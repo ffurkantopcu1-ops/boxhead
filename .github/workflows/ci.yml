@@ -38,7 +38,8 @@ jobs:
           PYGAME_HIDE_SUPPORT_PROMPT: '1'
           SDL_VIDEODRIVER: dummy
           SDL_AUDIODRIVER: dummy
-        run: python -c "import pygame; pygame.init(); from logic.version import get_version; print(f'Version: {get_version()}')"
+        run: >-
+          python -c "import pygame; pygame.init(); from logic.version import get_version; print(f'Version: {get_version()}')"
 
       - name: Unit tests
         env:
