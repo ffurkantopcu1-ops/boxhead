@@ -1,0 +1,186 @@
+# AGENTS.md
+
+## Project Overview
+
+Boxhead 2.0 is a single-player, top-down arena action game written in Python with
+Pygame. It has no package manifest, build configuration, automated test suite, or
+Git metadata in this directory. The checked-in `Boxhead.exe` and
+`Boxhead_Launcher.exe` are distribution artifacts; the Python sources are the
+authoritative implementation.
+
+Run commands from the repository root. Asset and save paths are relative to the
+current working directory.
+
+## Repository Map
+
+- `main.py`: Pygame initialization, borderless fullscreen window, and the 144 FPS
+  main loop. Delta time is passed in seconds.
+- `scene_manager.py`: owns the persistent scene instances and transitions among
+  `MainMenu`, `ClassSelect`, and `Game`.
+- `scenes/`: input handling and rendering for each screen. `game_scene.py` is the
+  main UI/controller layer and intentionally pauses simulation while inventory or
+  settings are open.
+- `logic/game_logic.py`: central gameplay state and update loop. It owns players,
+  enemies, drops, projectiles, waves, biome/card/quest systems, and transient
+  combat events.
+- `logic/`: independent gameplay systems such as items, inventory, cards,
+  synergies, quests, auras, hazards, biomes, elites, crystal upgrades, status
+  effects, and persistence.
+- `entities/`: mutable world entities. Class-specific combat behavior lives in
+  files such as `warrior_logic.py` and is selected by `entities/player.py`.
+- `ui_elements.py`: reusable Pygame widgets and item-icon loading.
+- `assets/` and `sounds/`: runtime media. Keep filenames stable unless all loading
+  references are updated.
+- `saves/`: mutable local player data, not fixtures. `meta.json` contains real
+  progression and daily-quest state.
+- `check_all_syntax.py`: the only repository-wide automated validation currently
+  provided.
+- `generate_enemy_sprites.py`, `transparent.py`, and `remove_bg_rembg.py`: offline
+  asset utilities. They target `public/assets` and require inputs that are not
+  present in this tree; they are not part of normal game startup.
+- `logic/game_logic.py.tmp`: a stale-looking temporary copy. Do not treat it as
+  runtime code or edit it unless the task explicitly concerns it.
+
+## Setup And Commands
+
+Use the existing Python 3 installation; the project is currently known to parse
+under Python 3.13.
+
+```powershell
+python -m pip install pygame
+python main.py
+```
+
+`main.py` immediately opens a borderless fullscreen window. Do not launch it in
+headless or unattended validation. For a syntax check on Windows, force UTF-8 so
+the Turkish success/error text does not fail under a legacy console encoding:
+
+```powershell
+$env:PYTHONUTF8='1'; python check_all_syntax.py
+```
+
+For a lightweight import smoke test that does not open the window:
+
+```powershell
+$env:PYGAME_HIDE_SUPPORT_PROMPT='1'; python -c "import pygame; from scene_manager import SceneManager"
+```
+
+The asset utilities additionally require Pillow, and `remove_bg_rembg.py` requires
+`rembg`. Do not add these as runtime dependencies unless runtime code begins to
+use them.
+
+## Architecture And Invariants
+
+- Preserve the flow `main.py -> SceneManager -> Scene -> GameLogic/entities`.
+  Scene transitions must go through `SceneManager.change_scene()` so `on_enter()`
+  runs.
+- Scenes receive `(manager, screen, width, height)` and implement `on_enter()`,
+  `update(dt, events)`, and `draw()`. Keep event consumption in the scene layer;
+  keep simulation and rules in `logic/` or the relevant entity.
+- `GameLogic.state` is a small state machine (`PLAYING`, `CARD_SELECT`,
+  `EVOLUTION_SELECT`, `GAMEOVER`). New overlays must respect these states and the
+  existing pause behavior.
+- Time-based simulation receives seconds through `dt`. Some attacks and cooldowns
+  also use Pygame/time timestamps; match the convention already used by the code
+  being changed rather than silently mixing units.
+- World coordinates and screen coordinates are distinct. Entity drawing methods
+  accept camera offsets; `GameScene` owns camera/zoom and HUD coordinates.
+- Collections are mutated during gameplay. Follow the existing snapshot iteration
+  pattern (`items[:]`) or deferred removal when removing elements during updates.
+- Use `logic.save_manager.SaveManager`. The root-level `save_manager.py` is not
+  imported by current runtime code and has a different API.
+- Save/load is a cross-module contract between `logic/save_manager.py`,
+  `GameLogic`, `Player`, and `InventoryManager`. When adding persistent fields,
+  update both serialization and restoration, use defaults for old saves, and test
+  a round trip. Never overwrite or normalize existing files in `saves/` during a
+  routine test.
+- IDs such as class names, item/orb IDs, rarities, card IDs, enemy types, scene
+  names, and difficulty labels are shared string contracts. Search all consumers
+  before renaming one.
+- `game_scene.py`, `player.py`, and `enemy.py` are large, coupled modules. Keep
+  changes focused and avoid broad formatting or opportunistic rewrites.
+
+## Code And Content Conventions
+
+- Follow the existing straightforward class-based style and four-space indentation.
+  There is no enforced formatter or type checker.
+- Prefer explicit imports and existing local helpers. Avoid introducing a new
+  framework or abstraction for a narrow change.
+- Keep gameplay data in the owning system's dictionaries/lists and use `.get()` or
+  `getattr()` defaults where backward compatibility or optional effects require it.
+- Preserve Turkish UI copy and UTF-8 source encoding. PowerShell may display valid
+  UTF-8 text as mojibake; do not rewrite strings merely because terminal output
+  looks corrupted. New comments should be concise; identifiers remain English.
+- Pygame drawing uses RGB tuples and immediate-mode rendering. Reuse fonts,
+  surfaces, pools, and existing widgets in hot paths; do not allocate large
+  surfaces or load images on every frame.
+- Prefer `os.path` while touching current path code, matching the repository.
+  Resolve new runtime paths relative to the project/module location if packaged
+  execution must be supported.
+- Do not modify `.exe`, `__pycache__/`, generated sprites, player saves, or
+  `version.txt` unless the task explicitly requires those artifacts.
+
+## Validation
+
+Every Python change must at least pass:
+
+```powershell
+$env:PYTHONUTF8='1'; python check_all_syntax.py
+```
+
+Also run the import smoke test for changes to imports or module boundaries. For
+gameplay/UI changes, manually exercise the affected flow in `python main.py` when a
+display is available: enter the relevant scene, test keyboard and mouse paths,
+and verify pause/resume, camera positioning, and save compatibility as applicable.
+There is no automated behavioral coverage, so state exactly which manual checks
+were and were not performed.
+
+When adding pure logic, prefer adding focused `unittest` coverage that avoids
+opening a display. For Pygame-dependent tests, set `SDL_VIDEODRIVER=dummy` before
+initialization and keep tests independent of the user's `saves/` directory.
+
+## Fixed Bugs
+
+- **Bug 9 (Wave Events):** Fixed wave events so that properties like `fast_enemies`, `elite_rain`, and `no_shooting` correctly modify enemy stats by adding logic to `_apply_global_modifiers` in `game_logic.py`.
+- **Bug 10 (Quest Tracking):** Fixed disconnected quest tracking by hooking up `quest_system.track()` for `reach_level` (in `player.py`) and `earn_gold` (in `ground_item.py`), and ensuring progress is correctly saved to `meta.json`.
+- **Bug 11 (Game Over Stats):** Added a global `stats` dictionary to `GameLogic` tracking `total_damage_dealt`, `total_damage_taken`, and `enemies_killed`, and synced `game_scene.py`'s display to correctly render these.
+- **Bug 12 (Combo Speed Override):** Fixed the combo speed logic by converting the kill streak speed bonus to `_base_speed_mod` in `game_logic.py`, ensuring `status_effects.py` applies slow/haste modifiers multiplicatively instead of overriding the bonus outright.
+- **Poison Stacking:** Fixed `StatusEffectManager.add_effect()` so that Poison DPS stacks additively instead of just refreshing duration.
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and automated releases.
+
+### Workflows
+
+- `.github/workflows/ci.yml`: Runs on push/PR to `main`. Performs syntax check,
+  headless import smoke test, and unit tests on `windows-latest`.
+- `.github/workflows/release.yml`: Triggered by `v*` tag push. Validates version
+  consistency, builds with PyInstaller, packages as `Boxhead-VERSION-win64.zip`,
+  generates SHA-256 checksum and `update.json` manifest, and publishes a GitHub
+  Release with all assets. Only the release job has `contents: write` permission.
+
+### Version System
+
+`version.txt` is the single source of truth. `logic/version.py` reads it at runtime
+(supports both source and PyInstaller-bundled paths). `scenes/menu_scene.py` displays
+the version dynamically. Release workflow validates that the tag matches `version.txt`.
+
+### Launcher
+
+`launcher/` contains a Tkinter-based auto-update launcher:
+- `launcher/config.py`: GitHub repo settings, paths, and constants.
+- `launcher/updater.py`: Core update logic (no GUI). Handles SemVer comparison,
+  SHA-256 verification, ZIP path traversal protection, staging/backup/rollback.
+- `launcher/main.py`: Tkinter GUI with progress bar, status, update and play buttons.
+
+The launcher never touches `saves/`. It uses `.part` temp files, validates checksums,
+and rolls back on failure.
+
+### Tests
+
+`tests/test_version.py`: SemVer parsing and comparison.
+`tests/test_updater.py`: Checksums, ZIP traversal detection, update/rollback,
+mocked GitHub API calls, saves preservation.
+
+Run: `python -m pytest tests/ -v`

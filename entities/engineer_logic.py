@@ -1,0 +1,41 @@
+import math
+import pygame
+
+class Engineer:
+    def __init__(self):
+        self.attack_range = 300
+        self.turret_cooldown = 0
+        
+    def execute_attack(self, player, game):
+        weapon = player.inv_manager.equipped.get("weapon")
+        
+        # Menzilli / Bomba Kontrolü
+        if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
+            player.shoot(game)
+            return
+
+        # Sadece Taret Kiti Varsa Taret Kur
+        if weapon and weapon.get("isTurret"):
+            current_time = pygame.time.get_ticks()
+            if current_time - self.turret_cooldown >= 5000:
+                player.place_turret(game)
+                self.turret_cooldown = current_time
+            return
+
+        # Yakın Dövüş Modu (Silah varsa Keser, yoksa Yumruk)
+        angle = player.facing_angle
+        is_punch = (weapon is None)
+        dmg = 25 * player.stats["dmgMult"] if not is_punch else 5
+        
+        game.add_event("slash", player.x, player.y, angle=angle, range=90, arc=1.0, timer=0.1)
+        
+        for e in game.enemies:
+            if not e.dead and math.hypot(e.x - player.x, e.y - player.y) < 110:
+                e.take_damage(dmg, game)
+        
+    def update(self, dt, player, game):
+        pass
+        
+    def draw_visuals(self, screen, camera_x, camera_y):
+        pass
+        

@@ -1,0 +1,82 @@
+import math
+import pygame
+
+class Warrior:
+    def __init__(self):
+        self.attack_range = 100
+        self.attack_arc = 1.2 # ~70 derece
+        
+    def execute_attack(self, player, game):
+        weapon = player.inv_manager.equipped.get("weapon")
+        
+        # Menzilli veya Bomba ise: Menzilli saldırı yap
+        if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
+            player.shoot(game)
+            return
+
+        # Warrior: Kılıç Savurma (Melee) veya Yumruk
+        range_val = (self.attack_range + player.stats.get("meleeRange", 0)) * player.stats.get("meleeRangeMult", 1.0)
+        angle = player.facing_angle
+        
+        # Hasar ve Görsel Belirleme
+        is_punch = weapon is None
+        dmg_base = 45 if not is_punch else 5
+        visual_type = "sweep" if not is_punch else "slash"
+        visual_timer = 0.15 if not is_punch else 0.1
+        
+        # Görsel Efekt
+        game.add_event(visual_type, player.x, player.y, angle=angle, range=range_val, arc=self.attack_arc, timer=visual_timer)
+        
+        # Hasar Kontrolü
+        hit_any = False
+        phys_flat = player.stats.get("physDmgFlat", 0)
+        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"]
+        
+        for e in game.enemies:
+            if not e.dead and not e.is_trap:
+                dist = math.hypot(e.x - player.x, e.y - player.y)
+                if dist < range_val + e.radius:
+                    # Açı Kontrolü
+                    angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
+                    diff = abs(angle_to_e - angle)
+                    if diff < self.attack_arc / 2:
+                        import random
+                        is_crit = random.random() < player.stats.get("critChance", 0.05)
+                        final_dmg = dmg * 2 if is_crit else dmg
+                        
+                        # --- ELEMENTEL UYGULAMA (NEW!) ---
+                        # 1. Zehir
+                        p_dps = player.stats.get("poisonDps", 0) * player.stats["dmgMult"]
+                        if p_dps > 0: e.apply_dot('poison', p_dps, 3.0)
+                        
+                        # 2. Buz (Sadece DoT, Yavaşlatma Kaldırıldı v1.0.6.6)
+                        f_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats["dmgMult"]
+                        if f_dmg > 0: e.apply_dot('frost', f_dmg * 0.5, 3.5)
+                        
+                        # 3. Ateş (Patlama + Yanma)
+                        fire_dmg = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats["dmgMult"]
+                        if fire_dmg > 0:
+                            # Vuruş anında mini patlama (AoE Pulse)
+                            game.add_event("explosion", e.x, e.y, radius=80, color=(255, 100, 0), timer=0.15)
+                            # Yakındaki düşmanlara sıçra (Splash)
+                            splash_count = 0
+                            for other in game.enemies:
+                                if not other.dead and not other.is_trap and other != e:
+                                    if math.hypot(other.x - e.x, other.y - e.y) < 80:
+                                        other.take_damage(fire_dmg, game)
+                                        other.apply_dot('fire', fire_dmg * 0.4, 3.0)
+                                        splash_count += 1
+                                        if splash_count >= 10:
+                                            break
+                            # Ana hedefe Yanma
+                            e.apply_dot('fire', fire_dmg * 0.4, 3.0)
+
+                        e.take_damage(final_dmg, game)
+                        hit_any = True
+        
+        # Dash kaldırıldı (İsteğe bağlı sarsıntı eklenebilir ama dash artık yok)
+        pass
+        
+    def draw_visuals(self, screen, camera_x, camera_y):
+        # Warrior özel görseli (Kılıç izi vb. eventler ile yönetiliyor)
+        pass

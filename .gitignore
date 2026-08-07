@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# User data - never commit
+saves/
+
+# Existing compiled binaries (keep in releases, not in repo)
+Boxhead.exe
+Boxhead_Launcher.exe
+Boxhead_Release.zip
+
+# Temp files
+*.part
+update.zip
+staging/
+backup_*/
+temp_zip_test/
+
+# Dev artifacts
+*.tmp
+scatter/
+.agent/
+
+# Images not needed in repo
+guide.png
+orc.png
+orc_v2.png
+test_frame.png
+
+release_assets/*.zip

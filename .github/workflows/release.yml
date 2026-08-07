@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.6.0)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version tag
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $tag = "${{ github.event.inputs.tag }}"
+          } else {
+            $tag = "${{ github.ref_name }}"
+          }
+          $ver = $tag -replace '^v', ''
+          echo "TAG=$tag" >> $env:GITHUB_OUTPUT
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Validate version matches version.txt
+        shell: pwsh
+        run: |
+          $fileVer = (Get-Content version.txt -Raw).Trim()
+          $tagVer = "${{ steps.version.outputs.VERSION }}"
+          if ($fileVer -ne $tagVer) {
+            Write-Error "Version mismatch: version.txt='$fileVer' but tag='$tagVer'"
+            exit 1
+          }
+          Write-Host "Version validated: $fileVer"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller Boxhead.spec --noconfirm
+
+      - name: Package release
+        id: package
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.VERSION }}"
+          $zipName = "Boxhead-$ver-win64.zip"
+
+          # Create staging directory
+          New-Item -ItemType Directory -Path release_staging -Force
+          Copy-Item dist/Boxhead.exe release_staging/
+          Copy-Item -Recurse assets release_staging/assets
+          Copy-Item -Recurse sounds release_staging/sounds
+          Copy-Item version.txt release_staging/
+
+          # Create ZIP
+          Compress-Archive -Path release_staging/* -DestinationPath $zipName -Force
+
+          # SHA-256 checksum
+          $hash = (Get-FileHash $zipName -Algorithm SHA256).Hash.ToLower()
+          $hash | Out-File -FilePath "$zipName.sha256" -Encoding utf8 -NoNewline
+
+          # update.json manifest
+          $size = (Get-Item $zipName).Length
+          $manifest = @{
+            version = $ver
+            filename = $zipName
+            sha256 = $hash
+            size = $size
+            min_launcher_version = "1.0.0"
+          } | ConvertTo-Json -Depth 3
+          $manifest | Out-File -FilePath "update.json" -Encoding utf8
+
+          echo "ZIP_NAME=$zipName" >> $env:GITHUB_OUTPUT
+          echo "SHA256=$hash" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: Boxhead v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Boxhead v${{ steps.version.outputs.VERSION }}
+
+            ### Kurulum
+            1. `${{ steps.package.outputs.ZIP_NAME }}` dosyasını indirin
+            2. İstediğiniz yere çıkartın
+            3. `Boxhead.exe` ile oynayın
+
+            ### Checksum (SHA-256)
+            ```
+            ${{ steps.package.outputs.SHA256 }}
+            ```
+          files: |
+            ${{ steps.package.outputs.ZIP_NAME }}
+            ${{ steps.package.outputs.ZIP_NAME }}.sha256
+            update.json
+          draft: false
+          prerelease: false
