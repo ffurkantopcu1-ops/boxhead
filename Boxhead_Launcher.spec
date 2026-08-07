@@ -2,8 +2,8 @@
 
 
 a = Analysis(
-    ['Launcher.py'],
-    pathex=[],
+    ['launcher\\main.py'],
+    pathex=['.'],
     binaries=[],
     datas=[],
     hiddenimports=[],
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='Boxhead_Launcher',
+    name='Launcher',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -35,5 +35,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['assets\\classes\\warrior.png'],
 )

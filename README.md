@@ -11,6 +11,13 @@ python main.py
 ```
 
 ### Use the Launcher (Auto-Update)
+
+Windows kullanıcıları en güncel launcher'ı doğrudan indirebilir:
+
+**[Launcher.exe indir](https://github.com/ffurkantopcu1-ops/boxhead-updates/releases/latest/download/Launcher.exe)**
+
+Kaynak koddan çalıştırmak için:
+
 ```powershell
 python launcher/main.py
 ```

@@ -18,15 +18,20 @@ from launcher.updater import (
 
 class LauncherApp:
     def __init__(self):
+        if getattr(sys, 'frozen', False):
+            self.install_dir = os.path.dirname(sys.executable)
+        else:
+            self.install_dir = os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))
+            )
+        os.chdir(self.install_dir)
+
         self.root = tk.Tk()
         self.root.title("Boxhead 2.0 Launcher")
         self.root.geometry("500x350")
         self.root.resizable(False, False)
         self.root.configure(bg='#14141e')
 
-        self.install_dir = os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__))
-        )
         self.release_info = None
 
         self._build_ui()

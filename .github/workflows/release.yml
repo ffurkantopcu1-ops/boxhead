@@ -62,7 +62,9 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Build with PyInstaller
-        run: pyinstaller Boxhead.spec --noconfirm
+        run: |
+          pyinstaller Boxhead.spec --noconfirm
+          pyinstaller Boxhead_Launcher.spec --noconfirm
 
       - name: Package release
         id: package
@@ -108,15 +110,18 @@ jobs:
             ## Boxhead v${{ steps.version.outputs.VERSION }}
 
             ### Kurulum
-            1. `${{ steps.package.outputs.ZIP_NAME }}` dosyasını indirin
-            2. İstediğiniz yere çıkartın
-            3. `Boxhead.exe` ile oynayın
+            1. `Launcher.exe` dosyasını indirin
+            2. İstediğiniz boş bir klasöre koyup çalıştırın
+            3. Launcher oyunu otomatik olarak indirip güncel tutar
+
+            **[Launcher.exe dosyasını doğrudan indir](https://github.com/${{ github.repository }}/releases/latest/download/Launcher.exe)**
 
             ### Checksum (SHA-256)
             ```
             ${{ steps.package.outputs.SHA256 }}
             ```
           files: |
+            dist/Launcher.exe
             ${{ steps.package.outputs.ZIP_NAME }}
             ${{ steps.package.outputs.ZIP_NAME }}.sha256
             update.json

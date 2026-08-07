@@ -68,10 +68,15 @@ This triggers the Release workflow which will:
 1. Run all CI checks (syntax, import smoke test, unit tests)
 2. Validate `version.txt` matches the tag
 3. Build `Boxhead.exe` with PyInstaller
-4. Package into `Boxhead-1.7.0-win64.zip`
-5. Generate SHA-256 checksum
-6. Create `update.json` manifest
-7. Publish a GitHub Release with all assets
+4. Build the standalone `Launcher.exe`
+5. Package into `Boxhead-1.7.0-win64.zip`
+6. Generate SHA-256 checksum
+7. Create `update.json` manifest
+8. Publish a GitHub Release with all assets
+
+The latest launcher always has this stable direct-download URL:
+
+https://github.com/ffurkantopcu1-ops/boxhead-updates/releases/latest/download/Launcher.exe
 
 ### Step 4: Verify
 
@@ -151,11 +156,11 @@ pyinstaller Boxhead.spec --noconfirm
 # Output: dist/Boxhead.exe
 ```
 
-### Build Launcher (Optional)
+### Build Launcher
 
 ```powershell
-pyinstaller --onefile --noconsole --name BoxheadLauncher launcher/main.py
-# Output: dist/BoxheadLauncher.exe
+pyinstaller Boxhead_Launcher.spec --noconfirm
+# Output: dist/Launcher.exe
 ```
 
 ### Package Manually
