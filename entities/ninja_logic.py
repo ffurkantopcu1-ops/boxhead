@@ -33,10 +33,10 @@ class Ninja:
         game.add_event(visual_type, player.x, player.y, angle=angle, range=range_visual, arc=1.4, timer=visual_timer)
         
         hit_any = False
-        for e in game.enemies:
+        for e in game.iter_enemies_near(player.x, player.y, range_hitbox):
             if not e.dead and not e.is_trap:
-                dist = math.hypot(e.x - player.x, e.y - player.y)
-                if dist < range_hitbox:
+                dx, dy = e.x - player.x, e.y - player.y
+                if dx * dx + dy * dy < range_hitbox * range_hitbox:
                     # Açı Kontrolü (~80 derece)
                     angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
                     diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)

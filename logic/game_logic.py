@@ -15,6 +15,11 @@ from logic.biome_system import BiomeSystem
 from logic.elite_system import EliteSystem
 
 class GameLogic:
+    MAX_ACTIVE_ENEMIES = 220
+    MAX_WAVE_ENEMIES = 600
+    MAX_VISUAL_EVENTS = 320
+    MAX_PARTICLES = 500
+
     BIOMES = {
         "normal":  {"name": "Ova", "color": (24, 28, 35), "enemy_speed_mult": 1.0},
         "desert":  {"name": "Çöl", "color": (60, 45, 20), "enemy_speed_mult": 1.3},
@@ -115,6 +120,7 @@ class GameLogic:
         # Grid System for Collision (Spatial Partitioning)
         self.grid_size = 128
         self.grid = {}
+        self._separation_accumulator = 0.0
         self.cheat_mode = False # Hile Modu (GDD 42)
 
     def setup_boss_test(self):
@@ -153,6 +159,9 @@ class GameLogic:
             return
             
         p = self.players[self.local_player_id]
+        # Oyuncu saldırıları ve erken-frame alan etkileri önceki karede taşınmış
+        # tam liste yerine grid sorgusu kullanabilsin.
+        self.update_grid()
         # Kill Streak (Combo) Update
         if self.kill_streak > 0:
             self.streak_timer -= dt
@@ -215,34 +224,45 @@ class GameLogic:
         if self.wave["enemies_to_spawn"] > 0:
             self.wave["spawn_timer"] -= dt
             if self.wave["spawn_timer"] <= 0:
-                spawned = self.spawn_enemy()
-                if spawned is None: spawned = 1
-                self.wave["enemies_to_spawn"] -= spawned
-                # Tüm dalganın belirlenen süre içinde doğması için dinamik interval hesapla
-                # İlk 5 wave için 20 saniye, sonrakiler için 10 saniye
-                wave_duration = 20.0 if self.wave.get("level", 1) <= 5 else 10.0
-                interval = wave_duration / max(1, self.wave["total_to_spawn"])
-                self.wave["spawn_timer"] = interval * spawned
-                
-                if not self.wave.get("bounty_assigned"):
-                    valid_enemies = [e for e in self.enemies if not getattr(e, 'is_trap', False) and not getattr(e, 'is_pillar', False) and getattr(e, 'type', '') != "boss"]
-                    if valid_enemies:
-                        bounty_target = random.choice(valid_enemies)
-                        bounty_target.is_bounty = True
-                        bounty_target.gold_reward = getattr(bounty_target, 'gold_reward', 10) * 2
-                        bounty_target.max_hp *= 1.5
-                        bounty_target.hp = bounty_target.max_hp
-                        self.wave["bounty_assigned"] = True
+                active_enemy_count = sum(
+                    1 for enemy in self.enemies
+                    if not enemy.dead and not enemy.is_trap
+                    and not getattr(enemy, 'is_pillar', False)
+                )
+                if active_enemy_count >= self.MAX_ACTIVE_ENEMIES:
+                    self.wave["spawn_timer"] = 0.08
+                else:
+                    spawned = self.spawn_enemy()
+                    if spawned is None: spawned = 1
+                    self.wave["enemies_to_spawn"] -= spawned
+                    # Tüm dalganın belirlenen süre içinde doğması için dinamik interval hesapla
+                    wave_duration = 20.0 if self.wave.get("level", 1) <= 5 else 10.0
+                    interval = wave_duration / max(1, self.wave["total_to_spawn"])
+                    self.wave["spawn_timer"] = interval * spawned
+
+                    if not self.wave.get("bounty_assigned"):
+                        valid_enemies = [e for e in self.enemies if not getattr(e, 'is_trap', False) and not getattr(e, 'is_pillar', False) and getattr(e, 'type', '') != "boss"]
+                        if valid_enemies:
+                            bounty_target = random.choice(valid_enemies)
+                            bounty_target.is_bounty = True
+                            bounty_target.gold_reward = getattr(bounty_target, 'gold_reward', 10) * 2
+                            bounty_target.max_hp *= 1.5
+                            bounty_target.hp = bounty_target.max_hp
+                            self.wave["bounty_assigned"] = True
         elif len([e for e in self.enemies if not e.dead and not getattr(e, 'is_trap', False) and not getattr(e, 'is_pillar', False)]) == 0:
             self.next_wave()
 
-        # Update Enemies
-        for e in self.enemies:
+        # Çağırıcı düşmanlar update sırasında listeye ekleme yapabildiğinden,
+        # yeni varlıkları aynı karede zincirleme güncelleme.
+        for e in tuple(self.enemies):
             e.update(dt, self)
             
         if hasattr(self, '_pending_spawns') and self._pending_spawns:
             self.enemies.extend(self._pending_spawns)
             self._pending_spawns.clear()
+
+        # Hareket sonrası grid, mermi/bulut/minyon sorgularının güncel kaynağıdır.
+        self.update_grid()
         
         for proj in self.projectiles:
             proj.update(dt, self)
@@ -256,10 +276,9 @@ class GameLogic:
             t.update(dt, self)
             
         # Update Clouds (AOE DOT)
-        for cl in self.clouds[:]:
+        for cl in self.clouds:
             cl.update(dt, self)
-            if cl.dead:
-                self.clouds.remove(cl)
+        self.clouds = [cloud for cloud in self.clouds if not cloud.dead]
             
         # Update Shake
         if self.shake_timer > 0:
@@ -270,24 +289,32 @@ class GameLogic:
             m.update(dt, self)
             
         # Update Particles
-        for p in self.particles[:]:
-            p['x'] += p['vx'] * dt * 60
-            p['y'] += p['vy'] * dt * 60
-            p['timer'] -= dt
-            if p['timer'] <= 0:
-                self.particles.remove(p)
+        live_particles = []
+        for particle in self.particles[-self.MAX_PARTICLES:]:
+            particle['x'] += particle['vx'] * dt * 60
+            particle['y'] += particle['vy'] * dt * 60
+            particle['timer'] -= dt
+            if particle['timer'] > 0:
+                live_particles.append(particle)
+        self.particles = live_particles
             
         # Update Visual Events
-        for ev in self.events[:]:
+        live_events = []
+        for ev in self.events:
             ev['timer'] -= dt
             if ev['timer'] <= 0:
-                self.events.remove(ev)
-            elif ev['type'] == 'damage_text':
+                continue
+            if ev['type'] == 'damage_text':
                 ev['y'] -= dt * 40 # Upward movement
+            live_events.append(ev)
+        self.events = live_events[-self.MAX_VISUAL_EVENTS:]
             
-        # Collision & Separation
-        self.update_grid()
-        self.apply_separation(dt)
+        # Ayrıştırma görsel/fiziksel olarak 30 Hz'de yeterlidir; her render
+        # karesinde çalıştırmak yoğun dalgalarda gereksiz çift maliyet yaratır.
+        self._separation_accumulator += dt
+        if self._separation_accumulator >= (1.0 / 30.0):
+            self.apply_separation(self._separation_accumulator)
+            self._separation_accumulator = 0.0
 
         # Cleanup
         self.enemies = [e for e in self.enemies if not e.dead]
@@ -669,17 +696,17 @@ class GameLogic:
             if p.add_item(item.copy()):
                 p.gold -= item.get('price', 500)
                 
-                # Marketten eşyayı siliyoruz
+                # Normal eşyalar tek stokludur; orblar sınırsız satın alınabilir.
                 if tab == "items":
                     self.market_inventory.pop(idx)
-                else:
-                    self.orb_market.pop(idx)
                 
                 self.add_event("damage_text", p.x, p.y-40, value="Satın Alındı!", color=(46, 204, 113))
                 return True
         return False
 
     def add_event(self, event_type, x, y, **kwargs):
+        if len(self.events) >= self.MAX_VISUAL_EVENTS:
+            self.events.pop(0)
         event = {"type": event_type, "x": x, "y": y, "timer": kwargs.get("timer", 0.5)}
         event.update(kwargs)
         self.events.append(event)
@@ -727,6 +754,7 @@ class GameLogic:
         count = int((15 + self.wave["level"] * 8) * 5 * 0.85) 
         if self.wave["event"] and self.wave["event"].get("enemy_count_mult"):
             count *= self.wave["event"]["enemy_count_mult"]
+        count = min(count, self.MAX_WAVE_ENEMIES)
             
         self.wave["enemies_to_spawn"] = count
         self.wave["total_to_spawn"] = count
@@ -820,10 +848,29 @@ class GameLogic:
     def update_grid(self):
         self.grid = {}
         for e in self.enemies:
+            if e.dead:
+                continue
             gx, gy = int(e.x // self.grid_size), int(e.y // self.grid_size)
             key = (gx, gy)
             if key not in self.grid: self.grid[key] = []
             self.grid[key].append(e)
+
+    def iter_enemies_near(self, x, y, radius):
+        """Uzamsal grid üzerinden yakındaki düşman adaylarını döndürür."""
+        cell_radius = max(1, int(math.ceil(radius / self.grid_size)))
+        gx, gy = int(x // self.grid_size), int(y // self.grid_size)
+        for ox in range(-cell_radius, cell_radius + 1):
+            for oy in range(-cell_radius, cell_radius + 1):
+                for enemy in self.grid.get((gx + ox, gy + oy), ()):
+                    if not enemy.dead:
+                        yield enemy
+
+    def can_spawn_summoned_enemy(self):
+        return sum(
+            1 for enemy in self.enemies
+            if not enemy.dead and not enemy.is_trap
+            and not getattr(enemy, 'is_pillar', False)
+        ) < self.MAX_ACTIVE_ENEMIES
 
     def apply_separation(self, dt):
         # Separation force to prevent overlapping (The Core Difficulty Fix)
@@ -831,7 +878,7 @@ class GameLogic:
         for e in self.enemies:
             if e.is_trap: continue
             # OPTIMIZATION: Skip separation for off-screen enemies
-            if math.hypot(e.x - p.x, e.y - p.y) > 1200: continue
+            if (e.x - p.x) ** 2 + (e.y - p.y) ** 2 > 1200 ** 2: continue
             
             gx, gy = int(e.x // self.grid_size), int(e.y // self.grid_size)
             
@@ -841,16 +888,19 @@ class GameLogic:
                     key = (gx + ox, gy + oy)
                     if key in self.grid:
                         for other in self.grid[key]:
-                            if e == other or other.is_trap: continue
+                            if e == other or other.is_trap or other.id <= e.id: continue
                             # Özel yaratıklar (Kamikaze/Barrel) veya İtileyemez Objeler (Pillar)
                             if e.type in ["kamikaze", "barrel"] or other.type in ["kamikaze", "barrel"] or getattr(other, 'is_pillar', False): continue
                             
-                            dist = math.hypot(e.x - other.x, e.y - other.y)
+                            dx = e.x - other.x
+                            dy = e.y - other.y
                             min_dist = e.radius + other.radius
-                            if dist < min_dist and dist > 0:
+                            dist_sq = dx * dx + dy * dy
+                            if 0 < dist_sq < min_dist * min_dist:
+                                dist = math.sqrt(dist_sq)
                                 overlap = min_dist - dist
-                                nx = (e.x - other.x) / dist
-                                ny = (e.y - other.y) / dist
+                                nx = dx / dist
+                                ny = dy / dist
                                 # Sıkışmayı yumuşatmak için 0.85'i 0.15'e düşürdük, böylece oyuncuya daha çok yaklaşabilirler
                                 e.x += nx * overlap * 0.15
                                 e.y += ny * overlap * 0.15

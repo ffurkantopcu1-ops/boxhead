@@ -32,10 +32,12 @@ class Warrior:
         phys_flat = player.stats.get("physDmgFlat", 0)
         dmg = (dmg_base + phys_flat) * player.stats["dmgMult"]
         
-        for e in game.enemies:
+        for e in game.iter_enemies_near(player.x, player.y, range_val + 160):
             if not e.dead and not e.is_trap:
-                dist = math.hypot(e.x - player.x, e.y - player.y)
-                if dist < range_val + e.radius:
+                dx = e.x - player.x
+                dy = e.y - player.y
+                hit_range = range_val + e.radius
+                if dx * dx + dy * dy < hit_range * hit_range:
                     # Açı Kontrolü
                     angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
                     diff = abs(angle_to_e - angle)
@@ -60,9 +62,11 @@ class Warrior:
                             game.add_event("explosion", e.x, e.y, radius=80, color=(255, 100, 0), timer=0.15)
                             # Yakındaki düşmanlara sıçra (Splash)
                             splash_count = 0
-                            for other in game.enemies:
+                            for other in game.iter_enemies_near(e.x, e.y, 80):
                                 if not other.dead and not other.is_trap and other != e:
-                                    if math.hypot(other.x - e.x, other.y - e.y) < 80:
+                                    odx = other.x - e.x
+                                    ody = other.y - e.y
+                                    if odx * odx + ody * ody < 80 * 80:
                                         other.take_damage(fire_dmg, game)
                                         other.apply_dot('fire', fire_dmg * 0.4, 3.0)
                                         splash_count += 1

@@ -159,6 +159,12 @@ class ClassCard:
         text_y_start = icon_y_start + icon_size + 15
         
         name_surf = self.font_sub.render(self.data['name'].upper(), True, (255, 255, 255))
+        if name_surf.get_width() > self.rect.width - 20:
+            scale = (self.rect.width - 20) / name_surf.get_width()
+            name_surf = pygame.transform.smoothscale(
+                name_surf,
+                (int(name_surf.get_width() * scale), int(name_surf.get_height() * scale)),
+            )
         name_rect = name_surf.get_rect(center=(self.rect.centerx, text_y_start))
         screen.blit(name_surf, name_rect)
         
@@ -242,12 +248,13 @@ class SkillButton:
         self.text = text
         self.skill_id = skill_id
         self.is_hovered = False
+        self.detail_font = pygame.font.SysFont("Segoe UI, Arial", 14)
 
     def update(self):
         self.is_hovered = self.rect.collidepoint(pygame.mouse.get_pos())
         return self.is_hovered and pygame.mouse.get_pressed()[0]
 
-    def draw(self, screen, font, can_afford):
+    def draw(self, screen, font, can_afford, description=None):
         bg = (39, 174, 96) if self.is_hovered and can_afford else (46, 204, 113)
         if not can_afford: bg = (127, 140, 141)
         
@@ -255,7 +262,31 @@ class SkillButton:
         pygame.draw.rect(screen, (255, 255, 255), self.rect, width=2, border_radius=10)
         
         txt = font.render(self.text, True, (255, 255, 255))
-        screen.blit(txt, txt.get_rect(center=self.rect.center))
+        max_width = self.rect.width - 16
+        if txt.get_width() > max_width:
+            ratio = max_width / txt.get_width()
+            txt = pygame.transform.smoothscale(txt, (max_width, int(txt.get_height() * ratio)))
+        text_y = self.rect.centery - 10 if description else self.rect.centery
+        screen.blit(txt, txt.get_rect(center=(self.rect.centerx, text_y)))
+
+        if description:
+            words = description.split()
+            lines = []
+            current = []
+            for word in words:
+                candidate = ' '.join(current + [word])
+                if self.detail_font.size(candidate)[0] <= max_width:
+                    current.append(word)
+                else:
+                    if current:
+                        lines.append(' '.join(current))
+                    current = [word]
+            if current:
+                lines.append(' '.join(current))
+            for i, line in enumerate(lines[:2]):
+                detail = self.detail_font.render(line, True, (225, 230, 235))
+                y = self.rect.centery + 10 + i * 15
+                screen.blit(detail, detail.get_rect(center=(self.rect.centerx, y)))
 
 class TabButton:
     def __init__(self, x, y, w, h, text, tab_id):

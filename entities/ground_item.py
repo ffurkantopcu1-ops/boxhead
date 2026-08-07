@@ -12,6 +12,8 @@ class GroundItem:
         self.is_gold = self.type == 'gold'
         self.radius = 12 if self.is_gold else 16
         self.dead = False
+        self.age = 0.0
+        self.max_lifetime = 60.0 if self.is_gold else (90.0 if self.type == 'potion' else None)
         
         # Nadirliğe göre renk belirle (Altın ise her zaman Sarı/Gold)
         self.colors = {
@@ -33,30 +35,46 @@ class GroundItem:
         self.offset_y = 0
         self.time_passed = 0
 
+        glow_size = self.radius * 4
+        self._glow_surface = pygame.Surface((glow_size, glow_size), pygame.SRCALPHA)
+        alpha = 100 if item_data.get('rarity') == "Normal" else 150
+        pygame.draw.circle(
+            self._glow_surface, (*self.color, alpha),
+            (glow_size // 2, glow_size // 2), glow_size // 2,
+        )
+
     def slice_icons(self, sheet):
         return {}
 
     def update(self, dt, game):
+        self.age += dt
+        if self.max_lifetime is not None and self.age >= self.max_lifetime:
+            self.dead = True
+            return
         self.time_passed += dt * 5
         self.offset_y = math.sin(self.time_passed) * 6
         
         # Oyuncu ile etkileşim (Magnet + Pickup)
         p = game.players[game.local_player_id]
-        dist = math.hypot(p.x - self.x, p.y - self.y)
+        dx = p.x - self.x
+        dy = p.y - self.y
+        dist_sq = dx * dx + dy * dy
         
         # --- MAGNET (Mıknatıs) ---
         # Altınlar her zaman biraz çekilir, eşyalar ise magnetRange kadar
         magnet_range = p.stats.get("magnetRadius", 100)
         if self.is_gold: magnet_range = max(magnet_range, 150) # Altınlar daha iştahlı çekilir
         
-        if dist < magnet_range:
+        if dist_sq < magnet_range * magnet_range:
+            dist = math.sqrt(dist_sq)
             # Oyuncuya doğru çekil (Mesafe kısaldıkça hızlan)
             angle = math.atan2(p.y - self.y, p.x - self.x)
             pull_speed = (magnet_range - dist) * 0.15 + (10 if self.is_gold else 5)
             self.x += math.cos(angle) * pull_speed * dt * 60
             self.y += math.sin(angle) * pull_speed * dt * 60
             
-        if dist < (self.radius + p.radius):
+        pickup_range = self.radius + p.radius
+        if dist_sq < pickup_range * pickup_range:
             self.pickup(p, game)
 
     def pickup(self, player, game):
@@ -108,11 +126,7 @@ class GroundItem:
         
         # --- Parlama Efekti (Glow) ---
         glow_size = self.radius * 4
-        s = pygame.Surface((glow_size, glow_size), pygame.SRCALPHA)
-        # Nadir eşyalar daha fazla parlasın
-        alpha = 100 if self.item_data.get('rarity') == "Normal" else 150
-        pygame.draw.circle(s, (*self.color, alpha), (glow_size // 2, glow_size // 2), glow_size // 2)
-        screen.blit(s, (draw_x - glow_size // 2, draw_y - glow_size // 2))
+        screen.blit(self._glow_surface, (draw_x - glow_size // 2, draw_y - glow_size // 2))
         
         # --- İkon veya Geometrik Şekil ---
         icon_drawn = False

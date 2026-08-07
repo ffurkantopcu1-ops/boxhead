@@ -551,8 +551,10 @@ class Player:
             # Görsel Efekt
             r_val = 80 + self.stats.get("meleeRange", 0)
             game.add_event("slash", self.x, self.y, angle=self.facing_angle, range=r_val, arc=1.0, timer=0.1)
-            for e in game.enemies:
-                if not e.dead and math.hypot(e.x - self.x, e.y - self.y) < r_val:
+            for e in game.iter_enemies_near(self.x, self.y, r_val):
+                dx = e.x - self.x
+                dy = e.y - self.y
+                if not e.dead and dx * dx + dy * dy < r_val * r_val:
                     e.take_damage(final_dmg, game)
             return
 
@@ -603,9 +605,11 @@ class Player:
             dot_mult = 1.0 + self.stats.get("dotDmgMult", 0.0)
             
             # Hedefleri bul (en yakın N hedef)
-            alive_enemies = [e for e in game.enemies if not getattr(e, 'dead', False)]
-            alive_enemies.sort(key=lambda e: math.hypot(e.x - self.x, e.y - self.y))
-            targets = [e for e in alive_enemies if math.hypot(e.x - self.x, e.y - self.y) <= range_val][:count]
+            candidates = game.iter_enemies_near(self.x, self.y, range_val)
+            targets = sorted(
+                (e for e in candidates if not e.dead),
+                key=lambda e: (e.x - self.x) ** 2 + (e.y - self.y) ** 2,
+            )[:count]
             
             for e in targets:
                 e.take_damage(final_dmg, game, is_crit=is_crit, from_player=True)
@@ -739,10 +743,12 @@ class Player:
         # Görsel
         game.add_event("sweep", self.x, self.y, angle=angle, range=range_val, arc=1.2, timer=0.15)
         
-        for e in game.enemies:
+        for e in game.iter_enemies_near(self.x, self.y, range_val + 160):
             if not e.dead and not e.is_trap:
-                dist = math.hypot(e.x - self.x, e.y - self.y)
-                if dist < range_val + e.radius:
+                dx = e.x - self.x
+                dy = e.y - self.y
+                hit_range = range_val + e.radius
+                if dx * dx + dy * dy < hit_range * hit_range:
                     # Basit Açı Kontrolü
                     angle_to_e = math.atan2(e.y - self.y, e.x - self.x)
                     if abs(angle_to_e - angle) < 0.6: # Yaklaşık 70 derece

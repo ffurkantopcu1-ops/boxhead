@@ -58,10 +58,13 @@ class Projectile:
             
         # --- BLACK HOLE LOGIC ---
         if self.type == 'black_hole':
-            for e in game.enemies:
+            for e in game.iter_enemies_near(self.x, self.y, self.aoe):
                 if not e.dead and not e.is_trap:
-                    dist = math.hypot(e.x - self.x, e.y - self.y)
-                    if dist < self.aoe:
+                    dx = e.x - self.x
+                    dy = e.y - self.y
+                    dist_sq = dx * dx + dy * dy
+                    if dist_sq < self.aoe * self.aoe:
+                        dist = math.sqrt(dist_sq)
                         # Çekim kuvveti (Merkeze doğru)
                         angle = math.atan2(self.y - e.y, self.x - e.x)
                         pull = (1.0 - (dist / self.aoe)) * 5 # Merkeze yaklaştıkça çekim artar
@@ -79,19 +82,22 @@ class Projectile:
         # Düşman Çarpışma Kontrolü (Dost Mermiler için)
         if not self.is_hostile:
             # --- MANYETİK ALAN SAPTIRMASI (Magnetar) ---
-            for e in game.enemies:
+            for e in game.iter_enemies_near(self.x, self.y, 400):
                 if not e.dead and e.type == "magnetar":
-                    mdist = math.hypot(e.x - self.x, e.y - self.y)
-                    if mdist < e.magnet_radius:
+                    dx = e.x - self.x
+                    dy = e.y - self.y
+                    if dx * dx + dy * dy < e.magnet_radius * e.magnet_radius:
                         if random.random() < 0.30 * dt * 60:  # dt normalize
                             self.vx += random.uniform(-4, 4)
                             self.vy += random.uniform(-4, 4)
                             break
 
-            for e in game.enemies:
+            for e in game.iter_enemies_near(self.x, self.y, 160):
                 if not e.dead and e.id not in self.hit_history:
-                    dist = math.hypot(e.x - self.x, e.y - self.y)
-                    if dist < (self.radius + e.radius):
+                    dx = e.x - self.x
+                    dy = e.y - self.y
+                    hit_radius = self.radius + e.radius
+                    if dx * dx + dy * dy < hit_radius * hit_radius:
                         self.on_hit(e, game)
                         break
         else:
@@ -161,10 +167,11 @@ class Projectile:
                          frost_dmg=self.frost_dmg)
         # --- AOE HASAR (Özellikle Ateş Patlaması için) ---
         if self.fire_dmg > 0:
-            for e in game.enemies:
+            for e in game.iter_enemies_near(self.x, self.y, radius):
                 if not e.dead and not e.is_trap:
-                    dist = math.hypot(e.x - self.x, e.y - self.y)
-                    if dist < radius:
+                    dx = e.x - self.x
+                    dy = e.y - self.y
+                    if dx * dx + dy * dy < radius * radius:
                         # Patlama anlık hasarı (Ateş Hasarı * 1.5 gibi bir çarpan veya direkt fire_dmg)
                         e.take_damage(self.fire_dmg, game, from_player=not self.is_hostile)
                         # DoT da ekleyelim (Patlamadan etkilenen yanar)
@@ -182,11 +189,13 @@ class Projectile:
     def find_next_target(self, game, current_id):
         next_target = None
         min_d = 400
-        for other in game.enemies:
+        for other in game.iter_enemies_near(self.x, self.y, min_d):
             if other.id != current_id and not other.dead and not other.is_trap and other.id not in self.hit_history:
-                d = math.hypot(other.x - self.x, other.y - self.y)
-                if d < min_d:
-                    min_d = d
+                dx = other.x - self.x
+                dy = other.y - self.y
+                d_sq = dx * dx + dy * dy
+                if d_sq < min_d * min_d:
+                    min_d = math.sqrt(d_sq)
                     next_target = other
         return next_target
 

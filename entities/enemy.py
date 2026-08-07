@@ -433,9 +433,11 @@ class Enemy:
                             game.trigger_shake(20)
                             if math.hypot(p.x - self.x, p.y - self.y) < 50:
                                 p.take_damage(self.dmg)
-                            for e in game.enemies:
+                            for e in game.iter_enemies_near(self.x, self.y, 50):
                                 if not e.dead and not e.is_trap and e != self:
-                                    if math.hypot(e.x - self.x, e.y - self.y) < 50:
+                                    dx = e.x - self.x
+                                    dy = e.y - self.y
+                                    if dx * dx + dy * dy < 50 * 50:
                                         e.take_damage(self.dmg * 0.5, game)
                             self.has_exploded = True
                             self.hp = 0
@@ -521,9 +523,11 @@ class Enemy:
                 self.x += math.cos(angle + offset) * self.speed * dt * 60
                 self.y += math.sin(angle + offset) * self.speed * dt * 60
                 # Buff: Yakındaki düşmanlara hız ve hasar artışı
-                for e in game.enemies:
+                for e in game.iter_enemies_near(self.x, self.y, self.buff_radius):
                     if not e.dead and e != self and e.type not in ["pack_leader", "lava_pit"]:
-                        if math.hypot(e.x - self.x, e.y - self.y) < self.buff_radius:
+                        dx = e.x - self.x
+                        dy = e.y - self.y
+                        if dx * dx + dy * dy < self.buff_radius * self.buff_radius:
                             e.speed = min(e.base_speed * 1.3, e.speed + 0.01)
                             e.dmg = e.dmg  # dmg direkt değiştirmek yerine check bayrak kullanılabilir
 
@@ -605,7 +609,7 @@ class Enemy:
                 
                 # Sürekli Sürü Yarasası çağırır
                 self.spawn_timer -= dt
-                if self.spawn_timer <= 0:
+                if self.spawn_timer <= 0 and game.can_spawn_summoned_enemy():
                     game.entity_id_counter += 1
                     spawn_type = "swarm_bat" if random.random() > 0.3 else "kamikaze"
                     minion = Enemy(game.entity_id_counter, self.x + random.uniform(-40, 40), self.y + random.uniform(-40, 40), game, type=spawn_type, wave_level=game.wave["level"])
@@ -624,7 +628,7 @@ class Enemy:
                     self.y += math.sin(angle) * self.speed * dt * 60
                 
                 self.spawn_timer -= dt
-                if self.spawn_timer <= 0:
+                if self.spawn_timer <= 0 and game.can_spawn_summoned_enemy():
                     game.entity_id_counter += 1
                     zombie = Enemy(game.entity_id_counter, self.x + random.uniform(-30, 30), self.y + random.uniform(-30, 30), game, type="zombie", wave_level=game.wave["level"])
                     game.enemies.append(zombie)

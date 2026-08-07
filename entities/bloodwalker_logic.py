@@ -44,11 +44,13 @@ class Bloodwalker:
         hit_any = False
         
         # (Aşağıdaki düşman döngüsü devam eder...)
-        for e in game.enemies:
+        for e in game.iter_enemies_near(player.x, player.y, range_val + 160):
             if e.dead or e.is_trap:
                 continue
-            dist = math.hypot(e.x - player.x, e.y - player.y)
-            if dist < range_val + e.radius:
+            dx = e.x - player.x
+            dy = e.y - player.y
+            hit_range = range_val + e.radius
+            if dx * dx + dy * dy < hit_range * hit_range:
                 angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
                 diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)
                 if diff < 0.9:  # ~100 derece yay
@@ -68,9 +70,11 @@ class Bloodwalker:
 
                     if fire_dmg > 0:
                         game.add_event("explosion", e.x, e.y, radius=70, color=(200, 60, 0), timer=0.12)
-                        for other in game.enemies:
+                        for other in game.iter_enemies_near(e.x, e.y, 70):
                             if not other.dead and not other.is_trap and other != e:
-                                if math.hypot(other.x - e.x, other.y - e.y) < 70:
+                                odx = other.x - e.x
+                                ody = other.y - e.y
+                                if odx * odx + ody * ody < 70 * 70:
                                     other.take_damage(fire_dmg, game)
                                     other.apply_dot('fire', fire_dmg * 0.4, 3.0)
                         e.apply_dot('fire', fire_dmg * 0.4, 3.0)

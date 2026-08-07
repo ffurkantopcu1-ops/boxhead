@@ -22,6 +22,17 @@ class Cloud:
         elif fire_dmg > poison_dps and fire_dmg > frost_dmg: self.color = (231, 76, 60)
         elif frost_dmg > fire_dmg and frost_dmg > poison_dps: self.color = (52, 152, 219)
         else: self.color = (46, 204, 113)
+
+        diameter = max(2, int(self.radius * 2))
+        self._visual = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
+        pygame.draw.circle(
+            self._visual, (*self.color, 100),
+            (diameter // 2, diameter // 2), int(self.radius),
+        )
+        pygame.draw.circle(
+            self._visual, (*self.color, 50),
+            (diameter // 2, diameter // 2), int(self.radius), 10,
+        )
             
     def update(self, dt, game):
         self.duration -= dt
@@ -30,10 +41,11 @@ class Cloud:
             return
             
         # Düşmanlara DOT uygula
-        for e in game.enemies:
+        for e in game.iter_enemies_near(self.x, self.y, self.radius):
             if not e.dead:
-                dist = math.hypot(e.x - self.x, e.y - self.y)
-                if dist < self.radius:
+                dx = e.x - self.x
+                dy = e.y - self.y
+                if dx * dx + dy * dy < self.radius * self.radius:
                     # 1. Zehir Etkisi
                     if self.poison_dps > 0:
                         e.apply_dot('poison', self.poison_dps, 1.5)
@@ -43,9 +55,11 @@ class Cloud:
                         e.apply_dot('fire', self.fire_dmg, 1.5)
                         if random.random() < 0.05: # %5 şansla patlama tick'i
                             game.add_event("explosion", e.x, e.y, radius=40, color=(255, 100, 0), timer=0.15)
-                            for other in game.enemies:
+                            for other in game.iter_enemies_near(e.x, e.y, 40):
                                 if not other.dead and not other.is_trap and other != e:
-                                    if math.hypot(other.x - e.x, other.y - e.y) < 40:
+                                    odx = other.x - e.x
+                                    ody = other.y - e.y
+                                    if odx * odx + ody * ody < 40 * 40:
                                         other.take_damage(self.fire_dmg * 0.5, game)
                     
                     # 3. Buz Etkisi
@@ -81,12 +95,6 @@ class Cloud:
         draw_x = self.x - camera_x
         draw_y = self.y - camera_y
         
-        # Bulut Görseli (Hafif Şeffaf)
-        alpha = min(100, int(255 * (self.duration / 2.0))) # Sonlarda solar
-        s = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(s, (*self.color, alpha), (self.radius, self.radius), self.radius)
-        
-        # Kenarlara doğru dağılma efekti
-        pygame.draw.circle(s, (*self.color, alpha // 2), (self.radius, self.radius), self.radius, 10)
-        
-        screen.blit(s, (draw_x - self.radius, draw_y - self.radius))
+        # Geometri init'te önbelleğe alınır; burada yalnızca solma alfası değişir.
+        self._visual.set_alpha(min(255, int(255 * (self.duration / 2.0))))
+        screen.blit(self._visual, (draw_x - self.radius, draw_y - self.radius))

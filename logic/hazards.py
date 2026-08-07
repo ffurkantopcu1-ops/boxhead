@@ -29,11 +29,14 @@ class Hazard:
             if dist < self.radius:
                 self.apply_effect(target, dt, game, is_enemy=False)
                 
-        for target in enemies:
+        nearby_enemies = (
+            game.iter_enemies_near(self.x, self.y, self.radius)
+            if getattr(game, 'grid', None) else enemies
+        )
+        for target in nearby_enemies:
             dx = target.x - self.x
             dy = target.y - self.y
-            dist = math.sqrt(dx*dx + dy*dy)
-            if dist < self.radius:
+            if dx * dx + dy * dy < self.radius * self.radius:
                 self.apply_effect(target, dt, game, is_enemy=True)
 
     def apply_effect(self, target, dt, game, is_enemy=False):

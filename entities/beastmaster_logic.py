@@ -29,17 +29,20 @@ class Beastmaster:
         target_enemy = None
         min_d = range_val + 50
         
-        for e in game.enemies:
+        for e in game.iter_enemies_near(player.x, player.y, range_val + 160):
             if not e.dead and not e.is_trap:
-                d = math.hypot(e.x - player.x, e.y - player.y)
-                if d < range_val + e.radius:
+                dx, dy = e.x - player.x, e.y - player.y
+                d_sq = dx * dx + dy * dy
+                if d_sq < (range_val + e.radius) ** 2:
                     # Açı Kontrolü
                     angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
                     diff = abs(angle_to_e - angle)
                     if diff > math.pi: diff = math.pi * 2 - diff
                     if diff < arc / 2:
                         # Artık kamçı hasar vurmuyor, sadece "İŞARETLİYOR"
-                        target_enemy = e
+                        if d_sq < min_d * min_d:
+                            min_d = math.sqrt(d_sq)
+                            target_enemy = e
         
         # 2. Minyonları Hedefe "Odakla" (Priority Target)
         if target_enemy:

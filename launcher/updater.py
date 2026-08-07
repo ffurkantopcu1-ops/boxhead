@@ -8,13 +8,15 @@ import sys
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 import zipfile
 from typing import Optional, Tuple, Callable
 
 from launcher.config import (
     API_URL, GAME_EXE, GAME_SCRIPT, VERSION_FILE, SAVES_DIR,
     STAGING_DIR, BACKUP_DIR, REQUEST_TIMEOUT, MAX_RETRIES,
-    MIN_LAUNCHER_VERSION, LAUNCHER_VERSION,
+    MIN_LAUNCHER_VERSION, LAUNCHER_VERSION, UPDATE_MANIFEST_URL,
+    LATEST_DOWNLOAD_URL, RETRY_DELAY,
 )
 
 
@@ -51,70 +53,91 @@ def compare_versions(a: str, b: str) -> int:
     return 0
 
 
+def _request_json(url: str) -> dict:
+    req = urllib.request.Request(
+        url,
+        headers={
+            'Accept': 'application/json',
+            'User-Agent': f'BoxheadLauncher/{LAUNCHER_VERSION}',
+        },
+    )
+    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
+        return json.loads(resp.read().decode('utf-8-sig'))
+
+
+def _release_from_manifest(manifest: dict) -> dict:
+    filename = str(manifest.get('filename', '')).strip()
+    version = str(manifest.get('version', '')).lstrip('v').strip()
+    if not version or not filename.lower().endswith('.zip') or 'win64' not in filename.lower():
+        raise ValueError('Güncelleme manifesti geçersiz veya win64 paketi eksik')
+
+    safe_filename = urllib.parse.quote(filename)
+    return {
+        'version': version,
+        'download_url': f'{LATEST_DOWNLOAD_URL}/{safe_filename}',
+        'size': int(manifest.get('size', 0) or 0),
+        'sha256': str(manifest.get('sha256', '')).strip().lower(),
+        'min_launcher_version': manifest.get('min_launcher_version', '1.0.0'),
+    }
+
+
+def _fetch_release_from_api() -> dict:
+    """Eski sürümlerde update.json yoksa GitHub API üzerinden geriye uyumlu kontrol."""
+    data = _request_json(API_URL)
+    tag = data.get('tag_name', '').lstrip('v')
+    assets = {a['name']: a for a in data.get('assets', [])}
+    zip_asset = next(
+        (asset for name, asset in assets.items()
+         if name.lower().endswith('.zip') and 'win64' in name.lower()),
+        None,
+    )
+    if not zip_asset:
+        raise RuntimeError(f'No win64 ZIP found in release {tag}')
+    return {
+        'version': tag,
+        'download_url': zip_asset['browser_download_url'],
+        'size': zip_asset.get('size', 0),
+        'sha256': '',
+        'min_launcher_version': '1.0.0',
+    }
+
+
 def fetch_latest_release() -> dict:
-    """Fetch latest release info from GitHub API.
+    """Fetch latest release info from the single-file release manifest.
     Returns dict with keys: version, download_url, sha256, size, min_launcher_version.
     Raises RuntimeError on failure.
     """
+    last_error = None
     for attempt in range(MAX_RETRIES):
         try:
-            req = urllib.request.Request(
-                API_URL,
-                headers={
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'BoxheadLauncher/1.0',
-                },
-            )
-            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-
-            tag = data.get('tag_name', '').lstrip('v')
-            assets = {a['name']: a for a in data.get('assets', [])}
-
-            # Fetch update.json manifest if present
-            update_manifest = None
-            if 'update.json' in assets:
-                manifest_url = assets['update.json']['browser_download_url']
-                req2 = urllib.request.Request(
-                    manifest_url,
-                    headers={'User-Agent': 'BoxheadLauncher/1.0'},
-                )
-                with urllib.request.urlopen(req2, timeout=REQUEST_TIMEOUT) as resp2:
-                    update_manifest = json.loads(resp2.read().decode('utf-8'))
-
-            # Find the win64 ZIP asset
-            zip_asset = None
-            for name, asset in assets.items():
-                if name.endswith('.zip') and 'win64' in name:
-                    zip_asset = asset
+            return _release_from_manifest(_request_json(UPDATE_MANIFEST_URL))
+        except urllib.error.HTTPError as e:
+            # update.json kullanılmayan eski release'ler için API'ye yalnızca
+            # kesin 404 durumunda düş; ağ kapalıyken ikinci bir uzun yol deneme.
+            if e.code == 404:
+                try:
+                    return _fetch_release_from_api()
+                except Exception as api_error:
+                    last_error = api_error
                     break
-            if not zip_asset and update_manifest:
-                fname = update_manifest.get('filename', '')
-                if fname in assets:
-                    zip_asset = assets[fname]
-
-            if not zip_asset:
-                raise RuntimeError(f'No win64 ZIP found in release {tag}')
-
-            return {
-                'version': update_manifest.get('version', tag) if update_manifest else tag,
-                'download_url': zip_asset['browser_download_url'],
-                'size': zip_asset.get('size', 0),
-                'sha256': update_manifest.get('sha256', '') if update_manifest else '',
-                'min_launcher_version': (
-                    update_manifest.get('min_launcher_version', '1.0.0')
-                    if update_manifest else '1.0.0'
-                ),
-            }
-
+            last_error = e
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            last_error = e
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            # Sunucuya ulaşıldı ama veri bozuksa tekrar beklemek faydasızdır.
+            last_error = e
+            break
         except Exception as e:
-            if attempt < MAX_RETRIES - 1:
-                time.sleep(2 ** attempt)
-                continue
-            raise RuntimeError(
-                f'Failed to fetch release after {MAX_RETRIES} attempts: {e}'
-            )
-    raise RuntimeError('Unreachable')
+            # Bazı Windows proxy/antivirüs katmanları standart URLError yerine
+            # genel hata yükseltebilir; aynı kısa retry bütçesini uygula.
+            last_error = e
+
+        if attempt < MAX_RETRIES - 1:
+            time.sleep(RETRY_DELAY)
+
+    raise RuntimeError(
+        f'Güncelleme bilgisi alınamadı ({MAX_RETRIES} deneme): {last_error}'
+    )
 
 
 def sha256_file(path: str) -> str:

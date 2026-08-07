@@ -14,6 +14,10 @@ class MenuScene(BaseScene):
         self.menu_state = "MAIN" # MAIN, LOAD, SETTINGS
         self.selected_idx = 0
         self.save_slots = []
+        self.load_offset = 0
+        self.shop_message = ""
+        self.shop_message_timer = 0
+        self.shop_message_success = False
         
         # Butonları oluştur
         button_width = 300
@@ -34,36 +38,48 @@ class MenuScene(BaseScene):
         self.shop_scroll = 0
 
     def update(self, dt, events):
+        if self.shop_message_timer > 0:
+            self.shop_message_timer = max(0, self.shop_message_timer - dt)
+
         if self.menu_state == "MAIN":
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_UP, pygame.K_w):
+                        self.selected_idx = (self.selected_idx - 1) % len(self.main_buttons)
+                    elif event.key in (pygame.K_DOWN, pygame.K_s):
+                        self.selected_idx = (self.selected_idx + 1) % len(self.main_buttons)
+                    elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                        self._trigger_main_action(self.selected_idx)
+
             # Buton durumlarını ve tıklamaları kontrol et
             if self.main_buttons[0].update(events): # New Game
-                self.manager.change_scene("ClassSelect")
+                self._trigger_main_action(0)
             if self.main_buttons[1].update(events): # Load Game
-                sm = SaveManager()
-                self.save_slots = sm.get_save_slots()
-                self.menu_state = "LOAD"
-                self.selected_idx = 0
+                self._trigger_main_action(1)
             if self.main_buttons[2].update(events): # Upgrades
-                self.meta_data = SaveManager.load_meta()
-                self.menu_state = "SHOP"
-                self.shop_scroll = 0
+                self._trigger_main_action(2)
             if self.main_buttons[3].update(events): # Settings
-                self.menu_state = "SETTINGS"
-                self.selected_idx = 0
+                self._trigger_main_action(3)
             if self.main_buttons[4].update(events): # Exit
-                pygame.quit()
-                import sys
-                sys.exit()
+                self._trigger_main_action(4)
+
+            for event in events:
+                if event.type == pygame.MOUSEMOTION:
+                    for i, button in enumerate(self.main_buttons):
+                        if button.rect.collidepoint(event.pos):
+                            self.selected_idx = i
+                            break
                 
         elif self.menu_state == "LOAD":
             mouse_pos = pygame.mouse.get_pos()
             mouse_clicked = any(e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 for e in events)
             
             panel_y = self.height // 2 - 100
-            for i in range(len(self.save_slots[:5])):
+            visible_slots = self.save_slots[self.load_offset:self.load_offset + 5]
+            for i in range(len(visible_slots)):
                 slot_rect = pygame.Rect(self.width // 2 - 250, panel_y + 100 + i * 50 - 20, 500, 40)
                 if slot_rect.collidepoint(mouse_pos):
-                    self.selected_idx = i
+                    self.selected_idx = self.load_offset + i
                     if mouse_clicked:
                         slot = self.save_slots[self.selected_idx]
                         self.manager.load_game_from_menu(slot['filename'])
@@ -80,35 +96,33 @@ class MenuScene(BaseScene):
                         elif event.key == pygame.K_RETURN:
                             slot = self.save_slots[self.selected_idx]
                             self.manager.load_game_from_menu(slot['filename'])
+                        self._keep_selected_save_visible()
 
         elif self.menu_state == "SETTINGS":
             mouse_pos = pygame.mouse.get_pos()
             mouse_clicked = any(e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 for e in events)
             
             panel_y = self.height // 2 - 50
-            for i in range(3):
+            for i in range(2):
                 opt_rect = pygame.Rect(self.width // 2 - 200, panel_y + 60 + i * 70 - 20, 400, 50)
                 if opt_rect.collidepoint(mouse_pos):
                     self.selected_idx = i
                     if mouse_clicked:
                         if i == 0: self.manager.global_settings['shake'] = not self.manager.global_settings['shake']
-                        elif i == 1: self.manager.global_settings['sound'] = not self.manager.global_settings['sound']
-                        elif i == 2: self.menu_state = "MAIN"
+                        elif i == 1: self.menu_state = "MAIN"
             
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.menu_state = "MAIN"
                     elif event.key == pygame.K_UP:
-                        self.selected_idx = (self.selected_idx - 1) % 3
+                        self.selected_idx = (self.selected_idx - 1) % 2
                     elif event.key == pygame.K_DOWN:
-                        self.selected_idx = (self.selected_idx + 1) % 3
+                        self.selected_idx = (self.selected_idx + 1) % 2
                     elif event.key == pygame.K_RETURN:
                         if self.selected_idx == 0: # Shake
                             self.manager.global_settings['shake'] = not self.manager.global_settings['shake']
-                        elif self.selected_idx == 1: # Sound
-                            self.manager.global_settings['sound'] = not self.manager.global_settings['sound']
-                        elif self.selected_idx == 2: # Back
+                        elif self.selected_idx == 1: # Back
                             self.menu_state = "MAIN"
 
         elif self.menu_state == "SHOP":
@@ -152,7 +166,33 @@ class MenuScene(BaseScene):
                         if success:
                             SaveManager.save_meta(meta_updated)
                             self.meta_data = meta_updated
-                            print(msg)
+                        self.shop_message = msg
+                        self.shop_message_timer = 2.5
+                        self.shop_message_success = success
+
+    def _trigger_main_action(self, idx):
+        if idx == 0:
+            self.manager.change_scene("ClassSelect")
+        elif idx == 1:
+            self.save_slots = SaveManager().get_save_slots()
+            self.menu_state = "LOAD"
+            self.selected_idx = 0
+            self.load_offset = 0
+        elif idx == 2:
+            self.meta_data = SaveManager.load_meta()
+            self.menu_state = "SHOP"
+            self.shop_scroll = 0
+        elif idx == 3:
+            self.menu_state = "SETTINGS"
+            self.selected_idx = 0
+        elif idx == 4:
+            pygame.event.post(pygame.event.Event(pygame.QUIT))
+
+    def _keep_selected_save_visible(self):
+        if self.selected_idx < self.load_offset:
+            self.load_offset = self.selected_idx
+        elif self.selected_idx >= self.load_offset + 5:
+            self.load_offset = self.selected_idx - 4
 
     def draw(self):
         # Arka Plan
@@ -168,7 +208,9 @@ class MenuScene(BaseScene):
         self.screen.blit(sub_surf, sub_rect)
 
         if self.menu_state == "MAIN":
-            for button in self.main_buttons:
+            for i, button in enumerate(self.main_buttons):
+                if i == self.selected_idx:
+                    pygame.draw.rect(self.screen, (241, 196, 15), button.rect.inflate(8, 8), width=2, border_radius=13)
                 button.draw(self.screen)
         elif self.menu_state == "SETTINGS":
             self.draw_settings_menu()
@@ -188,9 +230,8 @@ class MenuScene(BaseScene):
         pygame.draw.rect(self.screen, (100, 100, 120), panel, width=2, border_radius=15)
         
         opts = [
-            f"SCREEN SHAKE: {'[ON]' if self.manager.global_settings['shake'] else '[OFF]'}",
-            f"SOUND: {'[ON]' if self.manager.global_settings['sound'] else '[OFF]'}",
-            "BACK TO MENU"
+            f"EKRAN SARSINTISI: {'[AÇIK]' if self.manager.global_settings['shake'] else '[KAPALI]'}",
+            "ANA MENÜYE DÖN"
         ]
         
         for i, opt in enumerate(opts):
@@ -203,21 +244,25 @@ class MenuScene(BaseScene):
         pygame.draw.rect(self.screen, (30, 30, 45), panel, border_radius=15)
         pygame.draw.rect(self.screen, (100, 100, 120), panel, width=2, border_radius=15)
         
-        title = self.font_sub.render("SELECT SAVE SLOT", True, (52, 152, 219))
+        title = self.font_sub.render("KAYIT SEÇ", True, (52, 152, 219))
         self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 30))
         
         if not self.save_slots:
-            msg = self.font_sub.render("NO SAVES FOUND", True, (150, 150, 150))
+            msg = self.font_sub.render("KAYIT BULUNAMADI", True, (150, 150, 150))
             self.screen.blit(msg, (self.width // 2 - msg.get_width() // 2, panel.y + 150))
         else:
-            for i, slot in enumerate(self.save_slots[:5]):
-                color = (255, 255, 255) if i == self.selected_idx else (120, 120, 120)
+            for i, slot in enumerate(self.save_slots[self.load_offset:self.load_offset + 5]):
+                actual_idx = self.load_offset + i
+                color = (255, 255, 255) if actual_idx == self.selected_idx else (120, 120, 120)
                 slot_txt = f"{slot['level']} LVL - WAVE {slot['wave']} ({slot['class'].upper()})"
                 txt = self.font_sub.render(slot_txt, True, color)
                 txt_scale = pygame.transform.scale(txt, (int(txt.get_width()*0.8), int(txt.get_height()*0.8)))
                 self.screen.blit(txt_scale, (self.width // 2 - txt_scale.get_width() // 2, panel.y + 100 + i * 50))
         
-        back_msg = self.font_sub.render("Press ESC to return", True, (100, 100, 100))
+        footer = "ESC: Geri"
+        if len(self.save_slots) > 5:
+            footer += f"  •  {self.selected_idx + 1}/{len(self.save_slots)}"
+        back_msg = self.font_sub.render(footer, True, (100, 100, 100))
         self.screen.blit(back_msg, (self.width // 2 - back_msg.get_width() // 2, panel.bottom - 40))
 
     def draw_shop_menu(self):
@@ -288,11 +333,46 @@ class MenuScene(BaseScene):
         esc_txt = self.font_sub.render("Ana Menü için ESC", True, (150, 150, 150))
         self.screen.blit(esc_txt, (20, self.height - 40))
 
+        if self.shop_message_timer > 0 and self.shop_message:
+            msg_color = (120, 255, 160) if self.shop_message_success else (255, 130, 130)
+            msg = self.font_sub.render(self.shop_message, True, msg_color)
+            msg_bg = msg.get_rect(center=(self.width // 2, 125)).inflate(24, 14)
+            pygame.draw.rect(self.screen, (20, 20, 30), msg_bg, border_radius=8)
+            self.screen.blit(msg, msg.get_rect(center=msg_bg.center))
+
         # Tooltip Çizimi (En Üst Katman)
         if 'hovered_upg' in locals() and hovered_upg:
-            desc_txt = self.font_sub.render(hovered_upg["desc"], True, (255, 255, 200))
-            tw = desc_txt.get_width() + 20
-            th = desc_txt.get_height() + 20
+            rank = self.meta_data.get("upgrades", {}).get(hovered_upg["id"], 0)
+            is_max = rank >= hovered_upg["max_rank"]
+            category_names = {
+                "survival": "Hayatta Kalma", "economy": "Ekonomi",
+                "combat": "Savaş", "cards": "Kartlar", "special": "Özel",
+            }
+            max_text_width = 370
+            words = hovered_upg["desc"].split()
+            desc_lines, current = [], []
+            for word in words:
+                candidate = " ".join(current + [word])
+                if self.font_sub.size(candidate)[0] <= max_text_width:
+                    current.append(word)
+                else:
+                    if current:
+                        desc_lines.append(" ".join(current))
+                    current = [word]
+            if current:
+                desc_lines.append(" ".join(current))
+
+            meta_line = f"{category_names.get(hovered_upg['category'], 'Yükseltme')}  •  Seviye {rank}/{hovered_upg['max_rank']}"
+            cost = self.shop.get_cost(hovered_upg["id"], rank)
+            cost_line = "Tamamen geliştirildi" if is_max else f"Sonraki seviye: {cost} kristal"
+            tw = max(
+                300,
+                self.font_desc.size(meta_line)[0] + 24,
+                self.font_desc.size(cost_line)[0] + 24,
+                *(self.font_sub.size(line)[0] + 24 for line in desc_lines),
+            )
+            line_height = self.font_sub.get_height() + 3
+            th = 58 + len(desc_lines) * line_height
             mx, my = pygame.mouse.get_pos()
             
             # Ekrana sığdır
@@ -304,4 +384,11 @@ class MenuScene(BaseScene):
             t_rect = pygame.Rect(tx, ty, tw, th)
             pygame.draw.rect(self.screen, (20, 20, 30), t_rect, border_radius=8)
             pygame.draw.rect(self.screen, (241, 196, 15), t_rect, width=2, border_radius=8)
-            self.screen.blit(desc_txt, (tx + 10, ty + 10))
+            meta_txt = self.font_desc.render(meta_line, True, (180, 180, 195))
+            self.screen.blit(meta_txt, (tx + 12, ty + 9))
+            for i, line in enumerate(desc_lines):
+                desc_txt = self.font_sub.render(line, True, (255, 255, 220))
+                self.screen.blit(desc_txt, (tx + 12, ty + 28 + i * line_height))
+            cost_color = (120, 255, 160) if is_max or crystals >= (cost or 0) else (255, 130, 130)
+            cost_txt = self.font_desc.render(cost_line, True, cost_color)
+            self.screen.blit(cost_txt, (tx + 12, t_rect.bottom - cost_txt.get_height() - 8))

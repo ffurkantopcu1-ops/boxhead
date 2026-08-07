@@ -80,8 +80,10 @@ class Minion:
             self.aura_timer = 0
             aura_dmg = self.owner.stats.get("toxicAura", 0)
             if aura_dmg > 0:
-                for e in game.enemies:
-                    if not e.dead and math.hypot(e.x - self.x, e.y - self.y) < 150:
+                for e in game.iter_enemies_near(self.x, self.y, 150):
+                    dx = e.x - self.x
+                    dy = e.y - self.y
+                    if not e.dead and dx * dx + dy * dy < 150 * 150:
                         e.take_damage(aura_dmg, game)
                         game.add_event("damage_text", e.x, e.y - 10, value=aura_dmg, color=(46, 204, 113), scale=0.6)
             
@@ -125,41 +127,36 @@ class Minion:
             return
 
         self.target = None
-        pri1_enemies = []
-        all_valid_enemies = []
+        pri1_target = None
+        pri1_dist_sq = float('inf')
+        closest_target = None
+        closest_dist_sq = float('inf')
+        cone_target = None
+        best_angle_diff = math.pi
+        p_angle = getattr(self.owner, "facing_angle", 0)
         
-        for e in game.enemies:
+        for e in game.iter_enemies_near(self.owner.x, self.owner.y, 700 * m_range_mult):
             if not e.dead and not e.is_trap:
-                # Ölçümü OYUNCU üzerinden yapıyoruz
-                d = math.hypot(e.x - self.owner.x, e.y - self.owner.y)
-                if d < 700 * m_range_mult:
-                    all_valid_enemies.append((e, d))
-                    if d < 200:
-                        pri1_enemies.append((e, d))
-                        
-        if pri1_enemies:
-            pri1_enemies.sort(key=lambda x: x[1])
-            self.target = pri1_enemies[0][0]
-            return
-            
-        if all_valid_enemies:
-            best_angle_diff = math.pi
-            best_target_p2 = None
-            p_angle = getattr(self.owner, "facing_angle", 0)
-            
-            for e, d in all_valid_enemies:
-                angle_to_e = math.atan2(e.y - self.owner.y, e.x - self.owner.x)
+                dx = e.x - self.owner.x
+                dy = e.y - self.owner.y
+                dist_sq = dx * dx + dy * dy
+                if dist_sq < closest_dist_sq:
+                    closest_dist_sq = dist_sq
+                    closest_target = e
+                if dist_sq < 200 * 200 and dist_sq < pri1_dist_sq:
+                    pri1_dist_sq = dist_sq
+                    pri1_target = e
+
+                angle_to_e = math.atan2(dy, dx)
                 diff = abs((angle_to_e - p_angle + math.pi) % (2 * math.pi) - math.pi)
                 if diff < best_angle_diff and diff < math.radians(45):
                     best_angle_diff = diff
-                    best_target_p2 = e
-                    
-            if best_target_p2:
-                self.target = best_target_p2
-                return
-                
-            all_valid_enemies.sort(key=lambda x: x[1])
-            self.target = all_valid_enemies[0][0]
+                    cone_target = e
+
+        if pri1_target:
+            self.target = pri1_target
+            return
+        self.target = cone_target or closest_target
 
     def attack(self, game):
         if not self.target or self.is_recharging: return

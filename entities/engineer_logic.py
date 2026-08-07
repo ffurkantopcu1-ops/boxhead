@@ -29,8 +29,9 @@ class Engineer:
         
         game.add_event("slash", player.x, player.y, angle=angle, range=90, arc=1.0, timer=0.1)
         
-        for e in game.enemies:
-            if not e.dead and math.hypot(e.x - player.x, e.y - player.y) < 110:
+        for e in game.iter_enemies_near(player.x, player.y, 110):
+            dx, dy = e.x - player.x, e.y - player.y
+            if not e.dead and dx * dx + dy * dy < 110 * 110:
                 e.take_damage(dmg, game)
         
     def update(self, dt, player, game):

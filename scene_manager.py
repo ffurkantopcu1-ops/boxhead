@@ -7,6 +7,12 @@ class SceneManager:
         self.screen = screen
         self.width = width
         self.height = height
+
+        # Scene constructors may consult shared preferences. Initialize these
+        # before creating scenes and only enter the active scene at startup.
+        self.global_settings = {'shake': True, 'sound': True}
+        self.pending_save_slot = None
+
         self.scenes = {
             "MainMenu": MenuScene(self, screen, width, height),
             "Game": GameScene(self, screen, width, height),
@@ -14,10 +20,7 @@ class SceneManager:
         }
         self.current_scene_name = "MainMenu"
         self.current_scene = self.scenes[self.current_scene_name]
-        
-        # --- GLOBAL PERSISTENCE ---
-        self.global_settings = {'shake': True, 'sound': True}
-        self.pending_save_slot = None
+        self.current_scene.on_enter()
 
     def start_new_game(self, class_id):
         # Yeni oyun başladığında class_id'yi GameScene'e aktar

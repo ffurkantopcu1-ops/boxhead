@@ -89,6 +89,7 @@ class BossProjectile:
 class ProjectilePool:
     def __init__(self, size=2000):
         self.pool = [BossProjectile() for _ in range(size)]
+        self.active_objects = []
         self.size = size
         self.ptr = 0
 
@@ -98,6 +99,8 @@ class ProjectilePool:
             self.ptr = (self.ptr + 1) % self.size
             if not obj.active:
                 obj.reset(x, y, vx, vy, damage, radius, color, lifetime, status_effect)
+                if obj not in self.active_objects:
+                    self.active_objects.append(obj)
                 return obj
         return None
 
@@ -107,16 +110,27 @@ class ProjectilePool:
             self.ptr = (self.ptr + 1) % self.size
             if not obj.active:
                 obj.reset_ext(x, y, vx, vy, damage, radius, color, lifetime, status_effect, behavior, timer)
+                if obj not in self.active_objects:
+                    self.active_objects.append(obj)
                 return obj
         return None
 
     def update(self, dt, game):
-        for obj in self.pool:
-            if obj.active: obj.update(dt, game)
+        # Split davranışı update sırasında yeni mermi ekleyebilir; snapshot kullan.
+        for obj in tuple(self.active_objects):
+            if obj.active:
+                obj.update(dt, game)
+        self.active_objects = [obj for obj in self.active_objects if obj.active]
 
     def draw(self, screen, camera_x, camera_y):
-        for obj in self.pool:
-            if obj.active: obj.draw(screen, camera_x, camera_y)
+        width, height = screen.get_size()
+        for obj in self.active_objects:
+            draw_x = obj.x - camera_x
+            draw_y = obj.y - camera_y
+            if -30 <= draw_x <= width + 30 and -30 <= draw_y <= height + 30:
+                obj.draw(screen, camera_x, camera_y)
                 
     def clear(self):
-        for obj in self.pool: obj.active = False
+        for obj in self.active_objects:
+            obj.active = False
+        self.active_objects.clear()

@@ -8,6 +8,68 @@ import time
 import random
 import sys
 
+SKILL_HELP = {
+    'max_hp': 'Daha fazla hasara dayanmanı sağlar; mevcut canı da artırır.',
+    'regen': 'Her saniye pasif olarak can yeniler.',
+    'armor': 'Gelen doğrudan hasarı azaltır.',
+    'dodgeChance': 'Bir saldırının hasarını tamamen yok sayma şansı verir.',
+    'lifesteal': 'Verdiğin doğrudan hasarın bir bölümünü cana çevirir.',
+    'combatRegen': 'Savaş sırasında da çalışan saniyelik can yenilenmesidir.',
+    'maxEnergyShield': 'Canından önce tükenen ek enerji kalkanı sağlar.',
+    'esRegen': 'Hasar almadığında enerji kalkanını daha hızlı doldurur.',
+    'esDelayReduction': 'Enerji kalkanının yeniden dolmaya başlama süresini kısaltır.',
+    'dmgMult': 'Tüm doğrudan ve element saldırılarının hasarını artırır.',
+    'meleeRange': 'Yakın dövüş saldırılarının erişim mesafesini artırır.',
+    'physDmgFlat': 'Her fiziksel vuruşa sabit hasar ekler.',
+    'fireDmgFlat': 'Vuruşlara sabit ateş hasarı ve yanma ekler.',
+    'fireDmgMult': 'Mevcut ateş hasarının tamamını çarpan olarak artırır.',
+    'frostDmgFlat': 'Vuruşlara sabit buz hasarı ekler.',
+    'frostDmgMult': 'Mevcut buz hasarının tamamını çarpan olarak artırır.',
+    'critChance': 'Vuruşların kritik hasar verme olasılığını artırır.',
+    'attack_speed_bonus': 'Saldırılar arasındaki bekleme süresini azaltır.',
+    'pierce': 'Merminin ek bir düşmanın içinden geçmesini sağlar.',
+    'bounce': 'Merminin ilk hedeften sonra ek bir hedefe sekmesini sağlar.',
+    'bullet_speed': 'Mermilerin hedefe ulaşma hızını artırır.',
+    'aoe_bonus': 'Patlama ve alan saldırılarının yarıçapını büyütür.',
+    'projectileCount': 'Her saldırıda aynı anda ek bir mermi oluşturur.',
+    'killSpeedBoost': 'Öldürme serisi sırasında hareket hızını artırır.',
+    'elementDmgMult': 'Ateş, buz ve zehir dahil tüm element hasarını artırır.',
+    'dotDmgMult': 'Zehir ve yanma gibi zamanla verilen hasarı artırır.',
+    'speed': 'Temel hareket hızını artırır.',
+    'magicFind': 'Daha yüksek nadirlikte eşya bulma şansını artırır.',
+    'shopRarity': 'Kervanda daha yüksek seviye eşya çıkma ihtimalini artırır.',
+    'xpGain': 'Tüm kaynaklardan kazanılan deneyimi artırır.',
+    'goldGain': 'Düşmanlardan ve ödüllerden kazanılan altını artırır.',
+    'magnetRadius': 'Yerdeki eşya ve altınları daha uzaktan toplar.',
+    'turretMaxHp': 'Taretlerin maksimum dayanıklılığını artırır.',
+    'turretDmg': 'Taretlerin verdiği tüm hasarı artırır.',
+    'turretRate': 'Taretlerin saldırılar arasındaki bekleme süresini azaltır.',
+    'turretLimit': 'Aynı anda kurulabilecek taret sayısını artırır.',
+    'minionCount': 'Aynı anda savaşabilecek minyon sayısını artırır.',
+    'minionDamage': 'Tüm minyon saldırılarının hasarını artırır.',
+    'minionRate': 'Minyonların daha sık saldırmasını sağlar.',
+    'minionMaxHp': 'Minyonların maksimum canını artırır.',
+    'minionRange': 'Minyonların hedef alma mesafesini artırır.',
+    'minionPhysDmgFlat': 'Her minyon vuruşuna sabit fiziksel hasar ekler.',
+    'minionPhysDmgMult': 'Minyonların fiziksel hasarını çarpan olarak artırır.',
+    'minionFireDmgFlat': 'Minyon vuruşlarına sabit ateş hasarı ekler.',
+    'minionFireDmgMult': 'Minyonların ateş hasarını çarpan olarak artırır.',
+    'minionFrostDmgFlat': 'Minyon vuruşlarına sabit buz hasarı ekler.',
+    'minionFrostDmgMult': 'Minyonların buz hasarını çarpan olarak artırır.',
+    'minionBounce': 'Minyon mermilerinin ek hedeflere sekmesini sağlar.',
+    'minionPierce': 'Minyon mermilerinin ek düşmanları delmesini sağlar.',
+    'minionProjectileCount': 'Her minyon saldırısına ek bir mermi ekler.',
+}
+
+CARD_CATEGORY_LABELS = {
+    'survival': ('HAYATTA KALMA', (90, 200, 130)),
+    'offense': ('SALDIRI', (230, 110, 90)),
+    'support': ('DESTEK', (90, 170, 230)),
+    'minion': ('MİNYON', (170, 120, 220)),
+    'elemental': ('ELEMENT', (230, 170, 70)),
+    'curse': ('LANET • YÜKSEK RİSK', (210, 80, 120)),
+}
+
 class GameScene(BaseScene):
     def on_enter(self):
         # Varsayılan sınıf 'warrior' eğer seçilmemişse
@@ -19,8 +81,12 @@ class GameScene(BaseScene):
         self.camera_y = 0
         self.zoom_level = 1.0
         self.target_zoom = 1.0
-        self.min_zoom = 0.4
+        # Daha düşük değerler dev bir ara yüzey oluşturup fill/scale maliyetini
+        # katlıyor. 0.65 geniş görüşü korurken piksel bütçesini güvenli tutar.
+        self.min_zoom = 0.70
         self.max_zoom = 2.0
+        self._world_surface = None
+        self._world_surface_size = (0, 0)
         
         # --- APPLY GLOBAL SETTINGS ---
         if hasattr(self.manager, 'global_settings'):
@@ -57,6 +123,7 @@ class GameScene(BaseScene):
         self.market_tab = "items" # "items" or "orbs"
         self.show_craft_window = False
         self.show_inventory = False 
+        self.show_stats_panel = False
         self.crafting_target = None
         
         # Blood Moon Filter
@@ -127,8 +194,9 @@ class GameScene(BaseScene):
             self.bp_cards.append(BackpackItemCard(bx, by, 280, 80, i))
             
         # Sayfalama Butonları
-        self.inv_prev_rect = pygame.Rect(self.width // 2 + 20, 750 + 45, 120, 35)
-        self.inv_next_rect = pygame.Rect(self.width // 2 + 20 + 290 + 160, 750 + 45, 120, 35)
+        inventory_pager_y = min(665, self.height - 45)
+        self.inv_prev_rect = pygame.Rect(self.width // 2 + 20, inventory_pager_y, 120, 35)
+        self.inv_next_rect = pygame.Rect(self.width - 160, inventory_pager_y, 120, 35)
         
         # Craft Sayfalama
         self.craft_orb_prev_rect = pygame.Rect(self.width // 2 - 430, self.height // 2 + 250, 100, 35)
@@ -144,7 +212,7 @@ class GameScene(BaseScene):
         # MARKET TAB BUTONLARI
         self.market_tab_btns = [
             TabButton(self.width // 2 - 200, 105, 180, 40, "EŞYALAR", "items"),
-            TabButton(self.width // 2 + 20, 105, 180, 40, "ORBLAR", "orbs")
+            TabButton(self.width // 2 + 20, 105, 180, 40, "ORBLAR ∞", "orbs")
         ]
             
         # MARKET (4. Sekme) - 6x2 Izgara (12 Slot)
@@ -184,10 +252,19 @@ class GameScene(BaseScene):
         
         # Filtre Buton Alanları (SAĞ ÜST)
         self.filter_rects = []
+        filter_start_x = self.width // 2 + 20
+        filter_gap = 4
+        filter_available = self.width - filter_start_x - 20
+        filter_width = min(110, (filter_available - filter_gap * 5) // 6)
         for i in range(10): # 2 satır x 5 sütun
             row = i // 5
             col = i % 5
-            self.filter_rects.append(pygame.Rect(self.width // 2 + 30 + col * 112, 110 + row * 40, 110, 35))
+            self.filter_rects.append(pygame.Rect(
+                filter_start_x + col * (filter_width + filter_gap),
+                110 + row * 40,
+                filter_width,
+                35,
+            ))
             
         # Toplu Satış Butonları (SAĞ ALT)
         self.mass_sell_btns = [
@@ -197,13 +274,28 @@ class GameScene(BaseScene):
             {"label": "ÖZLERİ TÜKET", "action": "consume_essences", "color": (155, 89, 182)}
         ]
         self.mass_sell_rects = []
+        mass_gap = 6
+        mass_width = min(140, (filter_available - mass_gap * 3) // 4)
+        mass_y = min(710, self.height - 45)
         for i in range(4):
-            # 4 buton için genişliği biraz daraltalım (180 -> 140) ve aralığı ayarlayalım (190 -> 150)
-            self.mass_sell_rects.append(pygame.Rect(self.width // 2 + 20 + i * 145, 750, 140, 40))
+            self.mass_sell_rects.append(pygame.Rect(
+                filter_start_x + i * (mass_width + mass_gap),
+                mass_y,
+                mass_width,
+                40,
+            ))
 
         # ORB GİZLEME toggle (EŞYA TİPİ FİLTRELERİNİN SONUNA)
-        self.orb_toggle_rect = pygame.Rect(self.width // 2 + 30 + 5 * 112, 110 + 1 * 40, 110, 35)
+        self.orb_toggle_rect = pygame.Rect(
+            filter_start_x + 5 * (filter_width + filter_gap),
+            150,
+            filter_width,
+            35,
+        )
         self.hide_orbs = True 
+
+        # Savaş sırasında anlık toplamları açan kompakt HUD kontrolü.
+        self.stats_button_rect = pygame.Rect(self.width - 270, 75, 250, 36)
 
     def update(self, dt, events):
         p = self.logic.players[self.logic.local_player_id]
@@ -216,6 +308,8 @@ class GameScene(BaseScene):
         
         # ZOOM CALCULATION (Lerp)
         self.zoom_level += (self.target_zoom - self.zoom_level) * 0.1
+        if abs(self.zoom_level - self.target_zoom) < 0.002:
+            self.zoom_level = self.target_zoom
         
         # Kamera Oyuncuyu Takip Etsin (Zoom'a duyarlı)
         internal_w = self.width / self.zoom_level
@@ -243,7 +337,12 @@ class GameScene(BaseScene):
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_clicked = True
             
-            if event.type == pygame.MOUSEWHEEL:
+            if (
+                event.type == pygame.MOUSEWHEEL
+                and not self.show_inventory
+                and not self.show_settings
+                and self.logic.state == "PLAYING"
+            ):
                 # Zoom hızı ve limitleri
                 self.target_zoom += event.y * 0.1
                 self.target_zoom = max(self.min_zoom, min(self.max_zoom, self.target_zoom))
@@ -309,8 +408,10 @@ class GameScene(BaseScene):
 
                 # --- OYUN İÇİ DİĞER KONTROLLER (Sadece menü kapalıyken) ---
                 if not self.show_settings:
-                    if event.key == pygame.K_TAB:
+                    if event.key in (pygame.K_TAB, pygame.K_i) and self.logic.state == "PLAYING":
                         self.show_inventory = not self.show_inventory
+                    if event.key == pygame.K_c and self.logic.state == "PLAYING" and not self.show_inventory:
+                        self.show_stats_panel = not self.show_stats_panel
                     if event.key == pygame.K_f:
                         self._toggle_auto_sell(p)
                     if event.key == pygame.K_z:
@@ -323,7 +424,8 @@ class GameScene(BaseScene):
                         p.dash()
 
         # --- 2. AYARLAR MENÜSÜ FARE KONTROLÜ (MOUSE) ---
-        if self.show_settings:
+        settings_was_open = self.show_settings
+        if settings_was_open:
             panel = pygame.Rect(self.width // 2 - 250, self.height // 2 - 250, 500, 500)
             if mouse_clicked and not panel.collidepoint(mouse_pos):
                 self.show_settings = False
@@ -354,9 +456,23 @@ class GameScene(BaseScene):
                             self.logic.save_manager.load_game(self.logic, slot['filename'])
                             self.show_settings = False
 
+            # Modal arkasındaki kart veya oyun sonu butonlarına aynı tıklamanın
+            # ulaşmasını engelle.
+            return
+
+        if (
+            mouse_clicked
+            and not self.show_inventory
+            and self.logic.state == "PLAYING"
+            and self.stats_button_rect.collidepoint(mouse_pos)
+        ):
+            self.show_stats_panel = not self.show_stats_panel
+            return
+
         # --- 3. ENVANTER FARE KONTROLÜ (Yüksekliklerden bağımsız) ---
         if self.show_inventory and mouse_clicked:
             self._handle_inventory_mouse(p, mouse_pos)
+            return
             
         # --- 4. GAME OVER FARE KONTROLÜ ---
         if self.logic.state == "GAMEOVER" and mouse_clicked:
@@ -412,7 +528,7 @@ class GameScene(BaseScene):
             self.logic.add_event("damage_text", self.width//2, self.height//2, value=f"HİLE MODU: {status}", color=(241, 196, 15), timer=1.5)
         elif idx == 2: self.setting_tab = "save"; self.selected_setting_idx = 0
         elif idx == 3:
-            self.save_slots = self.logic.save_manager.get_save_slots()
+            self.save_slots = self.logic.save_manager.get_save_slots()[:5]
             self.setting_tab = "load"; self.selected_setting_idx = 0
         elif idx == 4:
             self.logic.save_manager.save_game(self.logic, "last_save")
@@ -677,16 +793,19 @@ class GameScene(BaseScene):
             if self.update_aura_clicks(pos, p): return
                         
     def handle_mouse_wheel(self, y):
-        # Zoom seviyesini 0.5 ile 2.0 arasında tut
-        self.zoom_level = max(0.5, min(2.0, self.zoom_level + y * 0.1))
+        self.zoom_level = max(self.min_zoom, min(self.max_zoom, self.zoom_level + y * 0.1))
 
     def draw(self):
         # --- ZOOM & CAMERA SETUP ---
         internal_w = int(self.width / self.zoom_level)
         internal_h = int(self.height / self.zoom_level)
         
-        # Geçici bir dünya surface'ı oluştur (Zoom için)
-        world_surf = pygame.Surface((internal_w, internal_h))
+        # Zoom sabitken aynı büyük yüzeyi her kare yeniden ayırma.
+        surface_size = (internal_w, internal_h)
+        if self._world_surface is None or self._world_surface_size != surface_size:
+            self._world_surface = pygame.Surface(surface_size).convert()
+            self._world_surface_size = surface_size
+        world_surf = self._world_surface
         
         cam_off_x, cam_off_y = 0, 0
         if self.logic.shake_timer > 0:
@@ -700,26 +819,46 @@ class GameScene(BaseScene):
         # 1. Zemini çiz (World Surface'a)
         self.draw_floor_to_surf(world_surf, final_cam_x, final_cam_y, internal_w, internal_h)
         
+        def visible(obj, margin=100):
+            return (
+                final_cam_x - margin <= obj.x <= final_cam_x + internal_w + margin
+                and final_cam_y - margin <= obj.y <= final_cam_y + internal_h + margin
+            )
+
         # 2. Boss Mermileri
         self.logic.projectile_pool.draw(world_surf, final_cam_x, final_cam_y)
         
         # 3. Objeleri çiz
-        for it in self.logic.items_on_ground: it.draw(world_surf, final_cam_x, final_cam_y)
-        for h in self.logic.hazards: h.draw(world_surf, final_cam_x, final_cam_y)
-        for cl in getattr(self.logic, 'clouds', []): cl.draw(world_surf, final_cam_x, final_cam_y)
-        for m in getattr(self.logic, 'minions', []): m.draw(world_surf, final_cam_x, final_cam_y)
-        for t in self.logic.turrets: t.draw(world_surf, final_cam_x, final_cam_y)
-        for pr in self.logic.projectiles: pr.draw(world_surf, final_cam_x, final_cam_y)
-        for e in self.logic.enemies: e.draw(world_surf, final_cam_x, final_cam_y)
+        for it in self.logic.items_on_ground:
+            if visible(it, 80): it.draw(world_surf, final_cam_x, final_cam_y)
+        for h in self.logic.hazards:
+            if visible(h, h.radius): h.draw(world_surf, final_cam_x, final_cam_y)
+        for cl in getattr(self.logic, 'clouds', []):
+            if visible(cl, cl.radius): cl.draw(world_surf, final_cam_x, final_cam_y)
+        for m in getattr(self.logic, 'minions', []):
+            if visible(m, 60): m.draw(world_surf, final_cam_x, final_cam_y)
+        for t in self.logic.turrets:
+            if visible(t, 80): t.draw(world_surf, final_cam_x, final_cam_y)
+        for pr in self.logic.projectiles:
+            if visible(pr, 30): pr.draw(world_surf, final_cam_x, final_cam_y)
+        for e in self.logic.enemies:
+            if visible(e, max(80, e.radius * 4)): e.draw(world_surf, final_cam_x, final_cam_y)
         
         # Partiküller
         for part in getattr(self.logic, 'particles', []):
+            if not (
+                final_cam_x - 20 <= part['x'] <= final_cam_x + internal_w + 20
+                and final_cam_y - 20 <= part['y'] <= final_cam_y + internal_h + 20
+            ):
+                continue
             px, py = part['x'] - final_cam_x, part['y'] - final_cam_y
             pygame.draw.circle(world_surf, part['color'], (int(px), int(py)), part['size'])
             
         # Görsel Efektler (Events)
         for ev in self.logic.events:
             dx, dy = ev['x'] - final_cam_x, ev['y'] - final_cam_y
+            if dx < -200 or dy < -200 or dx > internal_w + 200 or dy > internal_h + 200:
+                continue
             if ev['type'] == 'damage_text':
                 v_str = str(int(ev['value'])) if isinstance(ev['value'], (int, float)) else str(ev['value'])
                 txt = self.font_sub.render(v_str, True, ev.get('color', (255, 255, 255)))
@@ -835,7 +974,7 @@ class GameScene(BaseScene):
         # 6. HUD (Arayüz)
         self.draw_hud()
         
-        # 7. Envanter Overlay (I basıldığında)
+        # 7. Envanter Overlay (TAB veya I)
         if self.show_inventory:
             self.draw_inventory()
             
@@ -992,6 +1131,115 @@ class GameScene(BaseScene):
             
         dash_surf = self.font_sub.render(dash_text, True, d_color)
         self.screen.blit(dash_surf, (dash_x + 5, dash_y))
+
+        # Anlık stat paneli düğmesi ve açılır görünümü.
+        stats_hovered = self.stats_button_rect.collidepoint(pygame.mouse.get_pos())
+        stats_bg = (52, 152, 219) if self.show_stats_panel else ((55, 65, 85) if stats_hovered else (35, 40, 55))
+        pygame.draw.rect(self.screen, stats_bg, self.stats_button_rect, border_radius=7)
+        pygame.draw.rect(self.screen, (100, 155, 210), self.stats_button_rect, width=2, border_radius=7)
+        stats_label = "İSTATİSTİKLER [C] • AÇIK" if self.show_stats_panel else "İSTATİSTİKLER [C]"
+        stats_txt = self.font_desc.render(stats_label, True, (255, 255, 255))
+        self.screen.blit(stats_txt, stats_txt.get_rect(center=self.stats_button_rect.center))
+
+        if self.show_stats_panel and self.logic.state == "PLAYING":
+            self.draw_live_stats_panel(p)
+
+    @staticmethod
+    def _format_stat_bonus(value, percent=False):
+        if abs(value) < 0.0001:
+            return ""
+        if percent:
+            amount = value * 100
+            shown = f"{amount:.0f}" if abs(amount - round(amount)) < 0.01 else f"{amount:.1f}"
+            return f"{value:+.0%}" if abs(amount) < 1000 else f"{shown}%"
+        shown = f"{value:.1f}".rstrip("0").rstrip(".")
+        return f"{value:+.0f}" if float(value).is_integer() else f"{value:+.1f}"
+
+    def draw_live_stats_panel(self, p):
+        """Tüm kaynaklardan gelen son statları ve kartların ham katkısını gösterir."""
+        panel_w = 430
+        panel = pygame.Rect(self.width - panel_w - 20, 120, panel_w, min(620, self.height - 135))
+        surface = pygame.Surface(panel.size, pygame.SRCALPHA)
+        surface.fill((18, 22, 32, 238))
+        self.screen.blit(surface, panel.topleft)
+        pygame.draw.rect(self.screen, (80, 135, 190), panel, width=2, border_radius=10)
+
+        card_system = self.logic.card_system
+        card_bonus = card_system.get_stat_contributions()
+        card_count = len(card_system.active_cards)
+        active = set(card_system.active_cards)
+        synergy_count = sum(
+            1 for synergy in card_system.synergy_system.SYNERGIES
+            if all(card_id in active for card_id in synergy["required_cards"])
+        )
+
+        title = self.font_sub.render("ANLIK İSTATİSTİKLER", True, (130, 200, 255))
+        self.screen.blit(title, (panel.x + 16, panel.y + 12))
+        count_txt = self.font_desc.render(f"{card_count} kart • {synergy_count} sinerji", True, (175, 185, 200))
+        self.screen.blit(count_txt, (panel.right - count_txt.get_width() - 16, panel.y + 17))
+
+        info = self.font_desc.render("Toplam: tüm kaynaklar  |  Kart: ham kart+sinerji katkısı", True, (145, 155, 170))
+        if info.get_width() > panel.width - 32:
+            ratio = (panel.width - 32) / info.get_width()
+            info = pygame.transform.smoothscale(info, (panel.width - 32, max(12, int(info.get_height() * ratio))))
+        self.screen.blit(info, (panel.x + 16, panel.y + 43))
+
+        y = panel.y + 72
+        row_h = 24
+
+        def section(label):
+            nonlocal y
+            pygame.draw.line(self.screen, (65, 80, 105), (panel.x + 14, y + 9), (panel.right - 14, y + 9), 1)
+            text_surf = self.font_desc.render(label, True, (241, 196, 15))
+            bg = pygame.Rect(panel.x + 14, y, text_surf.get_width() + 12, text_surf.get_height())
+            pygame.draw.rect(self.screen, (18, 22, 32), bg)
+            self.screen.blit(text_surf, (panel.x + 20, y))
+            y += 25
+
+        def row(label, value, bonus_value=0, percent_bonus=False):
+            nonlocal y
+            label_surf = self.font_desc.render(label, True, (190, 195, 205))
+            value_surf = self.font_desc.render(str(value), True, (255, 255, 255))
+            self.screen.blit(label_surf, (panel.x + 20, y))
+            self.screen.blit(value_surf, (panel.x + 270 - value_surf.get_width(), y))
+            bonus_text = self._format_stat_bonus(bonus_value, percent_bonus)
+            if bonus_text:
+                bonus_color = (90, 220, 140) if bonus_value > 0 else (245, 115, 110)
+                bonus_surf = self.font_desc.render(bonus_text, True, bonus_color)
+                self.screen.blit(bonus_surf, (panel.right - bonus_surf.get_width() - 18, y))
+            y += row_h
+
+        stats = p.stats
+        dmg_mult = stats.get("dmgMult", 1.0)
+        dot_mult = 1.0 + stats.get("dotDmgMult", 0.0)
+        phys_base = stats.get("physDmg", 20) + stats.get("physDmgFlat", 0)
+        fire_base = stats.get("fireDamage", 0) + stats.get("fireDmgFlat", 0)
+        frost_base = stats.get("frostDamage", 0) + stats.get("frostDmgFlat", 0)
+        poison_base = stats.get("poisonDps", 0)
+        attacks_per_second = 1000.0 / max(1.0, stats.get("attack_cooldown", 350))
+
+        section("SALDIRI")
+        row("Hasar çarpanı", f"x{dmg_mult:.2f}", card_bonus.get("dmgMult", 0), True)
+        row("DoT çarpanı", f"x{dot_mult:.2f}", card_bonus.get("dotDmgMult", 0), True)
+        row("Fiziksel vuruş", f"{phys_base * dmg_mult:.1f}", card_bonus.get("physDmg", 0) + card_bonus.get("physDmgFlat", 0))
+        row("Ateş hasarı", f"{fire_base * dmg_mult * dot_mult:.1f}", card_bonus.get("fireDamage", 0) + card_bonus.get("fireDmgFlat", 0))
+        row("Buz hasarı", f"{frost_base * dmg_mult * dot_mult:.1f}", card_bonus.get("frostDamage", 0) + card_bonus.get("frostDmgFlat", 0))
+        row("Zehir DPS", f"{poison_base * dmg_mult * dot_mult:.1f}", card_bonus.get("poisonDps", 0))
+        row("Saldırı / saniye", f"{attacks_per_second:.2f}", card_bonus.get("fireRate", 0), True)
+        row("Kritik şansı", f"%{stats.get('critChance', 0.05) * 100:.0f}", card_bonus.get("critChance", 0), True)
+        row("Kritik çarpanı", f"x{2.0 + stats.get('critDmg', 0):.2f}", card_bonus.get("critDmg", 0), True)
+
+        section("SAVUNMA")
+        row("Can", f"{int(p.hp)} / {int(p.max_hp)}", card_bonus.get("max_hp", 0))
+        row("Zırh", f"{stats.get('armor', 0):.0f}", card_bonus.get("armor", 0))
+        row("Kaçınma", f"%{stats.get('dodgeChance', 0) * 100:.0f}", card_bonus.get("dodgeChance", 0), True)
+        row("Alınan hasar", f"x{getattr(p, 'damage_taken_mult', 1.0):.2f}")
+
+        section("YARDIMCI / MİNYON")
+        row("Hareket hızı", f"{stats.get('speed', 0):.1f}", card_bonus.get("speed", 0))
+        row("Can çalma", f"%{stats.get('lifesteal', 0) * 100:.0f}", card_bonus.get("lifesteal", 0), True)
+        row("Minyon hasarı", f"x{stats.get('minionDamage', 1):.2f}", card_bonus.get("minionDamage", 0), True)
+        row("Minyon limiti", f"{max(1, int(stats.get('minionCount', 1)))}", card_bonus.get("minionCount", 0))
 
     def draw_inventory(self):
         # Full Screen Overlay
@@ -1159,7 +1407,7 @@ class GameScene(BaseScene):
         self.screen.blit(tb_t, tb_t.get_rect(center=take_back_btn.center))
 
         # 3. SAĞ: ORB MARKET (DÜKKAN)
-        title_r = self.font_sub.render(f"ORB MARKET ({self.orb_market_page + 1})", True, (231, 76, 60))
+        title_r = self.font_sub.render(f"ORB MARKET ∞ ({self.orb_market_page + 1})", True, (231, 76, 60))
         self.screen.blit(title_r, (panel.right - 280, panel.y + 30))
         
         gold_t = self.font_sub.render(f"GOLD: {p.gold}", True, (241, 196, 15))
@@ -1543,11 +1791,14 @@ class GameScene(BaseScene):
         self.screen.blit(class_name_txt, (panel.x + 40, panel.y + 15))
         
         passives = {
-            "warrior": "Geniş Vuruş: Hasar alanındaki diğer düşmanlara da hasar verir.",
-            "archer": "Keskin Göz: Düşmana uzaksan %40'a kadar mesafe hasar bonusu.",
-            "mage": "Büyü Kalkanı: Zeka (INT) bazlı ekstra kalkan (Energy Shield).",
-            "summoner": "Sürü Lideri: Minyonlar oyuncunun kritik şansından faydalanır.",
-            "blood_mage": "Kan Ritüeli: Can %30'un altındayken hasar ve hız x1.4 artar."
+            "warrior": "Geniş Savuruş — Önündeki konide bulunan tüm düşmanlara aynı saldırıyla vurur.",
+            "beastmaster": "Av Emri — Kamçıyla işaretlenen hedefe bütün minyonlar anında odaklanır.",
+            "sniper": "Keskin Nişan — +%20 temel kritik şansı, +1 sekme ve +1 delme ile başlar.",
+            "engineer": "Taret Ustası — Taret kiti kullanırken 5 saniyede bir savaş alanına taret kurar.",
+            "ninja": "Arkadan Vuruş — Atılmadan sonraki ilk yakın saldırı 2 kat hasar verir.",
+            "alchemist": "Uçucu Karışım — Bomba alanı %40 büyür; yakın saldırılar %30 ihtimalle zehirler.",
+            "sorcerer": "Element Döngüsü — Ateş, buz ve zehir arasında döner; her 4. atış kritik ve 2 kat alanlıdır.",
+            "bloodwalker": "Kan Öfkesi — Can %30'un altındayken hasar ve hız %40 artar; R ile mermi emilir.",
         }
         passive_desc = passives.get(getattr(p, 'class_id', 'warrior'), "")
         self.draw_text_wrapped(f"Pasif: {passive_desc}", panel.x + 40, panel.y + 45, 520, (180, 200, 255), self.font_desc)
@@ -1623,7 +1874,12 @@ class GameScene(BaseScene):
                 btn.rect.y = 210 + (row * 85)
                 
                 btn.text = f"{sk_data['name']} ({sk_data['lvl']}/{sk_data['max']})"
-                btn.draw(self.screen, self.font_desc, p.skill_points > 0 and sk_data['lvl'] < sk_data['max'])
+                btn.draw(
+                    self.screen,
+                    self.font_desc,
+                    p.skill_points > 0 and sk_data['lvl'] < sk_data['max'],
+                    SKILL_HELP.get(sk_data['stat'], 'Bu özellik karakter istatistiklerini kalıcı olarak güçlendirir.'),
+                )
                 shown_count += 1
 
     def buy_skill(self, p, skill_idx):
@@ -1651,13 +1907,17 @@ class GameScene(BaseScene):
         
         # 3 Kartı Yan Yana Çiz
         cards = self.logic.pending_cards
-        card_w, card_h = 300, 400
-        start_x = self.width // 2 - (len(cards) * card_w + (len(cards)-1)*50) // 2
+        gap = 20 if len(cards) > 3 else 40
+        card_w = min(300, (self.width - 80 - gap * (len(cards) - 1)) // max(1, len(cards)))
+        card_top = 170
+        controls_top = self.height - 230
+        card_h = max(280, min(400, controls_top - card_top - 20))
+        start_x = self.width // 2 - (len(cards) * card_w + (len(cards)-1) * gap) // 2
         
         self.card_rects = []
         for i, card in enumerate(cards):
-            cx = start_x + i * (card_w + 50)
-            cy = self.height // 2 - card_h // 2
+            cx = start_x + i * (card_w + gap)
+            cy = card_top
             rect = pygame.Rect(cx, cy, card_w, card_h)
             self.card_rects.append(rect)
             
@@ -1667,10 +1927,19 @@ class GameScene(BaseScene):
             
             # Kart İsmi
             c_name = self.font_sub.render(card["name"], True, (255, 255, 255))
+            if c_name.get_width() > card_w - 30:
+                ratio = (card_w - 30) / c_name.get_width()
+                c_name = pygame.transform.smoothscale(c_name, (card_w - 30, int(c_name.get_height() * ratio)))
             self.screen.blit(c_name, (cx + card_w//2 - c_name.get_width()//2, cy + 30))
+
+            category, category_color = CARD_CATEGORY_LABELS.get(
+                card.get('category'), ('KART', (160, 160, 170))
+            )
+            category_txt = self.font_desc.render(category, True, category_color)
+            self.screen.blit(category_txt, category_txt.get_rect(center=(rect.centerx, cy + 78)))
             
             # Açıklama
-            self.draw_text_wrapped(card["desc"], cx + 20, cy + 100, card_w - 40, (200, 200, 200), self.font_desc)
+            self.draw_text_wrapped(card["desc"], cx + 20, cy + 110, card_w - 40, (215, 215, 225), self.font_desc)
             
             # Sinerji İpucu
             if hasattr(self.logic.card_system, 'synergy_system'):
@@ -1917,12 +2186,7 @@ class GameScene(BaseScene):
         synergies = getattr(self.logic.card_system.synergy_system, 'SYNERGIES', [])
         active_synergies = getattr(self.logic.card_system.synergy_system, 'active_synergies', [])
         
-        active_names = []
-        for s in p.skills:
-            lvl = s.get('lvl', 0)
-            if lvl > 0:
-                short_name = s['name'].split(' (')[0].strip()
-                active_names.append(f"{short_name} Lv{lvl}")
+        active_names = self.logic.card_system.get_active_card_names()
                 
         cards_title = self.font_sub.render(f"Sahip Olduğun Kartlar ({len(active_names)} Adet):", True, (200, 200, 200))
         self.screen.blit(cards_title, (self.width // 2 - 480, 160))
@@ -1934,7 +2198,7 @@ class GameScene(BaseScene):
             
         self.draw_text_wrapped(cards_text, self.width // 2 - 480, 190, 960, (150, 255, 150), self.font_desc)
         
-        # Sinerjileri biraz daha aşağıdan çiz
+        # Açıklama ve gereksinim satırlarına ayrı alan bırak.
         start_y = 240
         col_w = 460
         start_x_left = self.width // 2 - 480
@@ -1944,9 +2208,9 @@ class GameScene(BaseScene):
             is_active = syn['id'] in active_synergies
             
             x = start_x_left if i % 2 == 0 else start_x_right
-            y = start_y + (i // 2) * 110
+            y = start_y + (i // 2) * 125
             
-            rect = pygame.Rect(x, y, col_w, 100)
+            rect = pygame.Rect(x, y, col_w, 115)
             
             bg_color = (40, 50, 40) if is_active else (30, 30, 35)
             pygame.draw.rect(self.screen, bg_color, rect, border_radius=10)
@@ -1961,12 +2225,19 @@ class GameScene(BaseScene):
             status_txt = self.font_sub.render(status_str, True, (46, 204, 113) if is_active else (100, 100, 100))
             self.screen.blit(status_txt, (x + col_w - status_txt.get_width() - 15, y + 10))
             
-            desc_txt = self.font_desc.render(syn['desc'], True, (220, 220, 220) if is_active else (120, 120, 120))
-            self.screen.blit(desc_txt, (x + 15, y + 40))
+            self.draw_text_wrapped(
+                syn['desc'], x + 15, y + 40, col_w - 30,
+                (220, 220, 220) if is_active else (120, 120, 120),
+                self.font_desc,
+            )
             
-            req_str = "Kartlar: " + " + ".join([c.replace("_", " ").title() for c in syn['required_cards']])
-            req_txt = self.font_desc.render(req_str, True, (180, 180, 180) if is_active else (90, 90, 90))
-            self.screen.blit(req_txt, (x + 15, y + 65))
+            card_names = {card['id']: card['name'] for card in self.logic.card_system.CARDS}
+            req_str = "Gereken: " + " + ".join(card_names.get(c, c) for c in syn['required_cards'])
+            self.draw_text_wrapped(
+                req_str, x + 15, y + 84, col_w - 30,
+                (180, 180, 180) if is_active else (90, 90, 90),
+                self.font_desc,
+            )
 
     def draw_text_wrapped(self, text, x, y, max_width, color, font):
         """Metni belirtilen genişliğe göre satırlara bölerek çizer."""
@@ -1979,9 +2250,11 @@ class GameScene(BaseScene):
             if font.size(test_line)[0] <= max_width:
                 current_line.append(word)
             else:
-                lines.append(' '.join(current_line))
+                if current_line:
+                    lines.append(' '.join(current_line))
                 current_line = [word]
-        lines.append(' '.join(current_line))
+        if current_line:
+            lines.append(' '.join(current_line))
         
         for i, line in enumerate(lines):
             l_surf = font.render(line, True, color)

@@ -165,20 +165,6 @@ class TestPerformUpdate(unittest.TestCase):
 class TestFetchRelease(unittest.TestCase):
     @patch('launcher.updater.urllib.request.urlopen')
     def test_successful_fetch(self, mock_urlopen):
-        release_data = {
-            'tag_name': 'v1.7.0',
-            'assets': [
-                {
-                    'name': 'Boxhead-1.7.0-win64.zip',
-                    'browser_download_url': 'https://example.com/Boxhead.zip',
-                    'size': 50000000,
-                },
-                {
-                    'name': 'update.json',
-                    'browser_download_url': 'https://example.com/update.json',
-                },
-            ],
-        }
         manifest_data = {
             'version': '1.7.0',
             'filename': 'Boxhead-1.7.0-win64.zip',
@@ -187,29 +173,24 @@ class TestFetchRelease(unittest.TestCase):
             'min_launcher_version': '1.0.0',
         }
 
-        mock_resp1 = MagicMock()
-        mock_resp1.read.return_value = json.dumps(release_data).encode()
-        mock_resp1.__enter__ = MagicMock(return_value=mock_resp1)
-        mock_resp1.__exit__ = MagicMock(return_value=False)
-
-        mock_resp2 = MagicMock()
-        mock_resp2.read.return_value = json.dumps(manifest_data).encode()
-        mock_resp2.__enter__ = MagicMock(return_value=mock_resp2)
-        mock_resp2.__exit__ = MagicMock(return_value=False)
-
-        mock_urlopen.side_effect = [mock_resp1, mock_resp2]
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps(manifest_data).encode()
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = mock_resp
 
         result = fetch_latest_release()
         self.assertEqual(result['version'], '1.7.0')
         self.assertEqual(result['sha256'], 'abc123def456')
         self.assertIn('Boxhead', result['download_url'])
+        self.assertEqual(mock_urlopen.call_count, 1)
 
     @patch('launcher.updater.urllib.request.urlopen')
     def test_network_failure_retries(self, mock_urlopen):
         mock_urlopen.side_effect = Exception('Connection refused')
         with self.assertRaises(RuntimeError):
             fetch_latest_release()
-        self.assertEqual(mock_urlopen.call_count, 3)
+        self.assertEqual(mock_urlopen.call_count, 1)
 
 
 class TestLocalVersion(unittest.TestCase):

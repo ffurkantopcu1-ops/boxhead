@@ -16,49 +16,49 @@ class CardSystem:
         {
             "id": "iron_will",
             "name": "🛡️ Demir İrade",
-            "desc": "Hasar alınca 3sn kalkan (1dk CD). +50 Max HP. Hız -%10.",
+            "desc": "Etki: Hasar alınca 3 sn kalkan kazanır (60 sn bekleme) ve +50 maksimum can verir. Bedel: Hareket hızı %10 azalır.",
             "category": "survival",
             "apply": "_apply_iron_will",
         },
         {
             "id": "zombie_skin",
             "name": "🧟 Zombi Derisi",
-            "desc": "Bir kez ölümden dönersin. Max HP -%20.",
+            "desc": "Etki: Ölümcül hasarı bir kez engeller ve hayata döndürür. Bedel: Maksimum can %20 azalır.",
             "category": "survival",
             "apply": "_apply_zombie_skin",
         },
         {
             "id": "blood_pact",
             "name": "🩸 Kan Paktı",
-            "desc": "Her hasar alışta +5 XP kazanırsın. Max HP -%15.",
+            "desc": "Etki: Her hasar aldığında 5 deneyim kazanırsın. Bedel: Maksimum can %15 azalır.",
             "category": "survival",
             "apply": "_apply_blood_pact",
         },
         {
             "id": "iron_skin",
             "name": "🪨 Taş Deri",
-            "desc": "Zırh +80 artar. Hareket hızı -%30.",
+            "desc": "Etki: +80 zırh kazanırsın. Bedel: Hareket hızın %30 azalır.",
             "category": "survival",
             "apply": "_apply_iron_skin",
         },
         {
             "id": "berserker_rage",
             "name": "😡 Berserker Öfkesi",
-            "desc": "%40 HP altındayken hasar +%80 artar. HP Yenileme durur.",
+            "desc": "Etki: Canın %40'ın altındayken hasarın %80 artar. Bedel: Pasif can yenilenmesi tamamen durur.",
             "category": "survival",
             "apply": "_apply_berserker_rage",
         },
         {
             "id": "phoenix_blood",
             "name": "🔆 Anka Kanı",
-            "desc": "Ölünce tüm düşmanlara 200 hasar verir. Max HP -%10.",
+            "desc": "Etki: Öldüğünde savaş alanındaki tüm düşmanlara 200 hasar verir. Bedel: Maksimum can %10 azalır.",
             "category": "survival",
             "apply": "_apply_phoenix_blood",
         },
         {
             "id": "adrenaline",
             "name": "💉 Adrenalin",
-            "desc": "Her 20sn 5sn +%30 hız ve +%20 hasar. Zırh -30.",
+            "desc": "Etki: Her 20 saniyede, 5 saniye boyunca hızın %30 ve hasarın %20 artar. Bedel: 30 zırh kaybedersin.",
             "category": "survival",
             "apply": "_apply_adrenaline",
         },
@@ -66,56 +66,56 @@ class CardSystem:
         {
             "id": "blood_fire",
             "name": "🔥 Kan Ateşi",
-            "desc": "Hasar verince +5 HP kazanırsın. Max HP -%30.",
+            "desc": "Etki: Hasar verdiğinde 5 can yenilersin. Bedel: Maksimum can %30 azalır.",
             "category": "offense",
             "apply": "_apply_blood_fire",
         },
         {
             "id": "chaos_theory",
             "name": "🌀 Kaos Teorisi",
-            "desc": "Taban hasar x2 artar. Ateş Hızı -%40.",
+            "desc": "Etki: Taban hasarın 2 katına çıkar. Bedel: Saldırı hızın %40 azalır.",
             "category": "offense",
             "apply": "_apply_chaos_theory",
         },
         {
             "id": "glass_cannon",
             "name": "🧨 Cam Top",
-            "desc": "Saldırı hızı +%50 artar. Alınan hasar x2 olur.",
+            "desc": "Etki: Saldırı hızın %50 artar. Bedel: Düşmanlardan 2 kat hasar alırsın.",
             "category": "offense",
             "apply": "_apply_glass_cannon",
         },
         {
             "id": "death_pact",
             "name": "💀 Ölüm Anlaşması",
-            "desc": "Kritik Şans +%100. Maksimum Can 1e iner.",
+            "desc": "Etki: Tüm saldırıların kritik vurur. Bedel: Maksimum canın 1'e düşer.",
             "category": "offense",
             "apply": "_apply_death_pact",
         },
         {
             "id": "double_edge",
             "name": "⚔️ Çift Ağız",
-            "desc": "Hasar +%120 artar. Her vuruşta max HP'nin %2'si kadar kendini yaralar.",
+            "desc": "Etki: Hasarın %120 artar. Bedel: Her saldırıda maksimum canının %2'si kadar hasar alırsın.",
             "category": "offense",
             "apply": "_apply_double_edge",
         },
         {
             "id": "poison_heart",
             "name": "💚 Zehirli Kalp",
-            "desc": "Tüm hasarın zehire dönüşür. Anlık hasar sıfırlanır.",
+            "desc": "Etki: Verdiğin hasarın tamamı zamanla işleyen zehir hasarına dönüşür. Bedel: Doğrudan vuruş hasarın sıfırlanır.",
             "category": "offense",
             "apply": "_apply_poison_heart",
         },
         {
             "id": "crit_overload",
             "name": "⚡ Kritik Aşırı Yük",
-            "desc": "Kritik hasar +%200, sersemletir. Zırh -40.",
+            "desc": "Etki: Kritik hasarın %200 artar ve kritikler hedefi sersemletir. Bedel: 40 zırh kaybedersin.",
             "category": "offense",
             "apply": "_apply_crit_overload",
         },
         {
             "id": "executioner",
             "name": "🪓 Cellat",
-            "desc": "%30 HP altındaki düşmanları anında öldürür. Ateş hızı -%30.",
+            "desc": "Etki: Canı %30'un altındaki düşmanları anında infaz eder. Bedel: Saldırı hızın %30 azalır.",
             "category": "offense",
             "apply": "_apply_executioner",
         },
@@ -123,42 +123,42 @@ class CardSystem:
         {
             "id": "ice_shirt",
             "name": "🧊 Buz Gömleği",
-            "desc": "Zırh +50 artar. Hareket hızı -%20.",
+            "desc": "Etki: +50 zırh kazanırsın. Bedel: Hareket hızın %20 azalır.",
             "category": "support",
             "apply": "_apply_ice_shirt",
         },
         {
             "id": "vampire_touch",
             "name": "🦷 Vampir Dokunuşu",
-            "desc": "Can çalma +%15, Can yenileme +2. Max HP -%20.",
+            "desc": "Etki: %15 can çalma ve saniyede +2 can yenilenmesi kazanırsın. Bedel: Maksimum can %20 azalır.",
             "category": "support",
             "apply": "_apply_vampire_touch",
         },
         {
             "id": "gold_fever",
             "name": "💰 Altın Humması",
-            "desc": "Altın dropu +%60 artar. XP kazanımı -%30 azalır.",
+            "desc": "Etki: Kazandığın altın %60 artar. Bedel: Deneyim kazanımın %30 azalır.",
             "category": "support",
             "apply": "_apply_gold_fever",
         },
         {
             "id": "lucky_charm",
             "name": "🍀 Şans Tılsımı",
-            "desc": "Nadir eşya şansı +%40 artar. Hasar -%15 azalır.",
+            "desc": "Etki: Nadir eşya bulma şansın %40 artar. Bedel: Verdiğin hasar %15 azalır.",
             "category": "support",
             "apply": "_apply_lucky_charm",
         },
         {
             "id": "accelerator",
             "name": "🚀 İvmeleyici",
-            "desc": "Hareket hızı +%50 artar. Zırh -%30 azalır.",
+            "desc": "Etki: Hareket hızın %50 artar. Bedel: Zırhın %30 azalır.",
             "category": "support",
             "apply": "_apply_accelerator",
         },
         {
             "id": "merchant_soul",
             "name": "🪙 Tüccar Ruhu",
-            "desc": "Market yenileme -%50 ucuzlar. Hasar -%20 azalır.",
+            "desc": "Etki: Kervanı yenileme maliyeti %50 azalır. Bedel: Verdiğin hasar %20 azalır.",
             "category": "support",
             "apply": "_apply_merchant_soul",
         },
@@ -166,35 +166,35 @@ class CardSystem:
         {
             "id": "undead_army",
             "name": "💀 Ölümsüz Ordu",
-            "desc": "%15 minyon dönüşüm şansı. Hasarın -%15 azalır.",
+            "desc": "Etki: Düşmanların minyona dönüşme şansı %15 olur. Bedel: Kendi hasarın %15 azalır.",
             "category": "minion",
             "apply": "_apply_undead_army",
         },
         {
             "id": "war_commander",
             "name": "🎖️ Savaş Komutanı",
-            "desc": "Minyon hasarı +%80 artar. Kendi hasarın -%30 azalır.",
+            "desc": "Etki: Minyon hasarı %80 artar. Bedel: Kendi saldırı hasarın %30 azalır.",
             "category": "minion",
             "apply": "_apply_war_commander",
         },
         {
             "id": "swarmlord",
             "name": "🐜 Sürü Lordu",
-            "desc": "Minyon sayısı +3. Minyon saldırı hızı +%20.",
+            "desc": "Etki: Minyon limitin 3, minyon saldırı hızın %20 artar. Bedeli yoktur.",
             "category": "minion",
             "apply": "_apply_swarmlord",
         },
         {
             "id": "alpha_bond",
             "name": "🐺 Alfa Bağı",
-            "desc": "Pet hasarı x2 olur. Yalnızca 1 aktif pet olabilir.",
+            "desc": "Etki: Tek aktif petin 2 kat hasar verir. Bedel: Aynı anda yalnızca 1 pet kullanabilirsin.",
             "category": "minion",
             "apply": "_apply_alpha_bond",
         },
         {
             "id": "spirit_link",
             "name": "🔗 Vahşi Bağı",
-            "desc": "Minyon kritik şansı +%30. Zırh -20.",
+            "desc": "Etki: Minyonların kritik şansı %30 artar. Bedel: 20 zırh kaybedersin.",
             "category": "minion",
             "apply": "_apply_spirit_link",
         },
@@ -202,56 +202,56 @@ class CardSystem:
         {
             "id": "fire_soul",
             "name": "🔥 Ateş Ruhu",
-            "desc": "Tüm hasara +%40 ateş hasarı eklenir. Hız -%15.",
+            "desc": "Etki: Tüm saldırılarına verdiğin hasarın %40'ı kadar ateş hasarı eklenir. Bedel: Hızın %15 azalır.",
             "category": "elemental",
             "apply": "_apply_fire_soul",
         },
         {
             "id": "frozen_time",
             "name": "❄️ Donmuş Zaman",
-            "desc": "15 saniyede bir düşmanları dondurur. Hasar -%15.",
+            "desc": "Etki: Her 15 saniyede yakındaki düşmanları dondurur. Bedel: Verdiğin hasar %15 azalır.",
             "category": "elemental",
             "apply": "_apply_frozen_time",
         },
         {
             "id": "storm_caller",
             "name": "⚡ Fırtına Çağırıcı",
-            "desc": "Her 8 vuruşta yıldırım düşer. Max HP -%15.",
+            "desc": "Etki: Her 8. vuruşunda hedefe yıldırım düşer. Bedel: Maksimum can %15 azalır.",
             "category": "elemental",
             "apply": "_apply_storm_caller",
         },
         {
             "id": "void_touch",
             "name": "🔮 Karanlık Dokunuş",
-            "desc": "Hasar +%50, zırh delme %100. Alınan hasar +%30.",
+            "desc": "Etki: Hasarın %50 artar ve düşman zırhını tamamen yok sayarsın. Bedel: %30 daha fazla hasar alırsın.",
             "category": "elemental",
             "apply": "_apply_void_touch",
         },
         {
             "id": "poison_master",
             "name": "🧪 Zehir Ustası",
-            "desc": "Zehir/DoT Hasarı +%25 artar.",
+            "desc": "Etki: Zehir, yanma ve diğer zamanla işleyen hasarların %25 artar. Bedeli yoktur.",
             "category": "elemental",
             "apply": "_apply_poison_master",
         },
         {
             "id": "toxic_blood",
             "name": "🩸 Toksik Kan",
-            "desc": "Sabit Zehir Hasarı +20. HP Yenilenmesi saniyede -1 azalır.",
+            "desc": "Etki: Zehir saldırılarına saniyede 20 sabit hasar ekler. Bedel: Can yenilenmen saniyede 1 azalır.",
             "category": "elemental",
             "apply": "_apply_toxic_blood",
         },
         {
             "id": "venomous_strike",
             "name": "🐍 Zehirli Vuruş",
-            "desc": "Zehir/DoT Hasarı +%40. Direkt hasar -%20 azalır.",
+            "desc": "Etki: Zamanla işleyen hasarın %40 artar. Bedel: Doğrudan vuruş hasarın %20 azalır.",
             "category": "elemental",
             "apply": "_apply_venomous_strike",
         },
         {
             "id": "mana_overload",
             "name": "🔮 Büyü Taşması",
-            "desc": "Artifact bekleme süresi -%50. Her kullanımda -10 HP.",
+            "desc": "Etki: Eser bekleme süreleri %50 azalır. Bedel: Her eser kullanımında 10 can kaybedersin.",
             "category": "elemental",
             "apply": "_apply_mana_overload",
         },
@@ -259,32 +259,72 @@ class CardSystem:
         {
             "id": "death_wish",
             "name": "☠️ Ölüm Dileği",
-            "desc": "Her saniye -1 HP kaybedersin. Ama hasar x3 olur.",
+            "desc": "Etki: Verdiğin hasar 3 katına çıkar. Bedel: Canın 1'in altına inmese de her saniye 1 can kaybedersin.",
             "category": "curse",
             "apply": "_apply_death_wish",
         },
         {
             "id": "cursed_blood",
             "name": "🩸 Lanetli Kan",
-            "desc": "Her öldürmede +2 HP kazanırsın. Can yenileme durur.",
+            "desc": "Etki: Her düşman öldürmede 2 can yenilersin. Bedel: Diğer pasif can yenilenmeleri durur.",
             "category": "curse",
             "apply": "_apply_cursed_blood",
         },
         {
             "id": "glass_bones",
             "name": "💔 Cam Kemikler",
-            "desc": "Krit şans +%50. Alınan hasar x2 olur.",
+            "desc": "Etki: Kritik şansın %50 artar. Bedel: Düşmanlardan 2 kat hasar alırsın.",
             "category": "curse",
             "apply": "_apply_glass_bones",
         },
         {
             "id": "pact_devil",
             "name": "😈 Şeytan Paktı",
-            "desc": "İlk 5 dalgada ölümsüzsün. Sonrasında hasar -%40 kalıcı azalır.",
+            "desc": "Etki: İlk 5 dalga boyunca ölümcül hasar alamazsın. Bedel: Sonrasında verdiğin hasar kalıcı olarak %40 azalır.",
             "category": "curse",
             "apply": "_apply_pact_devil",
         },
     ]
+
+    # HUD'da kaynak ayrımı yapabilmek için kartların doğrudan stat katkıları.
+    # Koşullu/pasif etkiler kart açıklamalarında kalır; burada yalnızca oyuncunun
+    # hesaplanan stat havuzuna eklenen sayısal değerler bulunur.
+    CARD_STAT_BONUSES = {
+        "iron_will": {"max_hp": 50},
+        "zombie_skin": {"max_hp": -20},
+        "blood_pact": {"max_hp": -15},
+        "iron_skin": {"armor": 80},
+        "phoenix_blood": {"max_hp": -10},
+        "adrenaline": {"armor": -30},
+        "blood_fire": {"max_hp": -30},
+        "chaos_theory": {"dmgMult": 1.0, "fireRate": -0.4},
+        "glass_cannon": {"fireRate": 0.5},
+        "death_pact": {"max_hp": -99, "critChance": 1.0},
+        "double_edge": {"dmgMult": 1.2},
+        "crit_overload": {"critDmg": 2.0, "armor": -40},
+        "executioner": {"fireRate": -0.3},
+        "ice_shirt": {"armor": 50},
+        "vampire_touch": {"lifesteal": 0.15, "regen": 2, "max_hp": -20},
+        "gold_fever": {"goldGain": 0.6, "xpGain": -0.3},
+        "lucky_charm": {"magicFind": 0.4, "dmgMult": -0.15},
+        "accelerator": {"speed": 1.5, "armor": -30},
+        "merchant_soul": {"dmgMult": -0.2},
+        "undead_army": {"dmgMult": -0.15},
+        "war_commander": {"minionDamage": 0.8, "dmgMult": -0.3},
+        "swarmlord": {"minionCount": 3, "minionAttackSpeed": 0.2},
+        "alpha_bond": {"minionDamage": 1.0, "minionCount": -10},
+        "spirit_link": {"minionCrit": 0.3, "armor": -20},
+        "fire_soul": {"fireDamage": 20, "fireDmgFlat": 10},
+        "frozen_time": {"dmgMult": -0.15},
+        "storm_caller": {"max_hp": -15},
+        "void_touch": {"dmgMult": 0.5, "armorPen": 1.0},
+        "poison_master": {"dotDmgMult": 0.25},
+        "toxic_blood": {"poisonDps": 20, "hpRegen": -1},
+        "venomous_strike": {"dotDmgMult": 0.4, "dmgMult": -0.2},
+        "mana_overload": {"cooldownReduction": 0.5},
+        "death_wish": {"dmgMult": 2.0},
+        "glass_bones": {"critChance": 0.5},
+    }
 
 
     # ------------------------------------------------------------------
@@ -315,6 +355,22 @@ class CardSystem:
 
     def get_active_card_names(self) -> list:
         return [c["name"] for c in self.CARDS if c["id"] in self.active_cards]
+
+    def get_stat_contributions(self) -> dict:
+        """Aktif kart ve onların açtığı sinerjilerin ham stat katkılarını döndürür."""
+        totals = {}
+        active = set(self.active_cards)
+
+        for card_id in active:
+            for stat, value in self.CARD_STAT_BONUSES.get(card_id, {}).items():
+                totals[stat] = totals.get(stat, 0) + value
+
+        for synergy in self.synergy_system.SYNERGIES:
+            if all(card_id in active for card_id in synergy["required_cards"]):
+                for stat, value in synergy.get("bonus", {}).items():
+                    totals[stat] = totals.get(stat, 0) + value
+
+        return totals
 
     # ------------------------------------------------------------------
     # SURVIVAL CARDS

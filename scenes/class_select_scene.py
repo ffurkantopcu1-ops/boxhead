@@ -19,9 +19,14 @@ class ClassSelectScene(BaseScene):
         ]
 
         # Kartları Oluştur
-        card_w, card_h = 260, 400
-        spacing_x, spacing_y = 30, 25
+        side_margin = max(32, self.width // 24)
+        spacing_x, spacing_y = 18, 18
         num_cols = 4
+        card_w = min(260, (self.width - side_margin * 2 - spacing_x * (num_cols - 1)) // num_cols)
+        footer_h = 75
+        grid_top = 135
+        card_h = min(400, (self.height - grid_top - footer_h - spacing_y) // 2)
+        card_h = max(260, card_h)
         
         self.cards = []
         for i, data in enumerate(self.class_list):
@@ -30,34 +35,50 @@ class ClassSelectScene(BaseScene):
             total_w = (card_w * num_cols) + (spacing_x * (num_cols - 1))
             start_x = (self.width - total_w) // 2 + card_w // 2
             x = start_x + col * (card_w + spacing_x)
-            y = 120 + row * (card_h + spacing_y)
+            y = grid_top + row * (card_h + spacing_y)
             # Re-filling detailed descriptions for the cards
             detailed_desc = {
-                "warrior": ["Yakın dövüş uzmanı.", "Eski Kılıç ile başlar.", "+%20 Hasar ve +%20 Can."],
-                "beastmaster": ["Pet odaklı uzman.", "Küçük Kurt ile başlar.", "Minyon Hasarı: +%30"],
-                "sniper": ["Uzak mesafe uzmanı.", "Basit Arbalet ile başlar.", "+1 Sekme ve +1 Delme."],
-                "engineer": ["Savunma ustası.", "Taret Kiti ile başlar.", "+10 Zırh ve Taretler."],
-                "ninja": ["Suikastçı hızı.", "Paslı Katana ile başlar.", "+%30 Hız, %25 Kaçınma."],
-                "alchemist": ["Zehir ve patlayıcılar.", "Zehir Şişesi ile başlar.", "+%40 Alan, +%30 DoT."],
-                "sorcerer": ["3 Elementli Döngü.", "Sihir Asası ile başlar.", "Garantili Kritik+AoE."],
-                "bloodwalker": ["Can çalan savaşçı.", "Kan Kılıcı ile başlar.", "Can çekme ve Rage modu."]
+                "warrior": ["Dayanıklı yakın dövüşçü.", "Kılıcı öndeki düşmanları biçer.", "+%20 hasar ve +%20 can."],
+                "beastmaster": ["Minyonlarını hedefe yönlendirir.", "Küçük Kurt ile başlar.", "Minyon hasarı +%30."],
+                "sniper": ["Güvenli mesafeden tek hedef avlar.", "Basit Arbalet ile başlar.", "+1 sekme, +1 delme, +%20 kritik."],
+                "engineer": ["Alanı otomatik taretlerle tutar.", "Taret Kiti ile başlar.", "+10 zırh; 5 sn'de bir taret."],
+                "ninja": ["Hızlı ve kaçınmaya dayalı suikastçı.", "Paslı Katana ile başlar.", "Atılma sonrası ilk vuruş 2 kat."],
+                "alchemist": ["Zehir ve alan hasarı uzmanı.", "Zehir Şişesi ile başlar.", "+%40 patlama alanı, +%30 DoT."],
+                "sorcerer": ["Ateş, buz ve zehir arasında döner.", "Sihir Asası ile başlar.", "Her 4. saldırı kritik ve 2 kat alanlı."],
+                "bloodwalker": ["Can çalarak riskli oynar.", "Kan Kılıcı ile başlar.", "%30 can altında hasar ve hız +%40."]
             }
             data["desc"] = detailed_desc.get(data["id"], data["desc"])
             self.cards.append(ClassCard(x, y, card_w, card_h, data, self.font_main, self.font_sub))
 
         # Boss Test Button
-        self.boss_test_rect = pygame.Rect(self.width - 250, self.height - 80, 220, 50)
+        self.boss_test_rect = pygame.Rect(self.width - 250, self.height - 65, 220, 50)
         self.selected_idx = 0 # Warrior by default
         self.preview_idx = 0
 
     def update(self, dt, events):
         mouse_clicked = False
         mouse_pos = pygame.mouse.get_pos()
+        mouse_moved = False
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_clicked = True
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.manager.change_scene("MainMenu")
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_moved = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.manager.change_scene("MainMenu")
+                elif event.key in (pygame.K_LEFT, pygame.K_a):
+                    self.preview_idx = (self.preview_idx - 1) % len(self.cards)
+                elif event.key in (pygame.K_RIGHT, pygame.K_d):
+                    self.preview_idx = (self.preview_idx + 1) % len(self.cards)
+                elif event.key in (pygame.K_UP, pygame.K_w):
+                    self.preview_idx = (self.preview_idx - 4) % len(self.cards)
+                elif event.key in (pygame.K_DOWN, pygame.K_s):
+                    self.preview_idx = (self.preview_idx + 4) % len(self.cards)
+                elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    self.manager.start_new_game(self.class_list[self.preview_idx]['id'])
+                elif event.key == pygame.K_b:
+                    self.manager.start_boss_test(self.class_list[self.preview_idx]['id'])
 
         for i, card in enumerate(self.cards):
             if card.update(events):
@@ -66,7 +87,7 @@ class ClassSelectScene(BaseScene):
                 self.manager.start_new_game(self.class_list[i]['id'])
             
             # Hover detection
-            if card.rect.collidepoint(mouse_pos):
+            if mouse_moved and card.rect.collidepoint(mouse_pos):
                 self.preview_idx = i
 
         if mouse_clicked and self.boss_test_rect.collidepoint(mouse_pos):
@@ -78,7 +99,7 @@ class ClassSelectScene(BaseScene):
     def draw(self):
         self.screen.fill(self.bg_color)
         title = self.font_main.render("SINIFINI SEÇ", True, (255, 255, 255))
-        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 80))
+        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 30))
         
         for i, card in enumerate(self.cards):
             card.draw(self.screen)
@@ -86,8 +107,9 @@ class ClassSelectScene(BaseScene):
             if i == self.preview_idx:
                 pygame.draw.rect(self.screen, (255, 255, 255), card.rect, width=3, border_radius=12)
             
-        info = self.font_sub.render("ESC ile geri dönebilirsin | Sınıfa tıkla veya Boss odasına git", True, (100, 100, 100))
-        self.screen.blit(info, (self.width // 2 - info.get_width() // 2, self.height - 80))
+        info_font = pygame.font.SysFont("Segoe UI, Arial", 20)
+        info = info_font.render("Tıkla veya ENTER: Başla  •  Oklar/WASD: Seç  •  B: Boss testi  •  ESC: Geri", True, (150, 150, 165))
+        self.screen.blit(info, (30, self.height - 42))
         
         # Draw Boss Test Button
         mouse_pos = pygame.mouse.get_pos()

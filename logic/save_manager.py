@@ -75,7 +75,8 @@ class SaveManager:
             },
             "card_system": {
                 "active_cards": getattr(logic.card_system, 'active_cards', []),
-                "passive_stats": getattr(logic.card_system, 'passive_stats', {})
+                "passive_stats": getattr(logic.card_system, 'passive_stats', {}),
+                "active_synergies": getattr(logic.card_system.synergy_system, 'active_synergies', [])
             }
         }
         
@@ -136,6 +137,17 @@ class SaveManager:
         card_data = save_data.get("card_system", {})
         logic.card_system.active_cards = card_data.get("active_cards", [])
         logic.card_system.passive_stats = card_data.get("passive_stats", {})
+        saved_synergies = card_data.get("active_synergies")
+        if saved_synergies is None:
+            # Eski kayıtlar sinerji kimliklerini saklamıyordu. Bonusları zaten
+            # skills_permanent içinde olduğu için yalnızca aktif kimlikleri çıkar.
+            active_cards = set(logic.card_system.active_cards)
+            saved_synergies = [
+                synergy["id"]
+                for synergy in logic.card_system.synergy_system.SYNERGIES
+                if all(card_id in active_cards for card_id in synergy["required_cards"])
+            ]
+        logic.card_system.synergy_system.active_synergies = saved_synergies
 
         logic.next_wave()
         

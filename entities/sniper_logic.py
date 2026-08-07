@@ -26,8 +26,9 @@ class Sniper:
         visual_timer = 0.1 if not is_punch else 0.08
         game.add_event("slash", player.x, player.y, angle=angle, range=100, arc=1.2, timer=visual_timer)
         
-        for e in game.enemies:
-            if not e.dead and math.hypot(e.x - player.x, e.y - player.y) < 120:
+        for e in game.iter_enemies_near(player.x, player.y, 120):
+            dx, dy = e.x - player.x, e.y - player.y
+            if not e.dead and dx * dx + dy * dy < 120 * 120:
                 e.take_damage(dmg, game)
 
     def update(self, dt, player, game):
