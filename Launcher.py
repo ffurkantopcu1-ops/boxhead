@@ -11,7 +11,7 @@ import sys
 
 # --- YAPILANDIRMA (CONFIG) ---
 GITHUB_USER = "ffurkantopcu1-ops"
-REPO_NAME = "boxhead-updates"
+REPO_NAME = "boxhead"
 MANIFEST_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{REPO_NAME}/main/version.json"
 # Not: Release indirme linki versiyon.json içinden gelecek, ancak yedek olarak:
 FALLBACK_ZIP_URL = f"https://github.com/{GITHUB_USER}/{REPO_NAME}/releases/latest/download/Boxhead2.0.zip"

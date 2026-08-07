@@ -21,7 +21,7 @@ cd C:\Users\PC\Desktop\py\boxhead\Pygame_Versiyonu
 git init
 
 # 2. Add remote
-git remote add origin https://github.com/ffurkantopcu1-ops/boxhead-updates.git
+git remote add origin https://github.com/ffurkantopcu1-ops/boxhead.git
 
 # 3. Stage files (saves/ and .exe excluded via .gitignore)
 git add .
@@ -76,11 +76,11 @@ This triggers the Release workflow which will:
 
 The latest launcher always has this stable direct-download URL:
 
-https://github.com/ffurkantopcu1-ops/boxhead-updates/releases/latest/download/Launcher.exe
+https://github.com/ffurkantopcu1-ops/boxhead/releases/latest/download/Launcher.exe
 
 ### Step 4: Verify
 
-Go to https://github.com/ffurkantopcu1-ops/boxhead-updates/releases and confirm the
+Go to https://github.com/ffurkantopcu1-ops/boxhead/releases and confirm the
 release was created with the correct assets.
 
 ---
@@ -109,7 +109,7 @@ The launcher reads its configuration from `launcher/config.py`:
 
 ```python
 GITHUB_OWNER = "ffurkantopcu1-ops"
-GITHUB_REPO = "boxhead-updates"
+GITHUB_REPO = "boxhead"
 ```
 
 To point the launcher at a different repository, update these values.

@@ -2,7 +2,7 @@
 import os
 
 GITHUB_OWNER = "ffurkantopcu1-ops"
-GITHUB_REPO = "boxhead-updates"
+GITHUB_REPO = "boxhead"
 API_URL = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest"
 
 GAME_EXE = "Boxhead.exe"

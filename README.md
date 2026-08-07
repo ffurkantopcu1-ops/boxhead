@@ -14,7 +14,7 @@ python main.py
 
 Windows kullanıcıları en güncel launcher'ı doğrudan indirebilir:
 
-**[Launcher.exe indir](https://github.com/ffurkantopcu1-ops/boxhead-updates/releases/latest/download/Launcher.exe)**
+**[Launcher.exe indir](https://github.com/ffurkantopcu1-ops/boxhead/releases/latest/download/Launcher.exe)**
 
 Kaynak koddan çalıştırmak için:
 
