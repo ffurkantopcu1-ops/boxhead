@@ -854,7 +854,6 @@ class Enemy:
                     # 3 swarm bat çıkar
                     for _ in range(3):
                         game.entity_id_counter += 1
-                        from entities.enemy import Enemy
                         bat = Enemy(game.entity_id_counter, self.x + random.uniform(-10, 10), self.y + random.uniform(-10, 10), game, type="swarm_bat", wave_level=game.wave["level"])
                         game._pending_spawns.append(bat)
 
