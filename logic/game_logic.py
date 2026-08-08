@@ -197,8 +197,11 @@ class GameLogic:
                 self.kill_streak = 0
                 p._base_speed_mod = 1.0 # Hız bonusunu sıfırla
             else:
-                # Combo hız bonusu (Max %50)
-                p._base_speed_mod = 1.0 + min(0.5, self.kill_streak * 0.02)
+                # Combo hız bonusu yarı yarıya düşürüldü (Max %25) ve sadece killSpeedBoost kartı varken geçerli
+                if p.stats.get("killSpeedBoost", 0) > 0:
+                    p._base_speed_mod = 1.0 + min(0.25, self.kill_streak * 0.01)
+                else:
+                    p._base_speed_mod = 1.0
         else:
             p._base_speed_mod = 1.0
         

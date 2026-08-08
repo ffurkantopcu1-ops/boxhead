@@ -111,7 +111,7 @@ class Player:
             { 'name': '💨 Refleks (+3% Kaçınma)', 'stat': 'dodgeChance', 'val': 0.03, 'lvl': 0, 'max': 10, 'group': 'HAYATTA KALMA' },
             { 'name': '🦇 Vampir (+2% Can Çalma)', 'stat': 'lifesteal', 'val': 0.02, 'lvl': 0, 'max': 10, 'group': 'HAYATTA KALMA' },
             { 'name': '🩺 Savaş Refleksi (+0.5 Savaş Rej)', 'stat': 'combatRegen', 'val': 0.5, 'lvl': 0, 'max': 10, 'group': 'HAYATTA KALMA' },
-            { 'name': '⚡ Kalkan (+100 Max ES)', 'stat': 'maxEnergyShield', 'val': 100, 'lvl': 0, 'max': 10, 'group': 'HAYATTA KALMA' },
+            { 'name': '🛡 Kalkan (+30 Max ES)', 'stat': 'maxEnergyShield', 'val': 30, 'lvl': 0, 'max': 10, 'group': 'HAYATTA KALMA' },
             { 'name': '🔋 Şarj (+20.0 ES Rej)', 'stat': 'esRegen', 'val': 20.0, 'lvl': 0, 'max': 10, 'group': 'HAYATTA KALMA' },
             { 'name': '⏱️ Adaptasyon (+0.2s ES Hızı)', 'stat': 'esDelayReduction', 'val': 0.2, 'lvl': 0, 'max': 5, 'group': 'HAYATTA KALMA' },
             
@@ -138,7 +138,7 @@ class Player:
             { 'name': '👟 Atletizm (+0.2 Hız)', 'stat': 'speed', 'val': 0.2, 'lvl': 0, 'max': 10, 'group': 'YARDIMCI' },
             { 'name': '🍀 Talih (+15% Eşya Bulma)', 'stat': 'magicFind', 'val': 0.15, 'lvl': 0, 'max': 5, 'group': 'YARDIMCI' },
             { 'name': '🛝 Kervan Nadirliği (+1 Kervan Nadir.)', 'stat': 'shopRarity', 'val': 1, 'lvl': 0, 'max': 10, 'group': 'YARDIMCI' },
-            { 'name': '📜 Alim (+15% XP Kazanımı)', 'stat': 'xpGain', 'val': 0.15, 'lvl': 0, 'max': 5, 'group': 'YARDIMCI' },
+            { 'name': '🧠 Alim (+10% XP Kazanımı)', 'stat': 'xpGain', 'val': 0.10, 'lvl': 0, 'max': 5, 'group': 'YARDIMCI' },
             { 'name': '💰 Tüccâr (+20% Altın Kazanımı)', 'stat': 'goldGain', 'val': 0.2, 'lvl': 0, 'max': 5, 'group': 'YARDIMCI' },
             { 'name': '🧲 Mıknatıs (+50 Toplama Alanı)', 'stat': 'magnetRadius', 'val': 50, 'lvl': 0, 'max': 10, 'group': 'YARDIMCI' },
             
@@ -198,7 +198,7 @@ class Player:
         elif cn == "ninja":
             starting_weapon = {"name": "Paslı Katana", "type": "weapon", "isMelee": True, "rarity": "Magic", "itemBase": {"physDmg": 15, "attackCooldown": 450}, "prefixes": [], "suffixes": []}
         elif cn == "alchemist":
-            starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "rarity": "Normal", "itemBase": {"poisonDps": 8}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "rarity": "Normal", "itemBase": {"poisonDps": 4}, "prefixes": [], "suffixes": []}
         elif cn == "sorcerer":
             # elementDmgMult 0.2: T4 baz (item_system.py) ile hizalı; 0.6 başlangıçta T2 gücü veriyordu (F6)
             starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "rarity": "Magic", "itemBase": {"physDmg": 8, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
@@ -667,8 +667,12 @@ class Player:
         proj_lifetime = 180 + int(self.stats.get("meleeRange", 0) * 1.5)
         
         # Mermi Stats
-        bounce = int(self.stats.get("bounce", 0))
-        pierce = int(self.stats.get("pierce", 0))
+        if is_bomb:
+            bounce = 0
+            pierce = 0
+        else:
+            bounce = int(self.stats.get("bounce", 0))
+            pierce = int(self.stats.get("pierce", 0))
         count = int(self.stats.get("projectileCount", 1))
         # AOE Hesabı (Radius 50 = ~2x Karakter Boyutu)
         aoe = 50 * self.stats.get("aoe", 1.0)
