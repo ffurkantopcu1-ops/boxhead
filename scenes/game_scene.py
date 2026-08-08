@@ -1,7 +1,7 @@
 from scenes.base_scene import BaseScene
 from logic.game_logic import GameLogic
 from entities.player import Player
-from ui_elements import TabButton, EquippedRow, BackpackItemCard, SkillButton, MarketCard
+from ui_elements import TabButton, EquippedRow, BackpackItemCard, SkillButton, MarketCard, render_fit, shrink_to_width
 import pygame
 import math
 import time
@@ -543,7 +543,8 @@ class GameScene(BaseScene):
         self.logic.add_event("damage_text", p.x, p.y-80, value=f"OTO-SATIŞ: {m_str}", color=(241, 196, 15), timer=1.0)
 
     def _use_blood_absorb(self, p):
-        if p.class_name == "bloodwalker" and hasattr(p.specialization, 'activate_blood_absorb'):
+        # class_name evrimle değişir; kalıcı kimlik class_id'dir (Bloodwalker Q evrim sonrası da çalışsın)
+        if getattr(p, 'class_id', '') == "bloodwalker" and hasattr(p.specialization, 'activate_blood_absorb'):
             if p.specialization.activate_blood_absorb(p):
                 self.logic.add_event("damage_text", p.x, p.y - 60, value="KAN EMME!", color=(255, 50, 50), timer=1.0)
 
@@ -1010,10 +1011,10 @@ class GameScene(BaseScene):
         if self.setting_tab == "main":
             title = self.font_main.render("DURAKLATILDI", True, (241, 196, 15))
             self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 30))
-            
+
             options = [
-                f"EKRAN SARSINTISI: {'[AÇ]' if self.logic.settings['shake'] else '[KAPALI]'}",
-                f"HİLE MODU: {'[AÇ]' if self.logic.cheat_mode else '[KAPALI]'}",
+                f"EKRAN SARSINTISI: {'[AÇIK]' if self.logic.settings['shake'] else '[KAPALI]'}",
+                f"HİLE MODU: {'[AÇIK]' if self.logic.cheat_mode else '[KAPALI]'}",
                 "OYUNU KAYDET",
                 "KAYITLI OYUNLAR",
                 "KAYDET VE ANA MENÜYE DÖN",
@@ -1021,10 +1022,14 @@ class GameScene(BaseScene):
                 "OYUNA GERİ DÖN"
             ]
             for i, label in enumerate(options):
-                color = (255, 255, 255) if i == self.selected_setting_idx else (120, 120, 120)
-                txt = self.font_sub.render(label, True, color)
-                txt_scale = pygame.transform.scale(txt, (int(txt.get_width()*0.8), int(txt.get_height()*0.8)))
-                self.screen.blit(txt_scale, (self.width // 2 - txt_scale.get_width() // 2, panel.y + 100 + i * 50))
+                row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 100 + i * 50 - 15, 400, 40)
+                is_selected = i == self.selected_setting_idx
+                if is_selected:
+                    pygame.draw.rect(self.screen, (50, 50, 70), row_rect, border_radius=8)
+                    pygame.draw.rect(self.screen, (241, 196, 15), row_rect, width=2, border_radius=8)
+                color = (255, 255, 255) if is_selected else (150, 150, 160)
+                txt = render_fit(label, 20, color, row_rect.width - 20)
+                self.screen.blit(txt, txt.get_rect(center=row_rect.center))
 
         elif self.setting_tab == "save":
             title = self.font_main.render("KAYDET", True, (46, 204, 113))
@@ -1032,9 +1037,14 @@ class GameScene(BaseScene):
             
             options = ["YENİ KAYIT (FARKLI KAYDET)", "SON KAYDI GÜNCELLE"]
             for i, label in enumerate(options):
-                color = (255, 255, 255) if i == self.selected_setting_idx else (120, 120, 120)
-                txt = self.font_sub.render(label, True, color)
-                self.screen.blit(txt, (self.width // 2 - txt.get_width() // 2, panel.y + 150 + i * 80))
+                row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 150 + i * 80 - 20, 400, 60)
+                is_selected = i == self.selected_setting_idx
+                if is_selected:
+                    pygame.draw.rect(self.screen, (50, 50, 70), row_rect, border_radius=8)
+                    pygame.draw.rect(self.screen, (46, 204, 113), row_rect, width=2, border_radius=8)
+                color = (255, 255, 255) if is_selected else (150, 150, 160)
+                txt = render_fit(label, 24, color, row_rect.width - 24)
+                self.screen.blit(txt, txt.get_rect(center=row_rect.center))
 
         elif self.setting_tab == "load":
             title = self.font_main.render("KAYITLAR", True, (52, 152, 219))
@@ -1044,16 +1054,22 @@ class GameScene(BaseScene):
                 self.screen.blit(info, (self.width // 2 - info.get_width() // 2, panel.y + 180))
             else:
                 for i, slot in enumerate(self.save_slots[:5]): # Sadece son 5
-                    color = (255, 255, 255) if i == self.selected_setting_idx else (120, 120, 120)
-                    slot_txt = f"{slot['level']} LVL - WAVE {slot['wave']} ({slot['class'].upper()})"
-                    txt = self.font_desc.render(slot_txt, True, color)
-                    date_txt = self.font_desc.render(slot['date'], True, (100, 100, 100))
-                    self.screen.blit(txt, (self.width // 2 - txt.get_width() // 2, panel.y + 120 + i * 50))
-                    self.screen.blit(date_txt, (self.width // 2 + 120, panel.y + 120 + i * 50))
-                
+                    # Satır konumu, update()'teki tıklama alanıyla aynı (110 + i*55)
+                    row_rect = pygame.Rect(self.width // 2 - 250, panel.y + 110 + i * 55 - 20, 500, 40)
+                    is_selected = i == self.selected_setting_idx
+                    if is_selected:
+                        pygame.draw.rect(self.screen, (50, 50, 70), row_rect, border_radius=8)
+                        pygame.draw.rect(self.screen, (52, 152, 219), row_rect, width=2, border_radius=8)
+                    color = (255, 255, 255) if is_selected else (150, 150, 160)
+                    slot_txt = f"SEVİYE {slot['level']}  •  DALGA {slot['wave']}  •  {slot['class'].upper()}"
+                    date_txt = render_fit(slot['date'], 16, (120, 120, 135), 140)
+                    txt = render_fit(slot_txt, 19, color, row_rect.width - date_txt.get_width() - 40)
+                    self.screen.blit(txt, (row_rect.x + 14, row_rect.centery - txt.get_height() // 2))
+                    self.screen.blit(date_txt, (row_rect.right - date_txt.get_width() - 14, row_rect.centery - date_txt.get_height() // 2))
+
                 # Bilgi Notu
-                info_txt = self.font_desc.render("[DEL]: SİL | [X]: HEPSİNİ TEMİZLE", True, (231, 76, 60))
-                self.screen.blit(info_txt, (self.width // 2 - info_txt.get_width() // 2, panel.y + 440))
+                info_txt = render_fit("[DEL]: SİL  |  [X]: HEPSİNİ TEMİZLE", 18, (231, 76, 60), panel.width - 40)
+                self.screen.blit(info_txt, (self.width // 2 - info_txt.get_width() // 2, panel.bottom - 50))
 
     def draw_floor_to_surf(self, surf, camera_x, camera_y, width, height):
         # Sadece ekranda görünen karoları çiz (Optimizasyon)
@@ -1158,7 +1174,7 @@ class GameScene(BaseScene):
     def draw_live_stats_panel(self, p):
         """Tüm kaynaklardan gelen son statları ve kartların ham katkısını gösterir."""
         panel_w = 430
-        panel = pygame.Rect(self.width - panel_w - 20, 120, panel_w, min(620, self.height - 135))
+        panel = pygame.Rect(self.width - panel_w - 20, 120, panel_w, min(720, self.height - 135))
         surface = pygame.Surface(panel.size, pygame.SRCALPHA)
         surface.fill((18, 22, 32, 238))
         self.screen.blit(surface, panel.topleft)
@@ -1228,6 +1244,12 @@ class GameScene(BaseScene):
         row("Saldırı / saniye", f"{attacks_per_second:.2f}", card_bonus.get("fireRate", 0), True)
         row("Kritik şansı", f"%{stats.get('critChance', 0.05) * 100:.0f}", card_bonus.get("critChance", 0), True)
         row("Kritik çarpanı", f"x{2.0 + stats.get('critDmg', 0):.2f}", card_bonus.get("critDmg", 0), True)
+
+        section("HASAR TAKİBİ")
+        row("Son vuruş", f"{getattr(self.logic, 'last_hit_damage', 0):.0f}")
+        current_dps = self.logic.get_current_dps() if hasattr(self.logic, 'get_current_dps') else 0
+        row("Anlık DPS", f"{current_dps:.0f}")
+        row("Maks DPS", f"{getattr(self.logic, 'max_dps', 0):.0f}")
 
         section("SAVUNMA")
         row("Can", f"{int(p.hp)} / {int(p.max_hp)}", card_bonus.get("max_hp", 0))
@@ -1925,11 +1947,8 @@ class GameScene(BaseScene):
             pygame.draw.rect(self.screen, (35, 35, 50), rect, border_radius=15)
             pygame.draw.rect(self.screen, (241, 196, 15), rect, width=2, border_radius=15)
             
-            # Kart İsmi
-            c_name = self.font_sub.render(card["name"], True, (255, 255, 255))
-            if c_name.get_width() > card_w - 30:
-                ratio = (card_w - 30) / c_name.get_width()
-                c_name = pygame.transform.smoothscale(c_name, (card_w - 30, int(c_name.get_height() * ratio)))
+            # Kart İsmi (keskin sığdırma)
+            c_name = render_fit(card["name"], 24, (255, 255, 255), card_w - 30, bold=True)
             self.screen.blit(c_name, (cx + card_w//2 - c_name.get_width()//2, cy + 30))
 
             category, category_color = CARD_CATEGORY_LABELS.get(
@@ -1948,7 +1967,7 @@ class GameScene(BaseScene):
                 active_syns = getattr(self.logic.card_system.synergy_system, 'active_synergies', [])
                 for syn in getattr(self.logic.card_system.synergy_system, 'SYNERGIES', []):
                     if syn['id'] not in active_syns and all(c in test_cards for c in syn['required_cards']):
-                        hint_txt = self.font_desc.render(f"✨ Sinerji Sağlar: {syn['name']}", True, (46, 204, 113))
+                        hint_txt = render_fit(f"✨ Sinerji Sağlar: {syn['name']}", 18, (46, 204, 113), card_w - 40)
                         self.screen.blit(hint_txt, (cx + 20, cy + card_h - 40))
                         break
         # Yenile (Reroll) Butonu
@@ -1957,19 +1976,21 @@ class GameScene(BaseScene):
         if rerolls > 0:
             pygame.draw.rect(self.screen, (41, 128, 185), self.card_reroll_rect, border_radius=10)
             pygame.draw.rect(self.screen, (52, 152, 219), self.card_reroll_rect, width=3, border_radius=10)
-            rr_txt = self.font_sub.render(f"YENILE (Kalan: {rerolls})", True, (255, 255, 255))
+            rr_txt = self.font_sub.render(f"YENİLE (Kalan: {rerolls})", True, (255, 255, 255))
         else:
             pygame.draw.rect(self.screen, (100, 100, 100), self.card_reroll_rect, border_radius=10)
             pygame.draw.rect(self.screen, (150, 150, 150), self.card_reroll_rect, width=3, border_radius=10)
-            rr_txt = self.font_sub.render("YENILE (Kalan: 0)", True, (200, 200, 200))
-        self.screen.blit(rr_txt, (self.card_reroll_rect.centerx - rr_txt.get_width()//2, self.card_reroll_rect.centery - rr_txt.get_height()//2))
+            rr_txt = self.font_sub.render("YENİLE (Kalan: 0)", True, (200, 200, 200))
+        rr_txt = shrink_to_width(rr_txt, self.card_reroll_rect.width - 24)
+        self.screen.blit(rr_txt, rr_txt.get_rect(center=self.card_reroll_rect.center))
 
         # +1 Level / Skip Butonu
         self.card_skip_rect = pygame.Rect(self.width // 2 - 150, self.height - 150, 300, 60)
         pygame.draw.rect(self.screen, (192, 57, 43), self.card_skip_rect, border_radius=10)
         pygame.draw.rect(self.screen, (231, 76, 60), self.card_skip_rect, width=3, border_radius=10)
-        skip_txt = self.font_sub.render("KART ALMA (+1 LEVEL)", True, (255, 255, 255))
-        self.screen.blit(skip_txt, (self.card_skip_rect.centerx - skip_txt.get_width()//2, self.card_skip_rect.centery - skip_txt.get_height()//2))
+        skip_txt = self.font_sub.render("KART ALMA (+1 SEVİYE)", True, (255, 255, 255))
+        skip_txt = shrink_to_width(skip_txt, self.card_skip_rect.width - 24)
+        self.screen.blit(skip_txt, skip_txt.get_rect(center=self.card_skip_rect.center))
 
     def draw_evolution_select_screen(self):
         p = self.logic.players[self.logic.local_player_id]
@@ -2011,7 +2032,7 @@ class GameScene(BaseScene):
             pygame.draw.rect(self.screen, border_color, rect, width=3, border_radius=16)
 
             # İsim
-            ntxt = self.font_sub.render(evo_data["name"], True, (255, 220, 120))
+            ntxt = render_fit(evo_data["name"], 26, (255, 220, 120), card_w - 40, bold=True)
             self.screen.blit(ntxt, (cx + card_w//2 - ntxt.get_width()//2, card_y + 20))
 
             # Açıklama
@@ -2035,7 +2056,7 @@ class GameScene(BaseScene):
                 y_stat += 26
 
             # Pasif bilgisi
-            pasif_txt = self.font_desc.render(f"Pasif: {evo_data.get('passive','')}", True, (180, 140, 255))
+            pasif_txt = render_fit(f"Pasif: {evo_data.get('passive','')}", 18, (180, 140, 255), card_w - 40)
             self.screen.blit(pasif_txt, (cx + 20, card_y + card_h - 50))
 
             # Seç butonu

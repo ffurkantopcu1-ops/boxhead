@@ -72,7 +72,9 @@ class Turret:
             count = int(self.local_stats.get("projectileCount", 1)) + int(owner_stats.get("projectileCount", 0))
             bounce = int(self.local_stats.get("bounce", 0)) + int(owner_stats.get("bounce", 0))
             pierce = int(self.local_stats.get("pierce", 0))
-            dmg = 15 * self.dmg_mult * (1 + self.local_stats.get("dmgMult", 0))
+            # Denge: Taret hasarı sahibin silah gücüyle (physDmg) ölçeklenir; geç oyunda geride kalmaz
+            owner_phys = owner_stats.get("physDmg", 0) + owner_stats.get("physDmgFlat", 0)
+            dmg = (12 + owner_phys * 0.4) * self.dmg_mult * (1 + self.local_stats.get("dmgMult", 0))
             
             # IMPOSSIBLE ZORLUK CEZASI (%50 Hasar Kaybı)
             if game.wave.get("current_diff") == "Impossible":

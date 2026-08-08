@@ -8,6 +8,7 @@ class BaseScene:
         self.height = height
         self.font_main = pygame.font.SysFont("Outfit, Roboto, Inter, Segoe UI, Arial", 72, bold=True)
         self.font_sub = pygame.font.SysFont("Outfit, Roboto, Inter, Segoe UI, Arial", 32)
+        self.font_desc = pygame.font.SysFont("Outfit, Roboto, Inter, Segoe UI, Arial", 20)
 
     def on_enter(self):
         # Sahneler arası geçişte yapılacak işlemler

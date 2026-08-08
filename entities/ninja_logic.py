@@ -3,6 +3,13 @@ import pygame
 import random
 
 class Ninja:
+    """
+    Ninja - Hızlı ve kaçınmacı yakın dövüş sınıfı.
+    - +%30 saldırı hızı, %25 kaçınma (dodge) ve en yüksek hareket hızı (6.0).
+    - Uzun menzilli (180) hızlı katana savurması; hasar katananın physDmg değeriyle ölçeklenir.
+    - Kritik vuruş yapabilir (critChance/critDmg statları işler).
+    - Dash sonrası ilk vuruş "Backstab": x2 hasar.
+    """
     def __init__(self):
         # Warrior 600ms ise Ninja 420ms civarı (30% daha hızlı)
         self.attack_cooldown = 420
@@ -13,9 +20,15 @@ class Ninja:
         # Ninja: Yakın Dövüş Modu (Menzilliyi Player.py halleder)
         angle = player.facing_angle
         is_punch = (weapon is None)
-        dmg_base = 35 if not is_punch else 5
+        # Denge: Sabit 35 yerine katananın physDmg değeri baz alınır (silahla ölçeklenir)
+        dmg_base = (12 + player.stats.get("physDmg", 0)) if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)
         dmg = (dmg_base + phys_flat) * player.stats["dmgMult"]
+
+        # Kritik Vuruş (Shadow/Storm evrimlerinin critDmg bonusları artık melee'de işler)
+        is_crit = random.random() < player.stats.get("critChance", 0.05)
+        if is_crit:
+            dmg *= 2.0 + player.stats.get("critDmg", 0)
         
         # Hızlı kılıç savurma (Görsel ve Alan Buffed GDD 62)
         visual_type = "slash"
@@ -42,9 +55,10 @@ class Ninja:
                     diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)
                     if diff < 0.7:
                         # --- Elementel Uygulama (Ninja Yetenek Ağacı Desteği) ---
-                        fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0)
-                        frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0)
-                        p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0)
+                        elem_mult = 1.0 + player.stats.get("elementDmgMult", 0.0)
+                        fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0) * elem_mult
+                        frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0) * elem_mult
+                        p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0) * elem_mult
 
                         if fire_dmg > 0:
                             game.add_event("explosion", e.x, e.y, radius=60, color=(255, 100, 0), timer=0.1)

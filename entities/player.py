@@ -398,7 +398,8 @@ class Player:
                 self.energy_shield = min(self.max_energy_shield, self.energy_shield + regen * dt)
                 
         if self.hp < self.max_hp:
-            regen = self.stats["regen"]
+            # hpRegen (eşya/aura/kart/evrim) daha önce sadece HUD'da gösteriliyordu; artık gerçekten iyileştirir
+            regen = self.stats["regen"] + self.stats.get("hpRegen", 0)
             if game.wave.get("current_diff") == "Impossible":
                 regen *= 0.5 # Can yenileme etkisi yarıya iner
             self.hp = min(self.max_hp, self.hp + regen * dt)
@@ -567,7 +568,9 @@ class Player:
         
         # Çarpanlar
         mult = self.stats.get("dmgMult", 1.0)
-        
+        # Element hasar çarpanı (Sorcerer sınıf kimliği + Elementalist skill + auralar)
+        elem_mult = 1.0 + self.stats.get("elementDmgMult", 0.0)
+
         # Sabit Hasar Bonusunu (Flat) ekle
         phys_flat = self.stats.get("physDmgFlat", 0)
         
@@ -617,20 +620,20 @@ class Player:
                 # Element Etkileri
                 sorcerer_elem = getattr(self, '_sorcerer_override_element', None)
                 if sorcerer_elem == 'fire':
-                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult
+                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
                     e.apply_dot('fire', fire_dmg, 4.0)
                 elif sorcerer_elem == 'frost':
-                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult
+                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
                     e.apply_dot('frost', frost_dmg * 0.5, 4.0)
                 elif sorcerer_elem == 'poison':
-                    poison_dps = (base_poison + 15) * mult * dot_mult
+                    poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
                     e.apply_dot('poison', poison_dps, 5.0)
                 else:
-                    poison_dps = base_poison * mult * dot_mult
+                    poison_dps = base_poison * mult * dot_mult * elem_mult
                     if poison_dps > 0: e.apply_dot('poison', poison_dps, 5.0)
-                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult
+                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult
                     if fire_dmg > 0: e.apply_dot('fire', fire_dmg, 4.0)
-                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult
+                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult
                     if frost_dmg > 0: e.apply_dot('frost', frost_dmg * 0.5, 4.0)
             
             # Görsel
@@ -700,15 +703,15 @@ class Player:
             
             # Elementel Statları Aktar
             if sorcerer_elem == 'fire':
-                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult
+                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
             elif sorcerer_elem == 'frost':
-                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult
+                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
             elif sorcerer_elem == 'poison' or (is_bomb and base_poison > 0):
-                p.poison_dps = (base_poison + 15) * mult * dot_mult
+                p.poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
             else:
-                p.poison_dps = base_poison * mult * dot_mult
-                p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult
-                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult
+                p.poison_dps = base_poison * mult * dot_mult * elem_mult
+                p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult
+                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult
             
             game.projectiles.append(p)
             game.entity_id_counter += 1
@@ -831,52 +834,52 @@ class Player:
             "stats": {"armor": 50, "regen": 3.0, "dmgMult": 0.2},
             "max_hp_delta": 80,
             "passive": "paladin_aura",
-            "desc": "Dev zırh ve can yenileme. 5s'de bir ışık dalgası."
+            "desc": "Dev zırh (+50), +80 can ve saniyede 3 can yenileme."
         },
         # BEASTMASTER
         "beastmaster_emperor": {
             "name": "👑 Pet İmparatoru", "class_base": "beastmaster",
-            "stats": {"minionCount": 4, "minionDamage": 0.3, "minionMaxHp": 0.4, "minionRange": 0.2},
+            "stats": {"minionCount": 2, "minionDamage": 0.3, "minionMaxHp": 0.4, "minionRange": 0.2},
             "max_hp_delta": 0,
             "passive": "wind_minions",
-            "desc": "+4 minyon sayısı. Tüm minyon hasarı rüzgar elementine döner."
+            "desc": "+2 minyon sayısı ve sürü genelinde hasar/can bonusu."
         },
         "beastmaster_hunter": {
             "name": "🦅 Avcı", "class_base": "beastmaster",
-            "stats": {"minionDamage": 1.5, "minionMaxHp": 1.0, "minionRange": 0.6},
+            "stats": {"minionDamage": 2.0, "minionMaxHp": 1.0, "minionRange": 0.6},
             "max_hp_delta": 0,
             "passive": "alpha_pet",
-            "desc": "Yalnızca 1 pet ama devasa güç. Pet hızı ve hasarı 2.5x."
+            "desc": "Az sayıda ama devasa güçte pet: minyon hasarı 3x, canı 2x."
         },
         # SNIPER
         "sniper_marksman": {
             "name": "💥 Tetikçi", "class_base": "sniper",
-            "stats": {"critChance": 0.4, "critDmg": 2.0, "fireRate": 0.3},
+            "stats": {"critChance": 0.25, "critDmg": 1.5, "fireRate": 0.3},
             "max_hp_delta": -20,
             "passive": "crit_ignite",
-            "desc": "Krit şans +%40, kritik vuruş → ateş patlaması."
+            "desc": "Krit şans +%25, krit hasarı +%150 ve +%30 atış hızı. Can -20."
         },
         "sniper_phantom": {
             "name": "🌑 Hayalet Nişancı", "class_base": "sniper",
             "stats": {"critDmg": 3.0, "dodgeChance": 0.3},
             "max_hp_delta": 0,
             "passive": "first_shot_invisible",
-            "desc": "İlk atış görünmezden 2x hasar verir (8s CD)."
+            "desc": "Kritik vuruşlar 5x hasar verir; +%30 kaçınma."
         },
         # ENGINEER
         "engineer_architect": {
             "name": "🏰 Kale Mimarı", "class_base": "engineer",
-            "stats": {"turretCount": 3, "turretDamage": 0.3, "cooldownReduction": 0.2},
+            "stats": {"turretLimit": 3, "turretDmg": 0.3, "cooldownReduction": 0.2},
             "max_hp_delta": 0,
             "passive": "heal_turret",
-            "desc": "+3 taret slotu. Taretler aralıklı iyileştirici ışın atar."
+            "desc": "+3 taret slotu ve +%30 taret hasarı."
         },
         "engineer_electrician": {
             "name": "⚡ Elektrikçi", "class_base": "engineer",
-            "stats": {"turretDamage": 0.8, "turretFireRate": 0.5, "cooldownReduction": 0.4},
+            "stats": {"turretDmg": 0.8, "turretRate": 0.5, "cooldownReduction": 0.4},
             "max_hp_delta": 0,
             "passive": "chain_lightning",
-            "desc": "Taret atışları 3 hedefe zincirleme çarpar."
+            "desc": "+%80 taret hasarı ve +%50 taret atış hızı."
         },
         # BOMBER
         "bomber_nuclear": {
@@ -884,29 +887,29 @@ class Player:
             "stats": {"dmgMult": 0.8, "aoe_bonus": 0.5},
             "max_hp_delta": -30,
             "passive": "chain_explosion",
-            "desc": "Patlama zincirleme (%50 hasar komşulara). Dev AoE."
+            "desc": "+%80 hasar ve +%50 patlama alanı. Can -30."
         },
         "bomber_chemist": {
             "name": "🌊 Kimyager", "class_base": "bomber",
             "stats": {"poisonDps": 40, "dmgMult": 0.4, "aoe_bonus": 0.3},
             "max_hp_delta": 10,
             "passive": "toxic_cloud",
-            "desc": "Patlama sonrası 5s zehir bulutu bırakır."
+            "desc": "+40 zehir DPS, +%40 hasar ve +%30 patlama alanı."
         },
         # NINJA
         "ninja_shadow": {
             "name": "🗡️ Ölüm Gölgesi", "class_base": "ninja",
-            "stats": {"critDmg": 3.5, "dodgeChance": 0.35},
+            "stats": {"critChance": 0.3, "critDmg": 2.5, "dodgeChance": 0.35},
             "max_hp_delta": 0,
             "passive": "kill_invisible",
-            "desc": "Backstab x3 hasar. Her öldürmede 3s görünmezlik."
+            "desc": "Suikastçı: +%30 krit şansı, +%250 krit hasarı, +%35 kaçınma."
         },
         "ninja_storm": {
             "name": "🌀 Fırtına Bıçağı", "class_base": "ninja",
-            "stats": {"critDmg": 1.0, "dodgeChance": 0.2, "speed": 2},
+            "stats": {"critDmg": 1.0, "dodgeChance": 0.2, "speed": 2, "fireRate": 0.3},
             "max_hp_delta": 0,
             "passive": "kill_speed_stack",
-            "desc": "Her saldırıda 4 vuruş. Öldürdükçe ateş hızı artar (max %150)."
+            "desc": "+%30 saldırı hızı, +2 hareket hızı ve +%20 kaçınma."
         },
         # ALCHEMIST
         "alchemist_grandmaster": {
@@ -914,14 +917,14 @@ class Player:
             "stats": {"poisonDps": 20, "toxicAura": 30, "cooldownReduction": 0.3},
             "max_hp_delta": 0,
             "passive": "double_potion",
-            "desc": "İksir etkileri 2x. İksirler müttefikinize de etki eder."
+            "desc": "+20 zehir DPS ve +%30 yetenek bekleme süresi azaltımı."
         },
         "alchemist_poison_god": {
             "name": "🍄 Zehir Tanrısı", "class_base": "alchemist",
             "stats": {"poisonDps": 80, "toxicAura": 60, "dotDmgMult": 0.5},
             "max_hp_delta": 0,
             "passive": "death_cloud",
-            "desc": "Öldürülen düşmanlar 3s zehirli alan bırakır."
+            "desc": "+80 zehir DPS ve +%50 süreli hasar (DoT) bonusu."
         },
         # SORCERER
         "sorcerer_firelord": {
@@ -929,14 +932,14 @@ class Player:
             "stats": {"fireDamage": 60, "fireDmgFlat": 30, "elementDmgMult": 1.0},
             "max_hp_delta": -20,
             "passive": "fire_aoe",
-            "desc": "Ateş büyüleri patlama AoE'ye döner. +60 ateş hasarı."
+            "desc": "+90 ateş hasarı ve +%100 element hasarı. Can -20."
         },
         "sorcerer_icemage": {
             "name": "❄️ Buz Büyücüsü", "class_base": "sorcerer",
             "stats": {"frostDamage": 40, "frostDmgFlat": 20, "elementDmgMult": 0.6},
             "max_hp_delta": 0,
             "passive": "freeze_on_hit",
-            "desc": "Buz büyüleri 1s dondurur. +40 buz hasarı."
+            "desc": "+60 buz hasarı (yavaşlatır) ve +%60 element hasarı."
         },
         # BLOODWALKER
         "bloodwalker_noble": {
@@ -944,14 +947,14 @@ class Player:
             "stats": {"lifesteal": 0.4, "dmgMult": 0.3, "hpRegen": 2.0},
             "max_hp_delta": 50,
             "passive": "full_hp_bonus",
-            "desc": "Can çalma +%40. Max HP'deyken hasar +%30."
+            "desc": "Can çalma +%40, +50 can ve saniyede 2 can yenileme."
         },
         "bloodwalker_martyr": {
             "name": "💔 Şehit", "class_base": "bloodwalker",
-            "stats": {"lifesteal": 0.2, "dmgMult": 1.0},
+            "stats": {"lifesteal": 0.2, "dmgMult": 0.6},
             "max_hp_delta": -50,
             "passive": "low_hp_rage",
-            "desc": "Az HP iken hasar katlanır (max 3x). Yüksek riskli."
+            "desc": "Yüksek hasar (+%60) karşılığında -50 can. Yüksek riskli."
         },
     }
 

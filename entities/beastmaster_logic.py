@@ -3,6 +3,12 @@ import pygame
 import random
 
 class Beastmaster:
+    """
+    Canavar Efendisi (Beastmaster) - Minyon odaklı sınıf.
+    - +%30 minyon hasarı ve +%10 maksimum can; kurt yoldaşıyla başlar.
+    - Kamçı vuruşu hedefi hem hasarlar hem "işaretler": tüm minyonlar o hedefe
+      kilitlenir ve saldırı bekleme süreleri sıfırlanır.
+    """
     def __init__(self):
         pass
         
@@ -44,8 +50,10 @@ class Beastmaster:
                             min_d = math.sqrt(d_sq)
                             target_enemy = e
         
-        # 2. Minyonları Hedefe "Odakla" (Priority Target)
+        # 2. Kamçı Hasarı + Minyonları Hedefe "Odakla" (Priority Target)
         if target_enemy:
+            # Denge: Kamçı artık işaretlediği hedefe hasar da vurur (eskiden 0 hasar)
+            target_enemy.take_damage(dmg, game)
             for m in game.minions:
                 if m.owner == player:
                     m.priority_target = target_enemy

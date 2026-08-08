@@ -6,6 +6,20 @@ from entities.enemy import Enemy
 from entities.projectile_pool import ProjectilePool
 from logic.status_effects import StatusEffectManager
 
+# Boss zorluk çarpanları (hp, dmg) — normal düşmanlardaki 100x gibi uç değerler yerine
+# boss savaşının süresini makul tutan yumuşatılmış katsayılar.
+BOSS_DIFF_MULTS = {
+    "Normal":     (1.0,  1.0),
+    "Hard":       (2.5,  1.5),
+    "Very Hard":  (6.0,  2.0),
+    "Nightmare":  (6.0,  2.0),
+    "Impossible": (15.0, 3.0),
+}
+
+def get_boss_diff_mults(game):
+    diff = game.wave.get("current_diff", "Normal")
+    return BOSS_DIFF_MULTS.get(diff, (1.0, 1.0))
+
 def draw_objective_arrow(screen, start_x, start_y, target_x, target_y, color, camera_x, camera_y):
     """Draws a navigation arrow pointing from source to target if target is off-screen."""
     # Screen boundaries
@@ -65,14 +79,28 @@ class SafeSpot:
 class BossPillar(Enemy):
     def __init__(self, id, x, y, game, boss):
         super().__init__(id, x, y, game, type="minion", wave_level=boss.wave_level)
-        self.max_hp = 2500 * (1.1 ** boss.wave_level)
+        # Denge: 2500 tabanıyla 4 pillar'ın toplam HP'si boss'un canını aşıyordu
+        hp_mult, _ = get_boss_diff_mults(game)
+        self.max_hp = 1000 * (1.1 ** boss.wave_level) * hp_mult
         self.hp = self.max_hp
         self.radius = 40
         self.color = (231, 76, 60)
         self.boss = boss
         self.is_pillar = True
-        
-    def update(self, dt, game): pass
+
+    def apply_difficulty(self, diff_name):
+        # Zorluk değişiminde Enemy.apply_difficulty pillar HP'sini minion statlarıyla ezmesin
+        if not hasattr(self, 'boss'):
+            super().apply_difficulty(diff_name)
+            return
+        hp_mult, _ = get_boss_diff_mults(self.boss.game)
+        ratio = self.hp / self.max_hp if self.max_hp > 0 else 1.0
+        self.max_hp = 1000 * (1.1 ** self.boss.wave_level) * hp_mult
+        self.hp = self.max_hp * ratio
+
+    def update(self, dt, game):
+        # Hareket/AI yok ama DoT efektleri (yanma, zehir) tick atabilmeli
+        self.effect_manager.update(dt, self, game)
 
     def draw(self, screen, camera_x, camera_y):
         draw_x, draw_y = int(self.x - camera_x), int(self.y - camera_y)
@@ -108,10 +136,13 @@ class LabyrinthOfFire(BossPhase):
         self.pillars = []
         self.pattern_type = 0
         self.sweeper_count = 0
+        self.entry_count = 0
 
     def enter(self, boss):
         super().enter(boss)
         game = boss.game
+        self.entry_count += 1
+        self.sweeper_count = 0
         # SABİT PİLLAR KONUMLARI (Merkeze yakın, kare şeklinde)
         dist = 350
         arena_cx, arena_cy = 2500, 2500
@@ -121,6 +152,9 @@ class LabyrinthOfFire(BossPhase):
             (arena_cx - dist, arena_cy + dist),
             (arena_cx + dist, arena_cy + dist)
         ]
+        # Denge: Faz tekrarlarında 4 yerine 2 pillar (savaş boyunca 12 pillar birikmesin)
+        if self.entry_count > 1:
+            positions = random.sample(positions, 2)
         self.pillars = []
         for px, py in positions:
             pillar = BossPillar(game.entity_id_counter, px, py, game, boss)
@@ -169,7 +203,7 @@ class LabyrinthOfFire(BossPhase):
         for i in range(num_projectiles):
             if gap_index <= i <= gap_index + 2: continue
             sx, sy = start_x + math.cos(wall_normal) * (i * spacing), start_y + math.sin(wall_normal) * (i * spacing)
-            game.projectile_pool.spawn(sx, sy, vx, vy, damage=30, color=(231, 76, 60), status_effect="burn", lifetime=400)
+            game.projectile_pool.spawn(sx, sy, vx, vy, damage=boss.attack_damage(30), color=(231, 76, 60), status_effect="burn", lifetime=400)
 
     def breathing_fire_ring(self, boss, game, current_time):
         if int(current_time * 8) % 2 != 0: return
@@ -182,7 +216,7 @@ class LabyrinthOfFire(BossPhase):
             if gap_center <= i <= (gap_center + 2): continue
             angle = (current_time * 0.5) + (i / num_projectiles) * 2 * math.pi
             vx, vy = math.cos(angle) * final_speed, math.sin(angle) * final_speed
-            game.projectile_pool.spawn(boss.x, boss.y, vx, vy, damage=30, color=(231, 76, 60), status_effect="burn", lifetime=400)
+            game.projectile_pool.spawn(boss.x, boss.y, vx, vy, damage=boss.attack_damage(30), color=(231, 76, 60), status_effect="burn", lifetime=400)
 
     def fire_sweeper(self, boss, game, current_time):
         # Sweeper paternine kesiklik ekle (Sürekli tarama yerine kesik kesik tarama)
@@ -195,7 +229,7 @@ class LabyrinthOfFire(BossPhase):
             # Dönüş hızı da yavaşlatıldı
             angle = current_time * 1.0 + offset
             vx, vy = math.cos(angle) * speed, math.sin(angle) * speed
-            game.projectile_pool.spawn(boss.x, boss.y, vx, vy, damage=30, color=(150, 40, 40), status_effect="burn", lifetime=600)
+            game.projectile_pool.spawn(boss.x, boss.y, vx, vy, damage=boss.attack_damage(30), color=(150, 40, 40), status_effect="burn", lifetime=600)
 
 class StaticSilence(BossPhase):
     def __init__(self):
@@ -234,7 +268,7 @@ class StaticSilence(BossPhase):
             angle = math.atan2(p.y - boss.y, p.x - boss.x)
             for off in [-0.1, 0.1]:
                 vx, vy = math.cos(angle + off) * 4.5, math.sin(angle + off) * 4.5
-                game.projectile_pool.spawn(boss.x, boss.y, vx, vy, damage=20, color=(52, 152, 219), lifetime=600)
+                game.projectile_pool.spawn(boss.x, boss.y, vx, vy, damage=boss.attack_damage(20), color=(52, 152, 219), lifetime=600)
             self.shot_timer = 1.0
         if self.state == "SEARCHING":
             if self.timer <= 0:
@@ -250,7 +284,8 @@ class StaticSilence(BossPhase):
         if self.state == "STAYING":
             in_spot = any(math.hypot(p.x - ss.x, p.y - ss.y) < ss.radius for ss in self.safe_spots)
             if not in_spot:
-                p.take_damage(15 * dt * 60)
+                # Denge: force=True olmadan i-frame'e takılıp neredeyse etkisizdi
+                p.take_damage(boss.attack_damage(10) * dt * 3, force=True)
                 if int(time.time() * 10) % 2 == 0:
                     game.add_event("damage_text", p.x, p.y-20, value="OUT OF SAFE ZONE!", color=(231, 76, 60), scale=0.6)
 
@@ -309,14 +344,17 @@ class OrbitalChaos(BossPhase):
                 sx, sy = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
                 outward_angle = math.atan2(sy - boss.y, sx - boss.x)
                 vx, vy = math.cos(outward_angle) * speed, math.sin(outward_angle) * speed
-                game.projectile_pool.spawn(sx, sy, vx, vy, damage=25, color=(255, 0, 255), lifetime=800)
+                game.projectile_pool.spawn(sx, sy, vx, vy, damage=boss.attack_damage(25), color=(255, 0, 255), lifetime=800)
 
 class AbyssalLord(Enemy):
     def __init__(self, id, x, y, game, wave_level=10):
         super().__init__(id, x, y, game, type="boss", wave_level=wave_level)
         self.game, self.wave_level = game, wave_level
-        # BOSS HP NERF: Wave 10'da ~20-25k can olacak şekilde ayarlandı (Eski: 300k+)
-        self.max_hp = 5000 * (1.15 ** wave_level)
+        # Denge: 1.15^wave üstel formülü W50'de 5.4M HP'ye şişiyordu; 1.12'ye çekildi
+        # ve boss artık zorluk çarpanı alıyor (eskiden Impossible'da bile 1x kalıyordu).
+        hp_mult, dmg_mult = get_boss_diff_mults(game)
+        self.max_hp = 4000 * (1.12 ** wave_level) * hp_mult
+        self.boss_dmg_mult = dmg_mult
         self.hp, self.radius = self.max_hp, 80
         self.color, self.invulnerable = (44, 62, 80), False
         self.effect_manager = StatusEffectManager()
@@ -326,6 +364,21 @@ class AbyssalLord(Enemy):
         self.current_seq_idx = 0
         self.current_phase = self.phase_pool[self.phase_sequence[self.current_seq_idx]]
         self.current_phase.enter(self)
+
+    def attack_damage(self, base):
+        """Boss saldırı hasarı: sabit değer yerine wave ve zorlukla ölçeklenir."""
+        return base * (1.0 + 0.04 * self.wave_level) * self.boss_dmg_mult
+
+    def apply_difficulty(self, diff_name):
+        # Zorluk değişiminde Enemy.apply_difficulty boss HP'sini eski (200*ws*30) tabanla
+        # ezmesin; boss kendi formülünü korur. __init__ sırasındaki çağrıda sessizce atlanır.
+        if not hasattr(self, 'boss_dmg_mult'):
+            return
+        hp_mult, dmg_mult = get_boss_diff_mults(self.game)
+        ratio = self.hp / self.max_hp if self.max_hp > 0 else 1.0
+        self.max_hp = 4000 * (1.12 ** self.wave_level) * hp_mult
+        self.hp = self.max_hp * ratio
+        self.boss_dmg_mult = dmg_mult
 
     def next_phase(self):
         self.current_phase.exit(self)

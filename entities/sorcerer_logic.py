@@ -3,9 +3,10 @@ import random
 
 class Sorcerer:
     """
-    Büyücü (Sorcerer) - 3 element rotasyonlu uzak saldırı sınıfı.
-    Her atış sırayla fire -> frost -> poison yapar.
-    Her 4. atış otomatik kritik ve AoE.
+    Büyücü (Sorcerer) - 3 element rotasyonlu uzak saldırı sınıfı (cam top).
+    - Her atış sırayla fire -> frost -> poison; her 4. atış otomatik kritik + 2x AoE.
+    - +%60 element hasarı (elementDmgMult) — tüm ateş/buz/zehir hasarlarını güçlendirir.
+    - Bedeli: -%30 maksimum can (70 HP) - en kırılgan sınıf.
     """
     def __init__(self):
         self.attack_cooldown = 400  # Orta hız

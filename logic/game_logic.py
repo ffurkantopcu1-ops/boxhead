@@ -2,6 +2,7 @@ import pygame
 import time
 import random
 import math
+from collections import deque
 from entities.player import Player
 from entities.enemy import Enemy
 from entities.projectile import Projectile
@@ -112,6 +113,11 @@ class GameLogic:
             'gold_earned': 0
         }
 
+        # Hasar takibi (C paneli): son vuruş, anlık ve maksimum DPS
+        self.last_hit_damage = 0.0
+        self.max_dps = 0.0
+        self._dps_events = deque()  # (zaman, hasar) - son 1 saniyelik pencere
+
         self.kill_streak = 0
         self.streak_timer = 0
         self.entity_id_counter = 0
@@ -122,6 +128,26 @@ class GameLogic:
         self.grid = {}
         self._separation_accumulator = 0.0
         self.cheat_mode = False # Hile Modu (GDD 42)
+
+    def record_damage_dealt(self, amount, is_dot=False):
+        """Oyuncu kaynaklı hasarı kaydeder: toplam, son vuruş ve DPS penceresi."""
+        self.stats['total_damage_dealt'] += amount
+        if not is_dot:
+            self.last_hit_damage = amount
+        now = time.time()
+        self._dps_events.append((now, amount))
+        while self._dps_events and now - self._dps_events[0][0] > 1.0:
+            self._dps_events.popleft()
+        current = sum(dmg for _, dmg in self._dps_events)
+        if current > self.max_dps:
+            self.max_dps = current
+
+    def get_current_dps(self):
+        """Son 1 saniyede verilen toplam hasar (anlık DPS)."""
+        now = time.time()
+        while self._dps_events and now - self._dps_events[0][0] > 1.0:
+            self._dps_events.popleft()
+        return sum(dmg for _, dmg in self._dps_events)
 
     def setup_boss_test(self):
         """Skip directly to the boss fight with decent gear."""
@@ -345,7 +371,7 @@ class GameLogic:
         if self.wave.get("event"):
             evt = self.wave["event"]
             if evt.get("enemy_speed"): enemy.speed *= evt["enemy_speed"]
-            if evt.get("gold_mult"): enemy.gold_reward = getattr(enemy, 'gold_reward', 10) * evt["gold_mult"]
+            if evt.get("gold_mult"): enemy.gold_reward = getattr(enemy, 'gold_reward', getattr(enemy, 'xp_reward', 20) * 0.5) * evt["gold_mult"]
             if evt.get("enemy_hp_mult"):
                 enemy.max_hp *= evt["enemy_hp_mult"]
                 enemy.hp = enemy.max_hp
@@ -520,6 +546,25 @@ class GameLogic:
                 s2 = Enemy(self.entity_id_counter, enemy.x + 15, enemy.y, self, type="splitting_slime_small", wave_level=self.wave["level"])
                 self._pending_spawns.append(s2)
 
+        # 🔀 BÖLÜNEN ELİT: Ölünce 2 zayıf kopya bırakır (artık gerçekten çalışıyor)
+        splits = getattr(enemy, 'splits_on_death', 0)
+        if splits and not getattr(enemy, '_is_split_child', False) and not hasattr(enemy, 'slime_tier'):
+            from entities.enemy import Enemy
+            if not hasattr(self, '_pending_spawns'):
+                self._pending_spawns = []
+            for i in range(splits):
+                self.entity_id_counter += 1
+                child = Enemy(self.entity_id_counter, enemy.x + (i * 2 - 1) * 25, enemy.y, self,
+                              type=enemy.type, wave_level=self.wave["level"])
+                child.max_hp *= 0.35
+                child.hp = child.max_hp
+                child.dmg *= 0.6
+                child.radius = max(10, int(child.radius * 0.7))
+                child.no_drop = True
+                child._is_split_child = True
+                child.color = (155, 89, 182)
+                self._pending_spawns.append(child)
+
         if getattr(enemy, 'no_drop', False):
             return
 
@@ -540,7 +585,9 @@ class GameLogic:
 
         # ALTIN DÜŞÜRME (Fiziksel Drop)
         if not enemy.is_trap:
-            base_gold = 10 * r_mod * reward_step_mult
+            # Denge: Ödül artık düşman tipine bağlı (xp_reward tabanı); elit çarpanı da işler
+            reward_base = getattr(enemy, 'xp_reward', 20) * getattr(enemy, 'elite_reward_mult', 1.0)
+            base_gold = getattr(enemy, 'gold_reward', reward_base * 0.5) * r_mod * reward_step_mult
             gold_value = int(base_gold * (1.0 + p.stats.get("goldGain", 0)))
             self.entity_id_counter += 1
             self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x, enemy.y, 
@@ -572,8 +619,8 @@ class GameLogic:
                     if 'rarity' not in item_data: item_data['rarity'] = 'Normal'
                     self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x + 20, enemy.y + 20, item_data))
             
-            # XP Kazanımı (Basamak çarpanıyla senkronize)
-            xp_to_give = 20 * reward_step_mult * r_mod
+            # XP Kazanımı (Basamak çarpanıyla senkronize; düşman tipine göre değişir)
+            xp_to_give = reward_base * reward_step_mult * r_mod
             p.gain_xp(xp_to_give * (1.0 + p.stats.get("xpGain", 0)))
             
             # --- GÜNLÜK GÖREV TAKİBİ ---

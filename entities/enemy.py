@@ -6,7 +6,9 @@ import time
 class Enemy:
     def __init__(self, id, x, y, game, type="normal", wave_level=1):
         self.id = id
-        xp_mult = min(15.0, 1.1 ** wave_level)
+        # Denge: Wave ölçeklemesi artık kill_enemy'de (reward_step_mult) uygulanıyor;
+        # xp_reward tip bazlı taban değerdir (risk/ödül dengesi için).
+        xp_mult = 1.0
         self.x = x
         self.y = y
         self.type = type
@@ -17,8 +19,9 @@ class Enemy:
         diff_name = game.wave.get("current_diff", "Normal")
         
         # Step-based Wave Scaling (Her 10 wave'de bir boss sonrası zorlaşır)
+        # Denge: 1.35 basamağı tek dalgada +%38 sıçrama yaratıyordu; 1.25'e yumuşatıldı
         step_level = (wave_level - 1) // 10
-        wave_scale = (1.35 ** step_level) * (1.0 + wave_level * 0.05)
+        wave_scale = (1.25 ** step_level) * (1.0 + wave_level * 0.05)
         
         self.max_hp = 200 * wave_scale
         self.hp = self.max_hp
@@ -93,7 +96,8 @@ class Enemy:
             self.hp = 999999
             self.speed = 0
             self.radius = 60
-            self.dmg = 45
+            # Denge: Sabit 45 erken oyunda ölümcül, geç oyunda önemsizdi; wave ile ölçeklenir
+            self.dmg = 15 * wave_scale
             self.color = (211, 84, 0) # Turuncu
             self.is_trap = True
             self.xp_reward = 0
@@ -187,7 +191,7 @@ class Enemy:
             self.hp = self.max_hp
             self.speed = 3.5 + min(wave_level * 0.05, 1.5)
             self.radius = 22
-            self.dmg = 60 * wave_scale
+            self.dmg = 35 * wave_scale   # Denge: 60 tabanı temas halinde anlık ölüm demekti
             self.color = (142, 68, 173)     # Mor
             self.xp_reward = 100 * xp_mult
             self.tp_cooldown = random.uniform(4.0, 6.0)
@@ -207,6 +211,8 @@ class Enemy:
             self.armor += 150               # Ekstra Zırh
             self.lava_cooldown = 5.0
             self.lava_timer = self.lava_cooldown
+            self.lava_spawned = 0           # Denge: Sınırsız lav çukuru üretimi kapatıldı
+            self.max_lava_pits = 4
             self.is_pillar = True           # İttirmelere karşı bağışıklık
 
         elif self.type == "swarm_lord":
@@ -330,6 +336,13 @@ class Enemy:
     def update(self, dt, game):
         if self.dead: return
         self.effect_manager.update(dt, self, game)
+
+        # Pack Leader hız buff'ının süresi dolunca hızı normale döndür
+        if getattr(self, '_pack_buff_timer', 0) > 0:
+            self._pack_buff_timer -= dt
+            if self._pack_buff_timer <= 0 and hasattr(self, '_pack_base_speed'):
+                self.speed = self._pack_base_speed
+                del self._pack_base_speed
         
         # Target player
         p = game.players[game.local_player_id]
@@ -445,8 +458,8 @@ class Enemy:
                             game.kill_enemy(self)
                             return
                     elif dist > 5:
-                        # Yaklaşırken hızlan
-                        speed_mult = 2.0 if dist < 200 else 1.0
+                        # Yaklaşırken hızlan (Denge: x2.0 kaçınılmazdı, x1.5'e indirildi)
+                        speed_mult = 1.5 if dist < 200 else 1.0
                         self.x += math.cos(angle) * self.speed * speed_mult * dt * 60
                         self.y += math.sin(angle) * self.speed * speed_mult * dt * 60
 
@@ -528,8 +541,11 @@ class Enemy:
                         dx = e.x - self.x
                         dy = e.y - self.y
                         if dx * dx + dy * dy < self.buff_radius * self.buff_radius:
-                            e.speed = min(e.base_speed * 1.3, e.speed + 0.01)
-                            e.dmg = e.dmg  # dmg direkt değiştirmek yerine check bayrak kullanılabilir
+                            # Denge: Buff artık süreli; lider ölünce/uzaklaşınca hız normale döner
+                            if not hasattr(e, '_pack_base_speed'):
+                                e._pack_base_speed = e.speed
+                            e.speed = min(e._pack_base_speed * 1.3, e.speed + e._pack_base_speed * 0.6 * dt)
+                            e._pack_buff_timer = 0.5
 
             # --- ZEHİRLİ ÖRÜMCEK ---
             elif self.type == "venom_spider":
@@ -547,7 +563,7 @@ class Enemy:
                     vy = math.sin(angle) * 9
                     from entities.projectile import Projectile
                     proj = Projectile(game.entity_id_counter, self.x, self.y, vx, vy, self.dmg, is_hostile=True)
-                    proj.poison_dps = 10.0  # Zehir özelliği
+                    proj.poison_dps = self.dmg * 0.5  # Zehir özelliği (wave ile ölçeklenir)
                     game.projectiles.append(proj)
                     game.entity_id_counter += 1
                     self.shoot_timer = self.shoot_cooldown
@@ -588,9 +604,10 @@ class Enemy:
                 self.x += math.cos(angle) * self.speed * dt * 60
                 self.y += math.sin(angle) * self.speed * dt * 60
                 
-                # Belirli aralıklarla geçtiği yere Lav Çukuru bırakır
+                # Belirli aralıklarla geçtiği yere Lav Çukuru bırakır (juggernaut başına max 4)
                 self.lava_timer -= dt
-                if self.lava_timer <= 0:
+                if self.lava_timer <= 0 and self.lava_spawned < self.max_lava_pits:
+                    self.lava_spawned += 1
                     game.entity_id_counter += 1
                     # Spawn new lava pit with high wave level for high damage
                     lava = Enemy(game.entity_id_counter, self.x, self.y, game, type="lava_pit", wave_level=game.wave["level"])
@@ -710,9 +727,10 @@ class Enemy:
         # HASAR MANTIĞI
         # Saldırı menzilini biraz genişletiyoruz (radius + 10) çünkü kalabalık durumlarda yaratıklar birbirini ittiği için 
         # oyuncunun tam üstüne binemeyebiliyorlar, bu da hasar verememelerine sebep oluyordu.
-        if dist < self.radius + p.radius + 10:
+        if dist < self.radius + p.radius + 10 and not getattr(self, 'is_invulnerable', False):
             # Temas Hasarı: Kullanıcı İsteği - AFK kalmayı önlemek için i-frame aşılır ve sürekli vurur
-            p.take_damage(self.dmg * dt * 3, force=True)
+            # Denge: x3 çarpanı üst üste binen düşmanlarla anlık ölüm yaratıyordu, x2'ye indirildi
+            p.take_damage(self.dmg * dt * 2, force=True)
             
         # Sınır dışına çıkmayı engelle (Map Boundaries)
         self.x = max(50, min(4950, self.x))
@@ -770,12 +788,22 @@ class Enemy:
         # Minimum Hasar (Zırh çok yüksek olsa bile %5 vur)
         final_dmg = max(amount * 0.05, final_dmg)
         
-        # --- KALKAN KORUMASI (Shieldbearer): Önden gelen hasar %80 azalır ---
+        # --- KALKAN KORUMASI (Shieldbearer): Gelen hasar %65 azalır ---
+        # Denge: %80 azaltma açı kontrolü olmadan saf HP süngeri yaratıyordu
         if self.type == "shieldbearer" and not is_dot:
-            final_dmg *= 0.20
+            final_dmg *= 0.35
+
+        # --- ELİT ENERJİ KALKANI (🔮 Kalkanlı modifikatörü) ---
+        elite_shield = getattr(self, 'elite_shield', 0)
+        if elite_shield > 0 and not is_dot:
+            absorbed = min(elite_shield, final_dmg)
+            self.elite_shield -= absorbed
+            final_dmg -= absorbed
             
         self.hp -= final_dmg
-        if hasattr(game, 'stats'):
+        if hasattr(game, 'record_damage_dealt'):
+            game.record_damage_dealt(final_dmg, is_dot=is_dot)
+        elif hasattr(game, 'stats'):
             game.stats['total_damage_dealt'] += final_dmg
 
         # Görsel Hasar Text (Boş geçmeyelim)
@@ -813,7 +841,7 @@ class Enemy:
                 from entities.cloud import Cloud
                 game.entity_id_counter += 1
                 game.clouds.append(Cloud(game.entity_id_counter, self.x, self.y,
-                                         radius=70, duration=2.0, frost_dmg=20))
+                                         radius=70, duration=2.0, frost_dmg=self.dmg * 1.5))
                 game.add_event("explosion", self.x, self.y, radius=70, color=(100, 200, 235), timer=0.3)
             game.kill_enemy(self)
 

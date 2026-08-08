@@ -28,7 +28,8 @@ class Bloodwalker:
 
         # Yakın Dövüş Hesapla (Silah yoksa Yumruk)
         is_punch = (weapon is None)
-        dmg_base = player.stats.get("physDmg", 20) if not is_punch else 5
+        # Denge: Warrior/Ninja gibi sabit taban + silah physDmg (ham hasarda geri kalmasın)
+        dmg_base = (10 + player.stats.get("physDmg", 0)) if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)
         range_val = (100 + player.stats.get("meleeRange", 0)) * player.stats.get("meleeRangeMult", 1.0)
         
@@ -38,7 +39,7 @@ class Bloodwalker:
 
         dmg = (dmg_base + phys_flat) * player.stats.get("dmgMult", 1.0)
         is_crit = random.random() < player.stats.get("critChance", 0.05)
-        final_dmg = dmg * 2 if is_crit else dmg
+        final_dmg = dmg * (2.0 + player.stats.get("critDmg", 0)) if is_crit else dmg
         
         angle = player.facing_angle
         hit_any = False

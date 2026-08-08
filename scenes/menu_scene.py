@@ -1,6 +1,6 @@
 import pygame
 from scenes.base_scene import BaseScene
-from ui_elements import Button
+from ui_elements import Button, get_font, render_fit
 from logic.crystal_shop import CrystalShop
 from logic.save_manager import SaveManager
 
@@ -228,16 +228,26 @@ class MenuScene(BaseScene):
         panel = pygame.Rect(self.width // 2 - 250, self.height // 2 - 50, 500, 300)
         pygame.draw.rect(self.screen, (30, 30, 45), panel, border_radius=15)
         pygame.draw.rect(self.screen, (100, 100, 120), panel, width=2, border_radius=15)
-        
+
+        title = render_fit("AYARLAR", 30, (149, 165, 166), panel.width - 40, bold=True)
+        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 18))
+
         opts = [
             f"EKRAN SARSINTISI: {'[AÇIK]' if self.manager.global_settings['shake'] else '[KAPALI]'}",
             "ANA MENÜYE DÖN"
         ]
-        
+
         for i, opt in enumerate(opts):
-            color = (255, 255, 255) if i == self.selected_idx else (120, 120, 120)
-            txt = self.font_sub.render(opt, True, color)
-            self.screen.blit(txt, (self.width // 2 - txt.get_width() // 2, panel.y + 60 + i * 70))
+            row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 60 + i * 70 - 20, 400, 50)
+            if i == self.selected_idx:
+                pygame.draw.rect(self.screen, (45, 45, 65), row_rect, border_radius=8)
+                pygame.draw.rect(self.screen, (241, 196, 15), row_rect, width=2, border_radius=8)
+            color = (255, 255, 255) if i == self.selected_idx else (150, 150, 160)
+            txt = render_fit(opt, 26, color, row_rect.width - 24)
+            self.screen.blit(txt, txt.get_rect(center=row_rect.center))
+
+        hint = render_fit("ESC: Geri  •  ENTER: Seç", 18, (110, 110, 125), panel.width - 40)
+        self.screen.blit(hint, (self.width // 2 - hint.get_width() // 2, panel.bottom - 40))
 
     def draw_load_menu(self):
         panel = pygame.Rect(self.width // 2 - 300, self.height // 2 - 100, 600, 400)
@@ -248,34 +258,39 @@ class MenuScene(BaseScene):
         self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 30))
         
         if not self.save_slots:
-            msg = self.font_sub.render("KAYIT BULUNAMADI", True, (150, 150, 150))
+            msg = render_fit("KAYIT BULUNAMADI", 26, (150, 150, 150), panel.width - 40)
             self.screen.blit(msg, (self.width // 2 - msg.get_width() // 2, panel.y + 150))
         else:
             for i, slot in enumerate(self.save_slots[self.load_offset:self.load_offset + 5]):
                 actual_idx = self.load_offset + i
-                color = (255, 255, 255) if actual_idx == self.selected_idx else (120, 120, 120)
-                slot_txt = f"{slot['level']} LVL - WAVE {slot['wave']} ({slot['class'].upper()})"
-                txt = self.font_sub.render(slot_txt, True, color)
-                txt_scale = pygame.transform.scale(txt, (int(txt.get_width()*0.8), int(txt.get_height()*0.8)))
-                self.screen.blit(txt_scale, (self.width // 2 - txt_scale.get_width() // 2, panel.y + 100 + i * 50))
-        
+                row_rect = pygame.Rect(self.width // 2 - 250, panel.y + 100 + i * 50 - 20, 500, 40)
+                is_selected = actual_idx == self.selected_idx
+                if is_selected:
+                    pygame.draw.rect(self.screen, (45, 45, 65), row_rect, border_radius=8)
+                    pygame.draw.rect(self.screen, (52, 152, 219), row_rect, width=2, border_radius=8)
+                color = (255, 255, 255) if is_selected else (150, 150, 160)
+                slot_txt = f"SEVİYE {slot['level']}  •  DALGA {slot['wave']}  •  {slot['class'].upper()}"
+                txt = render_fit(slot_txt, 24, color, row_rect.width - 24)
+                self.screen.blit(txt, txt.get_rect(center=row_rect.center))
+
         footer = "ESC: Geri"
         if len(self.save_slots) > 5:
             footer += f"  •  {self.selected_idx + 1}/{len(self.save_slots)}"
-        back_msg = self.font_sub.render(footer, True, (100, 100, 100))
+        back_msg = render_fit(footer, 20, (110, 110, 125), panel.width - 40)
         self.screen.blit(back_msg, (self.width // 2 - back_msg.get_width() // 2, panel.bottom - 40))
 
     def draw_shop_menu(self):
         # Üst Panel
         pygame.draw.rect(self.screen, (20, 20, 30), (0, 0, self.width, 100))
         pygame.draw.line(self.screen, (155, 89, 182), (0, 100), (self.width, 100), 2)
-        
-        title = self.font_main.render("META UPGRADES", True, (155, 89, 182))
-        self.screen.blit(title, (40, 30))
-        
+
+        # Başlık ve kristal sayacı üst bara dikey olarak ortalanır (eski 72pt font bardan taşıyordu)
+        title = render_fit("KALICI YETENEKLER", 40, (155, 89, 182), self.width // 2 - 60, bold=True)
+        self.screen.blit(title, (40, 50 - title.get_height() // 2))
+
         crystals = self.meta_data.get("crystals", 0)
-        c_text = self.font_main.render(f"💎 {crystals} Kristal", True, (100, 220, 255))
-        self.screen.blit(c_text, (self.width - c_text.get_width() - 40, 30))
+        c_text = render_fit(f"💎 {crystals} Kristal", 32, (100, 220, 255), self.width // 2 - 60, bold=True)
+        self.screen.blit(c_text, (self.width - c_text.get_width() - 40, 50 - c_text.get_height() // 2))
 
         # Grid Alanı
         cols = 3
@@ -306,24 +321,29 @@ class MenuScene(BaseScene):
             pygame.draw.rect(self.screen, bg_color, rect, border_radius=10)
             pygame.draw.rect(self.screen, (155, 89, 182) if hover else (100, 50, 120), rect, width=2, border_radius=10)
 
-            # İsim
-            n_txt = self.font_sub.render(upg["name"], True, (255, 255, 255))
-            n_scale = pygame.transform.scale(n_txt, (int(n_txt.get_width()*0.8), int(n_txt.get_height()*0.8)))
-            self.screen.blit(n_scale, (rect.x + 10, rect.y + 10))
+            # Rank (Seviye) — önce ölç ki isim ona göre daralsın
+            r_txt = render_fit(f"{rank}/{upg['max_rank']}", 18, (200, 200, 200), 70)
+            self.screen.blit(r_txt, (rect.right - r_txt.get_width() - 12, rect.y + 12))
 
-            # Rank (Seviye)
-            r_txt = self.font_sub.render(f"[{rank}/{upg['max_rank']}]", True, (200, 200, 200))
-            r_scale = pygame.transform.scale(r_txt, (int(r_txt.get_width()*0.7), int(r_txt.get_height()*0.7)))
-            self.screen.blit(r_scale, (rect.right - r_scale.get_width() - 10, rect.y + 10))
+            # İsim (rank etiketiyle çakışmadan sığdırılır)
+            n_txt = render_fit(upg["name"], 22, (255, 255, 255), rect.width - r_txt.get_width() - 34, bold=True)
+            self.screen.blit(n_txt, (rect.x + 12, rect.y + 10))
+
+            # Seviye ilerleme çubuğu
+            bar_rect = pygame.Rect(rect.x + 12, rect.y + 44, rect.width - 24, 6)
+            pygame.draw.rect(self.screen, (50, 40, 65), bar_rect, border_radius=3)
+            if upg['max_rank'] > 0 and rank > 0:
+                fill_w = int(bar_rect.width * min(1, rank / upg['max_rank']))
+                fill_color = (100, 255, 100) if is_max else (155, 89, 182)
+                pygame.draw.rect(self.screen, fill_color, (bar_rect.x, bar_rect.y, fill_w, 6), border_radius=3)
 
             # Fiyat
             if not is_max:
                 cost_color = (100, 220, 255) if crystals >= cost else (255, 100, 100)
-                c_lbl = self.font_sub.render(f"Maliyet: {cost} 💎", True, cost_color)
+                c_lbl = render_fit(f"Maliyet: {cost} 💎", 20, cost_color, rect.width - 24)
             else:
-                c_lbl = self.font_sub.render("MAKSİMUM", True, (100, 255, 100))
-            c_scale = pygame.transform.scale(c_lbl, (int(c_lbl.get_width()*0.8), int(c_lbl.get_height()*0.8)))
-            self.screen.blit(c_scale, (rect.x + 10, rect.bottom - c_scale.get_height() - 10))
+                c_lbl = render_fit("MAKSİMUM", 20, (100, 255, 100), rect.width - 24, bold=True)
+            self.screen.blit(c_lbl, (rect.x + 12, rect.bottom - c_lbl.get_height() - 10))
 
             # Hover edilen yeteneği kaydet ki tooltipi en üste (diğer rect'lerin üzerine) çizelim
             if hover:
@@ -349,11 +369,12 @@ class MenuScene(BaseScene):
                 "combat": "Savaş", "cards": "Kartlar", "special": "Özel",
             }
             max_text_width = 370
+            desc_font = get_font(20)
             words = hovered_upg["desc"].split()
             desc_lines, current = [], []
             for word in words:
                 candidate = " ".join(current + [word])
-                if self.font_sub.size(candidate)[0] <= max_text_width:
+                if desc_font.size(candidate)[0] <= max_text_width:
                     current.append(word)
                 else:
                     if current:
@@ -369,9 +390,9 @@ class MenuScene(BaseScene):
                 300,
                 self.font_desc.size(meta_line)[0] + 24,
                 self.font_desc.size(cost_line)[0] + 24,
-                *(self.font_sub.size(line)[0] + 24 for line in desc_lines),
+                *(desc_font.size(line)[0] + 24 for line in desc_lines),
             )
-            line_height = self.font_sub.get_height() + 3
+            line_height = desc_font.get_height() + 3
             th = 58 + len(desc_lines) * line_height
             mx, my = pygame.mouse.get_pos()
             
@@ -387,7 +408,7 @@ class MenuScene(BaseScene):
             meta_txt = self.font_desc.render(meta_line, True, (180, 180, 195))
             self.screen.blit(meta_txt, (tx + 12, ty + 9))
             for i, line in enumerate(desc_lines):
-                desc_txt = self.font_sub.render(line, True, (255, 255, 220))
+                desc_txt = desc_font.render(line, True, (255, 255, 220))
                 self.screen.blit(desc_txt, (tx + 12, ty + 28 + i * line_height))
             cost_color = (120, 255, 160) if is_max or crystals >= (cost or 0) else (255, 130, 130)
             cost_txt = self.font_desc.render(cost_line, True, cost_color)

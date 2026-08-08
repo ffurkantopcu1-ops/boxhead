@@ -3,6 +3,55 @@ import math
 import time
 import os
 
+# --- Ortak Metin Yardımcıları ---
+_FONT_CACHE = {}
+UI_FONT_NAME = "Segoe UI, Arial"
+
+def get_font(size, bold=False):
+    """Boyuta göre önbelleğe alınmış font döndürür."""
+    key = (size, bold)
+    if key not in _FONT_CACHE:
+        _FONT_CACHE[key] = pygame.font.SysFont(UI_FONT_NAME, size, bold=bold)
+    return _FONT_CACHE[key]
+
+def render_fit(text, size, color, max_width, bold=False, min_size=11):
+    """Metni max_width'e sığana kadar font boyutunu küçülterek keskin şekilde render eder.
+    Yine sığmazsa sonuna '…' koyarak kırpar. Bulanık scale yerine bunu kullanın."""
+    s = size
+    while s >= min_size:
+        font = get_font(s, bold)
+        if font.size(text)[0] <= max_width:
+            return font.render(text, True, color)
+        s -= 1
+    font = get_font(min_size, bold)
+    clipped = text
+    while clipped and font.size(clipped + "…")[0] > max_width:
+        clipped = clipped[:-1]
+    return font.render(clipped + "…", True, color)
+
+def shrink_to_width(surface, max_width):
+    """Render edilmiş bir yüzeyi, oranını koruyarak max_width'e sığdırır."""
+    if surface.get_width() <= max_width or max_width <= 0:
+        return surface
+    ratio = max_width / surface.get_width()
+    return pygame.transform.smoothscale(
+        surface, (max_width, max(1, int(surface.get_height() * ratio)))
+    )
+
+def wrap_text(font, text, max_width):
+    """Metni kelime bazında satırlara böler."""
+    lines, current = [], []
+    for word in text.split():
+        candidate = " ".join(current + [word])
+        if font.size(candidate)[0] <= max_width or not current:
+            current.append(word)
+        else:
+            lines.append(" ".join(current))
+            current = [word]
+    if current:
+        lines.append(" ".join(current))
+    return lines
+
 class ImageLoader:
     _cache = {}
     
@@ -74,8 +123,9 @@ class Button:
         # 3. Kenar Çizgisi (Vurgu)
         pygame.draw.rect(screen, (255, 255, 255), self.rect, border_radius=10, width=2)
 
-        # 4. Metin
+        # 4. Metin (butona sığdırılır, taşma engellenir)
         text_surf = self.font.render(self.text, True, (255, 255, 255))
+        text_surf = shrink_to_width(text_surf, self.rect.width - 28)
         text_rect = text_surf.get_rect(center=self.rect.center)
         screen.blit(text_surf, text_rect)
 
@@ -158,36 +208,24 @@ class ClassCard:
         # 4. Metin Bölümü
         text_y_start = icon_y_start + icon_size + 15
         
-        name_surf = self.font_sub.render(self.data['name'].upper(), True, (255, 255, 255))
-        if name_surf.get_width() > self.rect.width - 20:
-            scale = (self.rect.width - 20) / name_surf.get_width()
-            name_surf = pygame.transform.smoothscale(
-                name_surf,
-                (int(name_surf.get_width() * scale), int(name_surf.get_height() * scale)),
-            )
+        max_txt_w = self.rect.width - 24
+        name_surf = render_fit(self.data['name'].upper(), 24, (255, 255, 255), max_txt_w, bold=True)
         name_rect = name_surf.get_rect(center=(self.rect.centerx, text_y_start))
         screen.blit(name_surf, name_rect)
-        
+
         pygame.draw.line(screen, (*self.data['color'], 80), (self.rect.x + 40, text_y_start + 18), (self.rect.x + self.rect.width - 40, text_y_start + 18), 1)
 
         y_off = text_y_start + 35
-        max_txt_w = self.rect.width - 20
         for line in self.data['desc']:
-            d_surf = self.font_desc.render(line, True, (200, 200, 210))
-            if d_surf.get_width() > max_txt_w:
-                scale = max_txt_w / d_surf.get_width()
-                d_surf = pygame.transform.smoothscale(d_surf, (int(d_surf.get_width() * scale), int(d_surf.get_height() * scale)))
+            d_surf = render_fit(line, 17, (200, 200, 210), max_txt_w)
             d_rect = d_surf.get_rect(center=(self.rect.centerx, y_off))
             screen.blit(d_surf, d_rect)
             y_off += 21
 
         y_off = self.rect.bottom - 25
         stat_items = list(self.data['stats'].items())
-        combined_stats = " | ".join([f"{k}: {v}" for k, v in stat_items])
-        s_surf = self.font_desc.render(combined_stats, True, self.data['color'])
-        if s_surf.get_width() > max_txt_w:
-            scale = max_txt_w / s_surf.get_width()
-            s_surf = pygame.transform.smoothscale(s_surf, (int(s_surf.get_width() * scale), int(s_surf.get_height() * scale)))
+        combined_stats = "  •  ".join([f"{k} {v}" for k, v in stat_items])
+        s_surf = render_fit(combined_stats, 16, self.data['color'], max_txt_w)
         s_rect = s_surf.get_rect(center=(self.rect.centerx, y_off))
         screen.blit(s_surf, s_rect)
 
@@ -261,11 +299,9 @@ class SkillButton:
         pygame.draw.rect(screen, bg, self.rect, border_radius=10)
         pygame.draw.rect(screen, (255, 255, 255), self.rect, width=2, border_radius=10)
         
-        txt = font.render(self.text, True, (255, 255, 255))
         max_width = self.rect.width - 16
-        if txt.get_width() > max_width:
-            ratio = max_width / txt.get_width()
-            txt = pygame.transform.smoothscale(txt, (max_width, int(txt.get_height() * ratio)))
+        txt = font.render(self.text, True, (255, 255, 255))
+        txt = shrink_to_width(txt, max_width)
         text_y = self.rect.centery - 10 if description else self.rect.centery
         screen.blit(txt, txt.get_rect(center=(self.rect.centerx, text_y)))
 
@@ -309,6 +345,7 @@ class TabButton:
         
         color = (255, 255, 255) if is_active else (180, 180, 180)
         txt = font.render(self.text, True, color)
+        txt = shrink_to_width(txt, self.rect.width - 12)
         screen.blit(txt, txt.get_rect(center=self.rect.center))
 
 class EquippedRow:
@@ -378,13 +415,10 @@ class EquippedRow:
             pygame.draw.rect(screen, (30, 30, 40), (self.rect.x + 5, self.rect.y + 5, 40, 40), border_radius=4)
             label = f"Boş {slot_map.get(self.slot_type, self.slot_type)}"
 
-        txt = font_sub.render(label, True, color)
-        # İsmi sığdır (Scale)
-        max_w = self.rect.width - 70
-        if txt.get_width() > max_w:
-            scale = max_w / txt.get_width()
-            txt = pygame.transform.smoothscale(txt, (int(txt.get_width() * scale), int(txt.get_height() * scale)))
-        screen.blit(txt, (self.rect.x + 60, self.rect.y + 15))
+        # İsmi keskin şekilde sığdır (bulanık scale yerine font küçültme)
+        txt = render_fit(label, 18, color, self.rect.width - 70)
+        txt_y = self.rect.y + (self.rect.height - txt.get_height()) // 2
+        screen.blit(txt, (self.rect.x + 60, txt_y))
 
 class BackpackItemCard:
     def __init__(self, x, y, w, h, idx):
@@ -428,44 +462,37 @@ class BackpackItemCard:
             if icon_img:
                 screen.blit(icon_img, (slot_rect.x + 2, slot_rect.y + 2))
         
-        # Name (Kırpılmış veya punto küçültülmüş)
-        name_t = font_sub.render(item['name'], True, color)
-        if name_t.get_width() > self.rect.width - 15:
-            name_t = pygame.transform.scale(name_t, (self.rect.width - 15, int(name_t.get_height() * 0.9)))
+        # Name (sığmazsa font küçültülür, oran bozulmaz)
+        name_t = render_fit(item['name'], 18, color, self.rect.width - 30)
         screen.blit(name_t, (self.rect.x + 8, self.rect.y + 6))
-        
+
         # Buttons
         # KULLAN (Sadece ekipmanlar için)
         if item.get('type') == 'essence':
             pygame.draw.rect(screen, (155, 89, 182), self.use_rect, border_radius=4)
-            u_txt = font_sub.render("TÜKET", True, (255, 255, 255))
-            u_scale = pygame.transform.scale(u_txt, (int(u_txt.get_width()*0.6), int(u_txt.get_height()*0.6)))
-            screen.blit(u_scale, u_scale.get_rect(center=self.use_rect.center))
+            u_txt = render_fit("TÜKET", 15, (255, 255, 255), self.use_rect.width - 8, bold=True)
+            screen.blit(u_txt, u_txt.get_rect(center=self.use_rect.center))
         elif item.get('type') != 'orb':
             pygame.draw.rect(screen, (46, 204, 113), self.use_rect, border_radius=4)
-            u_txt = font_sub.render("GİY", True, (255, 255, 255))
-            u_scale = pygame.transform.scale(u_txt, (int(u_txt.get_width()*0.6), int(u_txt.get_height()*0.6)))
-            screen.blit(u_scale, u_scale.get_rect(center=self.use_rect.center))
+            u_txt = render_fit("GİY", 15, (255, 255, 255), self.use_rect.width - 8, bold=True)
+            screen.blit(u_txt, u_txt.get_rect(center=self.use_rect.center))
         else:
             pygame.draw.rect(screen, (50, 50, 70), self.use_rect, border_radius=4)
-            u_txt = font_sub.render("ORB", True, (150, 150, 150))
-            u_scale = pygame.transform.scale(u_txt, (int(u_txt.get_width()*0.6), int(u_txt.get_height()*0.6)))
-            screen.blit(u_scale, u_scale.get_rect(center=self.use_rect.center))
-        
+            u_txt = render_fit("ORB", 15, (150, 150, 150), self.use_rect.width - 8, bold=True)
+            screen.blit(u_txt, u_txt.get_rect(center=self.use_rect.center))
+
         # SAT
         pygame.draw.rect(screen, (231, 76, 60), self.sell_rect, border_radius=4)
         s_price = item.get('price', 100) // 2
-        s_txt = font_sub.render(f"SAT({s_price})", True, (255, 255, 255))
-        s_scale = pygame.transform.scale(s_txt, (int(s_txt.get_width()*0.6), int(s_txt.get_height()*0.6)))
-        screen.blit(s_scale, s_scale.get_rect(center=self.sell_rect.center))
- 
+        s_txt = render_fit(f"SAT ({s_price})", 15, (255, 255, 255), self.sell_rect.width - 8, bold=True)
+        screen.blit(s_txt, s_txt.get_rect(center=self.sell_rect.center))
+
         # CRAFT
         is_equip = item.get('type') in ['weapon', 'helmet', 'chest', 'amulet', 'pet']
         c_color = (52, 152, 219) if is_equip else (100, 100, 100)
         pygame.draw.rect(screen, c_color, self.craft_rect, border_radius=4)
-        c_txt = font_sub.render("UP", True, (255, 255, 255))
-        c_scale = pygame.transform.scale(c_txt, (int(c_txt.get_width()*0.6), int(c_txt.get_height()*0.6)))
-        screen.blit(c_scale, c_scale.get_rect(center=self.craft_rect.center))
+        c_txt = render_fit("UP", 15, (255, 255, 255), self.craft_rect.width - 8, bold=True)
+        screen.blit(c_txt, c_txt.get_rect(center=self.craft_rect.center))
 
         # --- Set/Corrupted Overlay (S) ---
         if item.get('setTag'):
@@ -529,10 +556,9 @@ class MarketCard:
                 screen.blit(icon_img, (slot_rect.x + 2, slot_rect.y + 2))
 
         # Name & Price (SAĞA KAYDIRILDI)
-        name_txt = font_desc.render(self.item['name'], True, color)
-        # İsmi sığdır (Scale)
-        if name_txt.get_width() > self.rect.width - 185:
-            name_txt = pygame.transform.scale(name_txt, (self.rect.width - 185, int(name_txt.get_height() * 0.9)))
+        # İsim, ikon ile AL butonu arasına sığdırılır (taşma/ezilme yok)
+        name_max_w = max(40, self.buy_rect.left - (self.rect.x + 75) - 10)
+        name_txt = render_fit(self.item['name'], 18, color, name_max_w)
         screen.blit(name_txt, (self.rect.x + 75, self.rect.y + 15))
         
         # Price

@@ -1,6 +1,6 @@
 import pygame
 from scenes.base_scene import BaseScene
-from ui_elements import ClassCard
+from ui_elements import ClassCard, render_fit
 
 class ClassSelectScene(BaseScene):
     def on_enter(self):
@@ -107,14 +107,15 @@ class ClassSelectScene(BaseScene):
             if i == self.preview_idx:
                 pygame.draw.rect(self.screen, (255, 255, 255), card.rect, width=3, border_radius=12)
             
-        info_font = pygame.font.SysFont("Segoe UI, Arial", 20)
-        info = info_font.render("Tıkla veya ENTER: Başla  •  Oklar/WASD: Seç  •  B: Boss testi  •  ESC: Geri", True, (150, 150, 165))
+        # Alt bilgi, boss butonuyla çakışmayacak genişliğe sığdırılır
+        info_max_w = self.boss_test_rect.left - 60
+        info = render_fit("Tıkla veya ENTER: Başla  •  Oklar/WASD: Seç  •  B: Boss testi  •  ESC: Geri", 20, (150, 150, 165), info_max_w)
         self.screen.blit(info, (30, self.height - 42))
-        
+
         # Draw Boss Test Button
         mouse_pos = pygame.mouse.get_pos()
         color = (192, 57, 43) if self.boss_test_rect.collidepoint(mouse_pos) else (150, 40, 40)
         pygame.draw.rect(self.screen, color, self.boss_test_rect, border_radius=8)
         pygame.draw.rect(self.screen, (255, 255, 255), self.boss_test_rect, width=2, border_radius=8)
-        bt_text = self.font_sub.render("BOSS DENEME ODASI", True, (255, 255, 255))
-        self.screen.blit(bt_text, (self.boss_test_rect.centerx - bt_text.get_width()//2, self.boss_test_rect.centery - bt_text.get_height()//2))
+        bt_text = render_fit("BOSS DENEME ODASI", 24, (255, 255, 255), self.boss_test_rect.width - 20, bold=True)
+        self.screen.blit(bt_text, bt_text.get_rect(center=self.boss_test_rect.center))

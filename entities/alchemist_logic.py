@@ -3,6 +3,12 @@ import pygame
 import random
 
 class Alchemist:
+    """
+    Simyacı (Alchemist) - Alan hasarı (AoE) ve DoT uzmanı.
+    - +%40 alan yarıçapı ve +%30 süreli hasar (DoT) bonusu.
+    - Bombaları x1.4 alan çarpanıyla fırlatır; yavaş ama geniş etkili vuruş
+      (taban saldırı süresi 900ms - diğer sınıflardan yavaş).
+    """
     def __init__(self):
         # Bomber'dan (1500) daha hızlı
         self.attack_cooldown = 1200

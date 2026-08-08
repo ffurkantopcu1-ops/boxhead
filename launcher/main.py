@@ -222,12 +222,11 @@ class LauncherApp:
     def _expire_update_check(self, generation):
         if generation != self._check_generation or self.release_info is not None:
             return
-        # DNS çözümleme bazı Windows ağlarında urllib timeout'unu aşabilir.
-        # Nesil numarasını değiştirerek geç dönen iş parçacığının UI'ı bozmasını önle.
-        self._check_generation += 1
+        # Nesli bozma: yavaş ağlarda geç gelen sonuç yine de UI'a yansısın.
+        # Şimdilik çevrimdışı durumu göster ki kullanıcı beklemeden oynayabilsin.
         self._set_status(
-            "Kontrol zaman aşımına uğradı", self.colors['orange'],
-            "6,5 saniye içinde yanıt alınamadı. Çevrimdışı oynayabilir veya tekrar deneyebilirsin.",
+            "Kontrol uzun sürüyor", self.colors['orange'],
+            "Yanıt gecikti; kontrol arka planda sürüyor. Çevrimdışı oynayabilirsin.",
         )
         self._show_offline_state()
 

@@ -80,13 +80,13 @@ class InventoryManager:
         # 🟢 STEP 1: CLASS-SPECIFIC BASE STATS (Source of Truth)
         class_bases = {
             "warrior":     {"dmgMult": 0.2,  "max_hp_mult": 0.2,  "speed": 5.0},
-            "sniper":      {"dmgMult": 0.5,  "critChance": 0.2,   "speed": 4.0, "bounce": 1, "pierce": 1},
+            "sniper":      {"dmgMult": 0.5,  "critChance": 0.2,   "speed": 4.0, "bounce": 1, "pierce": 1, "attack_cooldown": 500},
             "engineer":    {"turretLimit": 1, "armor": 10,         "speed": 4.2},
             "beastmaster": {"minionDamage": 0.3, "max_hp_mult": 0.1, "speed": 4.6},
             "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 6.0},
-            "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 4.2},
+            "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 4.2, "attack_cooldown": 900},
             # --- YENİ SINIFLAR ---
-            "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.0},
+            "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.0, "attack_cooldown": 400},
             "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 4.6},
         }
         
@@ -188,26 +188,7 @@ class InventoryManager:
             new_stats["max_hp"] *= (1.0 + class_mods["max_hp_mult"])
         if "attack_speed_mult" in class_mods:
             new_stats["attack_speed_bonus"] += class_mods["attack_speed_mult"]
-            
-        # 🟢 FINAL MATH (Diminishing returns for speed and aoe)
-        # Cooldown: base / (1 + bonuses)
-        # AoE: base * (1 + bonuses)
-        base_cooldown = new_stats.get("attack_cooldown", 350)
-        speed_bonus = new_stats.get("attack_speed_bonus", 0)
-        # Eşyalardaki fireRate bonuslarını da hıza ekle
-        speed_bonus += new_stats.get("fireRate", 0)
-        new_stats["attack_cooldown"] = base_cooldown / (1.0 + max(-0.9, speed_bonus))
-        
-        aoe_bonus = new_stats.get("aoe_bonus", 0)
-        # Eşyalardaki aoe statını da bonusa ekle
-        aoe_bonus += (new_stats.get("aoe", 1.0) - 1.0)
-        new_stats["aoe"] = 1.0 + aoe_bonus # Bu çarpan Projectile'da 100 ile çarpılacak
-        
-        # Melee Range Hesabı
-        melee_bonus = (new_stats.get("meleeRange", 1.0) - 1.0)
-        melee_bonus += (new_stats.get("meleeRangeFlat", 0) / 100.0)
-        new_stats["meleeRange"] = 1.0 + melee_bonus
-        
+
         # 🏰 SET BONUSES
         active_sets = {}
         for slot in self.equipped:
@@ -255,8 +236,41 @@ class InventoryManager:
         # Overlay other class mods
         for k, v in class_mods.items():
             if k not in ["dmgMult", "max_hp_mult", "attack_speed_mult"]:
-                if k in new_stats: new_stats[k] += v
-                else: new_stats[k] = v
+                if k == "speed":
+                    # Sınıf hızı 4.0 tabanının YERİNE geçer (üstüne eklenmez);
+                    # eşya/skill hız bonusları korunur.
+                    new_stats["speed"] += v - base_stats["speed"]
+                elif k == "attack_cooldown":
+                    # Sınıf taban vuruş süresi 350ms varsayılanının yerine geçer
+                    new_stats["attack_cooldown"] = v
+                elif k in new_stats:
+                    new_stats[k] += v
+                else:
+                    new_stats[k] = v
+
+        # 🟢 FINAL MATH (Diminishing returns for speed and aoe)
+        # Cooldown: base / (1 + bonuses)
+        # AoE: base * (1 + bonuses)
+        # Silahın kendi vuruş süresi (attackCooldown) sınıf tabanını ezer
+        base_cooldown = new_stats.get("attackCooldown", 0) or new_stats.get("attack_cooldown", 350)
+        speed_bonus = new_stats.get("attack_speed_bonus", 0)
+        # Eşyalardaki fireRate bonuslarını da hıza ekle
+        speed_bonus += new_stats.get("fireRate", 0)
+        # Saldırı hızı azalan getiri (+%100 üzeri yumuşak tavan)
+        if speed_bonus > 1.0:
+            excess = speed_bonus - 1.0
+            speed_bonus = 1.0 + excess / (1.0 + excess)
+        new_stats["attack_cooldown"] = base_cooldown / (1.0 + max(-0.9, speed_bonus))
+
+        aoe_bonus = new_stats.get("aoe_bonus", 0)
+        # Eşyalardaki aoe statını da bonusa ekle
+        aoe_bonus += (new_stats.get("aoe", 1.0) - 1.0)
+        new_stats["aoe"] = 1.0 + aoe_bonus # Bu çarpan Projectile'da 100 ile çarpılacak
+
+        # Melee Range Hesabı
+        melee_bonus = (new_stats.get("meleeRange", 1.0) - 1.0)
+        melee_bonus += (new_stats.get("meleeRangeFlat", 0) / 100.0)
+        new_stats["meleeRange"] = 1.0 + melee_bonus
 
         if getattr(self.player, '_bloodwalker_rage_active', False):
             new_stats["dmgMult"] = new_stats.get("dmgMult", 1.0) * 1.40

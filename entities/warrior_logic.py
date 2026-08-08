@@ -2,6 +2,12 @@ import math
 import pygame
 
 class Warrior:
+    """
+    Savaşçı (Warrior) - Dayanıklı yakın dövüş sınıfı.
+    - +%20 hasar ve +%20 maksimum can (en tanky başlangıç).
+    - Geniş koni (~70°) kılıç savurması; hasar silahın physDmg değeriyle ölçeklenir.
+    - Ateş/buz/zehir statlarını yakın dövüşte uygular; ateş vuruşları alana sıçrar.
+    """
     def __init__(self):
         self.attack_range = 100
         self.attack_arc = 1.2 # ~70 derece
@@ -19,8 +25,9 @@ class Warrior:
         angle = player.facing_angle
         
         # Hasar ve Görsel Belirleme
+        # Denge: Sabit 45 yerine silahın physDmg değeri baz alınır (silahla ölçeklenir)
         is_punch = weapon is None
-        dmg_base = 45 if not is_punch else 5
+        dmg_base = (18 + player.stats.get("physDmg", 0)) if not is_punch else 5
         visual_type = "sweep" if not is_punch else "slash"
         visual_timer = 0.15 if not is_punch else 0.1
         
@@ -38,25 +45,27 @@ class Warrior:
                 dy = e.y - player.y
                 hit_range = range_val + e.radius
                 if dx * dx + dy * dy < hit_range * hit_range:
-                    # Açı Kontrolü
+                    # Açı Kontrolü (±π sınırında normalize edilir)
                     angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
-                    diff = abs(angle_to_e - angle)
+                    diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)
                     if diff < self.attack_arc / 2:
                         import random
                         is_crit = random.random() < player.stats.get("critChance", 0.05)
-                        final_dmg = dmg * 2 if is_crit else dmg
-                        
+                        crit_mult = 2.0 + player.stats.get("critDmg", 0)
+                        final_dmg = dmg * crit_mult if is_crit else dmg
+                        elem_mult = 1.0 + player.stats.get("elementDmgMult", 0.0)
+
                         # --- ELEMENTEL UYGULAMA (NEW!) ---
                         # 1. Zehir
-                        p_dps = player.stats.get("poisonDps", 0) * player.stats["dmgMult"]
+                        p_dps = player.stats.get("poisonDps", 0) * player.stats["dmgMult"] * elem_mult
                         if p_dps > 0: e.apply_dot('poison', p_dps, 3.0)
-                        
+
                         # 2. Buz (Sadece DoT, Yavaşlatma Kaldırıldı v1.0.6.6)
-                        f_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats["dmgMult"]
+                        f_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats["dmgMult"] * elem_mult
                         if f_dmg > 0: e.apply_dot('frost', f_dmg * 0.5, 3.5)
-                        
+
                         # 3. Ateş (Patlama + Yanma)
-                        fire_dmg = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats["dmgMult"]
+                        fire_dmg = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats["dmgMult"] * elem_mult
                         if fire_dmg > 0:
                             # Vuruş anında mini patlama (AoE Pulse)
                             game.add_event("explosion", e.x, e.y, radius=80, color=(255, 100, 0), timer=0.15)

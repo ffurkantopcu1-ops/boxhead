@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -18,6 +19,26 @@ from launcher.config import (
     MIN_LAUNCHER_VERSION, LAUNCHER_VERSION, UPDATE_MANIFEST_URL,
     LATEST_DOWNLOAD_URL, RETRY_DELAY,
 )
+
+
+_system_getaddrinfo = socket.getaddrinfo
+
+
+def _ipv4_first_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    # Bazı ağlarda AAAA (IPv6) DNS sorgusu yanıtsız kalıp her istekte ~10+ sn
+    # bekletiyor; urllib timeout'u DNS aşamasını kapsamadığı için kontrol
+    # zaman aşımına uğruyor. Önce IPv4 dene, olmazsa sistem davranışına dön.
+    if family in (0, socket.AF_UNSPEC):
+        try:
+            return _system_getaddrinfo(
+                host, port, socket.AF_INET, type, proto, flags
+            )
+        except socket.gaierror:
+            pass
+    return _system_getaddrinfo(host, port, family, type, proto, flags)
+
+
+socket.getaddrinfo = _ipv4_first_getaddrinfo
 
 
 def get_local_version() -> str:

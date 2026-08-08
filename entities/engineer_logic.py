@@ -2,6 +2,13 @@ import math
 import pygame
 
 class Engineer:
+    """
+    Mühendis (Engineer) - Taret odaklı savunma sınıfı.
+    - +1 taret limiti (toplam 2) ve +10 zırh ile başlar.
+    - 5 saniyede bir taret kurabilir; taret hasarı sahibinin silah gücüyle
+      (physDmg) ve turretDmg/turretRate statlarıyla ölçeklenir.
+    - Taretler düşman saldırısını üstüne çeker (aggro emer).
+    """
     def __init__(self):
         self.attack_range = 300
         self.turret_cooldown = 0
