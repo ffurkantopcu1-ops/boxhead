@@ -72,10 +72,8 @@ class MenuScene(BaseScene):
             mouse_pos = pygame.mouse.get_pos()
             mouse_clicked = any(e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 for e in events)
             
-            panel_y = self.height // 2 - 100
-            visible_slots = self.save_slots[self.load_offset:self.load_offset + 5]
-            for i in range(len(visible_slots)):
-                slot_rect = pygame.Rect(self.width // 2 - 250, panel_y + 100 + i * 50 - 20, 500, 40)
+            # Çizimde saklanan rect'ler kullanılır (tek kaynak)
+            for i, slot_rect in enumerate(getattr(self, 'load_slot_rects', [])):
                 if slot_rect.collidepoint(mouse_pos):
                     self.selected_idx = self.load_offset + i
                     if mouse_clicked:
@@ -100,9 +98,8 @@ class MenuScene(BaseScene):
             mouse_pos = pygame.mouse.get_pos()
             mouse_clicked = any(e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 for e in events)
             
-            panel_y = self.height // 2 - 50
-            for i in range(2):
-                opt_rect = pygame.Rect(self.width // 2 - 200, panel_y + 60 + i * 70 - 20, 400, 50)
+            # Çizimde saklanan rect'ler kullanılır (tek kaynak)
+            for i, opt_rect in enumerate(getattr(self, 'settings_row_rects', [])):
                 if opt_rect.collidepoint(mouse_pos):
                     self.selected_idx = i
                     if mouse_clicked:
@@ -160,21 +157,11 @@ class MenuScene(BaseScene):
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     self.menu_state = "MAIN"
 
-            # Tıklama kontrolü grid üzerinden
-            cols = 3
-            box_w, box_h = 300, 100
-            padding = 20
-            start_x = self.width // 2 - ((cols * box_w + (cols - 1) * padding) // 2)
-            start_y = 150 + self.shop_scroll
-            
-            for i, upg in enumerate(self.shop.UPGRADES):
-                col = i % cols
-                row = i // cols
-                rect = pygame.Rect(start_x + col * (box_w + padding), start_y + row * (box_h + padding), box_w, box_h)
-                
-                # Sadece ekranda görünenlere tıklanabilir
-                if rect.bottom > 100 and rect.top < self.height:
-                    if rect.collidepoint(mouse_pos) and mouse_clicked:
+            # Tıklama kontrolü: çizimde saklanan görünür rect'ler (tek kaynak)
+            if mouse_clicked:
+                for i, rect in getattr(self, 'shop_box_rects', {}).items():
+                    if rect.collidepoint(mouse_pos):
+                        upg = self.shop.UPGRADES[i]
                         meta_updated, success, msg = self.shop.purchase(self.meta_data, upg["id"])
                         if success:
                             SaveManager.save_meta(meta_updated)
@@ -182,6 +169,7 @@ class MenuScene(BaseScene):
                         self.shop_message = msg
                         self.shop_message_timer = 2.5
                         self.shop_message_success = success
+                        break
 
     def _trigger_main_action(self, idx):
         if idx == 0:
@@ -308,8 +296,10 @@ class MenuScene(BaseScene):
             "ANA MENÜYE DÖN"
         ]
 
+        self.settings_row_rects = []
         for i, opt in enumerate(opts):
             row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 60 + i * 70 - 20, 400, 50)
+            self.settings_row_rects.append(row_rect)
             if i == self.selected_idx:
                 pygame.draw.rect(self.screen, (45, 45, 65), row_rect, border_radius=8)
                 pygame.draw.rect(self.screen, (241, 196, 15), row_rect, width=2, border_radius=8)
@@ -332,9 +322,11 @@ class MenuScene(BaseScene):
             msg = render_fit("KAYIT BULUNAMADI", 26, (150, 150, 150), panel.width - 40)
             self.screen.blit(msg, (self.width // 2 - msg.get_width() // 2, panel.y + 150))
         else:
+            self.load_slot_rects = []
             for i, slot in enumerate(self.save_slots[self.load_offset:self.load_offset + 5]):
                 actual_idx = self.load_offset + i
                 row_rect = pygame.Rect(self.width // 2 - 250, panel.y + 100 + i * 50 - 20, 500, 40)
+                self.load_slot_rects.append(row_rect)
                 is_selected = actual_idx == self.selected_idx
                 if is_selected:
                     pygame.draw.rect(self.screen, (45, 45, 65), row_rect, border_radius=8)
@@ -372,14 +364,17 @@ class MenuScene(BaseScene):
 
         mouse_pos = pygame.mouse.get_pos()
 
+        # Hitbox tek kaynak: görünen kutu rect'leri saklanır
+        self.shop_box_rects = {}
         for i, upg in enumerate(self.shop.UPGRADES):
             col = i % cols
             row = i // cols
             rect = pygame.Rect(start_x + col * (box_w + padding), start_y + row * (box_h + padding), box_w, box_h)
-            
+
             # Sadece ekrandakileri çiz
             if rect.bottom < 100 or rect.top > self.height:
                 continue
+            self.shop_box_rects[i] = rect
 
             hover = rect.collidepoint(mouse_pos)
             rank = self.shop.get_rank(self.meta_data, upg["id"])

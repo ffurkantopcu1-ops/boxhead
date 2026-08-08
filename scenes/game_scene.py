@@ -511,9 +511,10 @@ class GameScene(BaseScene):
                         break
 
     def _handle_game_over_mouse(self, pos):
-        # "Yeniden Başla" butonu (Merkezlendi)
-        restart_rect = pygame.Rect(self.width // 2 - 200, self.height // 2 + 80, 400, 60)
-        
+        # "Yeniden Başla" butonu (çizimde saklanan rect kullanılır)
+        restart_rect = getattr(self, 'game_over_restart_rect', None) or \
+            pygame.Rect(self.width // 2 - 200, self.height // 2 + 80, 400, 60)
+
         if restart_rect.collidepoint(pos):
             self.manager.change_scene("MainMenu") # New Game için geri at
 
@@ -575,14 +576,12 @@ class GameScene(BaseScene):
                             self.logic.add_event("damage_text", p.x, p.y-40, value="Satın Alındı!", color=(46, 204, 113))
                     return
 
-            # ORB KULLANMA (Envanterdeki Orblar - Sol)
+            # ORB KULLANMA (Envanterdeki Orblar - Sol; çizimde saklanan rect'ler)
             orbs_in_inv = [x for x in p.inventory if x.get('type') == 'orb']
-            offset_i = self.orb_inv_page * 8
-            for i in range(min(8, len(orbs_in_inv) - offset_i)):
-                actual_idx = offset_i + i
+            for actual_idx, use_btn in getattr(self, 'craft_orb_use_rects', []):
+                if actual_idx >= len(orbs_in_inv):
+                    continue
                 orb = orbs_in_inv[actual_idx]
-                y_off = panel.y + 80 + i * 55
-                use_btn = pygame.Rect(panel.x + 30 + 180, y_off + 5, 60, 35)
                 if use_btn.collidepoint(pos):
                     # Orb bas!
                     err = self.logic.item_system.apply_orb(self.crafting_target, orb['orb_id'])
@@ -604,10 +603,9 @@ class GameScene(BaseScene):
             if self.craft_mkt_prev_rect.collidepoint(pos) and self.orb_market_page > 0: self.orb_market_page -= 1; return
             if self.craft_mkt_next_rect.collidepoint(pos) and (self.orb_market_page + 1) * 5 < len(market_list): self.orb_market_page += 1; return
             
-            # GERİ AL (Hedef Eşyayı Envantere Çek)
-            item_rect = pygame.Rect(self.width // 2 - 125, panel.y + 80, 250, 180)
-            take_back_btn = pygame.Rect(self.width // 2 - 60, item_rect.bottom + 15, 120, 40)
-            if take_back_btn.collidepoint(pos):
+            # GERİ AL (Hedef Eşyayı Envantere Çek) - çizimde saklanan rect kullanılır
+            take_back_btn = getattr(self, 'craft_take_back_rect', None)
+            if take_back_btn and take_back_btn.collidepoint(pos):
                 if p.add_item(self.crafting_target):
                     self.crafting_target = None
                     self.show_craft_window = False
@@ -730,11 +728,10 @@ class GameScene(BaseScene):
                         return
 
         elif self.active_tab == "skills":
-            # Tablar
-            for i, tab_name in enumerate(self.skill_sub_tabs):
-                tab_rect = pygame.Rect(self.width // 2 - 480 + i * 195, 140, 185, 40)
+            # Tablar (çizimde saklanan rect'ler kullanılır)
+            for i, tab_rect in enumerate(getattr(self, 'skill_sub_tab_rects', [])):
                 if tab_rect.collidepoint(pos):
-                    self.active_skill_sub_tab = tab_name
+                    self.active_skill_sub_tab = self.skill_sub_tabs[i]
                     
             if self.reset_btn_rect.collidepoint(pos):
                 if p.reset_skills():
@@ -1382,19 +1379,21 @@ class GameScene(BaseScene):
         self.screen.blit(title_l, (panel.x + 30, panel.y + 30))
         
         offset_i = self.orb_inv_page * 8
+        self.craft_orb_use_rects = []
         for i in range(min(8, len(orbs_in_inv) - offset_i)):
             orb = orbs_in_inv[offset_i + i]
             y_off = panel.y + 80 + i * 55
             rect = pygame.Rect(panel.x + 30, y_off, 250, 45)
             pygame.draw.rect(self.screen, (45, 45, 60), rect, border_radius=5)
-            
+
             name = orb['name'].split(" (")[0]
             stack = orb.get('stack', 1)
             txt = self.font_desc.render(f"{name} x{stack}", True, (255, 255, 255))
             self.screen.blit(txt, (rect.x + 10, rect.y + 12))
-            
-            # Seç/Kullan Butonu (Görsel olarak)
+
+            # Seç/Kullan Butonu - hitbox tek kaynak: rect saklanır
             use_btn = pygame.Rect(rect.right - 70, rect.y + 5, 60, 35)
+            self.craft_orb_use_rects.append((offset_i + i, use_btn))
             pygame.draw.rect(self.screen, (39, 174, 96), use_btn, border_radius=5)
             u_txt = self.font_desc.render("SEÇ", True, (255, 255, 255))
             self.screen.blit(u_txt, u_txt.get_rect(center=use_btn.center))
@@ -1459,8 +1458,9 @@ class GameScene(BaseScene):
             self.screen.blit(af_t, (item_rect.x + 15, y_s))
             y_s += 25
 
-        # GERİ AL BUTONU (Kutunun biraz altına)
+        # GERİ AL BUTONU (Kutunun biraz altına) - hitbox tek kaynak: bu rect saklanır
         take_back_btn = pygame.Rect(self.width // 2 - 70, item_rect.bottom + 10, 140, 40)
+        self.craft_take_back_rect = take_back_btn
         pygame.draw.rect(self.screen, (52, 152, 219), take_back_btn, border_radius=5)
         tb_t = self.font_desc.render("GERİ AL", True, (255, 255, 255))
         self.screen.blit(tb_t, tb_t.get_rect(center=take_back_btn.center))
@@ -1901,9 +1901,11 @@ class GameScene(BaseScene):
             self.screen.blit(txt, txt.get_rect(center=rect.center))
 
     def draw_skills_tab(self, p):
-        # ÜST KATEGORİ BUTONLARI (Alt Sekme)
+        # ÜST KATEGORİ BUTONLARI (Alt Sekme) - hitbox tek kaynak: rect'ler saklanır
+        self.skill_sub_tab_rects = []
         for i, tab_name in enumerate(self.skill_sub_tabs):
             tab_rect = pygame.Rect(self.width // 2 - 480 + i * 195, 140, 185, 40)
+            self.skill_sub_tab_rects.append(tab_rect)
             color = (46, 204, 113) if self.active_skill_sub_tab == tab_name else (52, 73, 94)
             pygame.draw.rect(self.screen, color, tab_rect, border_radius=5)
             pygame.draw.rect(self.screen, (255, 255, 255), tab_rect, width=1, border_radius=5)
@@ -2129,8 +2131,9 @@ class GameScene(BaseScene):
                 self.screen.blit(st_txt, (self.width // 2 - st_txt.get_width() // 2, sy))
                 sy += 30
         
-        # Buttons
+        # Buttons - hitbox tek kaynak: rect saklanır
         restart_rect = pygame.Rect(self.width // 2 - 200, self.height // 2 + 80, 400, 60)
+        self.game_over_restart_rect = restart_rect
         
         # Hover Kontrolü
         m_pos = pygame.mouse.get_pos()
@@ -2183,6 +2186,7 @@ class GameScene(BaseScene):
         all_auras = aura_mgr.get_all_auras()
         
         # Sayfalama
+        self.aura_btn_rects = []
         offset = self.aura_page * 8
         for i in range(8):
             idx = offset + i
@@ -2192,20 +2196,21 @@ class GameScene(BaseScene):
             ax = aura_panel.x + 20 + (i % 2) * 460
             ay = aura_panel.y + 60 + (i // 2) * 100
             card_rect = pygame.Rect(ax, ay, 440, 90)
-            
+
             # Kart Arkaplanı
             bg_color = (45, 45, 60)
             if aura.id in p.active_auras: bg_color = (60, 60, 80)
             pygame.draw.rect(self.screen, bg_color, card_rect, border_radius=10)
-            
+
             # Aura İsmi ve Açıklama
             name_t = self.font_sub.render(aura.name, True, (241, 196, 15))
             self.screen.blit(name_t, (ax + 15, ay + 10))
             # Açıklamayı sığdır (Wrap)
             self.draw_text_wrapped(aura.description, ax + 15, ay + 42, 290, (200, 200, 200), self.font_desc)
-            
-            # Buton (Satın Al veya Kuşan)
+
+            # Buton (Satın Al veya Kuşan) - hitbox tek kaynak: rect saklanır
             btn_rect = pygame.Rect(ax + 320, ay + 15, 100, 60)
+            self.aura_btn_rects.append((idx, btn_rect))
             if aura.id in p.purchased_auras:
                 is_active = aura.id in p.active_auras
                 btn_color = (46, 204, 113) if is_active else (52, 152, 219)
@@ -2227,12 +2232,14 @@ class GameScene(BaseScene):
             lock_msg = self.font_sub.render("TAPINAK KİLİTLİ: Önce Wave 10 Boss'unu Yenmelisin!", True, (231, 76, 60))
             self.screen.blit(lock_msg, lock_msg.get_rect(center=aura_panel.center))
                 
-        # Sayfalama Butonları
+        # Sayfalama Butonları - hitbox tek kaynak: rect'ler saklanır
+        self.aura_prev_rect = pygame.Rect(aura_panel.x + 400, aura_panel.bottom - 40, 70, 30)
+        self.aura_next_rect = pygame.Rect(aura_panel.x + 490, aura_panel.bottom - 40, 70, 30)
         if self.aura_page > 0:
-            pygame.draw.rect(self.screen, (52, 152, 219), (aura_panel.x + 400, aura_panel.bottom - 40, 70, 30), border_radius=5)
+            pygame.draw.rect(self.screen, (52, 152, 219), self.aura_prev_rect, border_radius=5)
             self.screen.blit(self.font_desc.render("<", True, (255, 255, 255)), (aura_panel.x + 430, aura_panel.bottom - 35))
         if (self.aura_page + 1) * 8 < len(all_auras):
-            pygame.draw.rect(self.screen, (52, 152, 219), (aura_panel.x + 490, aura_panel.bottom - 40, 70, 30), border_radius=5)
+            pygame.draw.rect(self.screen, (52, 152, 219), self.aura_next_rect, border_radius=5)
             self.screen.blit(self.font_desc.render(">", True, (255, 255, 255)), (aura_panel.x + 520, aura_panel.bottom - 35))
 
     def draw_synergy_tab(self, p):
@@ -2318,22 +2325,14 @@ class GameScene(BaseScene):
             
     def update_aura_clicks(self, pos, p):
         if not p.is_essence_system_unlocked: return False
-        
+
         from logic.aura_system import AuraManager
         aura_mgr = AuraManager()
         all_auras = aura_mgr.get_all_auras()
-        
-        aura_panel = pygame.Rect(self.width // 2 - 480, 360, 960, 480)
-        offset = self.aura_page * 8
-        for i in range(8):
-            idx = offset + i
-            if idx >= len(all_auras): break
-            
+
+        # Çizimde saklanan rect'ler kullanılır (tek kaynak)
+        for idx, btn_rect in getattr(self, 'aura_btn_rects', []):
             aura = all_auras[idx]
-            ax = aura_panel.x + 20 + (i % 2) * 460
-            ay = aura_panel.y + 60 + (i // 2) * 100
-            btn_rect = pygame.Rect(ax + 320, ay + 15, 100, 60)
-            
             if btn_rect.collidepoint(pos):
                 if aura.id in p.purchased_auras:
                     # KUŞAN / ÇIKAR
@@ -2348,9 +2347,11 @@ class GameScene(BaseScene):
                         self.logic.add_event("damage_text", p.x, p.y-40, value="Altın Yetersiz!", color=(231, 76, 60))
                 return True
         
-        # Sayfalama
-        if pygame.Rect(aura_panel.x + 400, aura_panel.bottom - 40, 70, 30).collidepoint(pos) and self.aura_page > 0:
+        # Sayfalama (çizimde saklanan rect'ler)
+        prev_r = getattr(self, 'aura_prev_rect', None)
+        next_r = getattr(self, 'aura_next_rect', None)
+        if prev_r and prev_r.collidepoint(pos) and self.aura_page > 0:
             self.aura_page -= 1; return True
-        if pygame.Rect(aura_panel.x + 490, aura_panel.bottom - 40, 70, 30).collidepoint(pos) and (self.aura_page + 1) * 8 < len(all_auras):
+        if next_r and next_r.collidepoint(pos) and (self.aura_page + 1) * 8 < len(all_auras):
             self.aura_page += 1; return True
         return False
