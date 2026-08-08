@@ -121,7 +121,7 @@ Tüm bu sinerjiler `synergies.json`'a işlenecek:
 *   **Kart Evrimi (Card Evolution):**
     *   Aynı pasif kart tekrar alındığında daha güçlü bir versiyonuna (Gelişmiş -> Efsanevi) evrimleşir.
 *   **Silah Mirası (Weapon Legacy):**
-    *   Kristal yükseltmesi (Crystal Upgrade) olarak eklenecek. Başlangıç silahının nadirlik seviyesini (T4 -> T3 -> T2) artırarak oyuna başlama imkanı sunar.
+    *   Kristal yükseltmesi (Crystal Upgrade) olarak eklenecek. Başlangıç silahının nadirliğini (Normal -> Magic -> Rare) artırarak oyuna başlama imkanı sunar.
 *   **Engineer (Taret Sınıfı) UI Geliştirmesi ve Dengeleme:**
     *   **Taret Bilgi Ekranı (Turret UI):** Taretlerin güncel istatistikleri oyuncuya anlık olarak gösterilecek.
     *   **Dengeleme:** Taretlerin hasar çarpanları, mermi sayıları ve ateşleme oranları yeniden ölçeklendirilecek.
