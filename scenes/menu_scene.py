@@ -24,14 +24,16 @@ class MenuScene(BaseScene):
         button_height = 60
         self.start_y = self.height // 2 - 100 # Biraz daha yukarıdan başlatalım ki alta taşmasın
         
-        # Buton Metinleri ve Renkleri
+        # Buton Metinleri ve Renkleri (koyu fantastik tema paleti, bkz. DESIGN.md)
+        import ui_theme
+        C = ui_theme.COLORS
         self.main_buttons = [
-            Button(self.width // 2, self.start_y, button_width, button_height, "YENİ OYUN", self.font_sub, (46, 204, 113), (39, 174, 96)),
-            Button(self.width // 2, self.start_y + 70, button_width, button_height, "OYUN YÜKLE", self.font_sub, (52, 152, 219), (41, 128, 185)),
-            Button(self.width // 2, self.start_y + 140, button_width, button_height, "KALICI YETENEKLER (KRİSTAL)", self.font_sub, (155, 89, 182), (142, 68, 173)),
-            Button(self.width // 2, self.start_y + 210, button_width, button_height, "AYARLAR", self.font_sub, (149, 165, 166), (127, 140, 141)),
-            Button(self.width // 2, self.start_y + 280, button_width, button_height, "YENİLİKLER", self.font_sub, (230, 126, 34), (211, 84, 0)),
-            Button(self.width // 2, self.start_y + 350, button_width, button_height, "ÇIKIŞ", self.font_sub, (231, 76, 60), (192, 57, 43))
+            Button(self.width // 2, self.start_y, button_width, button_height, "YENİ OYUN", self.font_sub, C["blood"]),
+            Button(self.width // 2, self.start_y + 70, button_width, button_height, "OYUN YÜKLE", self.font_sub, C["night"]),
+            Button(self.width // 2, self.start_y + 140, button_width, button_height, "KALICI YETENEKLER (KRİSTAL)", self.font_sub, C["arcane"]),
+            Button(self.width // 2, self.start_y + 210, button_width, button_height, "AYARLAR", self.font_sub, C["steel"]),
+            Button(self.width // 2, self.start_y + 280, button_width, button_height, "YENİLİKLER", self.font_sub, C["gold"]),
+            Button(self.width // 2, self.start_y + 350, button_width, button_height, "ÇIKIŞ", self.font_sub, C["ember"])
         ]
         self.notes_scroll = 0
         self.patch_notes = None  # PATCH_NOTES ekranına girince yüklenir
@@ -233,8 +235,7 @@ class MenuScene(BaseScene):
 
         if self.menu_state == "MAIN":
             for i, button in enumerate(self.main_buttons):
-                if i == self.selected_idx:
-                    pygame.draw.rect(self.screen, (241, 196, 15), button.rect.inflate(8, 8), width=2, border_radius=13)
+                button.selected = (i == self.selected_idx)
                 button.draw(self.screen)
         elif self.menu_state == "SETTINGS":
             self.draw_settings_menu()
@@ -251,9 +252,9 @@ class MenuScene(BaseScene):
         self.screen.blit(version_surf, (20, self.height - 40))
 
     def draw_patch_notes_menu(self):
+        import ui_theme
         panel = pygame.Rect(self.width // 2 - 400, 120, 800, self.height - 220)
-        pygame.draw.rect(self.screen, (22, 24, 38), panel, border_radius=15)
-        pygame.draw.rect(self.screen, (230, 126, 34), panel, width=2, border_radius=15)
+        ui_theme.draw_panel(self.screen, panel, skull=True)
 
         title = render_fit("YENİLİKLER (PATCH NOTES)", 30, (230, 126, 34), panel.width - 40, bold=True)
         self.screen.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 16))
@@ -295,9 +296,9 @@ class MenuScene(BaseScene):
         self.screen.blit(hint, (panel.centerx - hint.get_width() // 2, panel.bottom - 32))
 
     def draw_settings_menu(self):
+        import ui_theme
         panel = pygame.Rect(self.width // 2 - 250, self.height // 2 - 50, 500, 300)
-        pygame.draw.rect(self.screen, (30, 30, 45), panel, border_radius=15)
-        pygame.draw.rect(self.screen, (100, 100, 120), panel, width=2, border_radius=15)
+        ui_theme.draw_panel(self.screen, panel)
 
         title = render_fit("AYARLAR", 30, (149, 165, 166), panel.width - 40, bold=True)
         self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 18))
@@ -320,9 +321,9 @@ class MenuScene(BaseScene):
         self.screen.blit(hint, (self.width // 2 - hint.get_width() // 2, panel.bottom - 40))
 
     def draw_load_menu(self):
+        import ui_theme
         panel = pygame.Rect(self.width // 2 - 300, self.height // 2 - 100, 600, 400)
-        pygame.draw.rect(self.screen, (30, 30, 45), panel, border_radius=15)
-        pygame.draw.rect(self.screen, (100, 100, 120), panel, width=2, border_radius=15)
+        ui_theme.draw_panel(self.screen, panel)
         
         title = self.font_sub.render("KAYIT SEÇ", True, (52, 152, 219))
         self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 30))

@@ -77,32 +77,29 @@ class ImageLoader:
         return None
 
 class Button:
+    """Pixel-art fantazi banner buton (tema: ui_theme.py, bkz. DESIGN.md).
+
+    Eski API korunur: (x, y, w, h, text, font, color, hover_color).
+    hover_color artık kullanılmaz (hover durumunu tema üretir); `selected`
+    ve `disabled` bayraklarıyla ek durumlar açılır. Kurukafa süsü yalnızca
+    hover/seçili butonda görünür (dar menülerde üst üste binmesin diye).
+    """
+
     def __init__(self, x, y, width, height, text, font, color=(52, 152, 219), hover_color=(41, 128, 185)):
         self.rect = pygame.Rect(x - width // 2, y, width, height)
         self.text = text
-        self.font = font
+        self.font = font  # API uyumu için tutulur; tema kendi fontunu kullanır
         self.base_color = color
-        self.hover_color = hover_color
-        self.current_color = color
         self.is_hovered = False
-        
-        # Premium Efektler için: Kenarlıkları yumuşatma ve parlatma
-        self.glow_alpha = 0
-        self.target_glow = 0
+        self.selected = False
+        self.disabled = False
 
     def update(self, events):
+        if self.disabled:
+            self.is_hovered = False
+            return False
         mouse_pos = pygame.mouse.get_pos()
         self.is_hovered = self.rect.collidepoint(mouse_pos)
-        
-        if self.is_hovered:
-            self.current_color = self.hover_color
-            self.target_glow = 100 # Hover etkisindeki parlama
-        else:
-            self.current_color = self.base_color
-            self.target_glow = 0
-
-        # Glow yumuşatma (Lerp)
-        self.glow_alpha += (self.target_glow - self.glow_alpha) * 0.1
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -111,23 +108,22 @@ class Button:
         return False
 
     def draw(self, screen):
-        # 1. Glow Efekti (Alt katman)
-        if self.glow_alpha > 5:
-            glow_surface = pygame.Surface((self.rect.width + 20, self.rect.height + 20), pygame.SRCALPHA)
-            pygame.draw.rect(glow_surface, (self.current_color[0], self.current_color[1], self.current_color[2], int(self.glow_alpha)), (0, 0, self.rect.width + 20, self.rect.height + 20), border_radius=15)
-            screen.blit(glow_surface, (self.rect.x - 10, self.rect.y - 10))
+        import ui_theme
+        if self.disabled:
+            state = "disabled"
+        elif self.is_hovered and pygame.mouse.get_pressed()[0]:
+            state = "pressed"
+        elif self.is_hovered or self.selected:
+            state = "hover"
+        else:
+            state = "normal"
 
-        # 2. Ana Gövde
-        pygame.draw.rect(screen, self.current_color, self.rect, border_radius=10)
-        
-        # 3. Kenar Çizgisi (Vurgu)
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, border_radius=10, width=2)
-
-        # 4. Metin (butona sığdırılır, taşma engellenir)
-        text_surf = self.font.render(self.text, True, (255, 255, 255))
-        text_surf = shrink_to_width(text_surf, self.rect.width - 28)
-        text_rect = text_surf.get_rect(center=self.rect.center)
-        screen.blit(text_surf, text_rect)
+        show_skull = state in ("hover", "pressed") or self.selected
+        surf, overhang = ui_theme.render_banner_button(
+            self.rect.width, self.rect.height, self.text,
+            self.base_color, state=state, skull=show_skull)
+        bx = self.rect.centerx - surf.get_width() // 2
+        screen.blit(surf, (bx, self.rect.y - overhang))
 
 class ClassCard:
     def __init__(self, x, y, width, height, class_data, font_main, font_sub):
@@ -293,11 +289,17 @@ class SkillButton:
         return self.is_hovered and pygame.mouse.get_pressed()[0]
 
     def draw(self, screen, font, can_afford, description=None):
-        bg = (39, 174, 96) if self.is_hovered and can_afford else (46, 204, 113)
-        if not can_afford: bg = (127, 140, 141)
-        
-        pygame.draw.rect(screen, bg, self.rect, border_radius=10)
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, width=2, border_radius=10)
+        # Tema: koyu zemin + metal çerçeve; alınabilirlik rengi kenarla gösterilir
+        import ui_theme
+        bg = (32, 44, 36) if can_afford else (30, 28, 34)
+        border = ui_theme.COLORS["moss"] if can_afford else ui_theme.METAL_LO
+        if self.is_hovered and can_afford:
+            bg = (40, 58, 44)
+            border = ui_theme.METAL_HI
+
+        pygame.draw.rect(screen, bg, self.rect, border_radius=4)
+        pygame.draw.rect(screen, border, self.rect, width=2, border_radius=4)
+        pygame.draw.rect(screen, ui_theme.DARK_OUT, self.rect.inflate(2, 2), width=1, border_radius=5)
         
         max_width = self.rect.width - 16
         txt = font.render(self.text, True, (255, 255, 255))
@@ -336,17 +338,13 @@ class TabButton:
         return self.is_hovered and pygame.mouse.get_pressed()[0]
 
     def draw(self, screen, font, active_tab):
+        import ui_theme
         is_active = (active_tab == self.tab_id)
-        bg = (52, 73, 94) if is_active else (44, 62, 80)
-        border = (241, 196, 15) if is_active else (100, 100, 100)
-        
-        pygame.draw.rect(screen, bg, self.rect, border_radius=5)
-        pygame.draw.rect(screen, border, self.rect, width=2, border_radius=5)
-        
-        color = (255, 255, 255) if is_active else (180, 180, 180)
-        txt = font.render(self.text, True, color)
-        txt = shrink_to_width(txt, self.rect.width - 12)
-        screen.blit(txt, txt.get_rect(center=self.rect.center))
+        color = ui_theme.COLORS["gold"] if is_active else ui_theme.COLORS["steel"]
+        state = "hover" if (is_active or self.is_hovered) else "normal"
+        surf, overhang = ui_theme.render_banner_button(
+            self.rect.width, self.rect.height, self.text, color, state=state, skull=False)
+        screen.blit(surf, (self.rect.centerx - surf.get_width() // 2, self.rect.y - overhang))
 
 class EquippedRow:
     def __init__(self, x, y, w, h, slot_type):
@@ -360,10 +358,10 @@ class EquippedRow:
         self.is_hovered = self.rect.collidepoint(pygame.mouse.get_pos())
 
     def draw(self, screen, font_sub):
-        bg = (40, 40, 55) if not self.is_hovered else (50, 50, 70)
-        
+        bg = (30, 28, 38) if not self.is_hovered else (42, 38, 50)
+
         border_width = 1
-        glow_color = (80, 80, 100)
+        glow_color = (122, 126, 134)
         if self.item and self.item.get("setTag"):
             bg = (20, 45, 20) if not self.is_hovered else (30, 60, 30)
             border_width = 2
@@ -444,10 +442,10 @@ class BackpackItemCard:
         rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
         color = rarity_colors.get(item['rarity'], (255, 255, 255))
         
-        # Card BG
-        bg = (35, 35, 50)
-        if item.get("setTag"): bg = (20, 40, 20)
-            
+        # Card BG (tema zemini)
+        bg = (30, 28, 38)
+        if item.get("setTag"): bg = (24, 38, 28)
+
         pygame.draw.rect(screen, bg, self.rect, border_radius=8)
         pygame.draw.rect(screen, color, self.rect, width=1, border_radius=8)
         
@@ -466,33 +464,30 @@ class BackpackItemCard:
         name_t = render_fit(item['name'], 18, color, self.rect.width - 30)
         screen.blit(name_t, (self.rect.x + 8, self.rect.y + 6))
 
-        # Buttons
+        # Buttons (tema: mini banner)
+        import ui_theme
+
+        def mini_btn(rect, label, color, disabled=False):
+            surf, overhang = ui_theme.render_banner_button(
+                rect.width, rect.height, label, color,
+                state="disabled" if disabled else "normal", skull=False)
+            screen.blit(surf, (rect.centerx - surf.get_width() // 2, rect.y - overhang))
+
         # KULLAN (Sadece ekipmanlar için)
         if item.get('type') == 'essence':
-            pygame.draw.rect(screen, (155, 89, 182), self.use_rect, border_radius=4)
-            u_txt = render_fit("TÜKET", 15, (255, 255, 255), self.use_rect.width - 8, bold=True)
-            screen.blit(u_txt, u_txt.get_rect(center=self.use_rect.center))
+            mini_btn(self.use_rect, "TÜKET", ui_theme.COLORS["arcane"])
         elif item.get('type') != 'orb':
-            pygame.draw.rect(screen, (46, 204, 113), self.use_rect, border_radius=4)
-            u_txt = render_fit("GİY", 15, (255, 255, 255), self.use_rect.width - 8, bold=True)
-            screen.blit(u_txt, u_txt.get_rect(center=self.use_rect.center))
+            mini_btn(self.use_rect, "GİY", ui_theme.COLORS["moss"])
         else:
-            pygame.draw.rect(screen, (50, 50, 70), self.use_rect, border_radius=4)
-            u_txt = render_fit("ORB", 15, (150, 150, 150), self.use_rect.width - 8, bold=True)
-            screen.blit(u_txt, u_txt.get_rect(center=self.use_rect.center))
+            mini_btn(self.use_rect, "ORB", ui_theme.COLORS["steel"], disabled=True)
 
         # SAT
-        pygame.draw.rect(screen, (231, 76, 60), self.sell_rect, border_radius=4)
         s_price = item.get('price', 100) // 2
-        s_txt = render_fit(f"SAT ({s_price})", 15, (255, 255, 255), self.sell_rect.width - 8, bold=True)
-        screen.blit(s_txt, s_txt.get_rect(center=self.sell_rect.center))
+        mini_btn(self.sell_rect, f"SAT ({s_price})", ui_theme.COLORS["ember"])
 
         # CRAFT
         is_equip = item.get('type') in ['weapon', 'helmet', 'chest', 'amulet', 'pet']
-        c_color = (52, 152, 219) if is_equip else (100, 100, 100)
-        pygame.draw.rect(screen, c_color, self.craft_rect, border_radius=4)
-        c_txt = render_fit("UP", 15, (255, 255, 255), self.craft_rect.width - 8, bold=True)
-        screen.blit(c_txt, c_txt.get_rect(center=self.craft_rect.center))
+        mini_btn(self.craft_rect, "UP", ui_theme.COLORS["night"], disabled=not is_equip)
 
         # --- Set/Corrupted Overlay (S) ---
         if item.get('setTag'):
@@ -532,10 +527,10 @@ class MarketCard:
         rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
         color = rarity_colors.get(self.item['rarity'], (255,255,255))
         
-        # Card BG
-        bg = (35, 35, 50) if not self.is_hovered else (45, 45, 65)
+        # Card BG (tema zemini)
+        bg = (30, 28, 38) if not self.is_hovered else (42, 38, 50)
         if self.item.get("setTag"):
-            bg = (20, 40, 20) if not self.is_hovered else (30, 50, 30)
+            bg = (24, 38, 28) if not self.is_hovered else (32, 48, 36)
             
         pygame.draw.rect(screen, bg, self.rect, border_radius=10)
         pygame.draw.rect(screen, color, self.rect, width=1, border_radius=10)
@@ -570,8 +565,9 @@ class MarketCard:
             o_txt = font_desc.render(f"Sende: {owned_count}", True, (200, 200, 200))
             screen.blit(o_txt, (self.rect.x + 75, self.rect.y + 58))
 
-        # Buy Button
-        btn_color = (46, 204, 113) if not self.buy_hovered else (39, 174, 96)
-        pygame.draw.rect(screen, btn_color, self.buy_rect, border_radius=5)
-        buy_txt = font_desc.render("AL", True, (255, 255, 255))
-        screen.blit(buy_txt, buy_txt.get_rect(center=self.buy_rect.center))
+        # Buy Button (tema: mini banner)
+        import ui_theme
+        surf, overhang = ui_theme.render_banner_button(
+            self.buy_rect.width, self.buy_rect.height, "AL", ui_theme.COLORS["moss"],
+            state="hover" if self.buy_hovered else "normal", skull=False)
+        screen.blit(surf, (self.buy_rect.centerx - surf.get_width() // 2, self.buy_rect.y - overhang))

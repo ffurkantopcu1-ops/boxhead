@@ -1179,14 +1179,16 @@ class GameScene(BaseScene):
         dash_surf = self.font_sub.render(dash_text, True, d_color)
         self.screen.blit(dash_surf, (dash_x + 5, dash_y))
 
-        # Anlık stat paneli düğmesi ve açılır görünümü.
+        # Anlık stat paneli düğmesi ve açılır görünümü (tema: banner buton).
+        import ui_theme
         stats_hovered = self.stats_button_rect.collidepoint(pygame.mouse.get_pos())
-        stats_bg = (52, 152, 219) if self.show_stats_panel else ((55, 65, 85) if stats_hovered else (35, 40, 55))
-        pygame.draw.rect(self.screen, stats_bg, self.stats_button_rect, border_radius=7)
-        pygame.draw.rect(self.screen, (100, 155, 210), self.stats_button_rect, width=2, border_radius=7)
         stats_label = "İSTATİSTİKLER [C] • AÇIK" if self.show_stats_panel else "İSTATİSTİKLER [C]"
-        stats_txt = self.font_desc.render(stats_label, True, (255, 255, 255))
-        self.screen.blit(stats_txt, stats_txt.get_rect(center=self.stats_button_rect.center))
+        stats_state = "hover" if (stats_hovered or self.show_stats_panel) else "normal"
+        surf, overhang = ui_theme.render_banner_button(
+            self.stats_button_rect.width, self.stats_button_rect.height,
+            stats_label, ui_theme.COLORS["night"], state=stats_state, skull=False)
+        self.screen.blit(surf, (self.stats_button_rect.centerx - surf.get_width() // 2,
+                                self.stats_button_rect.y - overhang))
 
         if self.show_stats_panel and self.logic.state == "PLAYING":
             self.draw_live_stats_panel(p)
@@ -1309,9 +1311,13 @@ class GameScene(BaseScene):
         gold_txt = self.font_sub.render(f"ALTIN: {p.gold}", True, (241, 196, 15))
         self.screen.blit(gold_txt, (self.width - 400, 50))
         
-        pygame.draw.rect(self.screen, (192, 57, 43), self.exit_btn_rect, border_radius=8)
-        exit_txt = self.font_sub.render("SAVAŞA DÖN", True, (255, 255, 255))
-        self.screen.blit(exit_txt, exit_txt.get_rect(center=self.exit_btn_rect.center))
+        import ui_theme
+        exit_state = "hover" if self.exit_btn_rect.collidepoint(pygame.mouse.get_pos()) else "normal"
+        surf, over = ui_theme.render_banner_button(
+            self.exit_btn_rect.width, self.exit_btn_rect.height, "SAVAŞA DÖN",
+            ui_theme.COLORS["blood"], state=exit_state, skull=False)
+        self.screen.blit(surf, (self.exit_btn_rect.centerx - surf.get_width() // 2,
+                                self.exit_btn_rect.y - over))
         
         # 2. SEKME İÇERİĞİ
         if self.active_tab == "inventory":
@@ -2001,27 +2007,24 @@ class GameScene(BaseScene):
                         hint_txt = render_fit(f"✨ Sinerji Sağlar: {syn['name']}", 18, (46, 204, 113), card_w - 40)
                         self.screen.blit(hint_txt, (cx + 20, cy + card_h - 40))
                         break
-        # Yenile (Reroll) Butonu
+        # Yenile (Reroll) ve Kart Alma butonları (tema: banner)
+        import ui_theme
+        m_pos = pygame.mouse.get_pos()
         rerolls = getattr(self.logic, 'card_rerolls', 0)
         self.card_reroll_rect = pygame.Rect(self.width // 2 - 150, self.height - 230, 300, 60)
-        if rerolls > 0:
-            pygame.draw.rect(self.screen, (41, 128, 185), self.card_reroll_rect, border_radius=10)
-            pygame.draw.rect(self.screen, (52, 152, 219), self.card_reroll_rect, width=3, border_radius=10)
-            rr_txt = self.font_sub.render(f"YENİLE (Kalan: {rerolls})", True, (255, 255, 255))
-        else:
-            pygame.draw.rect(self.screen, (100, 100, 100), self.card_reroll_rect, border_radius=10)
-            pygame.draw.rect(self.screen, (150, 150, 150), self.card_reroll_rect, width=3, border_radius=10)
-            rr_txt = self.font_sub.render("YENİLE (Kalan: 0)", True, (200, 200, 200))
-        rr_txt = shrink_to_width(rr_txt, self.card_reroll_rect.width - 24)
-        self.screen.blit(rr_txt, rr_txt.get_rect(center=self.card_reroll_rect.center))
+        rr_state = "disabled" if rerolls <= 0 else (
+            "hover" if self.card_reroll_rect.collidepoint(m_pos) else "normal")
+        surf, over = ui_theme.render_banner_button(
+            300, 60, f"YENİLE (Kalan: {rerolls})", ui_theme.COLORS["night"], state=rr_state, skull=False)
+        self.screen.blit(surf, (self.card_reroll_rect.centerx - surf.get_width() // 2,
+                                self.card_reroll_rect.y - over))
 
-        # +1 Level / Skip Butonu
         self.card_skip_rect = pygame.Rect(self.width // 2 - 150, self.height - 150, 300, 60)
-        pygame.draw.rect(self.screen, (192, 57, 43), self.card_skip_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (231, 76, 60), self.card_skip_rect, width=3, border_radius=10)
-        skip_txt = self.font_sub.render("KART ALMA (+1 SEVİYE)", True, (255, 255, 255))
-        skip_txt = shrink_to_width(skip_txt, self.card_skip_rect.width - 24)
-        self.screen.blit(skip_txt, skip_txt.get_rect(center=self.card_skip_rect.center))
+        sk_state = "hover" if self.card_skip_rect.collidepoint(m_pos) else "normal"
+        surf, over = ui_theme.render_banner_button(
+            300, 60, "KART ALMA (+1 SEVİYE)", ui_theme.COLORS["ember"], state=sk_state, skull=False)
+        self.screen.blit(surf, (self.card_skip_rect.centerx - surf.get_width() // 2,
+                                self.card_skip_rect.y - over))
 
     def draw_evolution_select_screen(self):
         p = self.logic.players[self.logic.local_player_id]
@@ -2132,11 +2135,12 @@ class GameScene(BaseScene):
         # Hover Kontrolü
         m_pos = pygame.mouse.get_pos()
         
-        # Yeniden Başla
-        r_color = (192, 57, 43) if restart_rect.collidepoint(m_pos) else (150, 40, 30)
-        pygame.draw.rect(self.screen, r_color, restart_rect, border_radius=10)
-        r_txt = self.font_sub.render("ANA MENÜYE DÖN", True, (255, 255, 255))
-        self.screen.blit(r_txt, r_txt.get_rect(center=restart_rect.center))
+        # Yeniden Başla (tema: banner buton + kurukafa)
+        import ui_theme
+        r_state = "hover" if restart_rect.collidepoint(m_pos) else "normal"
+        surf, over = ui_theme.render_banner_button(
+            400, 60, "ANA MENÜYE DÖN", ui_theme.COLORS["ember"], state=r_state, skull=True)
+        self.screen.blit(surf, (restart_rect.centerx - surf.get_width() // 2, restart_rect.y - over))
         
         # Bilgi
         info = self.font_desc.render("Sıradaki Dalga Seni Bekliyor!", True, (200, 200, 200))

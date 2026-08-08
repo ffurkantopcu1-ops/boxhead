@@ -37,11 +37,12 @@ class LauncherApp:
         self.root.after(100, self._check_updates)
 
     def _build_ui(self):
+        # Koyu fantastik tema paleti (oyunla ortak; bkz. DESIGN.md / ui_theme.COLORS)
         self.colors = {
-            'window': '#0d1018', 'panel': '#171c29', 'panel_alt': '#111622',
-            'border': '#2c3850', 'text': '#f3f5f8', 'muted': '#8e9aab',
-            'gold': '#f1c40f', 'blue': '#3498db', 'green': '#2ecc71',
-            'orange': '#e67e22', 'red': '#e74c3c',
+            'window': '#181416', 'panel': '#1a1822', 'panel_alt': '#141218',
+            'border': '#7a7e86', 'text': '#f0eadc', 'muted': '#8c8470',
+            'gold': '#966416', 'blue': '#1e4e6e', 'green': '#2c603a',
+            'orange': '#b47a1e', 'red': '#92180f',
         }
         self.root.option_add('*Font', '{Segoe UI} 10')
 
@@ -125,15 +126,15 @@ class LauncherApp:
         actions.grid_columnconfigure(0, weight=1, uniform='actions')
         actions.grid_columnconfigure(1, weight=1, uniform='actions')
         self.play_btn = self._make_button(
-            actions, "OYNA", self.colors['green'], '#27ae60', self._launch_game,
+            actions, "OYNA", self.colors['red'], '#b8281c', self._launch_game,
         )
         self.play_btn.grid(row=0, column=0, sticky='ew', padx=(0, 8))
         self.update_btn = self._make_button(
-            actions, "GÜNCELLE", self.colors['orange'], '#d35400', self._start_update,
+            actions, "GÜNCELLE", self.colors['gold'], '#b47a1e', self._start_update,
         )
         self.update_btn.grid(row=0, column=1, sticky='ew', padx=(8, 0))
         self.notes_btn = self._make_button(
-            actions, "YENİLİKLER (PATCH NOTES)", self.colors['blue'], '#2980b9',
+            actions, "YENİLİKLER (PATCH NOTES)", self.colors['blue'], '#266089',
             self._show_patch_notes,
         )
         self.notes_btn.grid(row=1, column=0, columnspan=2, sticky='ew', pady=(10, 0))
@@ -147,7 +148,7 @@ class LauncherApp:
 
     def _make_button(self, parent, text, bg, hover_bg, command):
         button = tk.Button(
-            parent, text=text, font=("Segoe UI", 12, "bold"), fg='white', bg=bg,
+            parent, text=text, font=("Georgia", 12, "bold"), fg='#f0eadc', bg=bg,
             activeforeground='white', activebackground=hover_bg,
             disabledforeground='#687386', relief=tk.FLAT, bd=0, height=2,
             cursor='hand2', command=command,
