@@ -4,7 +4,7 @@ import time
 import random
 
 class Projectile:
-    def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False, is_returning=False):
+    def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False, is_returning=False, bounce_dmg_mult=1.0):
         self.id = id
         self.x = x
         self.y = y
