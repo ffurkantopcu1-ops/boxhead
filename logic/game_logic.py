@@ -87,7 +87,7 @@ class GameLogic:
         self.hazard_spawn_timer = 10.0 # 10 saniyede bir
         
         self.wave = {
-            "level": 1,
+            "level": 0,
             "enemies_to_spawn": 0,
             "total_to_spawn": 0,
             "spawn_timer": 0,
