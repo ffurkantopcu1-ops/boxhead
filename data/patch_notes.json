@@ -1,0 +1,72 @@
+{
+  "versions": [
+    {
+      "version": "Yayınlanmamış",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "bump checkout to v5 and setup-python to v6 (Node 20 deprecation)",
+          "mark spec files as release-critical in AGENTS.md"
+        ]
+      }
+    },
+    {
+      "version": "1.6.3",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "restore Boxhead_Launcher.spec required by release workflow"
+        ],
+        "⚙️ İyileştirmeler": [
+          "move static game data tables to data/*.json"
+        ],
+        "📦 Diğer": [
+          "Balance and bugfix pass: boss difficulty scaling, class logic and UI tweaks",
+          "Add new features implementation plan and Engineer UI requirements",
+          "clean up obsolete and temporary files"
+        ]
+      }
+    },
+    {
+      "version": "1.6.2",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Improve UI, launcher updates, and game performance"
+        ]
+      }
+    },
+    {
+      "version": "1.6.1",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "publish complete game executable"
+        ]
+      }
+    },
+    {
+      "version": "1.6.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "publish standalone launcher in releases"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "fetch updates from release repository",
+          "quote CI smoke test command for YAML",
+          "allow CI workflow reuse in releases"
+        ]
+      }
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "proje"
+        ]
+      }
+    }
+  ]
+}

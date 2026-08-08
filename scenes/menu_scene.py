@@ -30,8 +30,11 @@ class MenuScene(BaseScene):
             Button(self.width // 2, self.start_y + 70, button_width, button_height, "OYUN YÜKLE", self.font_sub, (52, 152, 219), (41, 128, 185)),
             Button(self.width // 2, self.start_y + 140, button_width, button_height, "KALICI YETENEKLER (KRİSTAL)", self.font_sub, (155, 89, 182), (142, 68, 173)),
             Button(self.width // 2, self.start_y + 210, button_width, button_height, "AYARLAR", self.font_sub, (149, 165, 166), (127, 140, 141)),
-            Button(self.width // 2, self.start_y + 280, button_width, button_height, "ÇIKIŞ", self.font_sub, (231, 76, 60), (192, 57, 43))
+            Button(self.width // 2, self.start_y + 280, button_width, button_height, "YENİLİKLER", self.font_sub, (230, 126, 34), (211, 84, 0)),
+            Button(self.width // 2, self.start_y + 350, button_width, button_height, "ÇIKIŞ", self.font_sub, (231, 76, 60), (192, 57, 43))
         ]
+        self.notes_scroll = 0
+        self.patch_notes = None  # PATCH_NOTES ekranına girince yüklenir
 
         self.shop = CrystalShop()
         self.meta_data = SaveManager.load_meta()
@@ -52,16 +55,9 @@ class MenuScene(BaseScene):
                         self._trigger_main_action(self.selected_idx)
 
             # Buton durumlarını ve tıklamaları kontrol et
-            if self.main_buttons[0].update(events): # New Game
-                self._trigger_main_action(0)
-            if self.main_buttons[1].update(events): # Load Game
-                self._trigger_main_action(1)
-            if self.main_buttons[2].update(events): # Upgrades
-                self._trigger_main_action(2)
-            if self.main_buttons[3].update(events): # Settings
-                self._trigger_main_action(3)
-            if self.main_buttons[4].update(events): # Exit
-                self._trigger_main_action(4)
+            for i, button in enumerate(self.main_buttons):
+                if button.update(events):
+                    self._trigger_main_action(i)
 
             for event in events:
                 if event.type == pygame.MOUSEMOTION:
@@ -125,6 +121,21 @@ class MenuScene(BaseScene):
                         elif self.selected_idx == 1: # Back
                             self.menu_state = "MAIN"
 
+        elif self.menu_state == "PATCH_NOTES":
+            for event in events:
+                if event.type == pygame.MOUSEWHEEL:
+                    self.notes_scroll += event.y * 40
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.menu_state = "MAIN"
+                    elif event.key in (pygame.K_UP, pygame.K_w):
+                        self.notes_scroll += 40
+                    elif event.key in (pygame.K_DOWN, pygame.K_s):
+                        self.notes_scroll -= 40
+            # Sınırlar draw sırasında hesaplanan toplam yüksekliğe göre uygulanır
+            max_up = getattr(self, '_notes_max_scroll', 0)
+            self.notes_scroll = max(-max_up, min(0, self.notes_scroll))
+
         elif self.menu_state == "SHOP":
             mouse_pos = pygame.mouse.get_pos()
             mouse_clicked = any(e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 for e in events)
@@ -186,7 +197,20 @@ class MenuScene(BaseScene):
             self.menu_state = "SETTINGS"
             self.selected_idx = 0
         elif idx == 4:
+            self._load_patch_notes()
+            self.menu_state = "PATCH_NOTES"
+            self.notes_scroll = 0
+        elif idx == 5:
             pygame.event.post(pygame.event.Event(pygame.QUIT))
+
+    def _load_patch_notes(self):
+        if self.patch_notes is not None:
+            return
+        try:
+            from logic.data_loader import load_data
+            self.patch_notes = load_data('patch_notes').get('versions', [])
+        except (OSError, ValueError, KeyError):
+            self.patch_notes = []
 
     def _keep_selected_save_visible(self):
         if self.selected_idx < self.load_offset:
@@ -218,11 +242,57 @@ class MenuScene(BaseScene):
             self.draw_load_menu()
         elif self.menu_state == "SHOP":
             self.draw_shop_menu()
+        elif self.menu_state == "PATCH_NOTES":
+            self.draw_patch_notes_menu()
 
         # Sürüm ve Telif Hakkı (Alt Köşe)
         from logic.version import get_version
         version_surf = self.font_sub.render(f"v{get_version()}", True, (80, 80, 80))
         self.screen.blit(version_surf, (20, self.height - 40))
+
+    def draw_patch_notes_menu(self):
+        panel = pygame.Rect(self.width // 2 - 400, 120, 800, self.height - 220)
+        pygame.draw.rect(self.screen, (22, 24, 38), panel, border_radius=15)
+        pygame.draw.rect(self.screen, (230, 126, 34), panel, width=2, border_radius=15)
+
+        title = render_fit("YENİLİKLER (PATCH NOTES)", 30, (230, 126, 34), panel.width - 40, bold=True)
+        self.screen.blit(title, (panel.centerx - title.get_width() // 2, panel.y + 16))
+
+        content = pygame.Rect(panel.x + 30, panel.y + 65, panel.width - 60, panel.height - 105)
+        self.screen.set_clip(content)
+
+        font_ver = get_font(26, bold=True)
+        font_cat = get_font(20, bold=True)
+        font_note = get_font(18)
+
+        y = content.y + self.notes_scroll
+        notes = self.patch_notes or []
+        if not notes:
+            empty = font_note.render("Patch notes bulunamadı.", True, (150, 150, 160))
+            self.screen.blit(empty, (content.x, y))
+            y += 30
+        for entry in notes:
+            ver_txt = font_ver.render(f"v{entry['version']}  •  {entry.get('date', '')}", True, (241, 196, 15))
+            self.screen.blit(ver_txt, (content.x, y))
+            y += ver_txt.get_height() + 8
+            for cat, items in entry.get('categories', {}).items():
+                cat_txt = font_cat.render(cat, True, (52, 152, 219))
+                self.screen.blit(cat_txt, (content.x + 15, y))
+                y += cat_txt.get_height() + 4
+                for note in items:
+                    note_txt = render_fit(f"• {note}", 18, (210, 210, 220), content.width - 50)
+                    self.screen.blit(note_txt, (content.x + 35, y))
+                    y += note_txt.get_height() + 3
+                y += 6
+            pygame.draw.line(self.screen, (60, 65, 90), (content.x, y + 6), (content.right, y + 6))
+            y += 24
+
+        total_height = (y - self.notes_scroll) - content.y
+        self._notes_max_scroll = max(0, total_height - content.height)
+        self.screen.set_clip(None)
+
+        hint = render_fit("ESC: Geri  •  Tekerlek/Ok Tuşları: Kaydır", 18, (110, 110, 125), panel.width - 40)
+        self.screen.blit(hint, (panel.centerx - hint.get_width() // 2, panel.bottom - 32))
 
     def draw_settings_menu(self):
         panel = pygame.Rect(self.width // 2 - 250, self.height // 2 - 50, 500, 300)

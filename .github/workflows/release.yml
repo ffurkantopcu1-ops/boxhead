@@ -80,6 +80,8 @@ jobs:
           Copy-Item -Recurse assets release_staging/assets
           Copy-Item -Recurse sounds release_staging/sounds
           Copy-Item version.txt release_staging/
+          New-Item -ItemType Directory -Path release_staging/data -Force
+          Copy-Item data/patch_notes.json release_staging/data/
 
           # Create ZIP
           Compress-Archive -Path release_staging/* -DestinationPath $zipName -Force

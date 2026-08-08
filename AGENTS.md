@@ -224,6 +224,33 @@ The project uses GitHub Actions for continuous integration and automated release
 (supports both source and PyInstaller-bundled paths). `scenes/menu_scene.py` displays
 the version dynamically. Release workflow validates that the tag matches `version.txt`.
 
+### Patch Notes (Auto-Generated)
+
+`data/patch_notes.json` is auto-generated from git history — never edit it by
+hand. `tools/generate_patch_notes.py` walks the `v*` tags, categorizes commit
+subjects by conventional-commit prefix (`feat` → Yeni Özellikler, `fix` → Hata
+Düzeltmeleri, `balance` → Denge, `perf`/`refactor` → İyileştirmeler, everything
+else → Diğer), and writes the newest version first. Commits after the last tag
+appear under a "Yayınlanmamış" (unreleased) heading.
+
+Regenerate and commit BEFORE tagging a release so the packaged notes are
+current:
+
+```powershell
+$env:PYTHONUTF8='1'; python tools/generate_patch_notes.py
+```
+
+Consumers: the in-game main menu ("YENİLİKLER" button, `PATCH_NOTES` state in
+`scenes/menu_scene.py`, loaded via `logic/data_loader.py`) and the launcher
+("YENİLİKLER (PATCH NOTES)" button in `launcher/main.py`, which reads
+`data/patch_notes.json` from the install directory). The release workflow copies
+`data/patch_notes.json` into the release ZIP so the launcher can read it on
+installed copies; the game reads the copy bundled inside `Boxhead.exe`.
+
+Write commit subjects with conventional prefixes (`feat:`, `fix:`, `balance:`,
+...) — they become user-facing patch notes verbatim. "Release vX.Y.Z", merge
+commits, and patch-notes regeneration commits are excluded automatically.
+
 ### Launcher
 
 `launcher/` contains a Tkinter-based auto-update launcher:

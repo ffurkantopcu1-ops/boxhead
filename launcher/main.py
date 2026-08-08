@@ -28,7 +28,7 @@ class LauncherApp:
 
         self.root = tk.Tk()
         self.root.title("Boxhead 2.0 — Launcher")
-        self.root.geometry("720x480")
+        self.root.geometry("720x540")
         self.root.resizable(False, False)
         self.root.configure(bg='#0d1018')
 
@@ -132,6 +132,11 @@ class LauncherApp:
             actions, "GÜNCELLE", self.colors['orange'], '#d35400', self._start_update,
         )
         self.update_btn.grid(row=0, column=1, sticky='ew', padx=(8, 0))
+        self.notes_btn = self._make_button(
+            actions, "YENİLİKLER (PATCH NOTES)", self.colors['blue'], '#2980b9',
+            self._show_patch_notes,
+        )
+        self.notes_btn.grid(row=1, column=0, columnspan=2, sticky='ew', pady=(10, 0))
 
         footer = tk.Label(
             shell,
@@ -378,6 +383,59 @@ class LauncherApp:
             self.play_btn.configure(
                 text="OYNA", state=tk.NORMAL if self._game_exists() else tk.DISABLED,
             )
+
+    def _show_patch_notes(self):
+        notes_path = os.path.join(self.install_dir, 'data', 'patch_notes.json')
+        try:
+            import json
+            with open(notes_path, 'r', encoding='utf-8') as f:
+                versions = json.load(f).get('versions', [])
+        except (OSError, ValueError):
+            messagebox.showinfo(
+                "Yenilikler",
+                "Patch notes dosyası bulunamadı. Oyunu güncelledikten sonra tekrar dene.",
+            )
+            return
+
+        win = tk.Toplevel(self.root)
+        win.title("Boxhead 2.0 — Yenilikler")
+        win.geometry("620x540")
+        win.configure(bg=self.colors['window'])
+        win.transient(self.root)
+
+        tk.Label(
+            win, text="YENİLİKLER", font=("Segoe UI", 16, "bold"),
+            fg=self.colors['gold'], bg=self.colors['window'],
+        ).pack(pady=(16, 8))
+
+        frame = tk.Frame(win, bg=self.colors['panel'])
+        frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 16))
+
+        scrollbar = tk.Scrollbar(frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        text = tk.Text(
+            frame, wrap=tk.WORD, bg=self.colors['panel'], fg=self.colors['text'],
+            relief=tk.FLAT, padx=16, pady=12, yscrollcommand=scrollbar.set,
+            font=("Segoe UI", 10), cursor='arrow',
+        )
+        text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.configure(command=text.yview)
+
+        text.tag_configure('version', font=("Segoe UI", 13, "bold"), foreground=self.colors['gold'], spacing1=10)
+        text.tag_configure('category', font=("Segoe UI", 10, "bold"), foreground=self.colors['blue'], spacing1=6)
+        text.tag_configure('note', foreground=self.colors['text'], lmargin1=18, lmargin2=30)
+        text.tag_configure('sep', foreground=self.colors['border'])
+
+        if not versions:
+            text.insert(tk.END, "Henüz patch notu yok.\n", 'note')
+        for entry in versions:
+            text.insert(tk.END, f"v{entry['version']}  •  {entry.get('date', '')}\n", 'version')
+            for cat, items in entry.get('categories', {}).items():
+                text.insert(tk.END, f"{cat}\n", 'category')
+                for note in items:
+                    text.insert(tk.END, f"• {note}\n", 'note')
+            text.insert(tk.END, "─" * 60 + "\n", 'sep')
+        text.configure(state=tk.DISABLED)
 
     def _launch_game(self):
         try:

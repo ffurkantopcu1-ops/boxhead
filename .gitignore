@@ -50,3 +50,5 @@ orc_v2.png
 test_frame.png
 
 release_assets/*.zip
+# Claude Code local session data
+.claude/
