@@ -1,0 +1,120 @@
+[
+  {
+    "id": "swift",
+    "name": "⚡ Hızlı",
+    "color": [
+      52,
+      152,
+      219
+    ],
+    "hp_mult": 1.0,
+    "dmg_mult": 1.0,
+    "speed_mult": 1.8,
+    "reward_mult": 1.5,
+    "desc": "Çok hızlı hareket eder"
+  },
+  {
+    "id": "thorny",
+    "name": "🌵 Dikenli",
+    "color": [
+      39,
+      174,
+      96
+    ],
+    "hp_mult": 1.3,
+    "dmg_mult": 1.0,
+    "speed_mult": 0.9,
+    "reward_mult": 1.8,
+    "thorns": 0.15,
+    "desc": "Vurunca hasar yansıtır"
+  },
+  {
+    "id": "vampiric",
+    "name": "🦇 Vampir",
+    "color": [
+      192,
+      57,
+      43
+    ],
+    "hp_mult": 1.2,
+    "dmg_mult": 1.3,
+    "speed_mult": 1.0,
+    "reward_mult": 2.0,
+    "lifesteal": 0.2,
+    "desc": "Vurduğunda can çalar"
+  },
+  {
+    "id": "armored",
+    "name": "🛡️ Zırhlı",
+    "color": [
+      149,
+      165,
+      166
+    ],
+    "hp_mult": 2.0,
+    "dmg_mult": 0.8,
+    "speed_mult": 0.7,
+    "reward_mult": 2.0,
+    "armor": 50,
+    "desc": "Çok dayanıklı ama yavaş"
+  },
+  {
+    "id": "berserker",
+    "name": "😡 Öfkeli",
+    "color": [
+      231,
+      76,
+      60
+    ],
+    "hp_mult": 0.8,
+    "dmg_mult": 2.5,
+    "speed_mult": 1.3,
+    "reward_mult": 2.5,
+    "desc": "Az canlı ama çok güçlü"
+  },
+  {
+    "id": "splitting",
+    "name": "🔀 Bölünen",
+    "color": [
+      155,
+      89,
+      182
+    ],
+    "hp_mult": 0.6,
+    "dmg_mult": 0.7,
+    "speed_mult": 1.1,
+    "reward_mult": 3.0,
+    "splits_on_death": 2,
+    "desc": "Öldürünce 2'ye bölünür"
+  },
+  {
+    "id": "frozen",
+    "name": "❄️ Dondurucu",
+    "color": [
+      41,
+      128,
+      185
+    ],
+    "hp_mult": 1.5,
+    "dmg_mult": 1.0,
+    "speed_mult": 0.8,
+    "reward_mult": 2.0,
+    "frost_aura": true,
+    "desc": "Yakınındaki oyuncuyu yavaşlatır"
+  },
+  {
+    "id": "shielded",
+    "name": "🔮 Kalkanlı",
+    "color": [
+      241,
+      196,
+      15
+    ],
+    "hp_mult": 1.0,
+    "dmg_mult": 1.0,
+    "speed_mult": 1.0,
+    "reward_mult": 2.5,
+    "shield_hp": 0.5,
+    "desc": "Enerji kalkanına sahip"
+  }
+]

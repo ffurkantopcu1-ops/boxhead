@@ -120,6 +120,61 @@ use them.
 - Do not modify `.exe`, `__pycache__/`, generated sprites, player saves, or
   `version.txt` unless the task explicitly requires those artifacts.
 
+## Class And Evolution Balance (Mandatory)
+
+Any new class or evolution/subclass MUST pass these checks before the change is
+considered done. The goal: a new character must be viable but never strictly
+better than existing ones ("broken").
+
+### Power budget rule
+
+Every meaningful strength must be paid for with an explicit weakness, matching
+the existing pattern: sorcerer gets `elementDmgMult 0.6` but pays `-30% max HP`
+and a slow `attack_cooldown 400`; ninja gets attack speed and dodge but the
+weakest starting weapon; sniper gets `dmgMult 0.5` but `attack_cooldown 500`.
+A class with only bonuses and no cost is rejected by definition.
+
+### Numeric envelopes (derived from existing classes — stay inside them)
+
+- `class_bases` in `logic/inventory_manager.py` is the source of truth. A new
+  class MUST be added there, and values must stay within the current envelope:
+  `dmgMult` bonus 0.2–0.5, `speed` 4.0–6.0, `attack_cooldown` 400–900 when
+  overridden (default 350), `lifesteal` ≤ 0.20, `critChance` bonus ≤ 0.2,
+  `dodgeChance` bonus ≤ 0.25. Exceeding any of these requires a compensating
+  malus (HP/speed/cooldown) and a written justification in the PR/commit.
+- Starting weapons (`init_class_specialization` in `entities/player.py`):
+  `physDmg` 8–18, rarity `Normal` or `Magic` only. Estimate wave-1 effective
+  DPS as `damage / (attack_cooldown in seconds)` including class `dmgMult`;
+  it must land within ±25% of the warrior baseline (12 phys × 1.2 / 0.35s).
+  Utility classes (engineer, beastmaster) may go below the band, never above.
+- Evolutions (`Player.EVOLUTIONS`): each class gets exactly two paths with
+  opposite trade-offs (one offensive/fragile, one defensive/sustained — see
+  gladiator vs paladin). `dmgMult` ≥ 0.8 requires a negative `max_hp_delta`;
+  pure stat additions without a passive identity are not enough.
+
+### Required touchpoints checklist
+
+A new class is a shared string contract. All of these must be updated together:
+`class_bases` (inventory_manager), starting weapon + `reinit_specialization`
+(player.py), a `<class>_logic.py` file in `entities/`, `class_list` and
+`detailed_desc` (class_select_scene.py), `passives` dict (game_scene.py), two
+`EVOLUTIONS` entries (player.py), class weapon tiers in `logic/item_system.py`
+bases, and save/load compatibility (old saves without the class must still load).
+
+### Required validation before merge
+
+1. Syntax + import smoke test (see Validation section).
+2. Manual playtest: waves 1–5 on Normal with the new class; confirm it can
+   clear wave 5 but does not trivialize it (no AFK-clearing wave 5, not dead
+   on wave 1 with reasonable play). If a display is unavailable, state this
+   explicitly and list the numeric checks performed instead.
+3. Side-by-side DPS/EHP comparison table (new class vs warrior and sniper at
+   wave 1) included in the summary of the change. Effective HP = max_hp
+   adjusted by armor/dodge/ES bonuses.
+4. Verify no stacking loophole: the class bonus combined with its starting
+   weapon and its two evolutions must not multiply into more than ~2× the
+   equivalent warrior build at the same investment level.
+
 ## Validation
 
 Every Python change must at least pass:

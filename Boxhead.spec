@@ -7,6 +7,7 @@ block_cipher = None
 datas = [
     ('assets', 'assets'),
     ('sounds', 'sounds'),
+    ('data', 'data'),
     ('version.txt', '.'),
 ]
 

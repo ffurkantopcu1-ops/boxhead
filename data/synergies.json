@@ -1,0 +1,98 @@
+[
+  {
+    "id": "fire_and_ice",
+    "name": "🌊 Buhar Patlaması",
+    "desc": "Ateş + Buz = Her 10sn tüm düşmanlara 50 hasar",
+    "required_cards": [
+      "frozen_time",
+      "blood_fire"
+    ],
+    "bonus": {
+      "periodicAoeDmg": 50
+    }
+  },
+  {
+    "id": "glass_berserker",
+    "name": "💥 Cam Berserker",
+    "desc": "Cam Top + Berserker = Kritik şans +%25",
+    "required_cards": [
+      "glass_cannon",
+      "berserker_rage"
+    ],
+    "bonus": {
+      "critChance": 0.25
+    }
+  },
+  {
+    "id": "undead_commander",
+    "name": "💀 Ölümsüz Komutan",
+    "desc": "Ölümsüz Ordu + Savaş Komutanı = Minyon hızı +%50",
+    "required_cards": [
+      "undead_army",
+      "war_commander"
+    ],
+    "bonus": {
+      "minionRate": 0.5
+    }
+  },
+  {
+    "id": "iron_fortress",
+    "name": "🏰 Demir Kale",
+    "desc": "Demir İrade + Taş Deri = Yansıtma hasarı 30",
+    "required_cards": [
+      "iron_will",
+      "iron_skin"
+    ],
+    "bonus": {
+      "thorns": 30
+    }
+  },
+  {
+    "id": "death_dealer",
+    "name": "☠️ Ölüm Tüccarı",
+    "desc": "Ölüm Anlaşması + Cellat = Execute eşiği +%15",
+    "required_cards": [
+      "death_pact",
+      "executioner"
+    ],
+    "bonus": {
+      "lowHpExec": 0.15
+    }
+  },
+  {
+    "id": "speed_demon",
+    "name": "⚡ Hız Şeytanı",
+    "desc": "İvmeleyici + Adrenalin = Dodge şansı +%15",
+    "required_cards": [
+      "accelerator",
+      "adrenaline"
+    ],
+    "bonus": {
+      "dodgeChance": 0.15
+    }
+  },
+  {
+    "id": "vampire_lord",
+    "name": "🧛 Vampir Lordu",
+    "desc": "Vampir Dokunuşu + Kan Ateşi = Can çalma +%20",
+    "required_cards": [
+      "vampire_touch",
+      "blood_fire"
+    ],
+    "bonus": {
+      "lifesteal": 0.2
+    }
+  },
+  {
+    "id": "chaos_crit",
+    "name": "🌀 Kaos Kritik",
+    "desc": "Kaos Teorisi + Kritik Aşırı Yük = Kritik hasar +%100",
+    "required_cards": [
+      "chaos_theory",
+      "crit_overload"
+    ],
+    "bonus": {
+      "critDmg": 1.0
+    }
+  }
+]
