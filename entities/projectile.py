@@ -42,6 +42,7 @@ class Projectile:
             
         self.bounce = bounce
         self.pierce = pierce
+        self.bounce_dmg_mult = bounce_dmg_mult
         self.hit_history = [] 
         self.is_katana = (p_type == 'katana')        
         
@@ -128,13 +129,25 @@ class Projectile:
         else:
             # Düşman Mermisi (Archer, Venom Spider vb.) Oyuncuya Çarptı mı?
             p = game.players[game.local_player_id]
+            
+            # MANYETİK AURA: Mermileri yavaşlat veya saptır
+            mag_aura = p.stats.get("magneticAura", 0)
+            if mag_aura > 0:
+                dist = math.hypot(p.x - self.x, p.y - self.y)
+                if dist < 300:
+                    self.vx *= 0.95
+                    self.vy *= 0.95
+                    if random.random() < 0.1:
+                        self.vx += random.uniform(-2, 2)
+                        self.vy += random.uniform(-2, 2)
+                        
             dist = math.hypot(p.x - self.x, p.y - self.y)
             if dist < (self.radius + p.radius):
                 # Bloodwalker Kan Emme aktifse mermileri emerek HP'ye dönüştür
                 absorb_active = (p.class_name == "bloodwalker" and 
                                  getattr(getattr(p, 'specialization', None), 'blood_absorb_active', False))
                 if not absorb_active:
-                    p.take_damage(self.dmg)
+                    p.last_attacker_type = getattr(self, "owner_type", "bilinmeyen"); p.take_damage(self.dmg)
                 # absorb_active ise bloodwalker_logic.update() zaten emer
                 self.dead = True
 
@@ -159,6 +172,13 @@ class Projectile:
         # Hasar Uygula
         enemy.take_damage(self.dmg, game, from_player=not self.is_hostile)
         self.hit_history.append(enemy.id)
+        
+        # Vampir İmparatorluğu (Minion Lifesteal)
+        if getattr(self, "is_minion_proj", False) and game and hasattr(game, "players"):
+            p = game.players[game.local_player_id]
+            ls = p.stats.get("minionLifesteal", 0)
+            if ls > 0:
+                p.heal(self.dmg * ls)
         
         # Görsel Efekt (Renge göre Damage Text)
         txt_color = self.color

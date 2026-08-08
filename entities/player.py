@@ -196,7 +196,7 @@ class Player:
         elif cn == "sniper":
             starting_weapon = {"name": "Basit Arbalet", "type": "weapon", "isRanged": True, "rarity": "Normal", "itemBase": {"physDmg": 18}, "prefixes": [], "suffixes": []}
         elif cn == "ninja":
-            starting_weapon = {"name": "Paslı Katana", "type": "weapon", "isMelee": True, "rarity": "Magic", "itemBase": {"physDmg": 15, "attackCooldown": 450}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Paslı Katana", "type": "weapon", "isMelee": True, "rarity": "Magic", "itemBase": {"physDmg": 15, "attackCooldown": 450, "meleeRange": 20}, "prefixes": [], "suffixes": []}
         elif cn == "alchemist":
             starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "rarity": "Normal", "itemBase": {"poisonDps": 4}, "prefixes": [], "suffixes": []}
         elif cn == "sorcerer":
@@ -392,6 +392,21 @@ class Player:
             
         # --- MİNYON KONTROLÜ ---
         self.check_minions(game)
+        
+        # --- GÖLGE KLONU SPAM ---
+        if getattr(self, "has_shadow_clone", False):
+            if not hasattr(self, "shadow_clone_timer"):
+                self.shadow_clone_timer = 15.0 # İlk doğuş gecikmeli
+            
+            self.shadow_clone_timer -= dt
+            if self.shadow_clone_timer <= 0:
+                self.shadow_clone_timer = 15.0
+                shadow_clones = [m for m in game.minions if m.owner == self and m.type == "shadow_clone"]
+                if len(shadow_clones) < 2:
+                    from entities.minion import Minion
+                    new_m = Minion(game.entity_id_counter, self.x, self.y, m_type="shadow_clone", owner=self)
+                    game.minions.append(new_m)
+                    game.entity_id_counter += 1
             
         # Regen
         # Energy Shield Regen (5s timer)
@@ -405,34 +420,30 @@ class Player:
                 self.energy_shield = min(self.max_energy_shield, self.energy_shield + regen * dt)
                 
         if self.hp < self.max_hp:
-            # hpRegen (eşya/aura/kart/evrim) daha önce sadece HUD'da gösteriliyordu; artık gerçekten iyileştirir
+            # hpRegen (eşya/aura/kart/evrim)
             regen = self.stats["regen"] + self.stats.get("hpRegen", 0)
             if game.wave.get("current_diff") == "Impossible":
                 regen *= 0.5 # Can yenileme etkisi yarıya iner
-            self.hp = min(self.max_hp, self.hp + regen * dt)
+            self.heal(regen * dt)
 
         # --- CAN ÇALMA GÜNCELLEMELERİ ---
         if self.lifesteal_cooldown_timer > 0:
             self.lifesteal_cooldown_timer -= dt
                 
-        # Havuzdan can yenileme (Sadece cooldown yoksa ve can eksikse)
+        # Havuzdan can yenileme (Sadece cooldown yoksa)
         if self.lifesteal_buffer > 0 and self.lifesteal_cooldown_timer <= 0:
-            if self.hp < self.max_hp:
-                # Saniyede 10 HP yenileme (Bloodwalker sınıf kimliği: 3x hızlı boşaltma)
-                heal_rate = 30 if getattr(self, "class_id", "") == "bloodwalker" else 10
-                heal_amount = heal_rate * dt
-                
-                can_heal = min(self.lifesteal_buffer, heal_amount)
-                needed = self.max_hp - self.hp
-                final_heal = min(can_heal, needed)
-                
-                self.hp += final_heal
-                self.lifesteal_buffer -= final_heal
-                
-                if self.hp >= self.max_hp:
-                    self.lifesteal_buffer = 0
-            else:
+            # Saniyede 10 HP yenileme (Bloodwalker sınıf kimliği: 3x hızlı boşaltma)
+            heal_rate = 30 if getattr(self, "class_id", "") == "bloodwalker" else 10
+            heal_amount = heal_rate * dt
+            
+            can_heal = min(self.lifesteal_buffer, heal_amount)
+            actual_healed, overheal = self.heal(can_heal)
+            
+            self.lifesteal_buffer -= can_heal
+            if self.hp >= self.max_hp:
                 self.lifesteal_buffer = 0
+        else:
+            self.lifesteal_buffer = 0
 
         # --- PASİF KART EFEKTLERİ ---
         # Death Wish: Her saniye HP drain
@@ -465,6 +476,49 @@ class Player:
                     if not e.dead and not getattr(e, 'is_trap', False):
                         apply_slow(e.effect_manager, duration=3.0, mult=0.0)
                 game.add_event("damage_text", self.x, self.y-60, value="❄️ DONDURULDU!", color=(100, 200, 255), timer=1.5)
+
+        # --- AURA VE ALAN ETKİLERİ ---
+        if not hasattr(self, '_aura_tick_timer'):
+            self._aura_tick_timer = 1.0
+
+        self._aura_tick_timer -= dt
+        if self._aura_tick_timer <= 0:
+            self._aura_tick_timer = 1.0
+            
+            decay = self.stats.get("decayAura", 0)
+            static_dmg = self.stats.get("static_field", 0)
+            starfall = self.stats.get("starfallAura", 0)
+            chaos = getattr(self, "has_chaos_field", False)
+            
+            if decay > 0 or static_dmg > 0 or chaos:
+                from logic.status_effects import apply_slow
+                for e in game.iter_enemies_near(self.x, self.y, 400):
+                    if e.dead or getattr(e, 'is_trap', False): continue
+                    if decay > 0:
+                        e.take_damage(self.max_hp * 0.05 * decay, game, from_player=True)
+                    if static_dmg > 0:
+                        e.take_damage(static_dmg, game, from_player=True)
+                        game.add_event("explosion", e.x, e.y, radius=20, color=(100, 200, 255), timer=0.1)
+                    if chaos:
+                        if random.random() < 0.30:
+                            effect_type = random.choice(['slow', 'poison', 'fire'])
+                            if effect_type == 'slow':
+                                apply_slow(e.effect_manager, duration=2.0, mult=0.5)
+                            elif effect_type == 'poison':
+                                e.apply_dot('poison', 25.0, 3.0)
+                            elif effect_type == 'fire':
+                                e.apply_dot('fire', 35.0, 2.0)
+                                
+            # Starfall Aura
+            if starfall > 0:
+                targets = list(game.iter_enemies_near(self.x, self.y, 600))
+                if targets:
+                    target = random.choice(targets)
+                    game.add_event("explosion", target.x, target.y, radius=80, color=(255, 100, 0), timer=0.3)
+                    target.take_damage(150 * starfall, game, from_player=True)
+                    for e in game.iter_enemies_near(target.x, target.y, 80):
+                        if not e.dead and e != target:
+                            e.take_damage(75 * starfall, game, from_player=True)
 
         # Iron Will Kalkan CD
         if self.passive_shield_cd > 0 and self._shield_timer > 0:
@@ -520,6 +574,33 @@ class Player:
         self.hp = self.max_hp # Can tazele
         self.level_up_timer = 2.0 # 2 saniye ekranda yazı kalsın
         print(f"LEVEL UP! Yeni Seviye: {self.level}")
+        
+        # Mutation Kartı Kontrolü
+        if getattr(self, "has_mutation", False):
+            if not hasattr(self, 'skills_permanent'):
+                self.skills_permanent = {}
+            stat_options = ["dmgMult", "attack_speed_bonus", "max_hp", "armor", "speed"]
+            buff_stat = random.choice(stat_options)
+            debuff_stat = random.choice([s for s in stat_options if s != buff_stat])
+            
+            # Buff (+20%)
+            if buff_stat == "dmgMult": self.skills_permanent["dmgMult"] = self.skills_permanent.get("dmgMult", 0) + 0.20
+            elif buff_stat == "attack_speed_bonus": self.skills_permanent["attack_speed_bonus"] = self.skills_permanent.get("attack_speed_bonus", 0) + 0.20
+            elif buff_stat == "max_hp": self.skills_permanent["max_hp"] = self.skills_permanent.get("max_hp", 0) + 20
+            elif buff_stat == "armor": self.skills_permanent["armor"] = self.skills_permanent.get("armor", 0) + 20
+            elif buff_stat == "speed": self.skills_permanent["speed"] = self.skills_permanent.get("speed", 0) + 0.20
+            
+            # Debuff (-15%)
+            if debuff_stat == "dmgMult": self.skills_permanent["dmgMult"] = self.skills_permanent.get("dmgMult", 0) - 0.15
+            elif debuff_stat == "attack_speed_bonus": self.skills_permanent["attack_speed_bonus"] = self.skills_permanent.get("attack_speed_bonus", 0) - 0.15
+            elif debuff_stat == "max_hp": self.skills_permanent["max_hp"] = self.skills_permanent.get("max_hp", 0) - 15
+            elif debuff_stat == "armor": self.skills_permanent["armor"] = self.skills_permanent.get("armor", 0) - 15
+            elif debuff_stat == "speed": self.skills_permanent["speed"] = self.skills_permanent.get("speed", 0) - 0.15
+            
+            self.inv_manager.recalculate_stats()
+            self.hp = min(self.hp, self.max_hp)
+            if hasattr(self, 'game') and self.game:
+                self.game.add_event("damage_text", self.x, self.y - 40, value=f"Mutasyon: +{buff_stat} / -{debuff_stat}", color=(200, 50, 200), timer=2.0)
         
         # Sınıf Evrimi Tetikleyicisi
         if self.level == 20:
@@ -682,6 +763,10 @@ class Player:
         proj_speed = 15
         proj_lifetime = 180 + int(self.stats.get("meleeRange", 0) * 1.5)
         
+        # Fırın (Furnace) Kartı Kontrolü
+        if getattr(self, "has_furnace", False):
+            p_type = 'fire'
+        
         # Mermi Stats
         if is_bomb:
             bounce = 0
@@ -689,6 +774,13 @@ class Player:
         else:
             bounce = int(self.stats.get("bounce", 0))
             pierce = int(self.stats.get("pierce", 0))
+            
+            # Sekme Ustası (Ricochet Master)
+            if getattr(self, "has_ricochet_master", False):
+                bounce += 1
+                pierce = max(0, pierce - 1)
+                proj_speed *= 0.85
+                
         count = int(self.stats.get("projectileCount", 1))
         # AOE Hesabı (Radius 50 = ~2x Karakter Boyutu)
         aoe = 50 * self.stats.get("aoe", 1.0)
@@ -696,6 +788,8 @@ class Player:
         # Çoklu Atış (Multi-shot) - Açılı
         spread = 0.26 
         start_angle = self.facing_angle - (spread * (count - 1) / 2)
+        
+        bounce_mult = 1.3 if getattr(self, "has_ricochet_master", False) else 1.0
         
         from entities.projectile import Projectile
         for i in range(count):
@@ -733,23 +827,28 @@ class Player:
 
             p = Projectile(game.entity_id_counter, sx, sy, vx, vy, 
                                              final_dmg, bounce, pierce, 
-                                             p_type=p_type_final, aoe=aoe, is_crit=is_crit, lifetime=proj_lifetime, is_returning=is_boomerang)
+                                             p_type=p_type_final, aoe=aoe, is_crit=is_crit, lifetime=proj_lifetime, is_returning=is_boomerang, bounce_dmg_mult=bounce_mult)
             
             if is_katana:
                 p.is_melee = True
                 p.pierce = 99
             
             # Elementel Statları Aktar
-            if sorcerer_elem == 'fire':
-                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * fire_mult
-            elif sorcerer_elem == 'frost':
-                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * frost_mult
-            elif sorcerer_elem == 'poison' or (is_bomb and base_poison > 0):
+            if self.stats.get("omniElement", 0) > 0:
+                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * max(1, fire_mult)
+                p.frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * max(1, frost_mult)
                 p.poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
             else:
-                p.poison_dps = base_poison * mult * dot_mult * elem_mult
-                p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult * fire_mult
-                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult * frost_mult
+                if sorcerer_elem == 'fire':
+                    p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * fire_mult
+                elif sorcerer_elem == 'frost':
+                    p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * frost_mult
+                elif sorcerer_elem == 'poison' or (is_bomb and base_poison > 0):
+                    p.poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
+                else:
+                    p.poison_dps = base_poison * mult * dot_mult * elem_mult
+                    p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult * fire_mult
+                    p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult * frost_mult
             
             game.projectiles.append(p)
             game.entity_id_counter += 1
@@ -840,42 +939,47 @@ class Player:
     def check_minions(self, game):
         # Kuşanılan Pet'e bak
         pet = self.inv_manager.equipped.get("pet")
+        
         if not pet:
-            # Pet yoksa bendeki tüm minyonları sil
-            game.minions = [m for m in game.minions if m.owner != self]
-            return
+            # Pet yoksa sadece pet minyonlarını (wolf, dragon) sil
+            game.minions = [m for m in game.minions if m.owner != self or m.type not in ["wolf", "dragon"]]
+        else:
+            # Pet varsa tipini ve sayısını belirle
+            m_type = "dragon" if "Ejder" in pet['name'] else "wolf"
             
-        # Pet varsa tipini ve sayısını belirle
-        m_type = "dragon" if "Ejder" in pet['name'] else "wolf"
-        
-        # SADECE PET SLOTUNDAKİ MODİFİERLARI AL
-        local_stats = self.inv_manager.get_item_local_stats("pet")
-        
-        # Sayı: 1 (Temel) + Local ProjectileCount + Global 'minionCount' skilli (Özel minyon skilli hariç tutulmaz genellikle ama kullanıcı 'skill tree' dediği için onu da ayırabiliriz. Şimdilik sadece local alalım.)
-        count = 1 + int(local_stats.get("projectileCount", 0))
-        # Eğer Ordulu (minionCount) skilli varsa onu ekleyelim çünkü o ÖZEL minyon skilli
-        count += int(self.stats.get("minionCount", 0))
-        count = min(count, 8)  # Sürü tavanı: 20+ minyon AFK-clear yaratıyordu (F5)
-        
-        # Mevcut minyon sayım
-        my_minions = [m for m in game.minions if m.owner == self]
-        
-        # TİP KONTROLÜ (Bug Fix): Eğer bendeki minyonların tipi mevcut pet tipinden farklıysa temizle
-        if my_minions and my_minions[0].type != m_type:
-             game.minions = [m for m in game.minions if m.owner != self]
-             my_minions = []
-        
-        if len(my_minions) < count:
-            from entities.minion import Minion
-            for _ in range(count - len(my_minions)):
-                new_m = Minion(game.entity_id_counter, self.x, self.y, m_type=m_type, owner=self, local_stats=local_stats)
+            # SADECE PET SLOTUNDAKİ MODİFİERLARI AL
+            local_stats = self.inv_manager.get_item_local_stats("pet")
+            
+            count = 1 + int(local_stats.get("projectileCount", 0))
+            count += int(self.stats.get("minionCount", 0))
+            count = min(count, 8)  # Sürü tavanı
+            
+            my_pet_minions = [m for m in game.minions if m.owner == self and m.type in ["wolf", "dragon"]]
+            
+            # TİP KONTROLÜ
+            if my_pet_minions and my_pet_minions[0].type != m_type:
+                 game.minions = [m for m in game.minions if m.owner != self or m.type not in ["wolf", "dragon"]]
+                 my_pet_minions = []
+            
+            if len(my_pet_minions) < count:
+                from entities.minion import Minion
+                for _ in range(count - len(my_pet_minions)):
+                    new_m = Minion(game.entity_id_counter, self.x, self.y, m_type=m_type, owner=self, local_stats=local_stats)
+                    game.minions.append(new_m)
+                    game.entity_id_counter += 1
+            elif len(my_pet_minions) > count:
+                for _ in range(len(my_pet_minions) - count):
+                    m = my_pet_minions.pop()
+                    game.minions.remove(m)
+                    
+        # --- Doppelganger ---
+        if getattr(self, "has_doppelganger", False):
+            dop_minions = [m for m in game.minions if m.owner == self and m.type == "doppelganger"]
+            if not dop_minions:
+                from entities.minion import Minion
+                new_m = Minion(game.entity_id_counter, self.x, self.y, m_type="doppelganger", owner=self)
                 game.minions.append(new_m)
                 game.entity_id_counter += 1
-        elif len(my_minions) > count:
-            # Fazla olanları sil
-            for _ in range(len(my_minions) - count):
-                m = my_minions.pop()
-                game.minions.remove(m)
 
     # --- 18 SINIF EVRİMİ (9 Sınıf × 2 Yol) ---
     EVOLUTIONS = {
@@ -1140,6 +1244,22 @@ class Player:
                                              50, p_type='black_hole', aoe=280, lifetime=300))
             game.entity_id_counter += 1
 
+    def heal(self, amount):
+        """Oyuncuyu iyileştirir ve (gerçekleşen_şifa, overheal) döndürür."""
+        if amount <= 0: return 0, 0
+        
+        needed = self.max_hp - self.hp
+        actual_heal = min(amount, needed)
+        overheal = max(0, amount - needed)
+        
+        self.hp += actual_heal
+        
+        # Kan Bankası (Blood Bank) overheal birikimi
+        if getattr(self, "has_blood_bank", False):
+            self.blood_bank_amount = getattr(self, "blood_bank_amount", 0) + overheal
+            
+        return actual_heal, overheal
+
     def take_damage(self, amount, force=False, is_self_damage=False):
         """Hasar alma mantığı. force=True ise i-frame'i yok sayıp direkt vurur (Sürekli temas hasarı)."""
         if self.is_invulnerable: return
@@ -1172,12 +1292,59 @@ class Player:
             
         if final_dmg > 0:
             if self.energy_shield > 0:
+                shield_broke = False
                 if self.energy_shield >= final_dmg:
                     self.energy_shield -= final_dmg
                     final_dmg = 0
                 else:
                     final_dmg -= self.energy_shield
                     self.energy_shield = 0
+                    shield_broke = True
+                    
+                # Statik Zırh
+                if getattr(self, "has_static_armor", False) and not is_self_damage:
+                    self.energy_shield = 0 # Tamamen sıfırlanır
+                    if hasattr(self, 'game') and self.game:
+                        from entities.cloud import Cloud
+                        elec_cloud = Cloud(self.x, self.y, duration=0.5, radius=150, dps=self.stats.get("physDmgFlat", 50) * 2, element="electric", source="player")
+                        self.game.clouds.append(elec_cloud)
+                        self.game.add_event("damage_text", self.x, self.y - 40, value="STATİK PATLAMA!", color=(255, 255, 0), timer=1.5)
+                        
+                # Kan Bankası (Kalkan kırılınca)
+                if shield_broke and getattr(self, "has_blood_bank", False) and not is_self_damage:
+                    stored_blood = getattr(self, "blood_bank_amount", 0)
+                    if stored_blood > 0:
+                        if hasattr(self, 'game') and self.game:
+                            from entities.cloud import Cloud
+                            blood_cloud = Cloud(self.x, self.y, duration=1.0, radius=180, dps=stored_blood, element="poison", source="player")
+                            self.game.clouds.append(blood_cloud)
+                            self.game.add_event("damage_text", self.x, self.y - 60, value=f"KAN PATLAMASI! (+{int(stored_blood)} HP)", color=(255, 0, 0), timer=1.5)
+                        self.hp = min(self.max_hp, self.hp + stored_blood)
+                        self.blood_bank_amount = 0
+                        
+                # Cam Kale (Shield Explosion)
+                if shield_broke and self.stats.get("shieldExplosion", 0) > 0 and not is_self_damage:
+                    if hasattr(self, 'game') and self.game:
+                        from entities.cloud import Cloud
+                        # Kalkanın maksimum değeri kadar DPS vuran kısa bir alan
+                        shield_cloud = Cloud(self.x, self.y, duration=0.5, radius=200, dps=self.max_energy_shield, element="magic", source="player")
+                        self.game.clouds.append(shield_cloud)
+                        self.game.add_event("damage_text", self.x, self.y - 40, value="CAM KALE PATLAMASI!", color=(200, 200, 255), timer=1.5)
+
+                # Iron Will CD Tetikleme
+                if shield_broke and self.passive_shield_cd > 0:
+                    cd_red = self.stats.get("shieldCdRed", 0)
+                    self._shield_timer = max(1, self.passive_shield_cd * (1 - cd_red))
+            
+            # Ayna Kalkan (Reflection Aura)
+            refl = self.stats.get("reflectionAura", 0)
+            if refl > 0 and final_dmg > 0 and not is_self_damage:
+                if hasattr(self, 'game') and self.game:
+                    reflect_dmg = final_dmg * refl
+                    for e in self.game.iter_enemies_near(self.x, self.y, 400):
+                        if not e.dead and not getattr(e, 'is_trap', False):
+                            e.take_damage(reflect_dmg, self.game, from_player=True)
+                    self.game.add_event("explosion", self.x, self.y, radius=40, color=(200, 200, 255), timer=0.2)
             
             if final_dmg > 0:
                 self.hp -= final_dmg

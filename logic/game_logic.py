@@ -245,6 +245,12 @@ class GameLogic:
                 try:
                     meta = self.save_manager.load_meta()
                     meta["crystals"] = meta.get("crystals", 0) + crystals_earned
+                    
+                    # NEMESIS SİSTEMİ: Oyuncuyu öldüren düşmanı kaydet
+                    if hasattr(p, "last_attacker_type") and p.last_attacker_type and p.last_attacker_type != "bilinmeyen":
+                        if p.last_attacker_type not in ["boss", "crystal_dragon", "arachne", "crystal_wall"]:
+                            meta["nemesis_type"] = p.last_attacker_type
+                    
                     self.save_manager.save_meta(meta)
                     print(f"GAMEOVER! {crystals_earned} Kan Kristali kazanıldı.")
                 except Exception as e:
@@ -464,7 +470,28 @@ class GameLogic:
         if enemy_type == "boss":
             from entities.boss import AbyssalLord
             new_enemy = AbyssalLord(self.entity_id_counter, ex, ey, self, wave_level=wave_lvl)
-            # Boss modifikasyonu yok
+        elif enemy_type == "crystal_dragon":
+            from entities.boss_crystal_dragon import CrystalDragon
+            new_enemy = CrystalDragon(self.entity_id_counter, ex, ey, self, wave_level=wave_lvl)
+        elif enemy_type == "arachne":
+            from entities.boss_arachne import Arachne
+            new_enemy = Arachne(self.entity_id_counter, ex, ey, self, wave_level=wave_lvl)
+        elif enemy_type == "nemesis":
+            # Nemesis: Normal bir düşman sınıfının devasa, çok güçlü hali
+            try:
+                meta = self.save_manager.load_meta()
+                ntype = meta.get("nemesis_type", "zombie")
+            except:
+                ntype = "zombie"
+            new_enemy = Enemy(self.entity_id_counter, ex, ey, self, type=ntype, wave_level=wave_lvl)
+            new_enemy.max_hp *= 10
+            new_enemy.hp = new_enemy.max_hp
+            new_enemy.dmg *= 3
+            new_enemy.speed *= 1.2
+            new_enemy.radius *= 2.5
+            new_enemy.color = (50, 0, 0) # Kapkaranlık kırmızı
+            new_enemy.is_boss = True # Boss barı çıksın
+            new_enemy.is_nemesis = True
         else:
             new_enemy = Enemy(self.entity_id_counter, ex, ey, self, type=enemy_type, wave_level=wave_lvl)
             self._apply_global_modifiers(new_enemy)
@@ -645,6 +672,11 @@ class GameLogic:
             reward_base = getattr(enemy, 'xp_reward', 20) * getattr(enemy, 'elite_reward_mult', 1.0)
             base_gold = getattr(enemy, 'gold_reward', reward_base * 0.5) * r_mod * reward_step_mult
             gold_value = int(base_gold * (1.0 + p.stats.get("goldGain", 0)))
+            
+            if getattr(p, "has_midas_touch", False) and random.random() < 0.10:
+                gold_value *= 3
+                self.add_event("damage_text", enemy.x, enemy.y - 30, value="💰 MIDAS TOUCH!", color=(255, 215, 0), timer=2.0)
+                
             self.entity_id_counter += 1
             self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x, enemy.y, 
                                                  {'type': 'gold', 'value': gold_value, 'rarity': 'Normal'}))
@@ -656,7 +688,7 @@ class GameLogic:
             
             # --- ÖZ (ESSENCE) DÜŞÜRME ---
             # Bosslar öldüğünde Aura sistemi açılır
-            if enemy.type == "boss" and self.wave["level"] >= 10:
+            if (enemy.type in ["boss", "crystal_dragon", "arachne"]) and self.wave["level"] >= 10:
                 if not p.is_essence_system_unlocked:
                     p.is_essence_system_unlocked = True
                     self.add_event("damage_text", enemy.x, enemy.y - 80, value="AURA SİSTEMİ AÇILDI!", color=(155, 89, 182), scale=1.5, timer=2.0)
@@ -664,7 +696,7 @@ class GameLogic:
             # Bosslar %100, Elitler %15 şansla Öz düşürür (Sadece Wave 10+)
             essence_chance = 0
             if self.wave["level"] >= 10:
-                essence_chance = 1.0 if enemy.type == "boss" else (0.15 if enemy.type == "elite" else 0.0)
+                essence_chance = 1.0 if (enemy.type in ["boss", "crystal_dragon", "arachne"] or getattr(enemy, 'is_nemesis', False)) else (0.15 if enemy.type == "elite" else 0.0)
             
             if random.random() < essence_chance:
                 essence_bases = [b for b in self.item_system.bases if b.get('type') == 'essence']
@@ -674,16 +706,31 @@ class GameLogic:
                     item_data = base.copy()
                     if 'rarity' not in item_data: item_data['rarity'] = 'Normal'
                     self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x + 20, enemy.y + 20, item_data))
-            
+                    
+            # NEMESIS ÖDÜLÜ
+            if getattr(enemy, "is_nemesis", False):
+                # Ekstra altın
+                self.entity_id_counter += 1
+                self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x - 20, enemy.y + 20, 
+                                                    {'type': 'gold', 'value': gold_value * 10, 'rarity': 'Normal'}))
+                self.add_event("damage_text", enemy.x, enemy.y - 120, value="NEMESIS İNTİKAMI ALINDI!", color=(255, 50, 50), scale=2.0, timer=3.0)
+                try:
+                    meta = self.save_manager.load_meta()
+                    if "nemesis_type" in meta:
+                        del meta["nemesis_type"]
+                        self.save_manager.save_meta(meta)
+                except: pass
+
             # XP Kazanımı (Basamak çarpanıyla senkronize; düşman tipine göre değişir)
             xp_to_give = reward_base * reward_step_mult * r_mod
+            if getattr(enemy, "is_nemesis", False): xp_to_give *= 5
             p.gain_xp(xp_to_give * (1.0 + p.stats.get("xpGain", 0)))
             
             # --- GÜNLÜK GÖREV TAKİBİ ---
             self.track_quest("kill", 1)
             if enemy.type == "elite":
                 self.track_quest("kill_elite", 1)
-            if enemy.type == "boss":
+            if enemy.type in ["boss", "crystal_dragon", "arachne"]:
                 self.track_quest("kill_boss", 1)
             # Low HP kill
             if p.hp / max(1, p.max_hp) < 0.20:
@@ -885,8 +932,26 @@ class GameLogic:
         # --- BOSS WAVE EVERY 10 ---
         if self.wave["level"] % 10 == 0:
             self.wave["enemies_to_spawn"] = 0
-            self.spawn_enemy("boss")
-            self.wave["announce_lines"].append("⚠️ BOSS GELİYOR! ⚠️")
+            
+            if self.wave["level"] == 20:
+                self.spawn_enemy("crystal_dragon")
+                self.wave["announce_lines"].append("⚠️ KRİSTAL EJDERHA UYANDI! ⚠️")
+            elif self.wave["level"] == 30:
+                self.spawn_enemy("arachne")
+                self.wave["announce_lines"].append("⚠️ KRALİÇE ARACHNE GELİYOR! ⚠️")
+            else:
+                self.spawn_enemy("boss")
+                self.wave["announce_lines"].append("⚠️ BOSS GELİYOR! ⚠️")
+        
+        # --- NEMESIS WAVE ---
+        if self.wave["level"] == 5:
+            try:
+                meta = self.save_manager.load_meta()
+                if "nemesis_type" in meta:
+                    self.spawn_enemy("nemesis")
+                    self.wave["announce_lines"].append("💀 NEMESIS İNTİKAM İÇİN DÖNDÜ! 💀")
+            except:
+                pass
             
         # 4. Bounty (Wanted) Sistemi
         self.wave["bounty_assigned"] = False
@@ -914,11 +979,12 @@ class GameLogic:
     def _get_wave_spawn_pool(self):
         """Dalga seviyesine göre spawn havuzu oluştur."""
         wave = self.wave["level"]
-        # 'normal' kaldırıldı, havuz okçu ve barrel (dash) ağırlıklı
-        pool = ["barrel"] * 6 + ["toxic_pit"] * 4
+        # Wave 1 için daha kolay olan 'swarm_bat' sürüsü daha fazla eklendi.
+        # Dash atan 'barrel' ve okçu 'toxic_pit' oranı düşürüldü.
+        pool = ["swarm_bat"] * 8 + ["barrel"] * 2 + ["toxic_pit"] * 2
 
         if wave >= 2:
-            pool += ["swarm_bat"] * 4
+            pool += ["swarm_bat"] * 2
             pool += ["frost_crawler"] * 3
         if wave >= 3:
             pool += ["kamikaze"] * 5

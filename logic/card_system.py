@@ -365,6 +365,35 @@ class CardSystem:
         player.pact_devil_waves = 5
 
 
+    def _apply_shadow_clone(self, player):
+        setattr(player, "has_shadow_clone", True)
+        
+    def _apply_midas_touch(self, player):
+        setattr(player, "has_midas_touch", True)
+
+    def _apply_mutation(self, player):
+        setattr(player, "has_mutation", True)
+
+    def _apply_static_armor(self, player):
+        setattr(player, "has_static_armor", True)
+
+    def _apply_ricochet_master(self, player):
+        setattr(player, "has_ricochet_master", True)
+
+    def _apply_blood_bank(self, player):
+        setattr(player, "has_blood_bank", True)
+        setattr(player, "blood_bank_amount", 0)
+
+    def _apply_chaos_field(self, player):
+        setattr(player, "has_chaos_field", True)
+
+    def _apply_doppelganger(self, player):
+        setattr(player, "has_doppelganger", True)
+        
+    def _apply_furnace(self, player):
+        setattr(player, "has_furnace", True)
+
+
 # --- Veri dogrulamasi (acilista bir kez) ---
 _card_ids = {c['id'] for c in CardSystem.CARDS}
 for _card in CardSystem.CARDS:

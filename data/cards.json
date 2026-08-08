@@ -382,5 +382,77 @@
     "desc": "Etki: İlk 5 dalga boyunca ölümcül hasar alamazsın. Bedel: Sonrasında verdiğin hasar kalıcı olarak %40 azalır.",
     "category": "curse",
     "apply": "_apply_pact_devil"
+  },
+  {
+    "id": "shadow_clone",
+    "name": "👥 Gölge Klonu",
+    "desc": "Etki: Belirli aralıklarla senin yerine savaşan ve hasar çeken bir klon yaratır.",
+    "category": "minion",
+    "apply": "_apply_shadow_clone"
+  },
+  {
+    "id": "midas_touch",
+    "name": "💰 Midas Dokunuşu",
+    "desc": "Etki: Vuruşlarda %5 ihtimalle düşmanı altına çevirir (düşman 1.5x hasar alır ve ölünce 5x altın düşürür). Bedel: Taban hasarın %20 azalır.",
+    "category": "offense",
+    "apply": "_apply_midas_touch",
+    "stats": {
+      "dmgMult": -0.2
+    }
+  },
+  {
+    "id": "mutation",
+    "name": "🧬 Mutasyon",
+    "desc": "Etki: Level atlandığında rastgele bir stat +%20 artarken başka bir rastgele stat -%15 azalır.",
+    "category": "survival",
+    "apply": "_apply_mutation"
+  },
+  {
+    "id": "static_armor",
+    "name": "⚡ Statik Zırh",
+    "desc": "Etki: Hasar alındığında kalkanı tamamen sıfırlar ve çevrede elektrik dalgası yaratır.",
+    "category": "survival",
+    "apply": "_apply_static_armor"
+  },
+  {
+    "id": "ricochet_master",
+    "name": "🪃 Sekme Ustası",
+    "desc": "Etki: Mermilere +1 sekme (bounce) ve her sekmede hasar artışı ekler. Bedel: Delme azalır.",
+    "category": "offense",
+    "apply": "_apply_ricochet_master"
+  },
+  {
+    "id": "blood_bank",
+    "name": "🩸 Kan Bankası",
+    "desc": "Etki: Fazla iyileşme (overheal) birikir. Belli şartlarda patlayarak AoE şifa ve hasar sağlar.",
+    "category": "survival",
+    "apply": "_apply_blood_bank"
+  },
+  {
+    "id": "chaos_field",
+    "name": "🌀 Kaos Alanı",
+    "desc": "Etki: Etraftaki düşmanların zırhını düşüren bir aura yaratır. Bedel: Senin zırhın %20 düşer.",
+    "category": "elemental",
+    "apply": "_apply_chaos_field",
+    "stats": {
+      "armor": -20
+    }
+  },
+  {
+    "id": "doppelganger",
+    "name": "👯 Doppelganger",
+    "desc": "Etki: Kalıcı bir ikiz minyon yaratır. Bedel: Kendi hasarın %50 azalır.",
+    "category": "minion",
+    "apply": "_apply_doppelganger",
+    "stats": {
+      "dmgMult": -0.5
+    }
+  },
+  {
+    "id": "furnace",
+    "name": "🔥 Fırın",
+    "desc": "Etki: Düşmanlar ölünce ateş patlaması yapar. Bedel: Sadece Ateş hasarı vurabilirsin.",
+    "category": "elemental",
+    "apply": "_apply_furnace"
   }
 ]

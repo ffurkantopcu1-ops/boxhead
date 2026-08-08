@@ -41,7 +41,13 @@ class AuraManager:
             "midas": Aura("midas", "Midas'ın Dokunuşu", "Tüm altın kazanımını %100 artırır.", 100000, {"goldGain": 1.0}),
             "scavenger": Aura("scavenger", "Leşçil", "Nadir eşya bulma değerini %50 artırır.", 100000, {"magicFind": 0.5}),
             "fleet": Aura("fleet", "Rüzgâr Ayak", "Hareket hızına +2.5 ekler.", 100000, {"speed": 2.5}),
-            "time_warp": Aura("time_warp", "Zaman Bükme", "Eser ve özel yetenek bekleme sürelerini %15 azaltır.", 150000, {"cooldownReduction": 0.15})
+            "time_warp": Aura("time_warp", "Zaman Bükme", "Eser ve özel yetenek bekleme sürelerini %15 azaltır.", 150000, {"cooldownReduction": 0.15}),
+            
+            # --- YENİ EKLENEN AURALAR ---
+            "decay_aura": Aura("decay_aura", "Çürüme Aurası", "Yakınındaki düşmanların HP'sini sürekli azaltır.", 150000, {"decayAura": 1}),
+            "magnetic_aura": Aura("magnetic_aura", "Manyetik Alan", "Düşman mermilerini yavaşlatır.", 200000, {"magneticAura": 1}),
+            "reflection_aura": Aura("reflection_aura", "Ayna Kalkan", "Alınan hasarın %50'sini geri yansıtır.", 180000, {"reflectionAura": 0.5}),
+            "starfall_aura": Aura("starfall_aura", "Yıldız Yağmuru", "Sürekli olarak yakındaki düşmanlara meteor düşürür.", 250000, {"starfallAura": 1})
         }
         # Not: Toplamda 40'a tamamlanabilir, şimdilik temel 20 adet eklendi.
 

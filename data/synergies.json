@@ -94,5 +94,47 @@
     "bonus": {
       "critDmg": 1.0
     }
+  },
+  {
+    "id": "storm_union",
+    "name": "⚡ Fırtına Birliği",
+    "desc": "Fırtına Çağırıcı + Buz Gömleği = Yıldırımlar düşmanı dondurur",
+    "required_cards": ["storm_caller", "ice_shirt"],
+    "bonus": {"stormFreeze": 1}
+  },
+  {
+    "id": "vampire_empire",
+    "name": "🦇 Vampir İmparatorluğu",
+    "desc": "Vampir Dokunuşu + Ölümsüz Ordu = Minyonlar can çalar",
+    "required_cards": ["vampire_touch", "undead_army"],
+    "bonus": {"minionLifesteal": 0.15}
+  },
+  {
+    "id": "chaotic_execution",
+    "name": "💀 Kaotik İnfaz",
+    "desc": "Kaos Teorisi + Cellat = İnfaz eşiği artar, düşman patlar",
+    "required_cards": ["chaos_theory", "executioner"],
+    "bonus": {"executeThreshold": 0.15, "executeExplosion": 1}
+  },
+  {
+    "id": "glass_fortress",
+    "name": "🏰 Cam Kale",
+    "desc": "Cam Kemikler + Demir İrade = Kalkan CD kısalır, kırılınca patlar",
+    "required_cards": ["glass_bones", "iron_will"],
+    "bonus": {"shieldCdRed": 0.3, "shieldExplosion": 1}
+  },
+  {
+    "id": "death_gamble",
+    "name": "🎲 Ölüm Kumarı",
+    "desc": "Ölüm Paktı + Ölüm Dileği = Hasar devasa artar ama Max HP 1 olur.",
+    "required_cards": ["death_pact", "death_wish"],
+    "bonus": {"dmgMult": 3.0, "maxHpLock": 1}
+  },
+  {
+    "id": "elemental_master",
+    "name": "🌟 Element Ustası",
+    "desc": "Ateş Ruhu + Donmuş Zaman + Zehir Ustası = Element hasarları birleşir.",
+    "required_cards": ["fire_soul", "frozen_time", "poison_master"],
+    "bonus": {"elementDmgMult": 1.0, "omniElement": 1}
   }
 ]

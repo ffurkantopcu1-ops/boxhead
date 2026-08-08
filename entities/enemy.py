@@ -479,13 +479,15 @@ class Enemy:
                 else:
                     # Dash Hareket
                     self.dash_timer -= dt
+                    self.dash_speed_mult = 4.0 # 5.5'ten 4.0'a düşürüldü
                     self.x += math.cos(self.dash_angle) * (self.speed * self.dash_speed_mult) * dt * 60
                     self.y += math.sin(self.dash_angle) * (self.speed * self.dash_speed_mult) * dt * 60
                     
                     # Varil Çarpışması (Burst Hasar ve i-frame)
-                    if dist < self.radius + p.radius:
+                    # Hitbox biraz daraltıldı (%80) "değmeden vurdu" hissini kaldırmak için
+                    if dist < (self.radius + p.radius) * 0.8:
                         if p.i_frame_timer <= 0:
-                            p.take_damage(self.dmg * 2, force=False) # i-frame'e saygı duyar
+                            p.last_attacker_type = self.type; p.take_damage(self.dmg * 2, force=False) # i-frame'e saygı duyar
                             self.is_dashing = False
                             self.dash_timer = self.dash_cooldown
                             # Geri sekme
@@ -548,7 +550,7 @@ class Enemy:
                             game.add_event("explosion", self.x, self.y, radius=50, color=(255, 100, 0), timer=0.4)
                             game.trigger_shake(20)
                             if math.hypot(p.x - self.x, p.y - self.y) < 50:
-                                p.take_damage(self.dmg)
+                                p.last_attacker_type = self.type; p.take_damage(self.dmg)
                             for e in game.iter_enemies_near(self.x, self.y, 50):
                                 if not e.dead and not e.is_trap and e != self:
                                     dx = e.x - self.x
@@ -685,7 +687,7 @@ class Enemy:
                         game.trigger_shake(10)
                         # Anlık Hasar (Eğer oyuncuya çok yakınsa)
                         if math.hypot(p.x - self.x, p.y - self.y) < self.radius*2:
-                            p.take_damage(self.dmg)
+                            p.last_attacker_type = self.type; p.take_damage(self.dmg)
                         self.tp_warning = False
                         self.tp_timer = self.tp_cooldown
                 else:
@@ -782,7 +784,7 @@ class Enemy:
                         game.add_event("explosion", self.x, self.y, radius=40, color=(211, 84, 0), timer=0.4)
                         game.trigger_shake(10)
                         if math.hypot(p.x - self.x, p.y - self.y) < 50:
-                            p.take_damage(self.dmg)
+                            p.last_attacker_type = self.type; p.take_damage(self.dmg)
                 else:
                     # Yüzeydeyken çok yavaş hareket et
                     self.x += math.cos(angle) * self.speed * 0.2 * dt * 60
@@ -952,7 +954,7 @@ class Enemy:
         if dist < self.radius + p.radius + 10 and not getattr(self, 'is_invulnerable', False):
             # Temas Hasarı: Kullanıcı İsteği - AFK kalmayı önlemek için i-frame aşılır ve sürekli vurur
             # Denge: x3 çarpanı üst üste binen düşmanlarla anlık ölüm yaratıyordu, x2'ye indirildi
-            p.take_damage(self.dmg * dt * 2, force=True)
+            p.last_attacker_type = self.type; p.take_damage(self.dmg * dt * 2, force=True)
             
         # Sınır dışına çıkmayı engelle (Map Boundaries)
         self.x = max(50, min(4950, self.x))
@@ -1044,6 +1046,29 @@ class Enemy:
             if (self.hp / self.max_hp) < exec_threshold:
                 self.hp = 0
                 game.add_event("damage_text", self.x, self.y - 40, value="EXECUTED!", color=(255, 0, 0), timer=0.8)
+                # Kaotik İnfaz (Chaotic Execution) Sinerjisi
+                if p_stats.get("executeExplosion", 0) > 0:
+                    game.add_event("explosion", self.x, self.y, radius=120, color=(150, 0, 150), timer=0.5)
+                    for e in game.iter_enemies_near(self.x, self.y, 120):
+                        if not e.dead and not getattr(e, 'is_trap', False) and e != self:
+                            e.take_damage(self.max_hp * 0.2, game, from_player=True)
+
+        # --- STORM CALLER (Fırtına Çağrıcı) ---
+        if from_player and getattr(player, "lightning_proc_hits", 0) > 0 and not is_dot:
+            if not hasattr(player, "_lightning_hit_count"):
+                player._lightning_hit_count = 0
+            player._lightning_hit_count += 1
+            if player._lightning_hit_count >= player.lightning_proc_hits:
+                player._lightning_hit_count = 0
+                # Yıldırım Hasarı
+                self.take_damage(amount * 2, game, from_player=True)
+                game.add_event("explosion", self.x, self.y, radius=40, color=(255, 255, 0), timer=0.2)
+                game.add_event("damage_text", self.x, self.y - 60, value="YILDIRIM!", color=(255, 255, 0), timer=1.0)
+                
+                # Fırtına Birliği (Storm Freeze) Sinerjisi
+                if p_stats.get("stormFreeze", 0) > 0:
+                    from logic.status_effects import apply_slow
+                    apply_slow(self.effect_manager, duration=3.0, mult=0.0)
 
         # --- LIFESTEAL (Can Çalma) ---
         if p_stats.get("lifesteal", 0) > 0 and not is_dot and player.hp < player.max_hp and player.lifesteal_cooldown_timer <= 0:

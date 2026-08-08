@@ -324,6 +324,10 @@ class InventoryManager:
         if card_sys and 'death_pact' in getattr(card_sys, 'active_cards', []):
             new_stats["max_hp"] = max(1, new_stats["max_hp"] * 0.10)
 
+        # Ölüm Kumarı (Death Gamble): max_hp 1'e sabitlenir
+        if new_stats.get("maxHpLock", 0) > 0:
+            new_stats["max_hp"] = 1
+
         # Sonuçları Player Statlarına Yaz
         self.player.stats.update(new_stats)
         self.player.max_hp = new_stats.get("max_hp", 100)

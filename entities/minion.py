@@ -13,9 +13,31 @@ class Minion:
         self.radius = 16
         
         # Base stats (Don't multiply yet, will do in attack)
-        self.base_dmg = 15 if m_type == "wolf" else 25
-        self.speed = 4.0 if m_type == "wolf" else 3.0
-        base_range = 350 if m_type == "wolf" else 600
+        if m_type == "doppelganger":
+            self.base_dmg = 30
+            self.speed = 5.0
+            base_range = 400
+            self.color = (138, 43, 226) # Purple
+            base_cd = 400
+        elif m_type == "shadow_clone":
+            self.base_dmg = 20
+            self.speed = 6.0
+            base_range = 400
+            self.color = (50, 50, 50) # Dark gray
+            base_cd = 300
+        elif m_type == "wolf":
+            self.base_dmg = 15
+            self.speed = 4.0
+            base_range = 350
+            self.color = (149, 165, 166)
+            base_cd = 500
+        else: # dragon
+            self.base_dmg = 25
+            self.speed = 3.0
+            base_range = 600
+            self.color = (231, 76, 60)
+            base_cd = 800
+            
         range_mult = owner.stats.get("minionRange", 1.0) if owner else 1.0
         self.range = base_range * range_mult
         
@@ -26,7 +48,6 @@ class Minion:
         self.hp = self.max_hp
         self.armor = owner.stats.get("minionArmor", 0) if owner else 0
         
-        base_cd = 500 if m_type == "wolf" else 800
         rate_mult = owner.stats.get("minionRate", 1.0) if owner else 1.0
         self.attack_cooldown = base_cd / max(0.1, rate_mult)
         
@@ -37,11 +58,17 @@ class Minion:
         
         self.offset_x = random.uniform(-80, 80)
         self.offset_y = random.uniform(-80, 80)
-        self.color = (149, 165, 166) if m_type == "wolf" else (231, 76, 60)
+        
+        self.lifetime = 10.0 if m_type == "shadow_clone" else None
 
     def update(self, dt, game):
         if not self.owner: return
         
+        if self.lifetime is not None:
+            self.lifetime -= dt
+            if self.lifetime <= 0:
+                self.hp = 0
+                
         # 0. RECHARGE KONTROLÜ: Minyon canı biterse 5 sn devre dışı kalır,
         # sonra yarı canla döner (kalıcı ölümsüzlük EHP'yi tanımsız yapıyordu, F5)
         if self.is_recharging:
@@ -236,6 +263,7 @@ class Minion:
                               final_dmg, bounce=bounce, pierce=pierce, 
                               p_type=p_type, aoe=final_aoe, lifetime=lifetime)
             proj.is_crit = is_crit
+            proj.is_minion_proj = True
             
             # Elemental Statlar (Poison vb.)
             proj.poison_dps = self.owner.stats.get("minionPoisonDpsFlat", 0) * total_mult
