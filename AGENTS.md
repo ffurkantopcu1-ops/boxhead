@@ -119,6 +119,9 @@ use them.
   execution must be supported.
 - Do not modify `.exe`, `__pycache__/`, generated sprites, player saves, or
   `version.txt` unless the task explicitly requires those artifacts.
+- Never delete `Boxhead.spec` or `Boxhead_Launcher.spec` in cleanup passes:
+  both are required by the release workflow (`.github/workflows/release.yml`),
+  which builds the game and the launcher from them on every `v*` tag.
 
 ## Class And Evolution Balance (Mandatory)
 
