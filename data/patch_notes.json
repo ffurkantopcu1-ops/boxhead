@@ -1,9 +1,18 @@
 {
   "versions": [
     {
-      "version": "Yayınlanmamış",
+      "version": "1.7.0",
       "date": "2026-08-08",
       "categories": {
+        "✨ Yeni Özellikler": [
+          "oyun ici ve launcher icin otomatik patch notes sistemi"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "dalga ve olay duyurulari ekran-alani HUD bannerinda gosteriliyor"
+        ],
+        "⚖️ Denge Değişiklikleri": [
+          "sistemik stat tavanlari ve broken build duzeltmeleri"
+        ],
         "📦 Diğer": [
           "bump checkout to v5 and setup-python to v6 (Node 20 deprecation)",
           "mark spec files as release-critical in AGENTS.md"

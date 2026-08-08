@@ -36,7 +36,7 @@ DEFAULT_CATEGORY = '📦 Diğer'
 SKIP_PATTERNS = [
     re.compile(r'^release v?\d', re.IGNORECASE),
     re.compile(r'^merge ', re.IGNORECASE),
-    re.compile(r'patch notes', re.IGNORECASE),
+    re.compile(r'regenerate patch notes', re.IGNORECASE),
 ]
 
 
