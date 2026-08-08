@@ -98,20 +98,20 @@ class InventoryManager:
     def recalculate_stats(self):
         # 🟢 STEP 1: CLASS-SPECIFIC BASE STATS (Source of Truth)
         class_bases = {
-            "warrior":     {"dmgMult": 0.2,  "max_hp_mult": 0.2,  "speed": 6.0},
+            "warrior":     {"dmgMult": 0.2,  "max_hp_mult": 0.2,  "speed": 6.0, "regen": 0.5},
             "sniper":      {"dmgMult": 0.5,  "critChance": 0.2,   "speed": 4.8, "bounce": 1, "pierce": 1, "attack_cooldown": 500},
             "engineer":    {"turretLimit": 1, "armor": 10,         "speed": 5.0},
             "beastmaster": {"minionDamage": 0.3, "max_hp_mult": 0.1, "speed": 5.5},
-            "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 7.2},
+            "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 7.2, "regen": 0.5},
             "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 5.0, "attack_cooldown": 900},
             # --- YENİ SINIFLAR ---
             "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.8, "attack_cooldown": 400},
-            "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 5.5},
+            "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 5.5, "regen": 0.5},
         }
         
         # Genel Varsayılanlar
         base_stats = {
-            "speed": 4.8, "max_hp": 100, "dmgMult": 1.0, "armor": 0, "regen": 0,
+            "speed": 4.8, "max_hp": 100, "dmgMult": 1.0, "armor": 0, "regen": 0.5,
             "magicFind": 1.0, "attack_cooldown": 350, "dodgeChance": 0.05,
             "lifesteal": 0, "combatRegen": 0, "critChance": 0.05, "pierce": 0,
             "bounce": 0, "aoe": 1.0, "projectileCount": 1, "meleeRange": 0,
