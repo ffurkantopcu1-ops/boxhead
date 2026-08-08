@@ -1,1 +1,6 @@
 pygame>=2.5.0
+# Launcher HTTPS dogrulamasi. truststore Windows'un kendi dogrulayicisini
+# kullanir (kokleri talep uzerine indirir, antivirus/proxy koklerini tanir);
+# certifi ise gomulu yedek CA paketidir. Bkz. launcher/updater.get_ssl_context
+truststore>=0.9; python_version >= "3.10"
+certifi>=2024.2.2

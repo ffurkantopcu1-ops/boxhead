@@ -194,6 +194,18 @@ class ClassCard:
         icon_y_start = self.rect.y + 15
         if self.icon:
             screen.blit(self.icon, (icon_x, icon_y_start))
+            # Eserin etrafına gotik çerçeve. get_border ortayı çizmediği için
+            # görsel kapanmıyor; hafif sınıf rengi tonu kartın kimliğini korur.
+            import ui_nineslice as n9
+            frame_rect = pygame.Rect(icon_x, icon_y_start, icon_size, icon_size)
+            frame_rect.inflate_ip(14, 14)
+            col = self.data['color']
+            strength = 0.30 if self.is_hovered else 0.18
+            border = n9.get_border(
+                "portrait_frame.png", frame_rect.width, frame_rect.height,
+                tint=tuple(int(c * strength) for c in col))
+            if border is not None:
+                screen.blit(border, frame_rect.topleft)
         else:
             center = (self.rect.centerx, icon_y_start + icon_size // 2)
             pygame.draw.circle(screen, (*self.data['color'], 40), center, 48)

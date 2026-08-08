@@ -21,6 +21,51 @@ from launcher.config import (
 )
 
 
+_ssl_ctx = None
+
+
+def get_ssl_context():
+    """HTTPS doğrulama bağlamı (bir kez kurulur, sonra tekrar kullanılır).
+
+    Sade `urlopen` işletim sisteminin *ortam* güvenine dayanıyordu ve bazı
+    kullanıcı makinelerinde zincir tamamlanamıyordu:
+    `CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate`.
+    İki yaygın sebep var ve farklı çözümler gerektiriyorlar:
+
+    1. Kök sertifika o makinede hiç yok. Windows kökleri *talep üzerine*
+       CryptoAPI ile indirir; OpenSSL bunu asla tetiklemez. Bu yüzden tarayıcı
+       çalışırken launcher aynı PC'de patlar.
+    2. Antivirüs / proxy / VPN bağlantıyı kendi köküyle yeniden imzalar. O kök
+       yalnızca Windows deposunda bulunur, gömülü bir CA paketinde bulunmaz.
+
+    Bu yüzden sıra önemli: önce `truststore` (Windows'un kendi doğrulayıcısı,
+    ikisini de kapsar), sonra gömülü `certifi` paketi, en sonda Python'un
+    varsayılanı.
+    """
+    global _ssl_ctx
+    if _ssl_ctx is not None:
+        return _ssl_ctx
+
+    import ssl
+
+    try:
+        import truststore
+        _ssl_ctx = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        return _ssl_ctx
+    except Exception:
+        pass
+
+    try:
+        import certifi
+        _ssl_ctx = ssl.create_default_context(cafile=certifi.where())
+        return _ssl_ctx
+    except Exception:
+        pass
+
+    _ssl_ctx = ssl.create_default_context()
+    return _ssl_ctx
+
+
 _system_getaddrinfo = socket.getaddrinfo
 
 
@@ -82,7 +127,8 @@ def _request_json(url: str) -> dict:
             'User-Agent': f'BoxheadLauncher/{LAUNCHER_VERSION}',
         },
     )
-    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
+    with urllib.request.urlopen(
+            req, timeout=REQUEST_TIMEOUT, context=get_ssl_context()) as resp:
         return json.loads(resp.read().decode('utf-8-sig'))
 
 
@@ -215,7 +261,8 @@ def download_file(
         req = urllib.request.Request(
             url, headers={'User-Agent': 'BoxheadLauncher/1.0'}
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(
+                req, timeout=60, context=get_ssl_context()) as resp:
             total = int(resp.headers.get('Content-Length', 0))
             downloaded = 0
             with open(part_path, 'wb') as f:

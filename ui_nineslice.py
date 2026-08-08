@@ -70,12 +70,26 @@ def _source(name):
 
 def get(name, width, height):
     """İstenen ölçüde 9-slice yüzey üretir (cache'li). Yoksa None."""
+    return _compose(name, width, height, include_center=True)
+
+
+def get_border(name, width, height, tint=None):
+    """Sadece kenar ve köşe dilimleri; orta boş kalır.
+
+    Mevcut bir içeriği (ör. sınıf kartındaki eser) çerçevelemek için: normal
+    `get` ortadaki dolguyu da gerdiği için altındaki görseli kapatıyor.
+    tint verilirse çerçeve o renkle harmanlanır (sınıf rengi gibi).
+    """
+    return _compose(name, width, height, include_center=False, tint=tint)
+
+
+def _compose(name, width, height, include_center=True, tint=None):
     if not has(name):
         return None
     mw, mh = min_size(name)
     width, height = max(int(width), mw), max(int(height), mh)
 
-    key = (name, width, height)
+    key = (name, width, height, include_center, tint)
     cached = _compose_cache.get(key)
     if cached is not None:
         return cached
@@ -112,9 +126,16 @@ def get(name, width, height):
         out.blit(stretch(piece(0, t, l, src_mid_h), l, dst_mid_h), (0, t))
         out.blit(stretch(piece(sw - r, t, r, src_mid_h), r, dst_mid_h), (width - r, t))
 
-    # orta -- iki eksende
-    if dst_mid_w > 0 and dst_mid_h > 0 and src_mid_w > 0 and src_mid_h > 0:
+    # orta -- iki eksende (çerçeve modunda atlanır, içerik görünsün)
+    if (include_center and dst_mid_w > 0 and dst_mid_h > 0
+            and src_mid_w > 0 and src_mid_h > 0):
         out.blit(stretch(piece(l, t, src_mid_w, src_mid_h), dst_mid_w, dst_mid_h), (l, t))
+
+    if tint is not None:
+        # Toplamalı harman şeffaf pikselleri atlar, çerçeve dışına taşmaz
+        layer = pygame.Surface((width, height))
+        layer.fill(tint)
+        out.blit(layer, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
 
     if len(_compose_cache) >= _MAX_CACHE:
         _compose_cache.clear()

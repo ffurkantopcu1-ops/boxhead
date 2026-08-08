@@ -8,7 +8,10 @@ a = Analysis(
     # Launcher, oyun kurulmadan once de calisir; gotik arayuz parcalarini
     # (413 KB) kendi icine gomer, yoksa klasik widget arayuzune duser.
     datas=[('assets/ui/gothic/launcher', 'assets/ui/gothic/launcher')],
-    hiddenimports=[],
+    # HTTPS guven zinciri. Ikisi de get_ssl_context icinde tembel import
+    # edildigi icin PyInstaller'in statik analizi bulamiyor; certifi hook'u da
+    # ancak import gorulurse cacert.pem'i pakete koyar.
+    hiddenimports=['truststore', 'certifi'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

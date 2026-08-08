@@ -119,6 +119,30 @@
    "right": 1.0
   }
  },
+ "portrait_frame.png": {
+  "insets": [
+   24,
+   24,
+   24,
+   24
+  ],
+  "trim": [
+   8,
+   8,
+   112,
+   112
+  ],
+  "min_size": [
+   50,
+   50
+  ],
+  "edge_opacity": {
+   "top": 0.29,
+   "bottom": 0.29,
+   "left": 0.29,
+   "right": 0.28
+  }
+ },
  "rarity_frame_common.png": {
   "insets": [
    14,

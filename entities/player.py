@@ -2,6 +2,13 @@ import pygame
 import math
 import time
 import random
+
+# Simyacı şişesi imlecin bulunduğu yere düşer. BOMB_THROW_RANGE bunun ÜST
+# SINIRI: imleç daha uzaktaysa şişe menzilin sonuna kadar gider. Alt sınır,
+# menzilin sıfıra düşüp şişenin normal mermiye dönmesini engeller.
+BOMB_THROW_RANGE = 460
+BOMB_MIN_THROW_RANGE = 60
+
 from entities.warrior_logic import Warrior
 from entities.beastmaster_logic import Beastmaster
 from entities.sniper_logic import Sniper
@@ -22,6 +29,10 @@ class Player:
         self.y = y
         self.radius = 24
         self.facing_angle = 0
+        # Dünya koordinatında nişan noktası; update() içinde fareden güncellenir.
+        # None ise (test/başlık öncesi) şişe maksimum menzile atılır.
+        self.aim_x = None
+        self.aim_y = None
         self.hp = 100
         self.max_hp = 100
         
@@ -363,6 +374,9 @@ class Player:
         world_mx = (mx / zoom) + game.manager.current_scene.camera_x
         world_my = (my / zoom) + game.manager.current_scene.camera_y
         self.facing_angle = math.atan2(world_my - self.y, world_mx - self.x)
+        # Nişan noktası: fırlatılan şişe tam buraya düşsün diye saklanıyor
+        # (shoot() sırasında fare tekrar okunmaz, atış anındaki hedef kullanılır)
+        self.aim_x, self.aim_y = world_mx, world_my
             
         # Shooting / Special Attack
         mouse_buttons = pygame.mouse.get_pressed()
@@ -825,9 +839,23 @@ class Player:
             if weapon_dict:
                 is_boomerang = weapon_dict.get("isBoomerang", False)
 
-            p = Projectile(game.entity_id_counter, sx, sy, vx, vy, 
-                                             final_dmg, bounce, pierce, 
-                                             p_type=p_type_final, aoe=aoe, is_crit=is_crit, lifetime=proj_lifetime, is_returning=is_boomerang, bounce_dmg_mult=bounce_mult)
+            # Şişe imlecin olduğu yere düşer, maksimum menzille sınırlı.
+            # Menzil "aoe" statına bağlanmıyor: aoe patlama ALANINI büyütür,
+            # atış mesafesini değil.
+            throw_range = 0
+            if p_type_final == 'bomb':
+                throw_range = BOMB_THROW_RANGE
+                if self.aim_x is not None:
+                    # Mesafe namlu çıkışından ölçülür, yoksa şişe imlecin
+                    # 20px gerisine düşer
+                    aim_dist = math.hypot(self.aim_x - sx, self.aim_y - sy)
+                    throw_range = max(BOMB_MIN_THROW_RANGE,
+                                      min(aim_dist, BOMB_THROW_RANGE))
+
+            p = Projectile(game.entity_id_counter, sx, sy, vx, vy,
+                                             final_dmg, bounce, pierce,
+                                             p_type=p_type_final, aoe=aoe, is_crit=is_crit, lifetime=proj_lifetime, is_returning=is_boomerang, bounce_dmg_mult=bounce_mult,
+                                             throw_range=throw_range)
             
             if is_katana:
                 p.is_melee = True

@@ -16,6 +16,95 @@ from launcher.updater import (
 )
 
 
+WINDOW_TITLE = "Boxhead 2.0 — Launcher"
+_MUTEX_NAME = "Boxhead2Launcher_SingleInstance_Mutex"
+_single_instance_handle = None   # süreç boyunca canlı kalmalı
+
+
+def _win32():
+    """Windows'ta (kernel32, user32); değilse (None, None)."""
+    if os.name != 'nt':
+        return None, None
+    try:
+        import ctypes
+        return ctypes.windll.kernel32, ctypes.windll.user32
+    except Exception:
+        return None, None
+
+
+def acquire_single_instance():
+    """İlk örnek isek True. Zaten çalışan bir launcher varsa False.
+
+    İsimli mutex kullanılıyor: süreç nasıl sonlanırsa sonlansın (çökme dahil)
+    işletim sistemi handle'ı kapattığı için kilit takılı kalmıyor. Kilit
+    dosyası bunu garanti etmezdi.
+    """
+    global _single_instance_handle
+    kernel32, _ = _win32()
+    if kernel32 is None:
+        return True
+    try:
+        import ctypes
+        from ctypes import wintypes
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        kernel32.CreateMutexW.argtypes = [wintypes.LPVOID, wintypes.BOOL,
+                                          wintypes.LPCWSTR]
+        handle = kernel32.CreateMutexW(None, True, _MUTEX_NAME)
+        ERROR_ALREADY_EXISTS = 183
+        if not handle:
+            return True   # mutex kurulamadıysa engellemeyelim
+        if ctypes.get_last_error() == ERROR_ALREADY_EXISTS or \
+                kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+            return False
+        _single_instance_handle = handle
+        return True
+    except Exception:
+        return True
+
+
+def focus_running_instance():
+    """Çalışan launcher penceresini geri yükleyip öne getirir."""
+    _, user32 = _win32()
+    if user32 is None:
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        found = []
+
+        @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        def each(hwnd, _lparam):
+            length = user32.GetWindowTextLengthW(hwnd)
+            if length:
+                buf = ctypes.create_unicode_buffer(length + 1)
+                user32.GetWindowTextW(hwnd, buf, length + 1)
+                # "Launcher" şartı önemli: oyunun penceresi de
+                # "Boxhead 2.0: Native Evolution" başlığını taşıyor ve sadece
+                # önek eşleşmesi onu launcher sanıp öne getiriyordu.
+                if buf.value.startswith("Boxhead 2.0") and "Launcher" in buf.value:
+                    pid = wintypes.DWORD()
+                    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+                    if pid.value != os.getpid():
+                        found.append(hwnd)
+                        return False
+            return True
+
+        user32.EnumWindows(each, 0)
+        if not found:
+            return False
+
+        hwnd = found[0]
+        SW_RESTORE = 9
+        if user32.IsIconic(hwnd):
+            user32.ShowWindow(hwnd, SW_RESTORE)
+        user32.BringWindowToTop(hwnd)
+        user32.SetForegroundWindow(hwnd)
+        return True
+    except Exception:
+        return False
+
+
 def _chrome_dir():
     """Arayüz parçalarının klasörü; kaynaktan ve exe'den çalışmayı da kapsar.
 
@@ -317,7 +406,7 @@ class LauncherApp:
         os.chdir(self.install_dir)
 
         self.root = tk.Tk()
-        self.root.title("Boxhead 2.0 — Launcher")
+        self.root.title(WINDOW_TITLE)
         self.root.geometry("720x540")
         self.root.resizable(False, False)
         self.root.configure(bg='#0d1018')
@@ -473,6 +562,10 @@ class LauncherApp:
 
         self.root.bind('<Escape>', lambda _e: self._quit())
 
+        # Pencere haritalandıktan sonra: çerçevesiz pencereye görev çubuğu
+        # düğmesi kazandır (WS_POPUP varsayılan olarak görünmez).
+        self.root.after(30, self._enable_taskbar_button)
+
     # --- ozel baslik cubugu davranisi ---
     def _drag_start(self, event):
         self._drag_from = (event.x_root - self.root.winfo_x(),
@@ -484,19 +577,65 @@ class LauncherApp:
         dx, dy = self._drag_from
         self.root.geometry(f"+{event.x_root - dx}+{event.y_root - dy}")
 
-    def _minimize(self):
-        """overrideredirect pencere dogrudan iconify edilemez; gecici olarak
-        cerceveyi geri acip kucultur, geri gelince tekrar kaldirir."""
+    def _hwnd(self):
+        """Pencerenin gerçek üst düzey HWND'si.
+
+        winfo_id() Tk'nin çerçeve penceresini verir; görev çubuğu stilleri
+        onun üstündeki gerçek top-level pencereye uygulanmalı.
+        """
+        _, user32 = _win32()
+        if user32 is None:
+            return None
         try:
-            self.root.overrideredirect(False)
+            self.root.update_idletasks()
+            hwnd = self.root.winfo_id()
+            parent = user32.GetParent(hwnd)
+            return parent or hwnd
+        except Exception:
+            return None
+
+    def _enable_taskbar_button(self):
+        """Çerçevesiz pencereyi görev çubuğunda görünür yapar.
+
+        overrideredirect pencereyi WS_POPUP yapıyor ve Windows onu görev
+        çubuğuna koymuyor. WS_EX_APPWINDOW eklenip WS_EX_TOOLWINDOW kaldırılır;
+        stil değişikliğinin görev çubuğuna işlemesi için pencerenin bir kez
+        gizlenip yeniden gösterilmesi gerekiyor.
+        """
+        hwnd = self._hwnd()
+        _, user32 = _win32()
+        if not hwnd or user32 is None:
+            return
+        try:
+            GWL_EXSTYLE = -20
+            WS_EX_TOOLWINDOW = 0x00000080
+            WS_EX_APPWINDOW = 0x00040000
+            SW_HIDE, SW_SHOW = 0, 5
+
+            style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            style = (style & ~WS_EX_TOOLWINDOW) | WS_EX_APPWINDOW
+            user32.ShowWindow(hwnd, SW_HIDE)
+            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+            user32.ShowWindow(hwnd, SW_SHOW)
+        except Exception as error:
+            print(f"[launcher] gorev cubugu dugmesi eklenemedi: {error}")
+
+    def _minimize(self):
+        """Görev çubuğuna küçültür.
+
+        Stil düzeltmesi sayesinde WS_MINIMIZE doğrudan çalışıyor; Tk'nin
+        iconify'ı overrideredirect pencerede güvenilir değil.
+        """
+        hwnd = self._hwnd()
+        _, user32 = _win32()
+        if hwnd and user32 is not None:
+            try:
+                user32.ShowWindow(hwnd, 6)  # SW_MINIMIZE
+                return
+            except Exception:
+                pass
+        try:
             self.root.iconify()
-
-            def restore(_e=None):
-                self.root.overrideredirect(True)
-                self.root.unbind('<Map>', self._map_bind)
-                self._map_bind = None
-
-            self._map_bind = self.root.bind('<Map>', restore)
         except Exception as error:
             print(f"[launcher] kucultme desteklenmiyor: {error}")
 
@@ -916,5 +1055,16 @@ class LauncherApp:
         self.root.mainloop()
 
 
-if __name__ == '__main__':
+def main():
+    """Tek örnek: launcher açıksa yenisini açmak yerine onu öne getirir."""
+    if not acquire_single_instance():
+        if not focus_running_instance():
+            # Pencere bulunamadıysa (ör. henüz açılıyor) sessizce çık;
+            # ikinci bir pencere açmak kullanıcıyı yanıltıyor.
+            print("[launcher] zaten calisiyor")
+        return
     LauncherApp().run()
+
+
+if __name__ == '__main__':
+    main()

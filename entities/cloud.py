@@ -1,6 +1,82 @@
-import pygame
+import colorsys
 import math
+import os
 import random
+
+import pygame
+
+# --- BULUT GÖRSELİ ---
+# Tek bir yeşil zehir sprite'ı üretildi; diğer tipler (ateş/buz/ağ/kara delik/
+# mayın) ondan hue kaydırılarak türetiliyor. Böylece bütün bulutlar aynı doku
+# ve kenar yumuşaklığını paylaşıyor.
+_SPRITE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "assets", "vfx", "cloud_poison.png",
+)
+_BASE_SPRITE = None
+_BASE_MISSING = False
+_TINTED = {}    # hedef hue -> renklendirilmiş kaynak
+_SCALED = {}    # (hue, çap) -> ölçeklenmiş yüzey
+
+
+def _base_sprite():
+    """Kaynak sprite (bir kez yüklenir). Dosya yoksa None -> daire çizimine düşülür."""
+    global _BASE_SPRITE, _BASE_MISSING
+    if _BASE_SPRITE is None and not _BASE_MISSING:
+        try:
+            _BASE_SPRITE = pygame.image.load(_SPRITE_PATH).convert_alpha()
+        except Exception:
+            _BASE_MISSING = True
+    return _BASE_SPRITE
+
+
+_BASE_SAT = 0.85    # kaynak sprite'ın (yeşil) yaklaşık doygunluğu
+
+
+def _hue_sat_of(color):
+    r, g, b = [c / 255.0 for c in color[:3]]
+    h, s, _ = colorsys.rgb_to_hsv(r, g, b)
+    return h, s
+
+
+def _cloud_surface(color, diameter):
+    """İstenen renkte ve çapta bulut yüzeyi (cache'li). Yoksa None."""
+    base = _base_sprite()
+    if base is None:
+        return None
+    hue, sat = _hue_sat_of(color)
+    # Doygunluğu da taşımak şart: ağ bulutunun rengi gri (180,180,180), yani
+    # doygunluğu 0. Sadece hue kaydırılsaydı gri bir hedef kırmızıya dönerdi.
+    sat_scale = min(1.2, sat / _BASE_SAT)
+    key = (round(hue, 3), round(sat_scale, 2), diameter)
+    cached = _SCALED.get(key)
+    if cached is not None:
+        return cached
+
+    tint_key = (round(hue, 3), round(sat_scale, 2))
+    tinted = _TINTED.get(tint_key)
+    if tinted is None:
+        tinted = base.copy()
+        w, h = tinted.get_size()
+        for y in range(h):
+            for x in range(w):
+                r, g, b, a = tinted.get_at((x, y))
+                if a == 0:
+                    continue
+                _, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+                nr, ng, nb = colorsys.hsv_to_rgb(hue, min(1.0, s * sat_scale), v)
+                tinted.set_at((x, y), (int(nr * 255), int(ng * 255), int(nb * 255), a))
+        _TINTED[tint_key] = tinted
+
+    # smoothscale DEĞİL: bulut sprite'ı oyun boyutuna büyütülürken bilinear
+    # filtre pikselleri eritip airbrush görünümü veriyordu. Nearest, setin
+    # geri kalanıyla aynı keskin pixel-art dilini korur.
+    scaled = pygame.transform.scale(tinted, (diameter, diameter))
+    if len(_SCALED) > 240:      # sınırsız büyümesin
+        _SCALED.clear()
+    _SCALED[key] = scaled
+    return scaled
+
 
 class Cloud:
     def __init__(self, id, x, y, radius, duration, poison_dps=0, fire_dmg=0, frost_dmg=0, is_black_hole=False, is_web=False, is_mine=False, mine_dmg=0):
@@ -29,6 +105,13 @@ class Cloud:
         else: self.color = (46, 204, 113)
 
         diameter = max(2, int(self.radius * 2))
+        self._visual = None
+        if not self.is_mine:
+            # Üretilen bulut sprite'ı (yoksa aşağıdaki daire çizimine düşer)
+            self._visual = _cloud_surface(self.color, diameter)
+        if self._visual is not None:
+            return
+
         self._visual = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
         if self.is_mine:
             # Mayın için ortasında belirgin bir çekirdek
@@ -126,7 +209,11 @@ class Cloud:
     def draw(self, screen, camera_x, camera_y):
         draw_x = self.x - camera_x
         draw_y = self.y - camera_y
-        
+
         # Geometri init'te önbelleğe alınır; burada yalnızca solma alfası değişir.
-        self._visual.set_alpha(min(255, int(255 * (self.duration / 2.0))))
+        # NOT: sprite yüzeyi aynı renk/çaptaki bulutlar arasında PAYLAŞILIR.
+        # set_alpha hemen ardından blit geldiği ve çizim sıralı olduğu için her
+        # bulut kendi alfasıyla basılır; değer kalıcı olarak saklanmaz.
+        alpha = min(255, int(255 * (self.duration / 2.0)))
+        self._visual.set_alpha(alpha)
         screen.blit(self._visual, (draw_x - self.radius, draw_y - self.radius))

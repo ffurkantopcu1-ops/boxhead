@@ -30,6 +30,9 @@ SPEC = {
     # tools/fix_asset_right_caps.py (the generated art had an open right edge)
     "bar_frame.png": [40, 5, 40, 5],
     "item_slot.png": [14, 14, 14, 14],
+    # Ortası tamamen boş portre çerçevesi (sınıf kartlarındaki eseri çerçeveler).
+    # Köşe braketleri ~22px; inset onların hemen dışında.
+    "portrait_frame.png": [24, 24, 24, 24],
     "rarity_frame_common.png": [14, 14, 14, 14],
     "rarity_frame_rare.png": [14, 14, 14, 14],
     "rarity_frame_epic.png": [14, 14, 14, 14],

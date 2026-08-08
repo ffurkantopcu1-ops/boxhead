@@ -4,10 +4,17 @@ import time
 import random
 
 class Projectile:
-    def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False, is_returning=False, bounce_dmg_mult=1.0):
+    def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False, is_returning=False, bounce_dmg_mult=1.0, throw_range=0):
         self.id = id
         self.x = x
         self.y = y
+        # Fırlatılan şişe: mermi gibi düşmana çarpınca değil, belirlenen
+        # menzilin sonunda yere değince patlar. Havada olduğu sürece
+        # düşmanlarla çarpışmaz (üzerlerinden geçer).
+        self.throw_range = throw_range
+        self.start_x = x
+        self.start_y = y
+        self.airborne = throw_range > 0
         self.vx = vx
         self.vy = vy
         self.dmg = dmg
@@ -77,6 +84,14 @@ class Projectile:
             self.dead = True
             return
         
+        # Menzil sonunda yere iniş: bulut tam düştüğü yerde oluşur
+        if self.airborne:
+            dx = self.x - self.start_x
+            dy = self.y - self.start_y
+            if dx * dx + dy * dy >= self.throw_range * self.throw_range:
+                self.land(game)
+                return
+
         if self.lifetime <= 0:
             if self.type == 'bomb':
                 self.explode(game)
@@ -105,8 +120,14 @@ class Projectile:
             if int(time.time() * 10) % 5 == 0:
                 game.add_event("explosion", self.x, self.y, radius=self.aoe/2, color=(142, 68, 173), timer=0.1)
 
-        # Düşman Çarpışma Kontrolü (Dost Mermiler için)
-        if not self.is_hostile:
+        # Havada olan dost şişe hiçbir şeyle çarpışmaz: hedefi düşman değil,
+        # yere ineceği nokta. Bu dal ayrı tutulmalı — sadece koşula
+        # "not self.airborne" eklemek şişeyi aşağıdaki `else` dalına düşürüyor
+        # ve o dal DÜŞMAN mermisi dalı, yani oyuncuya hasar veriyordu (şişe
+        # namludan 20px'te doğduğu için her atışta kendini vuruyordu).
+        if self.airborne and not self.is_hostile:
+            pass
+        elif not self.is_hostile:
             # --- MANYETİK ALAN SAPTIRMASI (Magnetar) ---
             for e in game.iter_enemies_near(self.x, self.y, 400):
                 if not e.dead and e.type == "magnetar":
@@ -151,6 +172,31 @@ class Projectile:
                 # absorb_active ise bloodwalker_logic.update() zaten emer
                 self.dead = True
 
+    def land(self, game):
+        """Şişe yere değdi: kırılır ve bulutu bırakır.
+
+        Konum tam menzil noktasına oturtulur; aksi halde son karenin adımı
+        kadar (~30px) hedefi aşıp bulut biraz ileride oluşuyor.
+        """
+        dx = self.x - self.start_x
+        dy = self.y - self.start_y
+        dist = math.hypot(dx, dy)
+        if dist > 0 and self.throw_range:
+            k = self.throw_range / dist
+            self.x = self.start_x + dx * k
+            self.y = self.start_y + dy * k
+        self.airborne = False
+        self.explode(game)
+        self.dead = True
+
+    def throw_progress(self):
+        """0 (elden çıktı) -> 1 (yere indi). Yay/gölge görseli için."""
+        if not self.throw_range:
+            return 1.0
+        dx = self.x - self.start_x
+        dy = self.y - self.start_y
+        return min(1.0, math.hypot(dx, dy) / self.throw_range)
+
     def on_hit(self, enemy, game):
         if self.type == 'bomb':
             self.explode(game)
@@ -192,6 +238,10 @@ class Projectile:
                 self.reorient(next_target)
                 self.bounce -= 1
                 self.lifetime = max(self.lifetime, 40)
+                # Sekme Ustası kartı sekerken hasarı artırır. bounce_dmg_mult
+                # daha önce yalnızca saklanıyordu, hiçbir yerde uygulanmıyordu.
+                if self.bounce_dmg_mult != 1.0:
+                    self.dmg *= self.bounce_dmg_mult
             elif self.pierce <= 0:
                 self.dead = True
         elif self.pierce > 0:
@@ -225,11 +275,29 @@ class Projectile:
         game.clouds.append(new_cloud)
         game.entity_id_counter += 1
         
-        # Ekran Sarsıntısı Tetikle
-        game.trigger_shake(15)
+        # Ekran Sarsıntısı. Cam şişe patlayıcı değil; her atışta 15'lik sarsıntı
+        # sürekli ateş ederken kamerayı titretiyordu.
+        game.trigger_shake(5 if self.type == 'bomb' else 15)
         
-        # Görsel Patlama Işığı
-        game.add_event("explosion", self.x, self.y, radius=self.aoe, color=self.color, timer=0.2)
+        if self.type == 'bomb':
+            # Şişede halka çizilmiyor: "explosion" event'i iki daire konturu
+            # basıyor (renkli + beyaz iç halka) ve bulutun üstünde donuk bir
+            # nişan işareti gibi duruyordu. Yerine sıçrayan damlalar; geri
+            # bildirimi bulutun kendisi veriyor.
+            for _ in range(12):
+                a = random.uniform(0, math.tau)
+                v = random.uniform(2.5, 7.0)
+                game.particles.append({
+                    'x': self.x, 'y': self.y,
+                    'vx': math.cos(a) * v, 'vy': math.sin(a) * v,
+                    'timer': random.uniform(0.12, 0.28),
+                    'color': random.choice([(120, 170, 70), (70, 110, 50),
+                                            (170, 200, 130)]),
+                    'size': random.randint(2, 4),
+                })
+        else:
+            game.add_event("explosion", self.x, self.y, radius=self.aoe,
+                           color=self.color, timer=0.2)
 
     def find_next_target(self, game, current_id):
         next_target = None
@@ -255,9 +323,34 @@ class Projectile:
         draw_y = self.y - camera_y
         
         if self.type == 'bomb':
-            # Bomba Görseli
-            pygame.draw.circle(screen, (39, 174, 96), (int(draw_x), int(draw_y)), self.radius + 2)
-            pygame.draw.circle(screen, (255, 255, 255), (int(draw_x), int(draw_y)), self.radius + 2, 1)
+            if self.airborne:
+                # Fırlatılan şişe: yerden yükselip inen bir yay izlenimi.
+                # Tepe noktasında büyür, gölge küçülüp uzaklaşır (top-down'da
+                # yükseklik ancak böyle okunuyor).
+                t = self.throw_progress()
+                lift = math.sin(math.pi * t)          # 0 -> 1 -> 0
+                height = 26 * lift
+                shadow_r = max(2, int(4 - 2 * lift))
+                shadow = pygame.Surface((shadow_r * 4, shadow_r * 4), pygame.SRCALPHA)
+                pygame.draw.circle(shadow, (0, 0, 0, 90),
+                                   (shadow_r * 2, shadow_r * 2), shadow_r * 2)
+                screen.blit(shadow, (int(draw_x) - shadow_r * 2,
+                                     int(draw_y) - shadow_r * 2))
+
+                bx, by = int(draw_x), int(draw_y - height)
+                size = int(self.radius + 3 + 3 * lift)
+                # Cam gövde + mantar + takla atan parlama
+                pygame.draw.circle(screen, (33, 120, 68), (bx, by), size)
+                pygame.draw.circle(screen, (120, 230, 150), (bx, by), size, 1)
+                spin = (self.throw_progress() * 12.0)
+                ox = int(math.cos(spin) * size * 0.5)
+                oy = int(math.sin(spin) * size * 0.5)
+                pygame.draw.line(screen, (215, 200, 160),
+                                 (bx - ox, by - oy), (bx + ox, by + oy), 2)
+                pygame.draw.circle(screen, (190, 255, 210), (bx - ox, by - oy), 2)
+            else:
+                pygame.draw.circle(screen, (39, 174, 96), (int(draw_x), int(draw_y)), self.radius + 2)
+                pygame.draw.circle(screen, (255, 255, 255), (int(draw_x), int(draw_y)), self.radius + 2, 1)
         elif self.type == 'black_hole':
             # Kara Delik Görseli (Büyük ve Karanlık)
             r = int(self.radius * 3)
