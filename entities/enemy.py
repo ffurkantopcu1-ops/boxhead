@@ -67,7 +67,7 @@ class Enemy:
             self.hp = self.max_hp
             self.speed = 2.2 # Hız sabitlendi
             self.radius = 24
-            self.dmg = 25 * wave_scale
+            self.dmg = 21.25 * wave_scale
             self.color = (139, 69, 19) # Kahverengi
             self.is_trap = False
             self.xp_reward = 35 * xp_mult
