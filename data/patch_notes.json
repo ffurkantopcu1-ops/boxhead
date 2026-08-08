@@ -1,6 +1,128 @@
 {
   "versions": [
     {
+      "version": "1.10.0",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "silah degistirince eski sinifin saldirisi uzerinde kalmasi giderildi"
+        ]
+      }
+    },
+    {
+      "version": "1.9.2",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "necromancer/swarm_egg Enemy UnboundLocalError duzeltildi (v1.9.2)"
+        ]
+      }
+    },
+    {
+      "version": "1.9.1",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "ninja pasli katana menzili artirildi, boks eldiveni atis hizi dengelendi, dash atan dusman hiz/hitbox nerflendi, silah degistirme sonrasi stat birikme bug'i giderildi"
+        ]
+      }
+    },
+    {
+      "version": "1.9.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "simyaci sise mekanigi, zehir bulutu gorseli ve launcher duzeltmeleri"
+        ]
+      }
+    },
+    {
+      "version": "1.8.3",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Fix NameError in projectile.py (bounce_dmg_mult missing in init args)"
+        ]
+      }
+    },
+    {
+      "version": "1.8.2",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Fix BOM issue in version.txt for GitHub Actions",
+          "Fix Ninja range, adjust Wave 1 spawn pool, and nerf dash enemy"
+        ]
+      }
+    },
+    {
+      "version": "1.8.1",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "update version to 1.8.1",
+          "yeni silahlar ve yaratıklar eklendi"
+        ]
+      }
+    },
+    {
+      "version": "1.8.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "gotik pixel-art UI seti, 9-slice altyapisi ve cerçevesiz launcher"
+        ]
+      }
+    },
+    {
+      "version": "1.7.3",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "simyaci evrimleri yeniden tasarlandi ve dengelendi"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "oyun baslangicinda otomatik atlanan wave 1 sorunu cozuldu",
+          "combo speed nerfi, alchemist baslangic silahi nerfi, xp ve es kart dengelenmesi, bomba sekme/delme bagisikligi"
+        ],
+        "📦 Diğer": [
+          "bump version to 1.7.3 for release"
+        ]
+      }
+    },
+    {
+      "version": "1.7.2",
+      "date": "2026-08-08",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "tum siniflara 0.5 saniyede can yenilemesi eklendi, yakin dovus siniflarina ekstra +0.5 (toplam 1.0) verildi",
+          "simyaci siselerinin zehir hasarlari yari yariya nerflendi",
+          "dash atan dusman hasari %15 azaltildi ve tum siniflarin hareket hizi %20 artirildi"
+        ],
+        "📦 Diğer": [
+          "update version.txt to 1.7.2 for release",
+          "silah mirasi ozelligi tier yerine rarity bazli olarak duzeltildi",
+          "yeni ozellikler plani guncellendi ve fikir havuzu eklendi"
+        ]
+      }
+    },
+    {
+      "version": "1.7.1",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "ekran modu secenegi (tam ekran / cercevesiz pencere / pencere)",
+          "koyu fantastik pixel-art UI temasi (banner butonlar + metal paneller)"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "buton cizim/hitbox uyusmazliklari tek kaynaga alindi"
+        ],
+        "📦 Diğer": [
+          "Fix UI crispness, rebuild display scaling engine, and bump version to v1.7.1"
+        ]
+      }
+    },
+    {
       "version": "1.7.0",
       "date": "2026-08-08",
       "categories": {
