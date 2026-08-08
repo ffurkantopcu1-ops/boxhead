@@ -9,7 +9,7 @@ def _base_path():
 def get_version():
     try:
         vfile = os.path.join(_base_path(), 'version.txt')
-        with open(vfile, 'r', encoding='utf-8') as f:
+        with open(vfile, 'r', encoding='utf-8-sig') as f:
             return f.read().strip()
     except (FileNotFoundError, OSError):
         return '0.0.0'
