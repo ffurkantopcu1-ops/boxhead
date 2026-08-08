@@ -329,6 +329,7 @@ class InventoryManager:
             new_stats["max_hp"] = 1
 
         # Sonuçları Player Statlarına Yaz
+        self.player.stats.clear()
         self.player.stats.update(new_stats)
         self.player.max_hp = new_stats.get("max_hp", 100)
         self.player.max_energy_shield = new_stats.get("maxEnergyShield", 0)

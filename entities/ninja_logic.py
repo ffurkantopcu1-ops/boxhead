@@ -18,6 +18,10 @@ class Ninja:
         weapon = player.inv_manager.equipped.get("weapon")
         
         # Ninja: Yakın Dövüş Modu (Menzilliyi Player.py halleder)
+        if weapon and not weapon.get("isMelee"):
+            player.shoot(game)
+            return
+            
         angle = player.facing_angle
         is_punch = (weapon is None)
         # Denge: Sabit 35 yerine katananın physDmg değeri baz alınır (silahla ölçeklenir)
