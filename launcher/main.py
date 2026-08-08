@@ -16,6 +16,296 @@ from launcher.updater import (
 )
 
 
+def _chrome_dir():
+    """Arayüz parçalarının klasörü; kaynaktan ve exe'den çalışmayı da kapsar.
+
+    PyInstaller onefile'da veriler _MEIPASS altına açılır; exe'nin yanına
+    elle konmuş bir klasör de kabul edilir.
+    """
+    rel = ('assets', 'ui', 'gothic', 'launcher')
+    candidates = []
+    if getattr(sys, 'frozen', False):
+        meipass = getattr(sys, '_MEIPASS', None)
+        if meipass:
+            candidates.append(os.path.join(meipass, *rel))
+        candidates.append(os.path.join(os.path.dirname(sys.executable), *rel))
+    candidates.append(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), *rel))
+    for path in candidates:
+        if os.path.isdir(path):
+            return path
+    return candidates[0]
+
+
+CHROME_DIR = _chrome_dir()
+
+# tools/generate_launcher_chrome.py ile BİREBİR aynı olmalı; PNG'ler o
+# ölçülerde hazır çizildiği için buradaki sayılar değişirse chrome yeniden
+# üretilmeli.
+TOPBAR_H = 40            # özel başlık çubuğu (OS çerçevesi kapalı)
+CONTENT_H = 540          # bg.png yüksekliği; çubuğun ALTINA çizilir
+
+# Yedek değerler. Gerçek yerleşim chrome ile birlikte üretilen layout.json'dan
+# okunur; böylece PNG ölçüleri ile buradaki konumlar birbirinden kopamaz
+# (bar iç genişliği tam olarak bu yüzden bir kez yanlış kalmıştı).
+LAYOUT = {
+    'content': (720, CONTENT_H),
+    'window': (720, CONTENT_H + TOPBAR_H),
+    'panel': (34, 132),
+    'panel_inset': 52,
+    'bar': (86, 256),
+    'bar_inner': (40, 5, 468, 16),
+    'btn_play': (34, 378, 318, 54),
+    'btn_update': (368, 378, 318, 54),
+    'btn_notes': (34, 444, 652, 54),
+    'version_box': (490, 38, 196, 64),
+}
+
+
+def _load_layout():
+    """layout.json varsa yerleşimi oradan alır (chrome ile aynı kaynak)."""
+    path = os.path.join(CHROME_DIR, 'layout.json')
+    layout = dict(LAYOUT)
+    try:
+        import json
+        with open(path, encoding='utf-8') as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return layout, TOPBAR_H
+    for key, value in data.items():
+        layout[key] = tuple(value) if isinstance(value, list) else value
+    return layout, int(data.get('topbar_h', TOPBAR_H))
+
+
+class _IconButton:
+    """Başlık çubuğu ikon butonu (kapat / küçült)."""
+
+    def __init__(self, canvas, images, x, y, command, tooltip=None):
+        self._c = canvas
+        self._images = images
+        self._command = command
+        self._id = canvas.create_image(x, y, anchor='nw', image=images['normal'])
+        canvas.tag_bind(self._id, '<Enter>', self._enter)
+        canvas.tag_bind(self._id, '<Leave>', self._leave)
+        canvas.tag_bind(self._id, '<ButtonRelease-1>', self._click)
+        if tooltip:
+            self._c.itemconfigure(self._id, tags=('icon', tooltip))
+
+    def _enter(self, _e=None):
+        self._c.itemconfigure(self._id, image=self._images['hover'])
+        self._c.configure(cursor='hand2')
+
+    def _leave(self, _e=None):
+        self._c.itemconfigure(self._id, image=self._images['normal'])
+        self._c.configure(cursor='')
+
+    def _click(self, _e=None):
+        if self._command:
+            self._command()
+
+
+class _CanvasText:
+    """create_text öğesini tk.Label gibi .configure(text=, fg=) edilebilir yapar."""
+
+    def __init__(self, canvas, item_id):
+        self._c = canvas
+        self._id = item_id
+
+    def configure(self, text=None, fg=None, **_ignored):
+        opts = {}
+        if text is not None:
+            opts['text'] = text
+        if fg is not None:
+            opts['fill'] = fg
+        if opts:
+            self._c.itemconfigure(self._id, **opts)
+
+    config = configure
+
+
+class _ImageButton:
+    """Gotik plaka görselleriyle canvas butonu.
+
+    tk.Button'un launcher'da kullanılan yüzeyini taklit eder (configure ile
+    text/state/command, cget('state')), böylece güncelleme mantığı değişmiyor.
+    """
+
+    def __init__(self, canvas, images, box, text, command, font,
+                 text_col='#f0eadc', disabled_col='#6b6558'):
+        self._c = canvas
+        self._images = images
+        self._command = command
+        self._state = tk.NORMAL
+        self._hover = False
+        self._pressed = False
+        self._text_col = text_col
+        self._disabled_col = disabled_col
+
+        x, y, w, h = box
+        self._img = canvas.create_image(x, y, anchor='nw', image=images['normal'])
+        self._txt = canvas.create_text(x + w // 2, y + h // 2, text=text,
+                                       fill=text_col, font=font)
+        for item in (self._img, self._txt):
+            canvas.tag_bind(item, '<Enter>', self._on_enter)
+            canvas.tag_bind(item, '<Leave>', self._on_leave)
+            canvas.tag_bind(item, '<ButtonPress-1>', self._on_press)
+            canvas.tag_bind(item, '<ButtonRelease-1>', self._on_release)
+
+    # --- görünüm ---
+    def _refresh(self):
+        if self._state == tk.DISABLED:
+            key, col = 'disabled', self._disabled_col
+        elif self._pressed:
+            key, col = 'pressed', self._text_col
+        elif self._hover:
+            key, col = 'hover', self._text_col
+        else:
+            key, col = 'normal', self._text_col
+        self._c.itemconfigure(self._img, image=self._images[key])
+        self._c.itemconfigure(self._txt, fill=col)
+
+    # --- olaylar ---
+    def _on_enter(self, _e=None):
+        self._hover = True
+        if self._state != tk.DISABLED:
+            self._c.configure(cursor='hand2')
+        self._refresh()
+
+    def _on_leave(self, _e=None):
+        self._hover = False
+        self._pressed = False
+        self._c.configure(cursor='')
+        self._refresh()
+
+    def _on_press(self, _e=None):
+        if self._state == tk.DISABLED:
+            return
+        self._pressed = True
+        self._refresh()
+
+    def _on_release(self, _e=None):
+        was_pressed = self._pressed
+        self._pressed = False
+        self._refresh()
+        if was_pressed and self._state != tk.DISABLED and self._command:
+            self._command()
+
+    # --- tk.Button uyumu ---
+    def configure(self, text=None, state=None, command=None, **_ignored):
+        if text is not None:
+            self._c.itemconfigure(self._txt, text=text)
+        if command is not None:
+            self._command = command
+        if state is not None:
+            self._state = state
+            if state == tk.DISABLED:
+                self._pressed = False
+        self._refresh()
+
+    config = configure
+
+    def cget(self, key):
+        if key == 'state':
+            return self._state
+        raise KeyError(key)
+
+
+class _ImageProgress:
+    """bar_frame + dolgu görselinden ttk.Progressbar benzeri çubuk.
+
+    Dolgu gerilmez, soldan kırpılır: Tk 8.6'nın `image copy -from` komutu
+    kullanılır (Pillow gerekmez).
+    """
+
+    def __init__(self, canvas, pos, frame_img, fill_img, busy_img, inner):
+        self._c = canvas
+        self._x, self._y = pos
+        self._fill = fill_img
+        self._busy = busy_img
+        self._dx, self._dy, self._w, self._h = inner
+        canvas.create_image(self._x, self._y, anchor='nw', image=frame_img)
+        self._item = canvas.create_image(self._x + self._dx, self._y + self._dy,
+                                         anchor='nw')
+        self._cur = None       # canlı PhotoImage referansı (GC koruması)
+        self._chunk = None
+        self._chunk_w = 0
+        self._mode = 'determinate'
+        self._value = 0.0
+        self._max = 100.0
+        self._anim = None
+        self._interval = 60
+        self._off = 0
+        self._dir = 1
+        self._last_w = None
+
+    @staticmethod
+    def _crop(src, width, height):
+        width = max(1, int(width))
+        out = tk.PhotoImage(width=width, height=height)
+        out.tk.call(str(out), 'copy', str(src),
+                    '-from', 0, 0, width, int(height))
+        return out
+
+    def _place(self, x_off):
+        self._c.coords(self._item, self._x + self._dx + x_off, self._y + self._dy)
+
+    def _render(self):
+        ratio = self._value / self._max if self._max else 0.0
+        width = int(self._w * max(0.0, min(1.0, ratio)))
+        if width == self._last_w:
+            return
+        self._last_w = width
+        if width <= 0:
+            self._c.itemconfigure(self._item, image='')
+            self._cur = None
+            return
+        self._cur = self._crop(self._fill, width, self._h)
+        self._place(0)
+        self._c.itemconfigure(self._item, image=self._cur)
+
+    def _tick(self):
+        span = max(1, self._w - self._chunk_w)
+        self._off += self._dir * 10
+        if self._off >= span:
+            self._off, self._dir = span, -1
+        elif self._off <= 0:
+            self._off, self._dir = 0, 1
+        self._place(self._off)
+        self._anim = self._c.after(self._interval, self._tick)
+
+    # --- ttk.Progressbar uyumu ---
+    def configure(self, mode=None, value=None, maximum=None, **_ignored):
+        if maximum is not None:
+            self._max = float(maximum) or 100.0
+        if mode is not None:
+            self._mode = mode
+        if value is not None:
+            self._value = float(value)
+        if self._mode == 'determinate':
+            self._render()
+
+    config = configure
+
+    def start(self, interval=None):
+        if interval:
+            self._interval = max(20, int(interval) * 4)
+        self.stop()
+        self._mode = 'indeterminate'
+        self._chunk_w = max(60, self._w // 4)
+        self._chunk = self._crop(self._busy, self._chunk_w, self._h)
+        self._cur = self._chunk
+        self._off, self._dir, self._last_w = 0, 1, None
+        self._c.itemconfigure(self._item, image=self._chunk)
+        self._tick()
+
+    def stop(self):
+        if self._anim is not None:
+            self._c.after_cancel(self._anim)
+            self._anim = None
+        self._chunk = None
+        self._last_w = None
+
+
 class LauncherApp:
     def __init__(self):
         if getattr(sys, 'frozen', False):
@@ -36,7 +326,184 @@ class LauncherApp:
         self._build_ui()
         self.root.after(100, self._check_updates)
 
+    # --- tema paleti (oyunla ortak; bkz. ui_theme.COLORS) ---
+    PALETTE = {
+        'window': '#181416', 'panel': '#1a1822', 'panel_alt': '#141218',
+        'border': '#7a7e86', 'text': '#f0eadc', 'muted': '#8c8470',
+        'gold': '#966416', 'blue': '#1e4e6e', 'green': '#2c603a',
+        'orange': '#b47a1e', 'red': '#92180f',
+    }
+
     def _build_ui(self):
+        """Gotik asset'lerle çizer; asset yoksa eski widget arayüzüne düşer."""
+        self.colors = dict(self.PALETTE)
+        try:
+            self._build_ui_themed()
+            return
+        except Exception as error:  # eksik/bozuk PNG, eski Tk sürümü vb.
+            print(f"[launcher] tema yuklenemedi, klasik arayuz: {error}")
+            for child in self.root.winfo_children():
+                child.destroy()
+        self._build_ui_classic()
+
+    def _load_chrome(self):
+        """Gerekli PNG'leri yükler. Eksik olan varsa hata verir."""
+        needed = ['bg.png', 'panel.png', 'version_box.png', 'bar.png',
+                  'bar_fill.png', 'bar_fill_busy.png', 'titlebar.png',
+                  'crest_small.png']
+        for key in ('play', 'update', 'notes'):
+            needed += [f'btn_{key}_{s}.png'
+                       for s in ('normal', 'hover', 'pressed', 'disabled')]
+        for key in ('close', 'min'):
+            needed += [f'btn_{key}_{s}.png' for s in ('normal', 'hover')]
+
+        images = {}
+        for name in needed:
+            path = os.path.join(CHROME_DIR, name)
+            if not os.path.exists(path):
+                raise FileNotFoundError(
+                    f"{name} yok - 'python tools/generate_launcher_chrome.py' calistir")
+            images[name] = tk.PhotoImage(file=path)
+        return images
+
+    def _build_ui_themed(self):
+        LAYOUT_R, T = _load_layout()
+        W, H = LAYOUT_R['window']
+        c = self.colors
+
+        # PhotoImage referanslari canli kalmali, yoksa Tk gorseli siler
+        self._chrome = self._load_chrome()
+        img = self._chrome
+
+        # OS baslik cubugunu kaldir, pencereyi ekranda ortala
+        self.root.overrideredirect(True)
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        self.root.geometry(f"{W}x{H}+{max(0, (sw - W) // 2)}+{max(0, (sh - H) // 3)}")
+        self.root.configure(bg='#0b0a0d')
+
+        canvas = tk.Canvas(self.root, width=W, height=H, highlightthickness=0,
+                           bd=0, bg='#0b0a0d')
+        canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas = canvas
+
+        canvas.create_image(0, T, anchor='nw', image=img['bg.png'])
+
+        # --- ozel baslik cubugu ---
+        bar_bg = canvas.create_image(0, 0, anchor='nw', image=img['titlebar.png'])
+        crest = canvas.create_image(16, T // 2, anchor='w', image=img['crest_small.png'])
+        title = canvas.create_text(60, T // 2, anchor='w',
+                                   text="BOXHEAD 2.0  —  LAUNCHER",
+                                   fill='#cfc6b4', font=("Georgia", 10, "bold"))
+        # Cubuk / baslik / süs: surukleyerek tasi
+        for item in (bar_bg, title, crest):
+            canvas.tag_bind(item, '<ButtonPress-1>', self._drag_start)
+            canvas.tag_bind(item, '<B1-Motion>', self._drag_move)
+
+        icon_y = (T - 26) // 2
+        self.close_btn = _IconButton(
+            canvas, {s: img[f'btn_close_{s}.png'] for s in ('normal', 'hover')},
+            W - 38, icon_y, self._quit)
+        self.min_btn = _IconButton(
+            canvas, {s: img[f'btn_min_{s}.png'] for s in ('normal', 'hover')},
+            W - 74, icon_y, self._minimize)
+
+        # --- marka ---
+        canvas.create_text(40, T + 46, anchor='w', text="NATIVE EVOLUTION",
+                           fill='#4a86b4', font=("Georgia", 9, "bold"))
+        canvas.create_text(38, T + 76, anchor='w', text="BOXHEAD 2.0",
+                           fill=c['text'], font=("Georgia", 28, "bold"))
+        canvas.create_text(40, T + 110, anchor='w',
+                           text="Hayatta kal. Güçlen. Sınırları aş.",
+                           fill=c['muted'], font=("Segoe UI", 10))
+
+        vx, vy, vw, _vh = LAYOUT_R['version_box']
+        canvas.create_image(vx, vy + T, anchor='nw', image=img['version_box.png'])
+        self.version_label = _CanvasText(canvas, canvas.create_text(
+            vx + vw // 2, vy + T + 32, text=(
+                f"OYUN      v{get_local_version()}\n"
+                f"LAUNCHER  v{LAUNCHER_VERSION}"),
+            fill=c['muted'], font=("Consolas", 9, "bold"), justify=tk.CENTER))
+
+        # --- durum karti ---
+        px, py = LAYOUT_R['panel']
+        py += T
+        canvas.create_image(px, py, anchor='nw', image=img['panel.png'])
+        ix = px + LAYOUT_R['panel_inset']
+        iy = py + LAYOUT_R['panel_inset']
+
+        self.status_dot = _CanvasText(canvas, canvas.create_text(
+            ix + 4, iy + 12, anchor='w', text="●", fill=c['blue'],
+            font=("Segoe UI", 12)))
+        self.status_label = _CanvasText(canvas, canvas.create_text(
+            ix + 24, iy + 12, anchor='w', text="Sürüm kontrol ediliyor",
+            fill=c['text'], font=("Georgia", 15, "bold")))
+        self.status_detail = _CanvasText(canvas, canvas.create_text(
+            ix, iy + 38, anchor='nw', width=530,
+            text="GitHub üzerinden en son sürüm bilgisi alınıyor.",
+            fill=c['muted'], font=("Segoe UI", 9), justify=tk.LEFT))
+
+        bx, by = LAYOUT_R['bar']
+        self.progress = _ImageProgress(
+            canvas, (bx, by + T), img['bar.png'], img['bar_fill.png'],
+            img['bar_fill_busy.png'], LAYOUT_R['bar_inner'])
+
+        # --- butonlar ---
+        def states(key):
+            return {s: img[f'btn_{key}_{s}.png']
+                    for s in ('normal', 'hover', 'pressed', 'disabled')}
+
+        def box(key):
+            x, y, w, h = LAYOUT_R[key]
+            return (x, y + T, w, h)
+
+        btn_font = ("Georgia", 13, "bold")
+        self.play_btn = _ImageButton(canvas, states('play'), box('btn_play'),
+                                     "OYNA", self._launch_game, btn_font)
+        self.update_btn = _ImageButton(canvas, states('update'), box('btn_update'),
+                                       "GÜNCELLE", self._start_update, btn_font)
+        self.notes_btn = _ImageButton(canvas, states('notes'), box('btn_notes'),
+                                      "YENİLİKLER (PATCH NOTES)",
+                                      self._show_patch_notes, btn_font)
+
+        canvas.create_text(
+            W // 2, H - 26, text=(
+                "Güncellemeler doğrulanarak uygulanır  •  Kayıt dosyaların korunur"),
+            fill='#6c7a8c', font=("Segoe UI", 9))
+
+        self.root.bind('<Escape>', lambda _e: self._quit())
+
+    # --- ozel baslik cubugu davranisi ---
+    def _drag_start(self, event):
+        self._drag_from = (event.x_root - self.root.winfo_x(),
+                           event.y_root - self.root.winfo_y())
+
+    def _drag_move(self, event):
+        if not getattr(self, '_drag_from', None):
+            return
+        dx, dy = self._drag_from
+        self.root.geometry(f"+{event.x_root - dx}+{event.y_root - dy}")
+
+    def _minimize(self):
+        """overrideredirect pencere dogrudan iconify edilemez; gecici olarak
+        cerceveyi geri acip kucultur, geri gelince tekrar kaldirir."""
+        try:
+            self.root.overrideredirect(False)
+            self.root.iconify()
+
+            def restore(_e=None):
+                self.root.overrideredirect(True)
+                self.root.unbind('<Map>', self._map_bind)
+                self._map_bind = None
+
+            self._map_bind = self.root.bind('<Map>', restore)
+        except Exception as error:
+            print(f"[launcher] kucultme desteklenmiyor: {error}")
+
+    def _quit(self):
+        self.root.destroy()
+
+    def _build_ui_classic(self):
         # Koyu fantastik tema paleti (oyunla ortak; bkz. DESIGN.md / ui_theme.COLORS)
         self.colors = {
             'window': '#181416', 'panel': '#1a1822', 'panel_alt': '#141218',

@@ -1090,6 +1090,18 @@ class GameScene(BaseScene):
                 pygame.draw.rect(surf, floor_color, rect)
                 pygame.draw.rect(surf, self.grid_line_color, rect, 1)
 
+    def _draw_hud_bar(self, x, y, w, h, ratio, fill_asset, flat_color, label):
+        """Gotik çerçeveli durum çubuğu; varlık yoksa eski düz çizime düşer."""
+        import ui_nineslice as n9
+        rect = pygame.Rect(x, y, w, h)
+        if not n9.draw_bar(self.screen, "bar_frame.png", rect, fill_asset, ratio):
+            pygame.draw.rect(self.screen, (30, 30, 45), rect, border_radius=6)
+            pygame.draw.rect(self.screen, flat_color,
+                             (x, y, int(w * max(0.0, min(1.0, ratio))), h),
+                             border_radius=6)
+        txt = self.font_desc.render(label, True, (255, 255, 255))
+        self.screen.blit(txt, (x + w + 10, y + h // 2 - txt.get_height() // 2))
+
     def draw_hud(self):
         p = self.logic.players[self.logic.local_player_id]
         # Wave Bilgisi
@@ -1137,28 +1149,27 @@ class GameScene(BaseScene):
         level_surf = self.font_sub.render(level_str, True, (52, 152, 219))
         self.screen.blit(level_surf, (20, 60))
         
-        # HP ve ES Barları (Sol Üst)
+        # HP / ES / XP Barları (Sol Üst)
+        # Yükseklik 24: gotik bar çerçevesinin üst/alt rayları ~5px, oluğa
+        # 14px kalıyor. 12px'te oluk 2px'e düşüp dolgu görünmez oluyordu.
+        BAR_W, BAR_H, BAR_GAP = 220, 24, 30
         hp_ratio = p.hp / max(1, p.max_hp)
-        pygame.draw.rect(self.screen, (30, 30, 45), (20, 95, 200, 12), border_radius=6)
-        pygame.draw.rect(self.screen, (231, 76, 60), (20, 95, 200 * hp_ratio, 12), border_radius=6)
-        hp_txt = self.font_desc.render(f"HP: {int(p.hp)}/{int(p.max_hp)}", True, (255, 255, 255))
-        self.screen.blit(hp_txt, (225, 90))
-        
-        y_offset = 115
+        self._draw_hud_bar(20, 95, BAR_W, BAR_H, hp_ratio,
+                           "bar_fill_hp.png", (231, 76, 60),
+                           f"HP: {int(p.hp)}/{int(p.max_hp)}")
+
+        y_offset = 95 + BAR_GAP
         if p.max_energy_shield > 0:
             es_ratio = p.energy_shield / max(1, p.max_energy_shield)
-            pygame.draw.rect(self.screen, (30, 30, 45), (20, 115, 200, 12), border_radius=6)
-            pygame.draw.rect(self.screen, (52, 152, 219), (20, 115, 200 * es_ratio, 12), border_radius=6)
-            es_txt = self.font_desc.render(f"ES: {int(p.energy_shield)}/{int(p.max_energy_shield)}", True, (255, 255, 255))
-            self.screen.blit(es_txt, (225, 110))
-            y_offset += 20
-        
-        # XP Barı
+            self._draw_hud_bar(20, y_offset, BAR_W, BAR_H, es_ratio,
+                               "bar_fill_shield.png", (52, 152, 219),
+                               f"ES: {int(p.energy_shield)}/{int(p.max_energy_shield)}")
+            y_offset += BAR_GAP
+
         xp_ratio = p.xp / p.xp_to_next_level
-        pygame.draw.rect(self.screen, (30, 30, 45), (20, y_offset, 200, 12), border_radius=6)
-        pygame.draw.rect(self.screen, (46, 204, 113), (20, y_offset, 200 * xp_ratio, 12), border_radius=6)
-        xp_txt = self.font_desc.render(f"XP: {p.xp:.1f}/{p.xp_to_next_level}", True, (255, 255, 255))
-        self.screen.blit(xp_txt, (225, y_offset - 5))
+        self._draw_hud_bar(20, y_offset, BAR_W, BAR_H, xp_ratio,
+                           "bar_fill_green.png", (46, 204, 113),
+                           f"XP: {p.xp:.1f}/{p.xp_to_next_level}")
         
         # --- HUD: DASH DURUMU (Space) ---
         dash_x, dash_y = self.width - 270, 20
@@ -1301,7 +1312,14 @@ class GameScene(BaseScene):
         # Full Screen Overlay
         self._overlay_surface.fill((20, 20, 30, 240)) # Daha koyu premium hava
         self.screen.blit(self._overlay_surface, (0, 0))
-        
+
+        # İçerik alanının gotik panel zemini (sekme çubuğunun altında kalır).
+        # İçerik ekran ortasına göre sağa kaymış durumda (kuşanılanlar ~510'da
+        # başlar, filtre satırı ~1660'a kadar gider), panel de ona göre.
+        import ui_nineslice as n9
+        n9.draw(self.screen, "panel_frame.png",
+                pygame.Rect(self.width // 2 - 520, 92, 1260, self.height - 150))
+
         p = self.logic.players[self.logic.local_player_id]
         
         # 1. TAB BAR & HUD
@@ -1346,13 +1364,13 @@ class GameScene(BaseScene):
         x = self.width // 2 - bar_w // 2
         y = 55
         
-        # Arka plan
-        pygame.draw.rect(self.screen, (20, 20, 30), (x, y, bar_w, bar_h), border_radius=5)
-        # Dolgu
         ratio = max(0, boss.hp / boss.max_hp)
-        pygame.draw.rect(self.screen, (192, 57, 43), (x, y, int(bar_w * ratio), bar_h), border_radius=5)
-        # Kenarlık
-        pygame.draw.rect(self.screen, (241, 196, 15), (x, y, bar_w, bar_h), width=2, border_radius=5)
+        import ui_nineslice as n9
+        if not n9.draw_bar(self.screen, "bar_frame.png",
+                           pygame.Rect(x, y, bar_w, bar_h), "bar_fill_hp.png", ratio):
+            pygame.draw.rect(self.screen, (20, 20, 30), (x, y, bar_w, bar_h), border_radius=5)
+            pygame.draw.rect(self.screen, (192, 57, 43), (x, y, int(bar_w * ratio), bar_h), border_radius=5)
+            pygame.draw.rect(self.screen, (241, 196, 15), (x, y, bar_w, bar_h), width=2, border_radius=5)
         
         # İsim (EchelionFinrod)
         name_t = self.font_boss_name.render("ECHELION FINROD", True, (241, 196, 15))

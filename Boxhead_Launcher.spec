@@ -5,7 +5,9 @@ a = Analysis(
     ['launcher\\main.py'],
     pathex=['.'],
     binaries=[],
-    datas=[],
+    # Launcher, oyun kurulmadan once de calisir; gotik arayuz parcalarini
+    # (413 KB) kendi icine gomer, yoksa klasik widget arayuzune duser.
+    datas=[('assets/ui/gothic/launcher', 'assets/ui/gothic/launcher')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

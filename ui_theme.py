@@ -9,6 +9,22 @@ fonksiyonlar boyuta göre üretir ve cache'ler.
 import os
 import pygame
 
+try:
+    import ui_nineslice as _n9
+except ImportError:  # varlıklar/modül yoksa tema kendi çizimiyle çalışır
+    _n9 = None
+
+# assets/ui/gothic/ varlıklarını kullan. False yapmak her şeyi eski
+# prosedürel çizime döndürür (varlıklar bozulursa hızlı çıkış yolu).
+USE_NINESLICE = True
+
+_N9_BUTTON = {
+    "normal": "button_normal.png",
+    "hover": "button_hover.png",
+    "pressed": "button_pressed.png",
+    "disabled": "button_disabled.png",
+}
+
 # --- PALET ---
 DARK_OUT = (24, 20, 22)      # dış kontur
 METAL = (122, 126, 134)      # metal çerçeve
@@ -93,6 +109,68 @@ def _banner_points(x0, y0, w, h, inset):
     ]
 
 
+def _draw_button_text(surf, width, box_y, box_h, text, color, state, scale=1):
+    """Buton metnini gölgesiyle yüzeye çizer (banner ve 9-slice ortak)."""
+    disabled = state == "disabled"
+    f_size = max(7 * scale, int(box_h * 0.62))
+    font = pygame.font.SysFont(_FONT_NAME, f_size, bold=True)
+    t_col = (150, 148, 142) if disabled else TEXT_COL
+    txt = font.render(text, True, t_col)
+
+    max_tw = width - 18 * scale
+    if max_tw > 0 and txt.get_width() > max_tw:
+        ratio = max_tw / txt.get_width()
+        txt = pygame.transform.smoothscale(
+            txt, (int(max_tw), max(1, int(txt.get_height() * ratio))))
+
+    tx = width // 2 - txt.get_width() // 2
+    ty = box_y + box_h // 2 - txt.get_height() // 2
+    sh = font.render(text, True, (20, 10, 8))
+    if sh.get_size() != txt.get_size():
+        sh = pygame.transform.smoothscale(sh, txt.get_size())
+    surf.blit(sh, (tx + max(1, scale), ty + max(1, scale)))
+    surf.blit(txt, (tx, ty))
+
+
+def _render_button_nineslice(width, height, text, color, state, skull):
+    """assets/ui/gothic plakasından buton üretir. Uygun değilse None.
+
+    Plaka tek renk koyu taş; menüdeki renk kodlaması (blood/night/arcane...)
+    kaybolmasın diye iç yüzey buton rengiyle toplamalı harmanlanır. Toplamalı
+    blend şeffaf pikselleri etkilemediğinden çerçeve dışına taşmaz.
+    """
+    asset = _N9_BUTTON.get(state, _N9_BUTTON["normal"])
+    if _n9 is None or not _n9.has(asset):
+        return None
+    mw, mh = _n9.min_size(asset)
+    if width < mw or height < mh:
+        return None  # çok küçük: banner çizimi daha iyi sonuç verir
+
+    over = (SKULL_H * 2) if skull else 0
+    surf = pygame.Surface((width, height + over), pygame.SRCALPHA)
+
+    plate = _n9.get(asset, width, height)
+    if plate is None:
+        return None
+    surf.blit(plate, (0, over))
+
+    if state != "disabled":
+        # Tonu plakanın tamamına uygula: sadece içe uygulanınca bevel'i
+        # takip etmeyen keskin bir dikdörtgen çıkıyordu. Toplamalı blend
+        # şeffaf pikselleri atladığı için taşma olmuyor.
+        strength = 0.42 if state == "hover" else 0.30
+        tint = pygame.Surface((width, height))
+        tint.fill(tuple(int(c * strength) for c in color))
+        surf.blit(tint, (0, over), special_flags=pygame.BLEND_RGB_ADD)
+
+    if skull:
+        sk = render_skull(2, glow=(state == "hover"))
+        surf.blit(sk, (width // 2 - sk.get_width() // 2, 0))
+
+    _draw_button_text(surf, width, over, height, text, color, state, scale=2)
+    return (surf, over)
+
+
 def render_banner_button(width, height, text, color, state="normal", skull=False):
     """Sivri uçlu banner buton döndürür: (surface, overhang_px).
 
@@ -103,6 +181,12 @@ def render_banner_button(width, height, text, color, state="normal", skull=False
     key = (width, height, text, color, state, skull)
     if key in _button_cache:
         return _button_cache[key]
+
+    if USE_NINESLICE:
+        made = _render_button_nineslice(width, height, text, color, state, skull)
+        if made is not None:
+            _button_cache[key] = made
+            return made
 
     hover = state == "hover"
     pressed = state == "pressed"
@@ -210,8 +294,52 @@ def render_banner_button(width, height, text, color, state="normal", skull=False
     return result
 
 
+def _draw_panel_nineslice(screen, rect, fill, alpha, skull):
+    """assets/ui/gothic çerçevesiyle panel çizer. Çizdiyse True.
+
+    Çerçeve rect'in DIŞINA çizilir: çağıranlar rect'i içerik alanı sayıp
+    başlığı/metni kenara yakın koyuyor, 52px'lik gotik kenar ise eski 3px'in
+    yerine geçince onları örtüyordu.
+    """
+    for asset in ("panel_frame.png", "panel_frame_small.png"):
+        if not _n9.has(asset):
+            continue
+        outer = _n9.outer_rect(asset, rect)
+        mw, mh = _n9.min_size(asset)
+        if outer.width < mw or outer.height < mh:
+            continue
+
+        key = ("n9", asset, outer.width, outer.height, fill, alpha)
+        surf = _panel_cache.get(key)
+        if surf is None:
+            frame = _n9.get(asset, outer.width, outer.height)
+            if frame is None:
+                continue
+            surf = pygame.Surface(outer.size, pygame.SRCALPHA)
+            # panel_frame ortası opak koyu; small'in ortası şeffaf olduğu
+            # için zemini kendimiz koyuyoruz
+            if asset != "panel_frame.png":
+                pygame.draw.rect(surf, fill + (255,), surf.get_rect(), border_radius=4)
+            surf.blit(frame, (0, 0))
+            if alpha < 255:
+                surf.set_alpha(alpha)
+            _panel_cache[key] = surf
+
+        screen.blit(surf, outer.topleft)
+        if skull:
+            sk = render_skull(3)
+            screen.blit(sk, (rect.centerx - sk.get_width() // 2,
+                             outer.y - sk.get_height() // 2))
+        return True
+    return False
+
+
 def draw_panel(screen, rect, fill=PANEL_BG, alpha=235, skull=False):
     """Metal çerçeveli koyu panel çizer (menü panelleri, kartlar, tooltipler)."""
+    if USE_NINESLICE and _n9 is not None and _draw_panel_nineslice(
+            screen, rect, fill, alpha, skull):
+        return
+
     key = (rect.width, rect.height, fill, alpha, skull)
     surf = _panel_cache.get(key)
     if surf is None:

@@ -1,0 +1,314 @@
+{
+ "panel_frame.png": {
+  "insets": [
+   52,
+   52,
+   52,
+   52
+  ],
+  "trim": [
+   0,
+   0,
+   400,
+   300
+  ],
+  "min_size": [
+   106,
+   106
+  ],
+  "edge_opacity": {
+   "top": 1.0,
+   "bottom": 1.0,
+   "left": 1.0,
+   "right": 1.0
+  }
+ },
+ "panel_frame_epic.png": {
+  "insets": [
+   56,
+   56,
+   56,
+   56
+  ],
+  "trim": [
+   14,
+   14,
+   372,
+   271
+  ],
+  "min_size": [
+   114,
+   114
+  ],
+  "edge_opacity": {
+   "top": 0.27,
+   "bottom": 0.33,
+   "left": 0.33,
+   "right": 0.32
+  }
+ },
+ "panel_frame_small.png": {
+  "insets": [
+   40,
+   40,
+   40,
+   40
+  ],
+  "trim": [
+   2,
+   1,
+   251,
+   185
+  ],
+  "min_size": [
+   82,
+   82
+  ],
+  "edge_opacity": {
+   "top": 0.31,
+   "bottom": 0.35,
+   "left": 0.34,
+   "right": 0.26
+  }
+ },
+ "bar_frame.png": {
+  "insets": [
+   40,
+   5,
+   40,
+   5
+  ],
+  "trim": [
+   9,
+   8,
+   311,
+   25
+  ],
+  "min_size": [
+   82,
+   12
+  ],
+  "edge_opacity": {
+   "top": 0.6,
+   "bottom": 0.6,
+   "left": 0.91,
+   "right": 0.91
+  }
+ },
+ "item_slot.png": {
+  "insets": [
+   14,
+   14,
+   14,
+   14
+  ],
+  "trim": [
+   7,
+   6,
+   50,
+   52
+  ],
+  "min_size": [
+   30,
+   30
+  ],
+  "edge_opacity": {
+   "top": 0.93,
+   "bottom": 0.93,
+   "left": 1.0,
+   "right": 1.0
+  }
+ },
+ "rarity_frame_common.png": {
+  "insets": [
+   14,
+   14,
+   14,
+   14
+  ],
+  "trim": [
+   7,
+   6,
+   50,
+   52
+  ],
+  "min_size": [
+   30,
+   30
+  ],
+  "edge_opacity": {
+   "top": 0.93,
+   "bottom": 0.93,
+   "left": 1.0,
+   "right": 1.0
+  }
+ },
+ "rarity_frame_rare.png": {
+  "insets": [
+   14,
+   14,
+   14,
+   14
+  ],
+  "trim": [
+   7,
+   6,
+   50,
+   52
+  ],
+  "min_size": [
+   30,
+   30
+  ],
+  "edge_opacity": {
+   "top": 0.93,
+   "bottom": 0.93,
+   "left": 1.0,
+   "right": 1.0
+  }
+ },
+ "rarity_frame_epic.png": {
+  "insets": [
+   14,
+   14,
+   14,
+   14
+  ],
+  "trim": [
+   7,
+   6,
+   50,
+   52
+  ],
+  "min_size": [
+   30,
+   30
+  ],
+  "edge_opacity": {
+   "top": 0.93,
+   "bottom": 0.93,
+   "left": 1.0,
+   "right": 1.0
+  }
+ },
+ "rarity_frame_legendary.png": {
+  "insets": [
+   14,
+   14,
+   14,
+   14
+  ],
+  "trim": [
+   7,
+   6,
+   50,
+   52
+  ],
+  "min_size": [
+   30,
+   30
+  ],
+  "edge_opacity": {
+   "top": 0.93,
+   "bottom": 0.93,
+   "left": 1.0,
+   "right": 1.0
+  }
+ },
+ "button_normal.png": {
+  "insets": [
+   26,
+   12,
+   26,
+   12
+  ],
+  "trim": [
+   7,
+   5,
+   293,
+   50
+  ],
+  "min_size": [
+   54,
+   26
+  ],
+  "edge_opacity": {
+   "top": 0.7,
+   "bottom": 0.67,
+   "left": 0.86,
+   "right": 0.86
+  }
+ },
+ "button_hover.png": {
+  "insets": [
+   26,
+   12,
+   26,
+   12
+  ],
+  "trim": [
+   7,
+   5,
+   293,
+   50
+  ],
+  "min_size": [
+   54,
+   26
+  ],
+  "edge_opacity": {
+   "top": 0.7,
+   "bottom": 0.67,
+   "left": 0.86,
+   "right": 0.86
+  }
+ },
+ "button_pressed.png": {
+  "insets": [
+   26,
+   12,
+   26,
+   12
+  ],
+  "trim": [
+   7,
+   5,
+   293,
+   50
+  ],
+  "min_size": [
+   54,
+   26
+  ],
+  "edge_opacity": {
+   "top": 0.7,
+   "bottom": 0.67,
+   "left": 0.86,
+   "right": 0.86
+  }
+ },
+ "button_disabled.png": {
+  "insets": [
+   26,
+   12,
+   26,
+   12
+  ],
+  "trim": [
+   7,
+   5,
+   293,
+   50
+  ],
+  "min_size": [
+   54,
+   26
+  ],
+  "edge_opacity": {
+   "top": 0.7,
+   "bottom": 0.67,
+   "left": 0.86,
+   "right": 0.86
+  }
+ }
+}

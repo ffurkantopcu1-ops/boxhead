@@ -50,5 +50,10 @@ orc_v2.png
 test_frame.png
 
 release_assets/*.zip
+
+# UI asset uretiminde kaynak olarak kullanilan referans sayfalari.
+# Oyun bunlari yuklemiyor; ~17 MB oldugu icin git gecmisine alinmiyor.
+assets/references/
+
 # Claude Code local session data
 .claude/

@@ -304,7 +304,9 @@ class MenuScene(BaseScene):
 
         self.settings_row_rects = []
         for i, opt in enumerate(opts):
-            row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 60 + i * 70 - 20, 400, 50)
+            # +84: 30 punto başlık panel.y+18'de başlayıp ~y+56'ya kadar iniyor;
+            # satırlar y+40'tan başlayınca opak dolgusu başlığın altını kesiyordu.
+            row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 84 + i * 70 - 20, 400, 50)
             self.settings_row_rects.append(row_rect)
             if i == self.selected_idx:
                 pygame.draw.rect(self.screen, (45, 45, 65), row_rect, border_radius=8)
