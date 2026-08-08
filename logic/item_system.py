@@ -21,10 +21,10 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Gölge Arbaleti (T2)', 'tier': 2, 'isRanged': True, 'weaponClass': 'sniper', 'icon_id': 'weapon_crossbow_shadow', 'itemBase': { 'physDmg': 85 } },
         { 'type': 'weapon', 'name': 'Balista (T1)', 'tier': 1, 'isRanged': True, 'weaponClass': 'sniper', 'icon_id': 'weapon_ballista', 'itemBase': { 'physDmg': 160, 'pierce': 3 } },
         
-        { 'type': 'weapon', 'name': 'Zehir Şişesi (T4)', 'tier': 4, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_poison_bottle', 'itemBase': { 'poisonDps': 8 } },
-        { 'type': 'weapon', 'name': 'Simyacı Karışımı (T3)', 'tier': 3, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_alchemist_mixture', 'itemBase': { 'poisonDps': 25, 'aoe': 1.8 } },
-        { 'type': 'weapon', 'name': 'Büyük Kimyasal Şişe (T2)', 'tier': 2, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_chemical_bottle_large', 'itemBase': { 'poisonDps': 60, 'aoe': 2.5 } },
-        { 'type': 'weapon', 'name': 'Nükleer Atık (T1)', 'tier': 1, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_nuclear_waste', 'itemBase': { 'poisonDps': 140, 'aoe': 3.5, 'dotDmgMult': 0.5 } },
+        { 'type': 'weapon', 'name': 'Zehir Şişesi (T4)', 'tier': 4, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_poison_bottle', 'itemBase': { 'poisonDps': 4 } },
+        { 'type': 'weapon', 'name': 'Simyacı Karışımı (T3)', 'tier': 3, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_alchemist_mixture', 'itemBase': { 'poisonDps': 12, 'aoe': 1.8 } },
+        { 'type': 'weapon', 'name': 'Büyük Kimyasal Şişe (T2)', 'tier': 2, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_chemical_bottle_large', 'itemBase': { 'poisonDps': 25, 'aoe': 2.5 } },
+        { 'type': 'weapon', 'name': 'Nükleer Atık (T1)', 'tier': 1, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_nuclear_waste', 'itemBase': { 'poisonDps': 60, 'aoe': 3.5, 'dotDmgMult': 0.5 } },
 
         # --- YENİ SINIF SİLAHLARI ---
         { 'type': 'weapon', 'name': 'Sihir Asası (T4)', 'tier': 4, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_magic', 'itemBase': { 'physDmg': 8, 'elementDmgMult': 0.2 } },
