@@ -1095,6 +1095,37 @@ class GameScene(BaseScene):
         wave_str = f"WAVE: {self.logic.wave['level']}"
         wave_surf = self.font_sub.render(wave_str, True, (241, 196, 15))
         self.screen.blit(wave_surf, (self.width // 2 - wave_surf.get_width() // 2, 20))
+
+        # Aktif dalga olayı şeridi (dalga boyunca görünür kalır)
+        evt = self.logic.wave.get("event")
+        if evt:
+            strip_txt = self.font_desc.render(evt["desc"], True, (255, 180, 40))
+            sw, sh = strip_txt.get_width() + 24, strip_txt.get_height() + 8
+            strip_bg = pygame.Surface((sw, sh), pygame.SRCALPHA)
+            pygame.draw.rect(strip_bg, (25, 20, 5, 190), strip_bg.get_rect(), border_radius=6)
+            pygame.draw.rect(strip_bg, (255, 165, 0, 220), strip_bg.get_rect(), width=1, border_radius=6)
+            strip_bg.blit(strip_txt, (12, 4))
+            self.screen.blit(strip_bg, (self.width // 2 - sw // 2, 58))
+
+        # Dalga başı büyük duyuru banner'ı (ekran ortası, sona doğru söner)
+        announce_t = self.logic.wave.get("announce_timer", 0)
+        lines = self.logic.wave.get("announce_lines") or []
+        if announce_t > 0 and lines:
+            line_surfs = []
+            for i, line in enumerate(lines):
+                color = (231, 76, 60) if i == 0 else (255, 165, 0)
+                line_surfs.append(self.font_sub.render(line, True, color))
+            bw = max(s.get_width() for s in line_surfs) + 80
+            bh = sum(s.get_height() for s in line_surfs) + 30 + 8 * (len(line_surfs) - 1)
+            banner = pygame.Surface((bw, bh), pygame.SRCALPHA)
+            pygame.draw.rect(banner, (10, 10, 22, 200), banner.get_rect(), border_radius=12)
+            pygame.draw.rect(banner, (241, 196, 15, 255), banner.get_rect(), width=2, border_radius=12)
+            ly = 15
+            for s in line_surfs:
+                banner.blit(s, (bw // 2 - s.get_width() // 2, ly))
+                ly += s.get_height() + 8
+            banner.set_alpha(int(255 * min(1.0, announce_t)))  # Son 1 saniyede fade-out
+            self.screen.blit(banner, (self.width // 2 - bw // 2, self.height // 4 - bh // 2))
         
         # Altın ve XP
         gold_str = f"GOLD: {p.gold}"
