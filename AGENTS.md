@@ -123,6 +123,62 @@ use them.
   both are required by the release workflow (`.github/workflows/release.yml`),
   which builds the game and the launcher from them on every `v*` tag.
 
+## UI Theme And Layout (Mandatory)
+
+`assets/ui/gothic/` is the visual source of truth — dark carved stone frames with
+red gem rivets, matching button plates, portrait/item frames, and a skull crest.
+`DESIGN.md` describes the older procedural theme; where the two disagree, the
+gothic assets win. Every new or edited UI surface must match them.
+
+### Use the theme, never hand-drawn chrome
+
+- Buttons: `ui_elements.Button` (wraps `ui_theme.render_banner_button`, which
+  uses `button_*.png`). Pick the colour from `ui_theme.COLORS`, never a raw RGB.
+- Panels/tooltips: `ui_theme.draw_panel` (frame is drawn OUTSIDE the rect, for
+  wide standalone panels) or `ui_theme.draw_inset_frame` (frame drawn INSIDE the
+  rect, for cards/rows in a grid where the outer size is fixed).
+- Item and portrait boxes: `item_slot.png`, `rarity_frame_*.png`,
+  `portrait_frame.png` via `ui_nineslice.get` / `get_border`.
+- Screen titles: `ui_theme.render_title` (serif + shadow), optionally flanked by
+  `ui_elements.get_skull_crest`.
+- A bare `pygame.draw.rect(..., border_radius=N)` as a panel, button, or slot is
+  a theme violation. Flat rounded rectangles with saturated fills (the old
+  "modern" look) are being removed, do not add more.
+
+### Layout rules that have actually broken before
+
+- **Allocate vertical space bottom-up.** Give fixed elements (footer strip,
+  stat line, action row) their height first, then let the flexible element
+  (portrait, list body) take the remainder. Sizing the image first and letting
+  text flow after it is what pushed text out of the card in `ClassCard`.
+- **Respect the frame's corners.** 9-slice `insets` equal the corner ornament
+  size (40px for `panel_frame_small.png`), not the thickness of the straight
+  edge. Use a smaller explicit `pad` for content, but keep text clear of the
+  corners horizontally, or it renders on top of the gem rivets.
+- **`draw_panel` grows the rect.** `ui_nineslice.outer_rect` puts the 52px
+  gothic border outside the rect you pass. In a grid this overlaps neighbours —
+  use `draw_inset_frame` there instead.
+- **Fit text explicitly.** Use `render_fit`/`wrap_text` with the real available
+  width; never assume a string fits. Check the widest real content (longest
+  class name, 4-stat rows), not the first item.
+- **Low-luminance accents are unreadable on the dark ground.** Run brand/class
+  colours through `ui_theme.readable()` before using them for text or thin lines.
+- **Draw the hovered/selected element last** so its glow and crest are not
+  overlapped by neighbouring frames.
+
+### Validation for UI changes
+
+Render the screen offscreen and actually look at it before claiming it is done:
+
+```powershell
+$env:SDL_VIDEODRIVER='dummy'  # or pygame.HIDDEN on a real display
+# build the scene with a stub manager, call scene.draw(), pygame.image.save(...)
+```
+
+Check both states (idle and hovered/selected) and the longest text content.
+Alignment bugs in this project have consistently been found by looking at a
+render, not by reading the code.
+
 ## Class And Evolution Balance (Mandatory)
 
 Any new class or evolution/subclass MUST pass these checks before the change is

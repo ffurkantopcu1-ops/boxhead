@@ -1,17 +1,39 @@
 # DESIGN.md — Boxhead 2.0 UI Teması
 
-Koyu-fantastik **pixel-art** UI teması. Referans: metal çerçeveli, sivri uçlu
-kırmızı banner + boynuzlu kurukafa süsü. Tüm UI bileşenleri bu temadan türetilir.
+Koyu-fantastik UI teması. **Görsel tek kaynak: `assets/ui/gothic/`** — oyulmuş
+koyu taş çerçeveler, köşelerde kırmızı mühür taşları, aynı dilden buton
+plakaları, portre/eşya çerçeveleri ve boynuzlu kurukafa arması.
+
+> Bu dosyanın eski sürümü prosedürel (kodla çizilen) banner/panel temasını
+> anlatıyordu. O çizim yolu hâlâ **yedek** olarak duruyor (varlık yüklenemezse
+> devreye girer) ama referans değil. Gotik varlıklarla eski prosedürel anlatım
+> çeliştiğinde **varlıklar kazanır**.
 
 ## Tek kaynak
 
-- **`ui_theme.py`** (repo kökü): palet, kurukafa piksel haritası, banner buton
-  ve panel üreticileri. Tüm çizimler burada; başka yerde el ile tema çizme.
-- **`tools/generate_ui_assets.py`**: `assets/ui/` altına şablon PNG'leri üretir
-  (`skull.png`, `button_<durum>.png`, `panel_template.png`, `theme_sheet.png`).
-  Tema değişince yeniden çalıştır: `python tools/generate_ui_assets.py`
-- Oyun çalışırken butonlar/paneller boyuta göre **prosedürel** üretilir ve
-  cache'lenir; PNG'ler şablon/referans içindir.
+- **`assets/ui/gothic/`**: görünüşün kendisi. Çerçeveler, buton durumları,
+  slotlar, bar çerçevesi/dolguları, kurukafa arması.
+- **`assets/ui/gothic/nineslice.json`**: her varlığın `insets`, `min_size` ve
+  `trim` bilgisi. Elle ölçü tahmin etme, buradan oku.
+- **`ui_nineslice.py`**: varlıkları serbest ölçüde çizen 9-slice katmanı.
+- **`ui_theme.py`**: palet + üst seviye çizim API'si (panel, buton, başlık,
+  aksan rengi düzeltme). UI kodu doğrudan buradan geçer.
+- **`ui_elements.py`**: widget'lar (`Button`, `ClassCard`, slotlar) ve metin
+  yardımcıları (`render_fit`, `wrap_text`, `get_font`).
+
+## Varlık envanteri (`assets/ui/gothic/`)
+
+| Varlık | insets | Kullanım |
+|---|---|---|
+| `panel_frame.png` | 52 | Geniş menü paneli (opak taş zemin dahil) |
+| `panel_frame_small.png` | 40 | Kart/satır çerçevesi (ortası şeffaf) |
+| `panel_frame_epic.png` | 56 | Mor "epic" vurgu paneli |
+| `button_normal/hover/pressed/disabled.png` | 26/12 | Buton plakası, 4 durum |
+| `portrait_frame.png` | 24 | Portre/eser çerçevesi |
+| `item_slot.png`, `rarity_frame_*.png` | 14 | Envanter slotu ve nadirlik çerçevesi |
+| `bar_frame.png` + `bar_fill_*.png` | 40/5 | HP/XP/kalkan/mana çubukları |
+| `skull_crest.png` | — | Başlık ve seçili öğe arması |
+| `icon_*.png`, `toggle_*.png` | — | Ok/onay/kapat ikonları, aç-kapa |
 
 ## Palet (`ui_theme.COLORS`)
 
@@ -26,54 +48,75 @@ kırmızı banner + boynuzlu kurukafa süsü. Tüm UI bileşenleri bu temadan t�
 | `moss` | (44, 96, 58) | Onay/başarı (satın al, craft) |
 
 Yapısal renkler: `METAL` (122,126,134), `METAL_HI`, `METAL_LO`, `DARK_OUT`
-(24,20,22 kontur), `BONE`/`HORN` (kurukafa), `TEXT_COL` (240,234,220),
-`PANEL_BG` (26,24,34), `GLOW_WARM` (255,120,50 hover halesi).
+(24,20,22 kontur), `TEXT_COL` (240,234,220), `PANEL_BG` (26,24,34),
+`GLOW_WARM` (255,120,50 hover halesi).
 
 ## Bileşenler
 
-### Banner buton — `ui_theme.render_banner_button(w, h, text, color, state, skull)`
+### Buton — `ui_elements.Button`
 
-- Uçları sivri altıgen banner + 2px metal çerçeve + dış koyu kontur + iç gölge.
-- Detaylar: uçlarda çift sivri metal elmas, dört eğim köşesinde metal plaka,
-  alt ortada madalyon sarkıt (yükseklik >= ~48px'te görünür).
-- Dolgu: dikey gradyan (üst %115 açık → alt %55 koyu).
-- Metin: Georgia serif bold, koyu gölgeli, native ölçekte render edilip
-  bütünle birlikte nearest-neighbor ölçeklenir (piksel görünümü).
-- Durumlar: `normal` / `hover` (çerçeve parlar, sıcak hale, kurukafa gözleri
-  yanar) / `pressed` (1 native px çöker) / `disabled` (gri tonlama).
-- **Kurukafa sadece hover/seçili durumda** gösterilir (dar dikey menülerde
-  üst üste binmeyi önler); banner üstüne ~9 native px taşar — `draw` çağrısı
-  dönen `overhang` kadar yukarı blit eder.
-- Kullanım: `ui_elements.Button` bu fonksiyonu sarar; eski
-  `Button(x, y, w, h, text, font, color, hover_color)` API'si korunur
-  (`hover_color` yok sayılır). Ek bayraklar: `.selected`, `.disabled`.
+`ui_theme.render_banner_button` üzerinden `button_<durum>.png` plakasını çizer;
+plaka tek renk taş olduğu için menüdeki renk kodlaması iç yüzeye toplamalı
+(additive) harmanla uygulanır. Durumlar: `normal` / `hover` / `pressed` /
+`disabled`. Kurukafa yalnız hover/seçilide görünür ve butonun üstüne taşar —
+`draw`, dönen `overhang` kadar yukarı blit eder.
 
-### Panel — `ui_theme.draw_panel(screen, rect, fill, alpha, skull)`
+Eski API korunur: `Button(x, y, w, h, text, font, color, hover_color)`
+(`hover_color` yok sayılır). Ek bayraklar: `.selected`, `.disabled`.
 
-Menü panelleri, kart arkaları, tooltip zeminleri için: koyu yarı saydam zemin +
-3px metal çerçeve + köşe plakaları + kenar ortası perçinleri; `skull=True` ile
-üst ortaya 3x kurukafa oturur (18px yukarı taşar).
+### Panel — `ui_theme.draw_panel(screen, rect, fill, alpha, skull, nineslice)`
 
-### Kurukafa — `ui_theme.render_skull(scale, glow)`
+Geniş, tek başına duran paneller için. **Çerçeve rect'in DIŞINA çizilir**
+(`ui_nineslice.outer_rect`): çağıran taraf rect'i içerik alanı sayar. Izgarada
+komşusu olan kutularda bu taşma bindirme yapar — orada aşağıdakini kullan.
 
-25x14 piksel harita (`ui_theme.SKULL`); `glow=True` gözleri turuncu yakar.
-Asset kopyası: `assets/ui/skull.png`, `assets/ui/skull_glow.png`.
+### Izgara çerçevesi — `ui_theme.draw_inset_frame(screen, rect, ...)`
+
+Çerçeveyi rect'in **İÇİNE** çizer, dış ölçü sabit kalır; kart/satır ızgaraları
+için. `tint` ile aksan rengi harmanlanır, `glow` ile hover halesi eklenir,
+`pad` ile içerik payı 9-slice insets yerine elle verilir. İçerik rect'ini
+döndürür.
+
+### Başlık — `ui_theme.render_title(text, size, color)`
+
+Serif + koyu gölge. İki yanına `ui_elements.get_skull_crest(size)` konabilir.
+
+### Aksan rengi — `ui_theme.readable(color, min_lum=150)`
+
+Koyu sınıf/marka renklerini (ör. Gölge Ninja 44,62,80) koyu zeminde okunur
+parlaklığa çeker; ton korunur. Metin ve ince çizgilerde ham renk kullanma.
 
 ## Kurallar
 
-1. Yeni buton eklerken `ui_elements.Button` kullan; renkleri `ui_theme.COLORS`
-   üzerinden seç (ham RGB gömme).
-2. Yeni panel/tooltip eklerken `ui_theme.draw_panel` kullan; el ile
-   `pygame.draw.rect` + kenar çizme.
+1. Buton eklerken `ui_elements.Button`; renk `ui_theme.COLORS`'tan (ham RGB yok).
+2. Panel/tooltip eklerken `draw_panel`, ızgara kartı eklerken
+   `draw_inset_frame`. Panel/buton/slot yerine çıplak
+   `pygame.draw.rect(..., border_radius=N)` tema ihlalidir.
 3. Seçili durum için sarı çerçeve çizme; `button.selected = True` yeter.
+   Kartlarda seçili öğe **en son** çizilir (arma/hale komşunun altında kalmasın).
 4. Pixel-art netliği için tema yüzeylerini `smoothscale` ile ÖLÇEKLEME —
    nearest (`pygame.transform.scale`) kullan.
-5. Tema değişikliği yaptıysan: `python tools/generate_ui_assets.py` çalıştırıp
-   `assets/ui/` şablonlarını güncelle ve bu dosyayı senkron tut.
-6. Launcher (Tkinter) aynı paleti kullanır (`launcher/main.py` içindeki
-   renk sözlüğü) — pygame teması birebir kopyalanamaz, palet ve sivri banner
-   silueti Canvas ile yaklaşıklanır.
+5. Dikey yerleşimi **alttan yukarı** tahsis et: sabit yükseklikli öğeler (alt
+   şerit, stat satırı, aksiyon sırası) önce yerini alır, esnek öğe (portre,
+   liste gövdesi) kalanı doldurur.
+6. 9-slice `insets` köşe süsünün ölçüsüdür, kenar taşının kalınlığı değil.
+   İçeriği `pad` ile daha kenara yaklaştırabilirsin ama yatayda köşe
+   taşlarının hizasından uzak dur.
+7. Metni `render_fit` / `wrap_text` ile gerçek kullanılabilir genişliğe sığdır;
+   en uzun içeriği (en uzun sınıf adı, 4 statlı satır) test et.
+8. Launcher (Tkinter) aynı paleti kullanır (`launcher/main.py` renk sözlüğü) —
+   pygame teması birebir kopyalanamaz, palet ve silüet Canvas ile yaklaşıklanır.
 
-## Durum örnekleri
+## Doğrulama
 
-Bkz. `assets/ui/theme_sheet.png` (4 durum + 7 renk varyantı tek sayfada).
+UI değişikliğini ekran görüntüsü almadan bitmiş sayma. Sahneyi offscreen kur
+(`pygame.HIDDEN` veya `SDL_VIDEODRIVER=dummy`), stub bir manager ver,
+`scene.draw()` çağır ve `pygame.image.save` ile PNG'ye yaz. Hem boşta hem
+hover/seçili durumu, hem de en uzun metinle bak. Bu projede hizalama hataları
+sürekli koddan değil render'dan yakalandı.
+
+## Yedek çizim yolu
+
+`ui_theme.USE_NINESLICE = False` her şeyi eski prosedürel çizime döndürür
+(varlıklar bozulursa hızlı çıkış). `tools/generate_ui_assets.py` prosedürel
+temanın şablon PNG'lerini üretir; gotik varlıkların yerine geçmez.

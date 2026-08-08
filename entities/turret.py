@@ -104,7 +104,8 @@ class Turret:
         # Namlu (Dönen) - Şimdilik merkeze küçük bir yuvarlak
         pygame.draw.circle(screen, (44, 62, 80), (int(dx), int(dy)), 8)
         
-        # Can Barı
-        hp_ratio = self.hp / self.max_hp
-        pygame.draw.rect(screen, (0, 0, 0), (dx - 15, dy - 25, 30, 3))
-        pygame.draw.rect(screen, (46, 204, 113), (dx - 15, dy - 25, 30 * hp_ratio, 3))
+        # Can Barı (ortak dünya barı: renkler paletten)
+        import ui_theme
+        ui_theme.draw_world_bar(
+            screen, pygame.Rect(int(dx - 15), int(dy - 25), 30, 4),
+            self.hp / max(1, self.max_hp), "moss")

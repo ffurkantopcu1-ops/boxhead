@@ -295,11 +295,23 @@ class StaticSilence(BossPhase):
             ss.draw(screen, camera_x, camera_y)
             if self.state == "SEARCHING":
                 draw_objective_arrow(screen, p.x, p.y, ss.x, ss.y, (46, 204, 113), camera_x, camera_y)
-        txt_color = (46, 204, 113) if self.state == "SEARCHING" else (231, 76, 60)
+        # Uyarı şeridi ekran uzayındadır: sabit y (eski 180) hem dalga duyuru
+        # banner'ıyla hem boss'un kafa üstü barıyla çakışıyordu. Konumu
+        # sahnenin üst HUD bandı tahsisinden alınır (_layout_top_hud).
+        import ui_theme
+        from ui_elements import render_fit
+        scene = getattr(getattr(boss.game, "manager", None), "current_scene", None)
+        y = getattr(scene, "_hud_phase_warning_y", None) or (screen.get_height() // 4 + 110)
+
+        txt_color = ui_theme.readable(ui_theme.COLORS["moss"] if self.state == "SEARCHING"
+                                      else ui_theme.COLORS["blood"])
         label = "FIND SAFE ZONE!" if self.state == "SEARCHING" else "STAY INSIDE!"
-        font = pygame.font.SysFont("Arial", 32, bold=True)
-        surf = font.render(f"{label} {max(0, self.timer):.1f}s", True, txt_color)
-        screen.blit(surf, (screen.get_width()//2 - surf.get_width()//2, 180))
+        surf = render_fit(f"{label} {max(0, self.timer):.1f}s", 28, txt_color,
+                          screen.get_width() - 200, bold=True)
+        rect = surf.get_rect(center=(screen.get_width() // 2, y))
+        ui_theme.draw_plate(screen, rect.inflate(60, 20), "hover",
+                            ui_theme.COLORS["ember"])
+        screen.blit(surf, rect)
 
 class OrbitalChaos(BossPhase):
     def __init__(self):
@@ -347,8 +359,13 @@ class OrbitalChaos(BossPhase):
                 game.projectile_pool.spawn(sx, sy, vx, vy, damage=boss.attack_damage(25), color=(255, 0, 255), lifetime=800)
 
 class AbyssalLord(Enemy):
+    # Boss adı: eskiden hem boss.draw hem game_scene.draw_boss_healthbar
+    # içinde ayrı ayrı gömülüydü ("EchelionFinrod" / "ECHELION FINROD").
+    NAME = "Echelion Finrod"
+
     def __init__(self, id, x, y, game, wave_level=10):
         super().__init__(id, x, y, game, type="boss", wave_level=wave_level)
+        self.name = self.NAME
         self.game, self.wave_level = game, wave_level
         # Denge: 1.15^wave üstel formülü W50'de 5.4M HP'ye şişiyordu; 1.12'ye çekildi
         # ve boss artık zorluk çarpanı alıyor (eskiden Impossible'da bile 1x kalıyordu).
@@ -424,24 +441,13 @@ class AbyssalLord(Enemy):
             pygame.draw.circle(s, (255, 255, 255, 150), (self.radius*1.5, self.radius*1.5), self.radius + 15 + pulse, 3)
             screen.blit(s, (draw_x - self.radius*1.5, draw_y - self.radius*1.5))
         super().draw(screen, camera_x, camera_y)
-        try:
-            name_font = pygame.font.SysFont("Arial", 28, bold=True)
-            name_txt = name_font.render("EchelionFinrod", True, (255, 215, 0))
-            screen.blit(name_txt, (draw_x - name_txt.get_width()//2, draw_y - self.radius - 75))
-            hp_ratio = max(0, self.hp / self.max_hp)
-            bar_w, bar_h = 240, 20
-            bx, by = draw_x - bar_w // 2, draw_y - self.radius - 40
-            pygame.draw.rect(screen, (30, 30, 30), (bx, by, bar_w, bar_h), border_radius=3)
-            color = (231, 76, 60) if hp_ratio > 0.25 else (192, 57, 43)
-            pygame.draw.rect(screen, color, (bx, by, int(bar_w * hp_ratio), bar_h), border_radius=3)
-            pygame.draw.rect(screen, (255, 255, 255), (bx, by, bar_w, bar_h), 2, border_radius=3)
-            hp_font = pygame.font.SysFont("Arial", 16, bold=True)
-            hp_str = f"{int(self.hp):,} / {int(self.max_hp):,}"
-            hp_txt = hp_font.render(hp_str, True, (255, 255, 255))
-            screen.blit(hp_txt, (draw_x - hp_txt.get_width()//2, by + 1))
-            
-            # 4. Phase Name
-            phase_font = pygame.font.SysFont("Arial", 22, bold=True)
-            phase_txt = phase_font.render(f"PHASE: {self.current_phase.name}", True, (255, 255, 255))
-            screen.blit(phase_txt, (draw_x - phase_txt.get_width()//2, draw_y + self.radius + 15))
-        except: pass
+        # Ad ve can barı ekranın üstünde (game_scene.draw_boss_healthbar)
+        # zaten çiziliyor; burada tekrar edilince aynı sayılar ekranda iki
+        # kez görünüyordu. Kafa üstünde yalnız faz adı kalıyor.
+        # Cache'li font: eskiden her karede üç ayrı SysFont açılıyordu.
+        import ui_theme
+        from ui_elements import render_fit
+        phase_txt = render_fit(f"PHASE: {self.current_phase.name}", 20,
+                               ui_theme.TEXT_COL, 320, bold=True)
+        screen.blit(phase_txt, (draw_x - phase_txt.get_width() // 2,
+                                draw_y + self.radius + 15))

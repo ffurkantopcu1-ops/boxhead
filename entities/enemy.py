@@ -1181,12 +1181,11 @@ class Enemy:
             # 3. Kenarlık (Glow / Border)
             pygame.draw.rect(screen, self.color, rect, width=4, border_radius=4)
             
-            # 4. Üstüne Hazard Sembolü
-            try:
-                font = pygame.font.SysFont("Arial", 40, bold=True)
-                txt = font.render("!", True, self.color)
-                screen.blit(txt, txt.get_rect(center=(draw_x, draw_y)))
-            except: pass
+            # 4. Üstüne Hazard Sembolü (cache'li font; her karede SysFont
+            # açmak sıcak çizim yolunda pahalı)
+            from ui_elements import get_font
+            txt = get_font(40, bold=True).render("!", True, self.color)
+            screen.blit(txt, txt.get_rect(center=(draw_x, draw_y)))
 
         elif "splitting_slime" in self.type:
             # SLIME: Dalgalanan daire
@@ -1281,23 +1280,25 @@ class Enemy:
 
         # Can Barı (Küçük ve Şık) - Tuzaklar için gizle
         if not self.is_trap:
-            hp_ratio = max(0, self.hp / self.max_hp)
-            bar_w = self.radius * 1.5
-            pygame.draw.rect(screen, (30, 30, 40), (draw_x - bar_w/2, draw_y - self.radius - 12, bar_w, 4), border_radius=2)
-            pygame.draw.rect(screen, (231, 76, 60), (draw_x - bar_w/2, draw_y - self.radius - 12, bar_w * hp_ratio, 4), border_radius=2)
-        
+            import ui_theme
+            bar_w = int(self.radius * 1.5)
+            ui_theme.draw_world_bar(
+                screen,
+                pygame.Rect(int(draw_x - bar_w / 2), int(draw_y - self.radius - 12), bar_w, 4),
+                self.hp / max(1, self.max_hp))
+
         # Efekt İkonları
         self.effect_manager.draw_icons(screen, draw_x, draw_y, self.radius)
 
         # Elite İsim Etiketi
         if getattr(self, 'is_elite', False) and hasattr(self, 'elite_mods'):
-            if not hasattr(Enemy, '_elite_font'):
-                Enemy._elite_font = pygame.font.SysFont("segoeui", 13, bold=True)
-            
-            mod_names = [m['name'] for m in self.elite_mods]
-            tag_text = " ".join(mod_names)
-            txt_surf = Enemy._elite_font.render(tag_text, True, getattr(self, 'elite_color', (255, 215, 0)))
-            
+            import ui_theme
+            from ui_elements import render_fit
+            # render_fit: mod adlarındaki emoji fontta yoksa □ çizilmesin
+            tag_text = " ".join(m['name'] for m in self.elite_mods)
+            txt_surf = render_fit(tag_text, 13,
+                                  ui_theme.readable(getattr(self, 'elite_color', (255, 215, 0))),
+                                  220, bold=True)
             bg_rect = txt_surf.get_rect(center=(draw_x, draw_y - self.radius - 22))
-            pygame.draw.rect(screen, (20, 20, 20), bg_rect.inflate(6, 4), border_radius=3)
+            pygame.draw.rect(screen, ui_theme.DARK_OUT, bg_rect.inflate(8, 4), border_radius=3)
             screen.blit(txt_surf, bg_rect)

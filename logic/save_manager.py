@@ -5,7 +5,41 @@ from datetime import datetime
 
 class SaveManager:
     SAVE_DIR = "saves"
-    
+
+    # Başlangıç silahlarında (Player.init_class_specialization) eskiden
+    # weaponClass alanı yoktu; o silah geri takıldığında sınıf eski silahın
+    # sınıfında takılı kalıyordu. Eski kayıtlar yüklenirken geri doldurulur.
+    LEGACY_STARTING_WEAPON_CLASSES = {
+        "Eski Kılıç": "warrior",
+        "Basit Arbalet": "sniper",
+        "Paslı Katana": "ninja",
+        "Zehir Şişesi": "alchemist",
+        "Sihir Asası": "sorcerer",
+        "Kan Kılıcı": "bloodwalker",
+        "Taret Kiti": "engineer",
+    }
+
+    @staticmethod
+    def _find_evolution_id(player, class_name):
+        """Gösterim adından evrim kimliğini çözer (eski kayıtlar için)."""
+        for evo_id, evo in getattr(player, "EVOLUTIONS", {}).items():
+            if evo.get("name") == class_name:
+                return evo_id
+        return ""
+
+    @staticmethod
+    def backfill_weapon_classes(equipped, bag):
+        """Eski kayıtlardaki weaponClass'sız başlangıç silahlarını onarır."""
+        items = list(equipped.values()) + list(bag)
+        for item in items:
+            if not isinstance(item, dict) or item.get("type") != "weapon":
+                continue
+            if item.get("weaponClass"):
+                continue
+            w_class = SaveManager.LEGACY_STARTING_WEAPON_CLASSES.get(item.get("name"))
+            if w_class:
+                item["weaponClass"] = w_class
+
     @staticmethod
     def ensure_dir():
         if not os.path.exists(SaveManager.SAVE_DIR):
@@ -52,7 +86,10 @@ class SaveManager:
                 "hp": getattr(p, 'hp', 100),
                 "energy_shield": getattr(p, 'energy_shield', 0),
                 "class_id": p.class_id,
+                "base_class_id": getattr(p, 'base_class_id', p.class_id),
                 "class_name": p.class_name,
+                "evolution": getattr(p, 'evolution', ""),
+                "evolution_passive": getattr(p, 'evolution_passive', ""),
                 "skills": p.skills,
                 "skills_permanent": getattr(p, 'skills_permanent', {}),
                 "x": p.x,
@@ -106,6 +143,7 @@ class SaveManager:
         p.hp = pd.get("hp", 100)
         p.energy_shield = pd.get("energy_shield", 0)
         p.class_id = pd.get("class_id", "warrior")
+        p.base_class_id = pd.get("base_class_id", p.class_id)
         p.class_name = pd.get("class_name", "Savaşçı")
         p.skills = pd.get("skills", {"str": 1, "dex": 1, "int": 1, "vit": 1})
         p.skills_permanent = pd.get("skills_permanent", {})
@@ -115,6 +153,11 @@ class SaveManager:
         p.active_auras = pd.get("active_auras", [])
         p.evolutions = pd.get("evolutions", [])
         p.is_evolved = pd.get("is_evolved", False)
+        # Evrim durumu eskiden kaydedilmiyordu; eski kayıtlarda gösterim
+        # adından (class_name) geriye doğru çözülür.
+        p.evolution = pd.get("evolution") or SaveManager._find_evolution_id(p, p.class_name)
+        p.evolution_passive = pd.get("evolution_passive") or \
+            p.EVOLUTIONS.get(p.evolution, {}).get("passive", "")
         if "color" in pd:
             p.color = tuple(pd["color"])
         p.passive_shield_cd = pd.get("passive_shield_cd", 0)
@@ -127,6 +170,7 @@ class SaveManager:
         inv = save_data.get("inventory", {})
         p.inv_manager.equipped = inv.get("equipped", {})
         p.inventory = inv.get("bag", [])
+        SaveManager.backfill_weapon_classes(p.inv_manager.equipped, p.inventory)
         
         # Wave (To prevent empty spawn queue triggering next wave immediately)
         wave_data = save_data.get("wave", {})

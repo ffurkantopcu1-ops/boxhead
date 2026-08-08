@@ -165,7 +165,8 @@ class Projectile:
             dist = math.hypot(p.x - self.x, p.y - self.y)
             if dist < (self.radius + p.radius):
                 # Bloodwalker Kan Emme aktifse mermileri emerek HP'ye dönüştür
-                absorb_active = (p.class_name == "bloodwalker" and 
+                # Kimlik kontrolü class_id ile: class_name evrimde evrim adına döner
+                absorb_active = (getattr(p, 'class_id', '') == "bloodwalker" and
                                  getattr(getattr(p, 'specialization', None), 'blood_absorb_active', False))
                 if not absorb_active:
                     p.last_attacker_type = getattr(self, "owner_type", "bilinmeyen"); p.take_damage(self.dmg)

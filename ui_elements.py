@@ -14,9 +14,52 @@ def get_font(size, bold=False):
         _FONT_CACHE[key] = pygame.font.SysFont(UI_FONT_NAME, size, bold=bold)
     return _FONT_CACHE[key]
 
+_glyph_cache = {}
+
+def strip_unsupported(text):
+    """UI fontunun çizemediği karakterleri (emoji vb.) atar.
+
+    Yetenek/sinerji adları emoji önekleriyle geliyor, Segoe UI'da bu glifler
+    yok ve ekranda boş kutu (□) olarak çiziliyordu. pygame per-glyph fallback
+    yapmadığı için karakteri metinden düşürüyoruz. Sonuç metin bazında cache'li.
+    """
+    cached = _glyph_cache.get(text)
+    if cached is not None:
+        return cached
+    try:
+        metrics = get_font(18).metrics(text)
+    except Exception:
+        metrics = None
+    if not metrics or len(metrics) != len(text):
+        metrics = [1] * len(text)
+
+    kept = []
+    for ch, m in zip(text, metrics):
+        if ch.isspace():
+            kept.append(ch)
+            continue
+        # Metrik yokken kesin at. Metrik olsa da emoji/dingbat aralıklarını
+        # atıyoruz: Segoe UI bu kod noktaları için glif bildirip .notdef
+        # (boş kutu) çiziyor, yani metrik kontrolü tek başına yetmiyor.
+        if m is None or _is_emoji(ch):
+            continue
+        kept.append(ch)
+    out = ' '.join(''.join(kept).split()) or text
+    _glyph_cache[text] = out
+    return out
+
+
+def _is_emoji(ch):
+    o = ord(ch)
+    return (0x2190 <= o <= 0x2BFF        # oklar, çeşitli semboller, dingbatlar
+            or 0xFE00 <= o <= 0xFE0F     # varyasyon seçiciler
+            or 0x1F000 <= o <= 0x1FAFF)  # emoji blokları
+
+
 def render_fit(text, size, color, max_width, bold=False, min_size=11):
     """Metni max_width'e sığana kadar font boyutunu küçülterek keskin şekilde render eder.
     Yine sığmazsa sonuna '…' koyarak kırpar. Bulanık scale yerine bunu kullanın."""
+    text = strip_unsupported(text)
     s = size
     while s >= min_size:
         font = get_font(s, bold)
@@ -40,6 +83,7 @@ def shrink_to_width(surface, max_width):
 
 def wrap_text(font, text, max_width):
     """Metni kelime bazında satırlara böler."""
+    text = strip_unsupported(text)
     lines, current = [], []
     for word in text.split():
         candidate = " ".join(current + [word])
@@ -125,6 +169,51 @@ class Button:
         bx = self.rect.centerx - surf.get_width() // 2
         screen.blit(surf, (bx, self.rect.y - overhang))
 
+def draw_set_badge(screen, center, radius=10):
+    """Set eşyası rozeti (altın madalyon + S).
+
+    Slot/kart/satır sınıflarının üçü de bunu ayrı ayrı çiziyor ve her karede
+    yeni SysFont açıyordu.
+    """
+    import ui_theme
+    surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+    pygame.draw.circle(surf, ui_theme.RARITY_COLORS["Rare"], (radius, radius), radius)
+    pygame.draw.circle(surf, ui_theme.DARK_OUT, (radius, radius), radius, 1)
+    txt = get_font(int(radius * 1.6), bold=True).render("S", True, ui_theme.DARK_OUT)
+    surf.blit(txt, txt.get_rect(center=(radius, radius)))
+    screen.blit(surf, (center[0] - radius, center[1] - radius))
+
+
+def draw_corrupted_pulse(screen, rect, pad=5):
+    """Bozulmuş (corrupted) eşya için nabız gibi atan mor hale."""
+    import ui_theme
+    pulse = int((math.sin(time.time() * 8) + 1) * 55 + 60)
+    col = ui_theme.readable(ui_theme.COLORS["arcane"], 190)
+    aura = pygame.Surface((rect.width + pad * 2, rect.height + pad * 2), pygame.SRCALPHA)
+    pygame.draw.rect(aura, col + (pulse,), aura.get_rect(), width=3, border_radius=4)
+    screen.blit(aura, (rect.x - pad, rect.y - pad))
+
+
+_crest_cache = {}
+
+def get_skull_crest(size):
+    """assets/ui/gothic/skull_crest.png'i istenen yükseklikte döndürür."""
+    if size in _crest_cache:
+        return _crest_cache[size]
+    surf = None
+    path = "assets/ui/gothic/skull_crest.png"
+    if os.path.exists(path):
+        try:
+            src = pygame.image.load(path).convert_alpha()
+            ratio = size / src.get_height()
+            surf = pygame.transform.smoothscale(
+                src, (max(1, int(src.get_width() * ratio)), size))
+        except pygame.error:
+            surf = None
+    _crest_cache[size] = surf
+    return surf
+
+
 class ClassCard:
     def __init__(self, x, y, width, height, class_data, font_main, font_sub):
         self.rect = pygame.Rect(x - width // 2, y, width, height)
@@ -139,16 +228,17 @@ class ClassCard:
         self.glow_alpha = 0
         
         # --- İkon Yükleme (Multi-extension support) ---
+        # _icon_src ham görsel: çizimde çerçevenin içerik alanına göre yeniden
+        # ölçekleniyor, tekrar tekrar küçültülen kopyadan ölçek almasın.
+        self._icon_src = None
         self.icon = None
-        # İkon boyutu: Kart genişliği - 80 (Overlap önleme için küçültüldü)
-        icon_size = width - 80 
         for ext in ['.png', '.jpeg', '.jpg']:
             try:
                 icon_path = f"assets/classes/{self.data['id']}{ext}"
-                loaded = pygame.image.load(icon_path).convert_alpha()
-                self.icon = pygame.transform.smoothscale(loaded, (icon_size, icon_size))
+                self._icon_src = pygame.image.load(icon_path).convert_alpha()
+                self.icon = self._icon_src
                 break # Dosya bulunduysa döngüden çık
-            except:
+            except (pygame.error, FileNotFoundError):
                 continue # Diğer uzantıyı dene
 
     def update(self, events):
@@ -169,73 +259,85 @@ class ClassCard:
                     return True
         return False
 
-    def draw(self, screen):
-        # 1. Glow & Shadow (Alt parıltı)
-        if self.glow_alpha > 5:
-            s = pygame.Surface((self.rect.width + 16, self.rect.height + 16), pygame.SRCALPHA)
-            pygame.draw.rect(s, (*self.data['color'], int(self.glow_alpha * 0.4)), (0, 0, self.rect.width + 16, self.rect.height + 16), border_radius=18)
-            screen.blit(s, (self.rect.x - 8, self.rect.y - 8))
+    def draw(self, screen, selected=False):
+        import ui_theme
+        import ui_nineslice as n9
 
-        # 2. Ana Kart Gövdesi (Glassmorphism)
-        bg_alpha = 230 if not self.is_hovered else 255
-        main_surface = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-        pygame.draw.rect(main_surface, (25, 25, 35, bg_alpha), (0, 0, *self.rect.size), border_radius=14)
-        pygame.draw.rect(main_surface, (255, 255, 255, 20), (2, 2, self.rect.width - 4, 80), border_radius=14) # Üst glossy
-        screen.blit(main_surface, self.rect.topleft)
+        col = self.data['color']
+        accent = ui_theme.readable(col)          # koyu sınıf renkleri okunur hale
+        active = self.is_hovered or selected
 
-        border_color = self.data['color']
-        if self.is_hovered:
-            border_color = (min(255, border_color[0] + 50), min(255, border_color[1] + 50), min(255, border_color[2] + 50))
-        pygame.draw.rect(screen, border_color, self.rect, border_radius=14, width=3)
+        # 1. Gövde: gotik taş çerçeve kartın İÇİNE çizilir (ızgarada taşmasın).
+        #    Hover'da sınıf rengi tonu güçlenir ve arkada sıcak hale belirir.
+        strength = 0.34 if active else 0.16
+        tint = tuple(int(c * strength) for c in accent)
+        glow = (accent, self.glow_alpha * 0.6) if self.glow_alpha > 5 else None
+        # pad=16: 9-slice insets (40px) köşe süslerinin ölçüsü, kenar taşı çok
+        # daha ince. 40px pay dar kartta metne yer bırakmıyordu.
+        content = ui_theme.draw_inset_frame(
+            screen, self.rect, "panel_frame_small.png",
+            fill=(22, 19, 26), alpha=248 if active else 236,
+            tint=tint, glow=glow, pad=16)
 
-        # 3. İKON Bölümü (Ortalı)
-        icon_size = self.rect.width - 80
-        icon_x = self.rect.x + 40
-        icon_y_start = self.rect.y + 15
+        # 2. Dikey yerleşim ALTTAN yukarı tahsis edilir: stat şeridi ve
+        #    açıklama sabit yer alır, portre arta kalan alanı doldurur.
+        #    (Önce portre büyütülünce metin karttan taşıyordu.)
+        max_txt_w = content.width
+        desc_lines = self.data['desc']
+        # stat_h alt kenar payını da içerir: şerit tam kenara oturunca
+        # çerçevenin köşe taşlarının üstüne biniyordu.
+        stat_h, desc_h, name_h = 28, len(desc_lines) * 19, 26
+        divider_h = 11
+        icon_size = content.height - (stat_h + desc_h + name_h + divider_h + 10)
+        icon_size = max(48, min(icon_size, content.width))
+
+        icon_x = content.centerx - icon_size // 2
+        icon_y = content.y
         if self.icon:
-            screen.blit(self.icon, (icon_x, icon_y_start))
-            # Eserin etrafına gotik çerçeve. get_border ortayı çizmediği için
-            # görsel kapanmıyor; hafif sınıf rengi tonu kartın kimliğini korur.
-            import ui_nineslice as n9
-            frame_rect = pygame.Rect(icon_x, icon_y_start, icon_size, icon_size)
-            frame_rect.inflate_ip(14, 14)
-            col = self.data['color']
-            strength = 0.30 if self.is_hovered else 0.18
-            border = n9.get_border(
-                "portrait_frame.png", frame_rect.width, frame_rect.height,
-                tint=tuple(int(c * strength) for c in col))
+            if self.icon.get_width() != icon_size:
+                self.icon = pygame.transform.smoothscale(self._icon_src, (icon_size, icon_size))
+            screen.blit(self.icon, (icon_x, icon_y))
+            frame_rect = pygame.Rect(icon_x, icon_y, icon_size, icon_size).inflate(12, 12)
+            border = n9.get_border("portrait_frame.png", frame_rect.width,
+                                   frame_rect.height, tint=tint)
             if border is not None:
                 screen.blit(border, frame_rect.topleft)
         else:
-            center = (self.rect.centerx, icon_y_start + icon_size // 2)
-            pygame.draw.circle(screen, (*self.data['color'], 40), center, 48)
-            pygame.draw.circle(screen, self.data['color'], center, 50, width=2)
-            char = self.font_main.render(self.data['name'][0], True, self.data['color'])
+            center = (content.centerx, icon_y + icon_size // 2)
+            pygame.draw.circle(screen, accent, center, icon_size // 2, width=2)
+            char = self.font_main.render(self.data['name'][0], True, accent)
             screen.blit(char, char.get_rect(center=center))
 
-        # 4. Metin Bölümü
-        text_y_start = icon_y_start + icon_size + 15
-        
-        max_txt_w = self.rect.width - 24
-        name_surf = render_fit(self.data['name'].upper(), 24, (255, 255, 255), max_txt_w, bold=True)
-        name_rect = name_surf.get_rect(center=(self.rect.centerx, text_y_start))
-        screen.blit(name_surf, name_rect)
+        # 3. Ad + aksan ayracı
+        y = icon_y + icon_size + 8
+        name_col = ui_theme.TEXT_COL if active else (196, 190, 178)
+        name_surf = render_fit(self.data['name'].upper(), 22, name_col, max_txt_w, bold=True)
+        screen.blit(name_surf, name_surf.get_rect(midtop=(content.centerx, y)))
+        y += name_h
 
-        pygame.draw.line(screen, (*self.data['color'], 80), (self.rect.x + 40, text_y_start + 18), (self.rect.x + self.rect.width - 40, text_y_start + 18), 1)
+        pygame.draw.line(screen, accent, (content.x + 8, y), (content.right - 8, y), 1)
+        y += divider_h
 
-        y_off = text_y_start + 35
-        for line in self.data['desc']:
-            d_surf = render_fit(line, 17, (200, 200, 210), max_txt_w)
-            d_rect = d_surf.get_rect(center=(self.rect.centerx, y_off))
-            screen.blit(d_surf, d_rect)
-            y_off += 21
+        # 4. Açıklama
+        desc_col = (206, 199, 184) if active else (168, 162, 150)
+        for line in desc_lines:
+            d_surf = render_fit(line, 15, desc_col, max_txt_w)
+            screen.blit(d_surf, d_surf.get_rect(midtop=(content.centerx, y)))
+            y += 19
 
-        y_off = self.rect.bottom - 25
-        stat_items = list(self.data['stats'].items())
-        combined_stats = "  •  ".join([f"{k} {v}" for k, v in stat_items])
-        s_surf = render_fit(combined_stats, 16, self.data['color'], max_txt_w)
-        s_rect = s_surf.get_rect(center=(self.rect.centerx, y_off))
-        screen.blit(s_surf, s_rect)
+        # 5. Stat şeridi (alt kenara sabit)
+        combined = "  •  ".join(f"{k} {v}" for k, v in self.data['stats'].items())
+        # Köşe süslerinden kaçmak için şerit daraltılır: çerçeve köşeleri 40px,
+        # içerik payı 16px -> her yanda 24px köşe payı bırakılır.
+        s_surf = render_fit(combined, 14, accent, max_txt_w - 48, bold=True)
+        screen.blit(s_surf, s_surf.get_rect(midbottom=(content.centerx, content.bottom - 6)))
+
+        # 5. Seçili/hover kartın tepesine kurukafa arması
+        if active:
+            crest = get_skull_crest(48)
+            if crest is not None:
+                screen.blit(crest, (self.rect.centerx - crest.get_width() // 2,
+                                    self.rect.y - crest.get_height() // 2))
 
 class InventorySlot:
     def __init__(self, x, y, size, slot_type):
@@ -248,16 +350,11 @@ class InventorySlot:
         self.is_hovered = self.rect.collidepoint(pygame.mouse.get_pos())
 
     def draw(self, screen, font):
-        color = (45, 45, 60) if not self.is_hovered else (60, 60, 80)
-        pygame.draw.rect(screen, color, self.rect, border_radius=8)
-        
-        border_color = (100, 100, 120)
-        if self.item:
-            rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
-            border_color = rarity_colors.get(self.item['rarity'], (255,255,255))
-            
-        pygame.draw.rect(screen, border_color, self.rect, width=2, border_radius=8)
-        
+        import ui_theme
+        rarity = self.item.get('rarity') if self.item else None
+        ui_theme.draw_item_slot(screen, self.rect, rarity, self.is_hovered)
+        border_color = ui_theme.rarity_color(rarity) if rarity else ui_theme.METAL
+
         # --- İkon Çizimi ---
         icon_drawn = False
         if self.item and self.item.get('icon_id'):
@@ -265,28 +362,20 @@ class InventorySlot:
             if icon_img:
                 screen.blit(icon_img, (self.rect.x + 5, self.rect.y + 5))
                 icon_drawn = True
-        
+
         if not icon_drawn:
             label = self.slot_type[0:2].upper() if not self.item else self.item['name'][0:1]
-            txt_color = (150, 150, 150) if not self.item else border_color
+            txt_color = ui_theme.METAL_LO if not self.item else border_color
             txt = font.render(label, True, txt_color)
             screen.blit(txt, txt.get_rect(center=self.rect.center))
 
         # --- Set İşaretçisi (S) ---
         if self.item and self.item.get('setTag'):
-            s_font = pygame.font.SysFont("Arial", 16, bold=True)
-            s_surf = pygame.Surface((20, 20), pygame.SRCALPHA)
-            pygame.draw.circle(s_surf, (241, 196, 15), (10, 10), 10) # Altın Yuvarlak
-            st_txt = s_font.render("S", True, (30, 30, 40))
-            s_surf.blit(st_txt, st_txt.get_rect(center=(10, 10)))
-            screen.blit(s_surf, (self.rect.right - 18, self.rect.top - 2))
-            
+            draw_set_badge(screen, (self.rect.right - 8, self.rect.top + 8), 10)
+
         # --- Corrupted Aura ---
         if self.item and self.item.get('is_corrupted'):
-            pulse = (math.sin(time.time() * 8) + 1) * 60 + 50
-            aura = pygame.Surface((self.rect.width + 10, self.rect.height + 10), pygame.SRCALPHA)
-            pygame.draw.rect(aura, (155, 89, 182, int(pulse)), (0, 0, self.rect.width + 10, self.rect.height + 10), border_radius=12, width=3)
-            screen.blit(aura, (self.rect.x - 5, self.rect.y - 5))
+            draw_corrupted_pulse(screen, self.rect)
 
 class SkillButton:
     def __init__(self, x, y, w, h, text, skill_id):
@@ -301,42 +390,35 @@ class SkillButton:
         return self.is_hovered and pygame.mouse.get_pressed()[0]
 
     def draw(self, screen, font, can_afford, description=None):
-        # Tema: koyu zemin + metal çerçeve; alınabilirlik rengi kenarla gösterilir
+        # Tema: gotik taş çerçeve; alınabilirlik yeşil tonla gösterilir
         import ui_theme
-        bg = (32, 44, 36) if can_afford else (30, 28, 34)
-        border = ui_theme.COLORS["moss"] if can_afford else ui_theme.METAL_LO
-        if self.is_hovered and can_afford:
-            bg = (40, 58, 44)
-            border = ui_theme.METAL_HI
+        active = can_afford and self.is_hovered
+        if can_afford:
+            base = ui_theme.COLORS["moss"]
+            tint = tuple(int(c * (0.50 if active else 0.34)) for c in base)
+        else:
+            tint = tuple(int(c * 0.16) for c in ui_theme.METAL_LO)
+        content = ui_theme.draw_inset_frame(
+            screen, self.rect, "panel_frame_small.png",
+            fill=(30, 38, 32) if can_afford else (28, 25, 32),
+            alpha=246, tint=tint, pad=12)
 
-        pygame.draw.rect(screen, bg, self.rect, border_radius=4)
-        pygame.draw.rect(screen, border, self.rect, width=2, border_radius=4)
-        pygame.draw.rect(screen, ui_theme.DARK_OUT, self.rect.inflate(2, 2), width=1, border_radius=5)
-        
-        max_width = self.rect.width - 16
-        txt = font.render(self.text, True, (255, 255, 255))
-        txt = shrink_to_width(txt, max_width)
-        text_y = self.rect.centery - 10 if description else self.rect.centery
-        screen.blit(txt, txt.get_rect(center=(self.rect.centerx, text_y)))
+        max_width = content.width
+        name_col = ui_theme.TEXT_COL if can_afford else (162, 156, 146)
+        # render_fit: shrink_to_width bulanıklaştırıyordu
+        txt = render_fit(self.text, 19, name_col, max_width, bold=can_afford)
+        text_y = content.y + 2 if description else self.rect.centery - txt.get_height() // 2
+        screen.blit(txt, txt.get_rect(midtop=(content.centerx, text_y)))
 
         if description:
-            words = description.split()
-            lines = []
-            current = []
-            for word in words:
-                candidate = ' '.join(current + [word])
-                if self.detail_font.size(candidate)[0] <= max_width:
-                    current.append(word)
-                else:
-                    if current:
-                        lines.append(' '.join(current))
-                    current = [word]
-            if current:
-                lines.append(' '.join(current))
-            for i, line in enumerate(lines[:2]):
-                detail = self.detail_font.render(line, True, (225, 230, 235))
-                y = self.rect.centery + 10 + i * 15
-                screen.blit(detail, detail.get_rect(center=(self.rect.centerx, y)))
+            # Ortak wrap_text (bu sınıfın kendi kopyası vardı)
+            lines = wrap_text(self.detail_font, description, max_width)
+            desc_col = (204, 210, 206) if can_afford else (150, 145, 138)
+            y = text_y + txt.get_height() + 4
+            for line in lines[:2]:
+                detail = self.detail_font.render(line, True, desc_col)
+                screen.blit(detail, detail.get_rect(midtop=(content.centerx, y)))
+                y += self.detail_font.get_height() + 1
 
 class TabButton:
     def __init__(self, x, y, w, h, text, tab_id):
@@ -370,18 +452,21 @@ class EquippedRow:
         self.is_hovered = self.rect.collidepoint(pygame.mouse.get_pos())
 
     def draw(self, screen, font_sub):
-        bg = (30, 28, 38) if not self.is_hovered else (42, 38, 50)
-
-        border_width = 1
-        glow_color = (122, 126, 134)
+        import ui_theme
+        # Satır gövdesi: gotik çerçeve içeri çizilir (ızgarada taşmasın).
+        # Set eşyasında yeşil, bozulmuşta mor tonla vurgulanır.
+        tint = None
         if self.item and self.item.get("setTag"):
-            bg = (20, 45, 20) if not self.is_hovered else (30, 60, 30)
-            border_width = 2
-            glow_color = (46, 204, 113)
-            
-        pygame.draw.rect(screen, bg, self.rect, border_radius=8)
-        pygame.draw.rect(screen, glow_color, self.rect, width=border_width, border_radius=8)
-        
+            tint = tuple(int(c * 0.34) for c in ui_theme.RARITY_COLORS["Set"])
+        elif self.item and self.item.get("is_corrupted"):
+            tint = tuple(int(c * 0.34) for c in ui_theme.readable(ui_theme.COLORS["arcane"]))
+        elif self.is_hovered:
+            tint = tuple(int(c * 0.22) for c in ui_theme.METAL_HI)
+        ui_theme.draw_inset_frame(
+            screen, self.rect, "panel_frame_small.png",
+            fill=(30, 26, 36) if not self.is_hovered else (42, 37, 50),
+            alpha=242, tint=tint, pad=10)
+
         slot_map = {
             "weapon": "Silah",
             "helmet": "Miğfer",
@@ -392,93 +477,108 @@ class EquippedRow:
             "orb": "Orb (Küre)"
         }
         
-        label = self.slot_type.upper()
+        # İkon yuvası dikeyde ortalanır (eskiden üste sabitti, satır 68px olunca
+        # metinle aynı hizada durmuyordu).
+        slot_size = min(44, self.rect.height - 14)
+        slot_rect = pygame.Rect(self.rect.x + 10, self.rect.centery - slot_size // 2,
+                                slot_size, slot_size)
+        text_x = slot_rect.right + 12
+
         if self.item:
             i_rarity = self.item.get('rarity', 'Normal')
             label = f"[{i_rarity.upper()}] {self.item['name']}"
-            rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
-            color = rarity_colors.get(i_rarity, (255,255,255))
-            
-            # Slot box
-            slot_rect = pygame.Rect(self.rect.x + 5, self.rect.y + 5, 40, 40)
-            pygame.draw.rect(screen, (30, 30, 40), slot_rect, border_radius=4)
-            
-            # İkon
+            color = ui_theme.rarity_color(i_rarity)
+            ui_theme.draw_item_slot(screen, slot_rect, i_rarity, self.is_hovered)
+
             if self.item.get('icon_id'):
-                icon_img = ImageLoader.get_item_icon(self.item['icon_id'], (36, 36))
+                icon_img = ImageLoader.get_item_icon(self.item['icon_id'],
+                                                     (slot_size - 8, slot_size - 8))
                 if icon_img:
-                    screen.blit(icon_img, (self.rect.x + 7, self.rect.y + 7))
-            
-            # --- Set/Corrupted Labels ---
+                    screen.blit(icon_img, (slot_rect.x + 4, slot_rect.y + 4))
+
             if self.item.get('setTag'):
-                s_font = pygame.font.SysFont("Arial", 14, bold=True)
-                pygame.draw.circle(screen, (241, 196, 15), (self.rect.x + 50, self.rect.y + 10), 8)
-                st = s_font.render("S", True, (0, 0, 0))
-                screen.blit(st, st.get_rect(center=(self.rect.x + 50, self.rect.y + 10)))
-            
+                draw_set_badge(screen, (slot_rect.right - 2, slot_rect.top + 2), 8)
             if self.item.get('is_corrupted'):
-                pulse = (math.sin(time.time() * 10) + 1) * 0.5
-                c_color = (155 + pulse*40, 89, 182)
-                pygame.draw.rect(screen, c_color, self.rect, width=2, border_radius=8)
+                draw_corrupted_pulse(screen, self.rect, pad=2)
         else:
-            color = (100, 100, 100)
-            pygame.draw.rect(screen, (30, 30, 40), (self.rect.x + 5, self.rect.y + 5, 40, 40), border_radius=4)
+            color = ui_theme.METAL_LO
+            ui_theme.draw_item_slot(screen, slot_rect)
             label = f"Boş {slot_map.get(self.slot_type, self.slot_type)}"
 
-        # İsmi keskin şekilde sığdır (bulanık scale yerine font küçültme)
-        txt = render_fit(label, 18, color, self.rect.width - 70)
+        # İsmi keskin şekilde sığdır (bulanık scale yerine font küçültme).
+        # Genişlik ikonun GERÇEK sağ kenarından hesaplanır.
+        txt = render_fit(label, 18, color, self.rect.right - text_x - 14)
         txt_y = self.rect.y + (self.rect.height - txt.get_height()) // 2
-        screen.blit(txt, (self.rect.x + 60, txt_y))
+        screen.blit(txt, (text_x, txt_y))
 
 class BackpackItemCard:
     def __init__(self, x, y, w, h, idx):
         self.rect = pygame.Rect(x, y, w, h)
         # Kartın kendi içindeki göreceli indexi (0-11)
         self.idx = idx
-        
-        # Butonlar (İkonun sağına yerleştirildi)
-        icon_w = 60
-        btn_w = (w - icon_w - 15) // 3
-        btn_y = y + 35
-        self.use_rect = pygame.Rect(x + icon_w, btn_y, btn_w, 30)
-        self.sell_rect = pygame.Rect(x + icon_w + btn_w + 5, btn_y, btn_w, 30)
-        self.craft_rect = pygame.Rect(x + icon_w + (btn_w + 5) * 2, btn_y, btn_w, 30)
         self.is_hovered = False
+        self._layout()
+
+    def reposition(self, x=None, y=None, w=None, h=None):
+        """Kartı taşır/boyutlandırır ve İÇ rect'lerini yeniden hesaplar.
+
+        Eskiden çizim tarafı yalnız rect.y ve buton y'lerini elle set ediyordu;
+        yükseklik değişince ikon/buton hizası kartla birlikte gelmiyordu.
+        """
+        if x is not None: self.rect.x = x
+        if y is not None: self.rect.y = y
+        if w is not None: self.rect.width = w
+        if h is not None: self.rect.height = h
+        self._layout()
+
+    def _layout(self):
+        r = self.rect
+        slot = max(34, min(46, r.height - 16))
+        self.slot_rect = pygame.Rect(r.x + 10, r.centery - slot // 2, slot, slot)
+        bx = self.slot_rect.right + 10
+        avail = max(60, r.right - 10 - bx)
+        btn_w = max(54, (avail - 10) // 3)   # 54: buton plakasının min genişliği
+        btn_h = max(26, min(30, r.height // 2 - 6))
+        by = r.bottom - btn_h - 6
+        self.use_rect = pygame.Rect(bx, by, btn_w, btn_h)
+        self.sell_rect = pygame.Rect(bx + btn_w + 5, by, btn_w, btn_h)
+        self.craft_rect = pygame.Rect(bx + (btn_w + 5) * 2, by, btn_w, btn_h)
+        self.name_pos = (bx, r.y + 7)
+        self.name_max_w = avail
 
     def draw(self, screen, font_sub, item):
-        if not item: 
-            # Boş Slot Çizimi (Görsel tutarlılık için)
-            pygame.draw.rect(screen, (30, 30, 40), self.rect, border_radius=8, width=1)
+        import ui_theme
+        if not item:
+            # Boş slot: dolu kartla aynı çerçeve dilinde, sadece sönük
+            ui_theme.draw_inset_frame(screen, self.rect, "panel_frame_small.png",
+                                      fill=(24, 21, 28), alpha=170, pad=10)
             return
-        
-        rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
-        color = rarity_colors.get(item['rarity'], (255, 255, 255))
-        
-        # Card BG (tema zemini)
-        bg = (30, 28, 38)
-        if item.get("setTag"): bg = (24, 38, 28)
 
-        pygame.draw.rect(screen, bg, self.rect, border_radius=8)
-        pygame.draw.rect(screen, color, self.rect, width=1, border_radius=8)
-        
-        # --- İkon / Slot ---
-        # Sol orta kısma yerleştirildi
-        slot_rect = pygame.Rect(self.rect.x + 8, self.rect.y + 26, 48, 48)
-        pygame.draw.rect(screen, (25, 25, 35), slot_rect, border_radius=6)
-        pygame.draw.rect(screen, color, slot_rect, width=1, border_radius=6)
-        
+        color = ui_theme.rarity_color(item.get('rarity', 'Normal'))
+        tint = tuple(int(c * 0.30) for c in color)
+        if item.get("setTag"):
+            tint = tuple(int(c * 0.34) for c in ui_theme.RARITY_COLORS["Set"])
+        ui_theme.draw_inset_frame(screen, self.rect, "panel_frame_small.png",
+                                  fill=(30, 26, 36), alpha=244, tint=tint, pad=10)
+
+        # --- İkon / Slot (dikeyde ortalı, _layout'tan) ---
+        slot_rect = self.slot_rect
+        ui_theme.draw_item_slot(screen, slot_rect, item.get('rarity'))
+
         if item.get('icon_id'):
-            icon_img = ImageLoader.get_item_icon(item['icon_id'], (44, 44))
+            ic = slot_rect.width - 8
+            icon_img = ImageLoader.get_item_icon(item['icon_id'], (ic, ic))
             if icon_img:
-                screen.blit(icon_img, (slot_rect.x + 2, slot_rect.y + 2))
-        
+                screen.blit(icon_img, (slot_rect.x + 4, slot_rect.y + 4))
+
+        if item.get("is_corrupted"):
+            draw_corrupted_pulse(screen, self.rect, pad=2)
+
         # Name (sığmazsa font küçültülür, oran bozulmaz)
-        name_t = render_fit(item['name'], 18, color, self.rect.width - 30)
-        screen.blit(name_t, (self.rect.x + 8, self.rect.y + 6))
+        name_t = render_fit(item['name'], 18, color, self.name_max_w)
+        screen.blit(name_t, self.name_pos)
 
         # Buttons (tema: mini banner)
-        import ui_theme
-
         def mini_btn(rect, label, color, disabled=False):
             surf, overhang = ui_theme.render_banner_button(
                 rect.width, rect.height, label, color,
@@ -501,17 +601,9 @@ class BackpackItemCard:
         is_equip = item.get('type') in ['weapon', 'helmet', 'chest', 'amulet', 'pet']
         mini_btn(self.craft_rect, "UP", ui_theme.COLORS["night"], disabled=not is_equip)
 
-        # --- Set/Corrupted Overlay (S) ---
+        # Set rozeti kartın sağ üstünde (isim şeridiyle çakışmasın)
         if item.get('setTag'):
-            pygame.draw.circle(screen, (241, 196, 15), (self.rect.right - 10, self.rect.y + 10), 8)
-            s_font = pygame.font.SysFont("Arial", 12, bold=True)
-            st = s_font.render("S", True, (0,0,0))
-            screen.blit(st, st.get_rect(center=(self.rect.right - 10, self.rect.y + 10)))
-        
-        if item.get('is_corrupted'):
-            s = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-            pygame.draw.rect(s, (155, 89, 182, 40), (0, 0, *self.rect.size), border_radius=8)
-            screen.blit(s, self.rect.topleft)
+            draw_set_badge(screen, (self.rect.right - 12, self.rect.y + 12), 8)
 
 class MarketCard:
     def __init__(self, x, y, width, height, idx):
@@ -535,50 +627,44 @@ class MarketCard:
 
     def draw(self, screen, font_sub, font_desc, owned_count=0):
         if not self.item: return
-        
-        rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
-        color = rarity_colors.get(self.item['rarity'], (255,255,255))
-        
-        # Card BG (tema zemini)
-        bg = (30, 28, 38) if not self.is_hovered else (42, 38, 50)
+        import ui_theme
+
+        color = ui_theme.rarity_color(self.item.get('rarity', 'Normal'))
+        tint = tuple(int(c * (0.36 if self.is_hovered else 0.26)) for c in color)
         if self.item.get("setTag"):
-            bg = (24, 38, 28) if not self.is_hovered else (32, 48, 36)
-            
-        pygame.draw.rect(screen, bg, self.rect, border_radius=10)
-        pygame.draw.rect(screen, color, self.rect, width=1, border_radius=10)
-        
-        if self.item.get("setTag"):
-            s = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-            pygame.draw.rect(s, (46, 204, 113, 30), (0, 0, self.rect.width, self.rect.height), border_radius=10)
-            screen.blit(s, self.rect.topleft)
-        
+            tint = tuple(int(c * 0.34) for c in ui_theme.RARITY_COLORS["Set"])
+        ui_theme.draw_inset_frame(
+            screen, self.rect, "panel_frame_small.png",
+            fill=(30, 26, 36) if not self.is_hovered else (42, 37, 50),
+            alpha=244, tint=tint, pad=10)
+
         # İkon Slotu (SOLA ALINDI)
         slot_rect = pygame.Rect(self.rect.x + 10, self.rect.y + 12, 55, 55)
-        pygame.draw.rect(screen, (25, 25, 40), slot_rect, border_radius=8)
-        pygame.draw.rect(screen, color, slot_rect, width=1, border_radius=8)
-        
-        if self.item.get('icon_id'):
-            icon_img = ImageLoader.get_item_icon(self.item['icon_id'], (50, 50))
-            if icon_img:
-                screen.blit(icon_img, (slot_rect.x + 2, slot_rect.y + 2))
+        ui_theme.draw_item_slot(screen, slot_rect, self.item.get('rarity'), self.is_hovered)
 
-        # Name & Price (SAĞA KAYDIRILDI)
-        # İsim, ikon ile AL butonu arasına sığdırılır (taşma/ezilme yok)
-        name_max_w = max(40, self.buy_rect.left - (self.rect.x + 75) - 10)
+        if self.item.get('icon_id'):
+            icon_img = ImageLoader.get_item_icon(self.item['icon_id'], (46, 46))
+            if icon_img:
+                screen.blit(icon_img, (slot_rect.x + 5, slot_rect.y + 5))
+
+        if self.item.get("setTag"):
+            draw_set_badge(screen, (slot_rect.right - 2, slot_rect.top + 2), 8)
+
+        # Name & Price: ikonun GERÇEK sağ kenarı ile AL butonu arasına sığdırılır
+        text_x = slot_rect.right + 12
+        name_max_w = max(40, self.buy_rect.left - text_x - 12)
         name_txt = render_fit(self.item['name'], 18, color, name_max_w)
-        screen.blit(name_txt, (self.rect.x + 75, self.rect.y + 15))
-        
-        # Price
-        price_txt = font_desc.render(f"{self.item.get('price', 0)} GOLD", True, (241, 196, 15))
-        screen.blit(price_txt, (self.rect.x + 75, self.rect.y + 40))
-        
-        # Owned Count
+        screen.blit(name_txt, (text_x, self.rect.y + 15))
+
+        price_txt = render_fit(f"{self.item.get('price', 0)} GOLD", 17,
+                               ui_theme.readable(ui_theme.COLORS["gold"]), name_max_w)
+        screen.blit(price_txt, (text_x, self.rect.y + 40))
+
         if owned_count > 0:
-            o_txt = font_desc.render(f"Sende: {owned_count}", True, (200, 200, 200))
-            screen.blit(o_txt, (self.rect.x + 75, self.rect.y + 58))
+            o_txt = render_fit(f"Sende: {owned_count}", 16, (186, 180, 168), name_max_w)
+            screen.blit(o_txt, (text_x, self.rect.y + 60))
 
         # Buy Button (tema: mini banner)
-        import ui_theme
         surf, overhang = ui_theme.render_banner_button(
             self.buy_rect.width, self.buy_rect.height, "AL", ui_theme.COLORS["moss"],
             state="hover" if self.buy_hovered else "normal", skull=False)

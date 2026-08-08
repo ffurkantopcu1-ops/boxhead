@@ -51,6 +51,62 @@ COLORS = {
     "moss":     (44, 96, 58),     # onay/başarı (koyu yosun yeşili)
 }
 
+# Nadirlik renkleri ve çerçeve varlıkları — TEK kaynak.
+# (Eskiden ui_elements'te 4, game_scene'de 2 ayrı kopyası vardı.)
+RARITY_COLORS = {
+    "Normal": (206, 200, 188),
+    "Magic":  (86, 154, 214),
+    "Rare":   (226, 186, 74),
+    "Unique": (214, 96, 74),
+    "Set":    (86, 196, 118),
+}
+RARITY_FRAMES = {
+    "Normal": "rarity_frame_common.png",
+    "Magic":  "rarity_frame_rare.png",
+    "Rare":   "rarity_frame_epic.png",
+    "Unique": "rarity_frame_legendary.png",
+}
+
+
+def rarity_color(rarity):
+    return RARITY_COLORS.get(rarity, RARITY_COLORS["Normal"])
+
+
+def draw_item_slot(screen, rect, rarity=None, hovered=False, empty_label=None, font=None):
+    """Gotik eşya slotunu çizer: taş yuva + nadirlik çerçevesi.
+
+    Envanter/kuşanılan/market kartlarının tamamı buradan geçer; her biri
+    kendi rect+renk kombinasyonunu çizerken slotlar birbirini tutmuyordu.
+    """
+    if USE_NINESLICE and _n9 is not None and _n9.has("item_slot.png"):
+        slot = _n9.get("item_slot.png", rect.width, rect.height)
+        if slot is not None:
+            screen.blit(slot, rect.topleft)
+        else:
+            pygame.draw.rect(screen, (26, 23, 30), rect, border_radius=3)
+    else:
+        pygame.draw.rect(screen, (26, 23, 30), rect, border_radius=3)
+        pygame.draw.rect(screen, METAL_LO, rect, width=2, border_radius=3)
+
+    if rarity:
+        asset = RARITY_FRAMES.get(rarity)
+        col = rarity_color(rarity)
+        drawn = False
+        if asset and USE_NINESLICE and _n9 is not None and _n9.has(asset):
+            strength = 0.45 if hovered else 0.30
+            frame = _n9.get_border(asset, rect.width, rect.height,
+                                   tint=tuple(int(c * strength) for c in col))
+            if frame is not None:
+                screen.blit(frame, rect.topleft)
+                drawn = True
+        if not drawn:
+            pygame.draw.rect(screen, col, rect, width=2, border_radius=3)
+
+    if empty_label and font is not None:
+        txt = font.render(empty_label, True, METAL_LO)
+        screen.blit(txt, txt.get_rect(center=rect.center))
+
+
 _FONT_NAME = "Georgia, Times New Roman, serif"
 
 # --- KURUKAFA (25x14 piksel haritası) ---
@@ -334,10 +390,41 @@ def _draw_panel_nineslice(screen, rect, fill, alpha, skull):
     return False
 
 
-def draw_panel(screen, rect, fill=PANEL_BG, alpha=235, skull=False):
-    """Metal çerçeveli koyu panel çizer (menü panelleri, kartlar, tooltipler)."""
-    if USE_NINESLICE and _n9 is not None and _draw_panel_nineslice(
-            screen, rect, fill, alpha, skull):
+def readable(color, min_lum=150):
+    """Koyu sınıf/aksan renklerini koyu zeminde okunur seviyeye çıkarır.
+
+    Gölge Ninja (44,62,80) gibi renkler panel zemininde neredeyse görünmez
+    kalıyordu; ton korunur, yalnızca parlaklık eşiğe kadar yükseltilir.
+    """
+    lum = 0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]
+    if lum >= min_lum or lum <= 0:
+        return tuple(min(255, int(c)) for c in color[:3])
+    k = min_lum / lum
+    return tuple(min(255, int(c * k)) for c in color[:3])
+
+
+def render_title(text, size, color=TEXT_COL, shadow=(16, 10, 12)):
+    """Tema serif fontuyla gölgeli başlık yüzeyi (menü/ekran başlıkları)."""
+    font = pygame.font.SysFont(_FONT_NAME, size, bold=True)
+    body = font.render(text, True, color)
+    sh = font.render(text, True, shadow)
+    off = max(2, size // 16)
+    surf = pygame.Surface((body.get_width() + off, body.get_height() + off),
+                          pygame.SRCALPHA)
+    surf.blit(sh, (off, off))
+    surf.blit(body, (0, 0))
+    return surf
+
+
+def draw_panel(screen, rect, fill=PANEL_BG, alpha=235, skull=False, nineslice=True):
+    """Metal çerçeveli koyu panel çizer (menü panelleri, kartlar, tooltipler).
+
+    nineslice=False: gotik plaka yerine ince (3px) prosedürel metal çerçeve.
+    Gotik çerçeve rect'in 52px DIŞINA taşar; sınıf kartı gibi ızgara içinde
+    yan yana duran dar kutularda komşuların üstüne biniyor.
+    """
+    if (nineslice and USE_NINESLICE and _n9 is not None
+            and _draw_panel_nineslice(screen, rect, fill, alpha, skull)):
         return
 
     key = (rect.width, rect.height, fill, alpha, skull)
@@ -368,6 +455,104 @@ def draw_panel(screen, rect, fill=PANEL_BG, alpha=235, skull=False):
             surf.blit(sk, (rect.width // 2 - sk.get_width() // 2, 0))
         _panel_cache[key] = surf
     screen.blit(surf, (rect.x, rect.y - (18 if skull else 0)))
+
+
+def draw_plate(screen, rect, state="normal", color=None):
+    """Buton plakasını METİNSİZ çizer (liste satırı, sekme, slot başlığı).
+
+    render_banner_button metni kendi ortalar; sol/sağ hizalı satırlarda
+    (kayıt listesi, stat satırı) metni çağıran yerleştirmek ister.
+    """
+    asset = _N9_BUTTON.get(state, _N9_BUTTON["normal"])
+    if USE_NINESLICE and _n9 is not None and _n9.has(asset):
+        mw, mh = _n9.min_size(asset)
+        if rect.width >= mw and rect.height >= mh:
+            plate = _n9.get(asset, rect.width, rect.height)
+            if plate is not None:
+                screen.blit(plate, rect.topleft)
+                if color and state != "disabled":
+                    strength = 0.42 if state == "hover" else 0.28
+                    tint = pygame.Surface(rect.size)
+                    tint.fill(tuple(int(c * strength) for c in color))
+                    screen.blit(tint, rect.topleft, special_flags=pygame.BLEND_RGB_ADD)
+                return
+
+    # Yedek: düz taş zemin + metal kontur
+    base = color or METAL_LO
+    fill = tuple(int(c * (0.55 if state == "hover" else 0.35)) for c in base)
+    pygame.draw.rect(screen, fill, rect, border_radius=4)
+    pygame.draw.rect(screen, METAL_HI if state == "hover" else METAL,
+                     rect, width=2, border_radius=4)
+
+
+def draw_world_bar(screen, rect, ratio, fill_key="blood"):
+    """Dünya uzayındaki minik can/kalkan barı (düşman, oyuncu, taret).
+
+    Gotik bar_frame.png'nin en küçük yüksekliği 12px; bu barlar 3-6px olduğu
+    için prosedürel kalıyor. Renkler yine paletten gelsin diye tek yerde.
+    """
+    ratio = max(0.0, min(1.0, ratio))
+    pygame.draw.rect(screen, DARK_OUT, rect, border_radius=2)
+    if ratio > 0:
+        fill = pygame.Rect(rect.x, rect.y, int(rect.width * ratio), rect.height)
+        pygame.draw.rect(screen, readable(COLORS[fill_key]), fill, border_radius=2)
+    pygame.draw.rect(screen, METAL_LO, rect, width=1, border_radius=2)
+
+
+def draw_inset_frame(screen, rect, asset="panel_frame_small.png",
+                     fill=PANEL_BG, alpha=235, tint=None, glow=None, pad=None):
+    """Gotik çerçeveyi rect'in İÇİNE çizer; içerik alanını döndürür.
+
+    draw_panel çerçeveyi rect'in dışına taşırır (geniş menü panelleri için
+    doğru). Izgarada yan yana duran kartlarda dış ölçü sabit kalmalı, bu
+    yüzden çerçeve içeri çizilir. tint çerçeveyi bir aksan rengiyle harmanlar,
+    glow rect'in arkasına renkli hale koyar (hover).
+
+    pad verilirse içerik alanı 9-slice insets yerine bu payla hesaplanır:
+    insets köşe süslerinin tam ölçüsüdür (40px), kenar taşı ise çok daha
+    ince; dar kartlarda 40px pay içeriğe yer bırakmıyor.
+    """
+    if glow:
+        col, strength = glow
+        # Yumuşak hale: tek dikdörtgen sert bir kutu gibi görünüyordu,
+        # dışa doğru sönen eşmerkezli konturlar daha doğal.
+        layers = 6
+        g = pygame.Surface((rect.width + 28, rect.height + 28), pygame.SRCALPHA)
+        for i in range(layers):
+            a = int(strength * (1 - i / layers) ** 2)
+            if a <= 0:
+                continue
+            inset = i * 2
+            pygame.draw.rect(g, col + (a,),
+                             pygame.Rect(inset, inset,
+                                         g.get_width() - inset * 2,
+                                         g.get_height() - inset * 2),
+                             width=4, border_radius=10)
+        screen.blit(g, (rect.x - 14, rect.y - 14))
+
+    body = pygame.Surface(rect.size, pygame.SRCALPHA)
+    body.fill(fill + (alpha,))
+    screen.blit(body, rect.topleft)
+
+    drawn = False
+    if USE_NINESLICE and _n9 is not None and _n9.has(asset):
+        mw, mh = _n9.min_size(asset)
+        if rect.width >= mw and rect.height >= mh:
+            border = _n9.get_border(asset, rect.width, rect.height, tint=tint)
+            if border is not None:
+                screen.blit(border, rect.topleft)
+                drawn = True
+
+    if not drawn:
+        # Varlık yoksa/çok küçükse prosedürel metal çerçeve
+        pygame.draw.rect(screen, tint or METAL, rect, width=3, border_radius=4)
+        pygame.draw.rect(screen, DARK_OUT, rect.inflate(2, 2), width=1, border_radius=5)
+
+    if pad is not None:
+        return rect.inflate(-2 * pad, -2 * pad)
+    if drawn:
+        return _n9.content_rect(asset, rect)
+    return rect.inflate(-14, -14)
 
 
 def clear_caches():

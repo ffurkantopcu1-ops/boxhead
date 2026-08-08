@@ -1,6 +1,6 @@
 import pygame
 from scenes.base_scene import BaseScene
-from ui_elements import ClassCard, render_fit
+from ui_elements import Button, ClassCard, render_fit, get_skull_crest
 
 class ClassSelectScene(BaseScene):
     def on_enter(self):
@@ -50,10 +50,14 @@ class ClassSelectScene(BaseScene):
             data["desc"] = detailed_desc.get(data["id"], data["desc"])
             self.cards.append(ClassCard(x, y, card_w, card_h, data, self.font_main, self.font_sub))
 
-        # Boss Test Button
-        self.boss_test_rect = pygame.Rect(self.width - 250, self.height - 65, 220, 50)
+        # Boss Test Button (tema banner butonu; ham rect çizimi yok)
+        import ui_theme
+        self.boss_btn = Button(self.width - 160, self.height - 68, 260, 52,
+                               "BOSS DENEME ODASI", self.font_desc,
+                               ui_theme.COLORS["ember"])
         self.selected_idx = 0 # Warrior by default
         self.preview_idx = 0
+        self._bg_cache = None
 
     def update(self, dt, events):
         mouse_clicked = False
@@ -90,32 +94,73 @@ class ClassSelectScene(BaseScene):
             if mouse_moved and card.rect.collidepoint(mouse_pos):
                 self.preview_idx = i
 
-        if mouse_clicked and self.boss_test_rect.collidepoint(mouse_pos):
+        if self.boss_btn.update(events):
             # Use the hovered class if any, else use the last clicked one
             final_idx = self.preview_idx
             selected_class_id = self.class_list[final_idx]['id']
             self.manager.start_boss_test(selected_class_id)
 
+    def _draw_background(self):
+        """Koyu taş zemin + merkezden dışa kararan vinyet (gotik tema)."""
+        import ui_theme
+        self.screen.fill(ui_theme.DARK_OUT)
+        if self._bg_cache is None or self._bg_cache.get_size() != (self.width, self.height):
+            bg = pygame.Surface((self.width, self.height))
+            top, bottom = (34, 29, 38), (16, 13, 18)
+            for y in range(self.height):
+                t = y / max(1, self.height - 1)
+                pygame.draw.line(bg, tuple(int(top[i] + (bottom[i] - top[i]) * t)
+                                           for i in range(3)), (0, y), (self.width, y))
+            # Kenar kararması: ekranın ortasındaki kartlar öne çıksın
+            vig = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            steps = 60
+            for i in range(steps):
+                a = int(90 * (i / steps) ** 2)
+                inset = int(min(self.width, self.height) * 0.5 * (1 - i / steps))
+                pygame.draw.rect(vig, (0, 0, 0, a),
+                                 pygame.Rect(inset, inset,
+                                             self.width - inset * 2,
+                                             self.height - inset * 2), width=6)
+            bg.blit(vig, (0, 0))
+            self._bg_cache = bg
+        self.screen.blit(self._bg_cache, (0, 0))
+
     def draw(self):
-        self.screen.fill(self.bg_color)
-        title = self.font_main.render("SINIFINI SEÇ", True, (255, 255, 255))
-        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 30))
-        
+        import ui_theme
+        self._draw_background()
+
+        # --- Başlık: kurukafa arması + gotik serif başlık ---
+        title = ui_theme.render_title("SINIFINI SEÇ", 62)
+        tx = self.width // 2 - title.get_width() // 2
+        self.screen.blit(title, (tx, 34))
+        crest = get_skull_crest(56)
+        if crest is not None:
+            gap = 26
+            cy = 34 + title.get_height() // 2 - crest.get_height() // 2
+            self.screen.blit(crest, (tx - crest.get_width() - gap, cy))
+            self.screen.blit(crest, (tx + title.get_width() + gap, cy))
+
+        # Başlık altı metal ayraç
+        line_y = 34 + title.get_height() + 8
+        half = min(self.width // 2 - 40, 420)
+        pygame.draw.line(self.screen, ui_theme.METAL_LO,
+                         (self.width // 2 - half, line_y),
+                         (self.width // 2 + half, line_y), 2)
+        pygame.draw.line(self.screen, ui_theme.METAL,
+                         (self.width // 2 - half // 2, line_y),
+                         (self.width // 2 + half // 2, line_y), 2)
+
+        # Seçili kart en son çizilir: kurukafa arması ve halesi komşuların
+        # çerçevesinin altında kalmasın.
         for i, card in enumerate(self.cards):
-            card.draw(self.screen)
-            # Draw a border around the previewed (hovered) class
-            if i == self.preview_idx:
-                pygame.draw.rect(self.screen, (255, 255, 255), card.rect, width=3, border_radius=12)
-            
+            if i != self.preview_idx:
+                card.draw(self.screen)
+        self.cards[self.preview_idx].draw(self.screen, selected=True)
+
         # Alt bilgi, boss butonuyla çakışmayacak genişliğe sığdırılır
-        info_max_w = self.boss_test_rect.left - 60
-        info = render_fit("Tıkla veya ENTER: Başla  •  Oklar/WASD: Seç  •  B: Boss testi  •  ESC: Geri", 20, (150, 150, 165), info_max_w)
+        info_max_w = self.boss_btn.rect.left - 60
+        info = render_fit("Tıkla veya ENTER: Başla  •  Oklar/WASD: Seç  •  B: Boss testi  •  ESC: Geri",
+                          20, (150, 144, 132), info_max_w)
         self.screen.blit(info, (30, self.height - 42))
 
-        # Draw Boss Test Button
-        mouse_pos = pygame.mouse.get_pos()
-        color = (192, 57, 43) if self.boss_test_rect.collidepoint(mouse_pos) else (150, 40, 40)
-        pygame.draw.rect(self.screen, color, self.boss_test_rect, border_radius=8)
-        pygame.draw.rect(self.screen, (255, 255, 255), self.boss_test_rect, width=2, border_radius=8)
-        bt_text = render_fit("BOSS DENEME ODASI", 24, (255, 255, 255), self.boss_test_rect.width - 20, bold=True)
-        self.screen.blit(bt_text, bt_text.get_rect(center=self.boss_test_rect.center))
+        self.boss_btn.draw(self.screen)

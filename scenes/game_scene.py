@@ -1,7 +1,9 @@
 from scenes.base_scene import BaseScene
 from logic.game_logic import GameLogic
 from entities.player import Player
-from ui_elements import TabButton, EquippedRow, BackpackItemCard, SkillButton, MarketCard, render_fit, shrink_to_width
+from ui_elements import (TabButton, EquippedRow, BackpackItemCard, SkillButton,
+                         MarketCard, render_fit, shrink_to_width,
+                         strip_unsupported, get_skull_crest)
 import pygame
 import math
 import time
@@ -116,6 +118,8 @@ class GameScene(BaseScene):
         
         # Aura & Essence UI State
         self.aura_page = 0
+        self.synergy_scroll = 0        # sinerji listesi kaydırma ofseti (<= 0)
+        self._synergy_max_scroll = 0
         self.aura_msg = ""
         self.aura_msg_timer = 0
         
@@ -125,7 +129,11 @@ class GameScene(BaseScene):
         self.show_inventory = False 
         self.show_stats_panel = False
         self.crafting_target = None
-        
+        # Craft hata mesajı yalnız pencere açılırken atanıyordu; çizim buna
+        # koşulsuz bakıyor, farklı bir yol pencereyi açarsa AttributeError olur.
+        self.craft_error_msg = ""
+        self.craft_error_timer = 0.0
+
         # Blood Moon Filter
         self.blood_moon_surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.blood_moon_surf.fill((200, 0, 0, 45)) 
@@ -134,8 +142,8 @@ class GameScene(BaseScene):
         self._overlay_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self._sweep_surface = pygame.Surface((3840, 2160), pygame.SRCALPHA)
         self.font_combo = pygame.font.SysFont("Arial", 28, bold=True)
-        self.font_boss_name = pygame.font.SysFont("Arial", 28, bold=True)
-        self.font_boss_hp = pygame.font.SysFont("Arial", 16, bold=True)
+        # font_boss_name / font_boss_hp kaldırıldı: boss barı artık render_fit
+        # kullanıyor (tek metin yardımcısı, otomatik sığdırma).
         
         self.stats_tracker = {
             'total_damage_dealt': 0,
@@ -233,10 +241,8 @@ class GameScene(BaseScene):
         self.exit_btn_rect = pygame.Rect(self.width - 220, 40, 180, 50)
         
         # ZORLUK BUTONLARI (Hero Tab)
-        self.diff_btn_rects = []
-        diff_names = ["Normal", "Hard", "Very Hard", "Impossible"]
-        for i, name in enumerate(diff_names):
-            self.diff_btn_rects.append(pygame.Rect(self.width // 2 - 280 + i * 140, 570, 130, 40))
+        # Zorluk butonu rect'leri _diff_button_rects() ile panelden türetilir
+        # (sabit liste, panel taşınınca hitbox'ı çizimden ayırıyordu).
 
         # CRAFT SAYFALAMA
         self.orb_inv_page = 0
@@ -267,11 +273,12 @@ class GameScene(BaseScene):
             ))
             
         # Toplu Satış Butonları (SAĞ ALT)
+        # color_key: ui_theme.COLORS anahtarı (ham RGB gömülmez)
         self.mass_sell_btns = [
-            {"label": "NORMAL SAT", "rarity": "Normal", "color": (150, 150, 150)},
-            {"label": "MAGIC SAT", "rarity": "Magic", "color": (52, 152, 219)},
-            {"label": "RARE SAT", "rarity": "Rare", "color": (241, 196, 15)},
-            {"label": "ÖZLERİ TÜKET", "action": "consume_essences", "color": (155, 89, 182)}
+            {"label": "NORMAL SAT", "rarity": "Normal", "color_key": "steel"},
+            {"label": "MAGIC SAT", "rarity": "Magic", "color_key": "night"},
+            {"label": "RARE SAT", "rarity": "Rare", "color_key": "gold"},
+            {"label": "ÖZLERİ TÜKET", "action": "consume_essences", "color_key": "arcane"}
         ]
         self.mass_sell_rects = []
         mass_gap = 6
@@ -347,6 +354,13 @@ class GameScene(BaseScene):
                 self.target_zoom += event.y * 0.1
                 self.target_zoom = max(self.min_zoom, min(self.max_zoom, self.target_zoom))
 
+            # Sinerji listesi ekrana sığmıyor: tekerlekle kaydırılır
+            if (event.type == pygame.MOUSEWHEEL and self.show_inventory
+                    and self.active_tab == "synergy"):
+                self.synergy_scroll = max(
+                    -getattr(self, "_synergy_max_scroll", 0),
+                    min(0, self.synergy_scroll + event.y * 45))
+
             if event.type == pygame.KEYDOWN:
                 # ESC: Menüyü aç/kapat
                 if event.key == pygame.K_ESCAPE:
@@ -417,28 +431,36 @@ class GameScene(BaseScene):
                     if event.key == pygame.K_z:
                         p.auto_attack = not p.auto_attack
                     if event.key == pygame.K_q:
+                        # Efekt yalnız yetenek gerçekten kullanıldıysa (cooldown
+                        # bitmişse) oynatılır: use_artifact sessizce dönebiliyor
+                        art_ready = (p.inv_manager.equipped.get("artifact")
+                                     and getattr(p, "artifact_cooldown", 0) <= 0
+                                     and not p.is_silenced)
                         p.use_artifact(self.logic)
+                        if art_ready:
+                            self._cast_fx(p, "artifact")
                     if event.key == pygame.K_r:
                         self._use_blood_absorb(p)
                     if event.key == pygame.K_SPACE and not self.show_inventory:
-                        p.dash()
+                        if p.dash():
+                            self._cast_fx(p, "dash")
 
         # --- 2. AYARLAR MENÜSÜ FARE KONTROLÜ (MOUSE) ---
         settings_was_open = self.show_settings
         if settings_was_open:
-            panel = pygame.Rect(self.width // 2 - 250, self.height // 2 - 250, 500, 500)
+            panel = self._pause_panel_rect()
             if mouse_clicked and not panel.collidepoint(mouse_pos):
                 self.show_settings = False
-            
+
+            # Satır rect'leri çizimle aynı kaynaktan (_pause_rows)
+            rows = self._pause_rows()
             if self.setting_tab == "main":
-                for i in range(8):
-                    opt_rect = pygame.Rect(self.width // 2 - 200, panel.y + 100 + i * 50 - 15, 400, 40)
+                for i, opt_rect in enumerate(rows):
                     if opt_rect.collidepoint(mouse_pos):
                         self.selected_setting_idx = i
                         if mouse_clicked: self._trigger_setting_action(i)
             elif self.setting_tab == "save":
-                for i in range(2):
-                    opt_rect = pygame.Rect(self.width // 2 - 200, panel.y + 150 + i * 80 - 20, 400, 60)
+                for i, opt_rect in enumerate(rows):
                     if opt_rect.collidepoint(mouse_pos):
                         self.selected_setting_idx = i
                         if mouse_clicked:
@@ -448,12 +470,11 @@ class GameScene(BaseScene):
                             else: self.logic.save_manager.save_game(self.logic, "last_save")
                             self.setting_tab = "main"
             elif self.setting_tab == "load":
-                for i, slot in enumerate(self.save_slots):
-                    opt_rect = pygame.Rect(self.width // 2 - 250, panel.y + 110 + i * 55 - 20, 500, 40)
+                for i, opt_rect in enumerate(rows):
                     if opt_rect.collidepoint(mouse_pos):
                         self.selected_setting_idx = i
                         if mouse_clicked:
-                            self.logic.save_manager.load_game(self.logic, slot['filename'])
+                            self.logic.save_manager.load_game(self.logic, self.save_slots[i]['filename'])
                             self.show_settings = False
 
             # Modal arkasındaki kart veya oyun sonu butonlarına aynı tıklamanın
@@ -503,12 +524,14 @@ class GameScene(BaseScene):
                         self.logic.pending_cards = cards
                         
         if self.logic.state == "EVOLUTION_SELECT" and mouse_clicked:
-            if hasattr(self, 'evo_rects'):
-                for rect, evo_id in self.evo_rects:
-                    if rect.collidepoint(mouse_pos):
-                        p.apply_evolution(evo_id)
-                        self.logic.state = "PLAYING"
-                        break
+            # Hem kartın kendisi hem SEÇ butonu tıklanabilir (buton eskiden
+            # çizilip hiçbir tıklama testine girmiyordu)
+            for rect, evo_id in (list(getattr(self, 'evo_btn_rects', []))
+                                 + list(getattr(self, 'evo_rects', []))):
+                if rect.collidepoint(mouse_pos):
+                    p.apply_evolution(evo_id)
+                    self.logic.state = "PLAYING"
+                    break
 
     def _handle_game_over_mouse(self, pos):
         # "Yeniden Başla" butonu (çizimde saklanan rect kullanılır)
@@ -551,27 +574,26 @@ class GameScene(BaseScene):
         if getattr(p, 'class_id', '') == "bloodwalker" and hasattr(p.specialization, 'activate_blood_absorb'):
             if p.specialization.activate_blood_absorb(p):
                 self.logic.add_event("damage_text", p.x, p.y - 60, value="KAN EMME!", color=(255, 50, 50), timer=1.0)
+                self._cast_fx(p, "blood_absorb")
 
     def _handle_inventory_mouse(self, p, pos):
         # 1. CRAFTİNG PENCERESİ AÇIKSA (Öncelikli)
         if self.show_craft_window:
-            panel = pygame.Rect(self.width // 2 - 450, self.height // 2 - 300, 900, 600)
-            
+            # Rect'ler çizimle AYNI kaynaktan (_craft_layout)
+            L = self._craft_layout()
+
             # Kapatma Butonu
-            close_btn = pygame.Rect(panel.right - 50, panel.y + 10, 40, 40)
-            if close_btn.collidepoint(pos):
+            if L["close"].collidepoint(pos):
                 self.show_craft_window = False
                 return
 
             # ORB SATIN ALMA (Dükkan - Sağ)
             market_list = self.logic.orb_market
-            offset_m = self.orb_market_page * 5
-            for i in range(min(5, len(market_list) - offset_m)):
+            offset_m = self.orb_market_page * self.MARKET_ROWS_PER_PAGE
+            for i in range(min(self.MARKET_ROWS_PER_PAGE, len(market_list) - offset_m)):
                 actual_idx = offset_m + i
                 orb = market_list[actual_idx]
-                y_off = panel.y + 110 + i * 90
-                # TIKLAMA ALANI (DİKKAT: draw_craft_window ile aynı (panel.right - 100) olmalı!)
-                buy_btn = pygame.Rect(panel.right - 100, y_off + 20, 60, 40)
+                buy_btn = L["mkt_buy"][i]
                 if buy_btn.collidepoint(pos):
                     if p.gold >= orb['price']:
                         if p.add_item(orb.copy()):
@@ -601,14 +623,16 @@ class GameScene(BaseScene):
                     return
 
             # SAYFALAMA KONTROLLERİ (CRAFT)
-            if self.craft_orb_prev_rect.collidepoint(pos) and self.orb_inv_page > 0: self.orb_inv_page -= 1; return
-            if self.craft_orb_next_rect.collidepoint(pos) and (self.orb_inv_page + 1) * 8 < len(orbs_in_inv): self.orb_inv_page += 1; return
-            if self.craft_mkt_prev_rect.collidepoint(pos) and self.orb_market_page > 0: self.orb_market_page -= 1; return
-            if self.craft_mkt_next_rect.collidepoint(pos) and (self.orb_market_page + 1) * 5 < len(market_list): self.orb_market_page += 1; return
-            
-            # GERİ AL (Hedef Eşyayı Envantere Çek) - çizimde saklanan rect kullanılır
-            take_back_btn = getattr(self, 'craft_take_back_rect', None)
-            if take_back_btn and take_back_btn.collidepoint(pos):
+            orb_pages = self.ORB_ROWS_PER_PAGE
+            mkt_pages = self.MARKET_ROWS_PER_PAGE
+            if L["orb_prev"].collidepoint(pos) and self.orb_inv_page > 0: self.orb_inv_page -= 1; return
+            if L["orb_next"].collidepoint(pos) and (self.orb_inv_page + 1) * orb_pages < len(orbs_in_inv): self.orb_inv_page += 1; return
+            if L["mkt_prev"].collidepoint(pos) and self.orb_market_page > 0: self.orb_market_page -= 1; return
+            if L["mkt_next"].collidepoint(pos) and (self.orb_market_page + 1) * mkt_pages < len(market_list): self.orb_market_page += 1; return
+
+            # GERİ AL (Hedef Eşyayı Envantere Çek)
+            take_back_btn = L["take_back"]
+            if take_back_btn.collidepoint(pos):
                 if p.add_item(self.crafting_target):
                     self.crafting_target = None
                     self.show_craft_window = False
@@ -629,6 +653,9 @@ class GameScene(BaseScene):
 
         # 4. SEKME İÇERİĞİ
         if self.active_tab == "inventory":
+            # Hitbox'lar çizimle aynı kaynaktan konumlansın
+            self._apply_inventory_layout()
+
             # --- FİLTRE TIKLAMALARI ---
             for i, rect in enumerate(self.filter_rects):
                 if rect.collidepoint(pos):
@@ -660,21 +687,7 @@ class GameScene(BaseScene):
                     return
 
             # Filtrelenmiş Liste (Hangi eşyaya tıklandığını bulmak için)
-            filtered_inv = []
-            for it in p.inventory:
-                # ORB GİZLEME
-                if self.hide_orbs and it.get('type') == 'orb': continue
-
-                if self.inv_filter_rarity != "TÜMÜ":
-                    if self.inv_filter_rarity == "SET" and not it.get("setTag"): continue
-                    if self.inv_filter_rarity != "SET" and it.get("rarity") != self.inv_filter_rarity: continue
-                if self.inv_filter_type != "TÜMÜ":
-                    it_type = it.get("type", "")
-                    if self.inv_filter_type == "armor" and it_type not in ["helmet", "chest"]: continue
-                    if self.inv_filter_type == "accessory" and it_type not in ["amulet", "ring"]: continue
-                    if self.inv_filter_type == "special" and it_type not in ["artifact", "orb"]: continue
-                    if self.inv_filter_type not in ["armor", "accessory", "special"] and it_type != self.inv_filter_type: continue
-                filtered_inv.append(it)
+            filtered_inv = self._filtered_inventory(p)
 
             # Sayfalama Kontrolü
             if self.inv_prev_rect.collidepoint(pos) and self.inventory_page > 0:
@@ -750,7 +763,7 @@ class GameScene(BaseScene):
 
         elif self.active_tab == "hero":
             diff_names = ["Normal", "Hard", "Very Hard", "Impossible"]
-            for i, rect in enumerate(self.diff_btn_rects):
+            for i, rect in enumerate(self._diff_button_rects()):
                 if rect.collidepoint(pos):
                     self.logic.update_difficulty(diff_names[i])
                     return
@@ -921,53 +934,64 @@ class GameScene(BaseScene):
         sell_surf = self.font_sub.render(f"OTO-SATIŞ (F): {sell_text}", True, (241, 196, 15) if sm > 0 else (150, 150, 150))
         self.screen.blit(sell_surf, (20, 180))
         
-        # Artifact
+        # Artifact (tema plakası + gotik bar; eskiden çıplak rect'ti ve
+        # draw.rect'e verilen RGBA'nın alfası sessizce yok sayılıyordu)
+        import ui_theme
+        import ui_nineslice as n9
         art = p.inv_manager.equipped.get("artifact")
+        # y=226: üstteki OTO-SATIŞ satırı 32pt fontla ~212'ye kadar iniyor,
+        # plakanın üst süsü 215'te onun üstüne biniyordu.
+        art_rect = pygame.Rect(20, 226, 250, 46)
         if art:
-            art_name, max_cd = art.get("name", "Artifact").upper(), art.get("cooldown", 30)
-            pygame.draw.rect(self.screen, (30, 30, 40, 200), (20, 215, 250, 45), border_radius=5)
-            pygame.draw.rect(self.screen, (100, 100, 120), (20, 215, 250, 45), width=2, border_radius=5)
-            if p.artifact_cooldown > 0:
-                ratio = 1.0 - (p.artifact_cooldown / max_cd)
-                pygame.draw.rect(self.screen, (192, 57, 43), (25, 240, 240 * ratio, 10), border_radius=3)
-                txt = f"{art_name} ({int(p.artifact_cooldown)}s)"
-                clr = (200, 200, 200)
-            else:
-                pygame.draw.rect(self.screen, (46, 204, 113), (25, 240, 240, 10), border_radius=3)
-                txt = f"{art_name} (HAZIR)"
-                clr = (255, 255, 255)
-            art_surf = self.font_sub.render(txt, True, clr)
-            self.screen.blit(art_surf, (25, 215))
+            art_name, max_cd = art.get("name", "Artifact").upper(), max(1, art.get("cooldown", 30))
+            ready = p.artifact_cooldown <= 0
+            ui_theme.draw_plate(self.screen, art_rect, "hover" if ready else "normal",
+                                ui_theme.COLORS["arcane"])
+            txt = f"{art_name} (HAZIR)" if ready else f"{art_name} ({int(p.artifact_cooldown)}s)"
+            clr = ui_theme.TEXT_COL if ready else (176, 170, 158)
+            art_surf = render_fit(txt, 19, clr, art_rect.width - 40, bold=ready)
+            self.screen.blit(art_surf, (art_rect.x + 20, art_rect.y + 5))
+
+            bar = pygame.Rect(art_rect.x + 20, art_rect.bottom - 15, art_rect.width - 40, 10)
+            ratio = 1.0 if ready else 1.0 - (p.artifact_cooldown / max_cd)
+            if not n9.draw_bar(self.screen, "bar_frame.png", bar,
+                               "bar_fill_green.png" if ready else "bar_fill_mana.png", ratio):
+                pygame.draw.rect(self.screen, ui_theme.METAL_LO, bar, border_radius=3)
+                pygame.draw.rect(self.screen, ui_theme.readable(ui_theme.COLORS["arcane"]),
+                                 (bar.x, bar.y, int(bar.width * ratio), bar.height), border_radius=3)
         else:
-            pygame.draw.rect(self.screen, (30, 30, 40, 150), (20, 215, 250, 30), border_radius=5)
-            art_surf = self.font_sub.render("ARTIFACT: EKSİK", True, (100, 100, 100))
-            self.screen.blit(art_surf, (25, 215))
+            empty_rect = pygame.Rect(20, 226, 250, 34)
+            ui_theme.draw_plate(self.screen, empty_rect, "disabled")
+            art_surf = render_fit("ARTIFACT: EKSİK", 18, (140, 134, 124), empty_rect.width - 40)
+            self.screen.blit(art_surf, art_surf.get_rect(center=empty_rect.center))
         
         # 4. Kan Ayı Filtresi
         if self.logic.wave.get("is_blood_moon"):
             self.screen.blit(self.blood_moon_surf, (0, 0))
 
+        # Üst-orta HUD bandını tahsis et (WAVE / boss / dalga olayı / combo
+        # hepsi buraya çiziliyor ve sabit y'lerle üst üste biniyorlardı)
+        self._layout_top_hud()
+
         # 🟢 KILL STREAK HUD
         # 4. Kill Streak (Combo) - Minimalist Tasarım
         if self.logic.kill_streak > 1:
+            import ui_theme
             streak = self.logic.kill_streak
-            color = (241, 196, 15) if streak < 20 else (231, 76, 60)
-            
-            # Daha küçük ve şık font
-            txt = self.font_combo.render(f"COMBO: {streak}", True, color)
-            txt_rect = txt.get_rect(center=(self.width // 2, 80))
-            
-            # Hafif gölge
-            shadow = self.font_combo.render(f"COMBO: {streak}", True, (0, 0, 0))
-            self.screen.blit(shadow, (txt_rect.x + 2, txt_rect.y + 2))
+            key = "gold" if streak < 20 else "blood"
+
+            txt = ui_theme.render_title(f"COMBO: {streak}", 26,
+                                        ui_theme.readable(ui_theme.COLORS[key]))
+            txt_rect = txt.get_rect(midtop=(self.width // 2, self._hud_combo_y))
             self.screen.blit(txt, txt_rect)
-            
-            # Streak Zaman Çubuğu (Daha ince ve kısa)
+
+            # Streak Zaman Çubuğu (ortak dünya barı yardımcısı)
             bar_w = 120
             ratio = max(0, min(1.0, self.logic.streak_timer / 3.5))
-            bar_y = txt_rect.bottom + 5
-            pygame.draw.rect(self.screen, (40, 40, 40), (self.width//2 - bar_w//2, bar_y, bar_w, 4), border_radius=2)
-            pygame.draw.rect(self.screen, color, (self.width//2 - bar_w//2, bar_y, bar_w * ratio, 4), border_radius=2)
+            ui_theme.draw_world_bar(
+                self.screen,
+                pygame.Rect(self.width // 2 - bar_w // 2, txt_rect.bottom + 4, bar_w, 5),
+                ratio, key)
 
         # 5. Boss HP Barı (GDD 31)
         self.draw_boss_healthbar()
@@ -1000,19 +1024,36 @@ class GameScene(BaseScene):
             self.draw_evolution_select_screen()
 
 
-    def draw_settings_menu(self):
-        self._overlay_surface.fill((0, 0, 0, 180))
-        self.screen.blit(self._overlay_surface, (0, 0))
-        
-        panel = pygame.Rect(self.width // 2 - 250, self.height // 2 - 250, 500, 500)
-        pygame.draw.rect(self.screen, (35, 35, 50), panel, border_radius=15)
-        pygame.draw.rect(self.screen, (80, 80, 100), panel, width=2, border_radius=15)
-        
-        if self.setting_tab == "main":
-            title = self.font_main.render("DURAKLATILDI", True, (241, 196, 15))
-            self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 30))
+    # --- Duraklatma menüsü geometrisi (çizim ve tıklama TEK kaynak) ---
+    # Satır rect'leri hem draw_settings_menu hem update() tarafından buradan
+    # alınır; iki yerde ayrı hesaplanınca hizalama sürekli kayıyordu.
 
-            options = [
+    PAUSE_OPTION_COLORS = ["steel", "steel", "steel", "moss",
+                           "night", "night", "ember", "blood"]
+
+    def _pause_panel_rect(self):
+        return pygame.Rect(self.width // 2 - 260, self.height // 2 - 290, 520, 580)
+
+    def _pause_rows(self):
+        """Aktif sekmedeki satır rect'lerini döndürür.
+
+        Satır aralığı plaka yüksekliğinden 12px fazla: buton plakasının alt/üst
+        kenarındaki mühür taşları bitişik satırlarda üst üste biniyordu.
+        """
+        panel = self._pause_panel_rect()
+        if self.setting_tab == "main":
+            return [pygame.Rect(panel.centerx - 210, panel.y + 116 + i * 54, 420, 42)
+                    for i in range(8)]
+        if self.setting_tab == "save":
+            return [pygame.Rect(panel.centerx - 210, panel.y + 170 + i * 80, 420, 56)
+                    for i in range(2)]
+        return [pygame.Rect(panel.centerx - 235, panel.y + 130 + i * 60, 470, 46)
+                for i in range(len(self.save_slots[:5]))]
+
+    def _pause_labels(self):
+        """Aktif sekmedeki satır metinleri (main/save); load kendi çizer."""
+        if self.setting_tab == "main":
+            return [
                 f"EKRAN SARSINTISI: {'[AÇIK]' if self.logic.settings['shake'] else '[KAPALI]'}",
                 f"EKRAN MODU: [{self.manager.get_display_mode_label()}]",
                 f"HİLE MODU: {'[AÇIK]' if self.logic.cheat_mode else '[KAPALI]'}",
@@ -1020,57 +1061,69 @@ class GameScene(BaseScene):
                 "KAYITLI OYUNLAR",
                 "KAYDET VE ANA MENÜYE DÖN",
                 "ANA MENÜYE DÖN (Kaydetmeden)",
-                "OYUNA GERİ DÖN"
+                "OYUNA GERİ DÖN",
             ]
-            for i, label in enumerate(options):
-                row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 100 + i * 50 - 15, 400, 40)
-                is_selected = i == self.selected_setting_idx
-                if is_selected:
-                    pygame.draw.rect(self.screen, (50, 50, 70), row_rect, border_radius=8)
-                    pygame.draw.rect(self.screen, (241, 196, 15), row_rect, width=2, border_radius=8)
-                color = (255, 255, 255) if is_selected else (150, 150, 160)
-                txt = render_fit(label, 20, color, row_rect.width - 20)
-                self.screen.blit(txt, txt.get_rect(center=row_rect.center))
+        return ["YENİ KAYIT (FARKLI KAYDET)", "SON KAYDI GÜNCELLE"]
 
-        elif self.setting_tab == "save":
-            title = self.font_main.render("KAYDET", True, (46, 204, 113))
-            self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 30))
-            
-            options = ["YENİ KAYIT (FARKLI KAYDET)", "SON KAYDI GÜNCELLE"]
-            for i, label in enumerate(options):
-                row_rect = pygame.Rect(self.width // 2 - 200, panel.y + 150 + i * 80 - 20, 400, 60)
-                is_selected = i == self.selected_setting_idx
-                if is_selected:
-                    pygame.draw.rect(self.screen, (50, 50, 70), row_rect, border_radius=8)
-                    pygame.draw.rect(self.screen, (46, 204, 113), row_rect, width=2, border_radius=8)
-                color = (255, 255, 255) if is_selected else (150, 150, 160)
-                txt = render_fit(label, 24, color, row_rect.width - 24)
-                self.screen.blit(txt, txt.get_rect(center=row_rect.center))
+    def draw_settings_menu(self):
+        import ui_theme
 
-        elif self.setting_tab == "load":
-            title = self.font_main.render("KAYITLAR", True, (52, 152, 219))
-            self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 30))
-            if not self.save_slots:
-                info = self.font_desc.render("HENÜZ KAYIT YOK", True, (150, 150, 150))
-                self.screen.blit(info, (self.width // 2 - info.get_width() // 2, panel.y + 180))
-            else:
-                for i, slot in enumerate(self.save_slots[:5]): # Sadece son 5
-                    # Satır konumu, update()'teki tıklama alanıyla aynı (110 + i*55)
-                    row_rect = pygame.Rect(self.width // 2 - 250, panel.y + 110 + i * 55 - 20, 500, 40)
-                    is_selected = i == self.selected_setting_idx
-                    if is_selected:
-                        pygame.draw.rect(self.screen, (50, 50, 70), row_rect, border_radius=8)
-                        pygame.draw.rect(self.screen, (52, 152, 219), row_rect, width=2, border_radius=8)
-                    color = (255, 255, 255) if is_selected else (150, 150, 160)
-                    slot_txt = f"SEVİYE {slot['level']}  •  DALGA {slot['wave']}  •  {slot['class'].upper()}"
-                    date_txt = render_fit(slot['date'], 16, (120, 120, 135), 140)
-                    txt = render_fit(slot_txt, 19, color, row_rect.width - date_txt.get_width() - 40)
-                    self.screen.blit(txt, (row_rect.x + 14, row_rect.centery - txt.get_height() // 2))
-                    self.screen.blit(date_txt, (row_rect.right - date_txt.get_width() - 14, row_rect.centery - date_txt.get_height() // 2))
+        self._overlay_surface.fill((0, 0, 0, 180))
+        self.screen.blit(self._overlay_surface, (0, 0))
 
-                # Bilgi Notu
-                info_txt = render_fit("[DEL]: SİL  |  [X]: HEPSİNİ TEMİZLE", 18, (231, 76, 60), panel.width - 40)
-                self.screen.blit(info_txt, (self.width // 2 - info_txt.get_width() // 2, panel.bottom - 50))
+        panel = self._pause_panel_rect()
+        ui_theme.draw_panel(self.screen, panel)
+
+        titles = {"main": "DURAKLATILDI", "save": "KAYDET", "load": "KAYITLAR"}
+        title = ui_theme.render_title(titles[self.setting_tab], 40)
+        tx = panel.centerx - title.get_width() // 2
+        self.screen.blit(title, (tx, panel.y + 26))
+        crest = get_skull_crest(34)
+        if crest is not None:
+            cy = panel.y + 26 + title.get_height() // 2 - crest.get_height() // 2
+            self.screen.blit(crest, (tx - crest.get_width() - 16, cy))
+            self.screen.blit(crest, (tx + title.get_width() + 16, cy))
+
+        rows = self._pause_rows()
+        mouse_pos = pygame.mouse.get_pos()
+
+        if self.setting_tab in ("main", "save"):
+            labels = self._pause_labels()
+            for i, (row, label) in enumerate(zip(rows, labels)):
+                active = i == self.selected_setting_idx or row.collidepoint(mouse_pos)
+                key = self.PAUSE_OPTION_COLORS[i] if self.setting_tab == "main" else "moss"
+                ui_theme.draw_plate(self.screen, row,
+                                    "hover" if active else "normal",
+                                    ui_theme.COLORS[key])
+                col = ui_theme.TEXT_COL if active else (176, 170, 158)
+                txt = render_fit(label, 20, col, row.width - 28, bold=active)
+                self.screen.blit(txt, txt.get_rect(center=row.center))
+            return
+
+        # --- load ---
+        if not self.save_slots:
+            info = render_fit("HENÜZ KAYIT YOK", 24, (150, 145, 135), panel.width - 60)
+            self.screen.blit(info, info.get_rect(center=(panel.centerx, panel.centery)))
+            return
+
+        for i, (row, slot) in enumerate(zip(rows, self.save_slots[:5])):
+            active = i == self.selected_setting_idx or row.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, row, "hover" if active else "normal",
+                                ui_theme.COLORS["night"])
+            col = ui_theme.TEXT_COL if active else (176, 170, 158)
+            # 30px pay: plakanın uç kapakları/mühür taşları 26px insets içinde
+            date_txt = render_fit(slot['date'], 15, (140, 134, 122), 130)
+            slot_txt = f"SEVİYE {slot['level']}  •  DALGA {slot['wave']}  •  {slot['class'].upper()}"
+            txt = render_fit(slot_txt, 19, col,
+                             row.width - date_txt.get_width() - 76, bold=active)
+            self.screen.blit(txt, (row.x + 30, row.centery - txt.get_height() // 2))
+            self.screen.blit(date_txt, (row.right - date_txt.get_width() - 30,
+                                        row.centery - date_txt.get_height() // 2))
+
+        info_txt = render_fit("[DEL]: SİL  |  [X]: HEPSİNİ TEMİZLE", 18,
+                              ui_theme.readable(ui_theme.COLORS["blood"]), panel.width - 60)
+        self.screen.blit(info_txt, (panel.centerx - info_txt.get_width() // 2,
+                                    panel.bottom - 44))
 
     def draw_floor_to_surf(self, surf, camera_x, camera_y, width, height):
         # Sadece ekranda görünen karoları çiz (Optimizasyon)
@@ -1102,23 +1155,54 @@ class GameScene(BaseScene):
         txt = self.font_desc.render(label, True, (255, 255, 255))
         self.screen.blit(txt, (x + w + 10, y + h // 2 - txt.get_height() // 2))
 
+    def _layout_top_hud(self):
+        """Üst-orta HUD bandını yukarıdan aşağıya tahsis eder.
+
+        WAVE sayacı, boss adı+barı, dalga olayı şeridi ve combo sayacı hepsi
+        ekranın üst ortasına sabit y'lerle çiziliyordu (20 / 55 / 74 / 80) ve
+        boss varken hepsi üst üste biniyordu. Artık her biri sırayla yer alır.
+        """
+        y = 20
+        self._hud_wave_y = y
+        y += 34
+
+        self._hud_boss = next((e for e in self.logic.enemies if e.type == "boss"), None)
+        self._hud_phase_warning_y = None
+        if self._hud_boss:
+            self._hud_boss_name_y = y
+            y += 32
+            self._hud_boss_bar_y = y
+            y += 34
+            # Boss faz uyarısı (ör. "FIND SAFE ZONE!") — sabit ekran y'sinde
+            # dururken boss'un kafa üstü barıyla çakışıyordu.
+            self._hud_phase_warning_y = y + 22
+            y += 48
+
+        if self.logic.wave.get("event"):
+            self._hud_event_y = y + 14
+            y += 42
+
+        self._hud_combo_y = y + 6
+
     def draw_hud(self):
+        import ui_theme
         p = self.logic.players[self.logic.local_player_id]
         # Wave Bilgisi
-        wave_str = f"WAVE: {self.logic.wave['level']}"
-        wave_surf = self.font_sub.render(wave_str, True, (241, 196, 15))
-        self.screen.blit(wave_surf, (self.width // 2 - wave_surf.get_width() // 2, 20))
+        wave_surf = render_fit(f"WAVE: {self.logic.wave['level']}", 26,
+                               ui_theme.readable(ui_theme.COLORS["gold"]), 300, bold=True)
+        self.screen.blit(wave_surf, (self.width // 2 - wave_surf.get_width() // 2,
+                                     self._hud_wave_y))
 
         # Aktif dalga olayı şeridi (dalga boyunca görünür kalır)
         evt = self.logic.wave.get("event")
         if evt:
-            strip_txt = self.font_desc.render(evt["desc"], True, (255, 180, 40))
-            sw, sh = strip_txt.get_width() + 24, strip_txt.get_height() + 8
-            strip_bg = pygame.Surface((sw, sh), pygame.SRCALPHA)
-            pygame.draw.rect(strip_bg, (25, 20, 5, 190), strip_bg.get_rect(), border_radius=6)
-            pygame.draw.rect(strip_bg, (255, 165, 0, 220), strip_bg.get_rect(), width=1, border_radius=6)
-            strip_bg.blit(strip_txt, (12, 4))
-            self.screen.blit(strip_bg, (self.width // 2 - sw // 2, 58))
+            strip_txt = render_fit(evt["desc"], 18,
+                                   ui_theme.readable(ui_theme.COLORS["gold"]),
+                                   self.width // 2, bold=True)
+            strip_rect = strip_txt.get_rect(center=(self.width // 2, self._hud_event_y))
+            ui_theme.draw_plate(self.screen, strip_rect.inflate(48, 16), "normal",
+                                ui_theme.COLORS["gold"])
+            self.screen.blit(strip_txt, strip_rect)
 
         # Dalga başı büyük duyuru banner'ı (ekran ortası, sona doğru söner)
         announce_t = self.logic.wave.get("announce_timer", 0)
@@ -1131,8 +1215,9 @@ class GameScene(BaseScene):
             bw = max(s.get_width() for s in line_surfs) + 80
             bh = sum(s.get_height() for s in line_surfs) + 30 + 8 * (len(line_surfs) - 1)
             banner = pygame.Surface((bw, bh), pygame.SRCALPHA)
-            pygame.draw.rect(banner, (10, 10, 22, 200), banner.get_rect(), border_radius=12)
-            pygame.draw.rect(banner, (241, 196, 15, 255), banner.get_rect(), width=2, border_radius=12)
+            # Tema paneli (prosedürel ince metal çerçeve; banner geçici ve dar)
+            ui_theme.draw_panel(banner, banner.get_rect(), fill=(16, 13, 20),
+                                alpha=225, nineslice=False)
             ly = 15
             for s in line_surfs:
                 banner.blit(s, (bw // 2 - s.get_width() // 2, ly))
@@ -1171,25 +1256,8 @@ class GameScene(BaseScene):
                            "bar_fill_green.png", (46, 204, 113),
                            f"XP: {p.xp:.1f}/{p.xp_to_next_level}")
         
-        # --- HUD: DASH DURUMU (Space) ---
-        dash_x, dash_y = self.width - 270, 20
-        pygame.draw.rect(self.screen, (30, 30, 40), (dash_x, dash_y, 250, 45), border_radius=5) # Transparency (RGBA) Surface olmadan pygame.draw.rect ile yapılamaz, Color box yeterli
-        pygame.draw.rect(self.screen, (100, 100, 120), (dash_x, dash_y, 250, 45), width=2, border_radius=5)
-        
-        if p.dash_timer > 0:
-            ratio = 1.0 - (p.dash_timer / p.dash_cooldown)
-            pygame.draw.rect(self.screen, (52, 152, 219), (dash_x + 5, dash_y + 25, 240 * ratio, 10), border_radius=3)
-            dash_text = f"DASH: {int(p.dash_timer)}s"
-            d_color = (200, 200, 200)
-        else:
-            pygame.draw.rect(self.screen, (39, 174, 150), (dash_x + 5, dash_y + 25, 240, 10), border_radius=3)
-            dash_text = "DASH [SPACE] HAZIR"
-            d_color = (46, 204, 113)
-            import time
-            if int(time.time() * 4) % 2 == 0: d_color = (255, 255, 255)
-            
-        dash_surf = self.font_sub.render(dash_text, True, d_color)
-        self.screen.blit(dash_surf, (dash_x + 5, dash_y))
+        # --- HUD: YETENEK ÇUBUĞU (tuş + bekleme) ---
+        self.draw_ability_bar(p)
 
         # Anlık stat paneli düğmesi ve açılır görünümü (tema: banner buton).
         import ui_theme
@@ -1204,6 +1272,130 @@ class GameScene(BaseScene):
 
         if self.show_stats_panel and self.logic.state == "PLAYING":
             self.draw_live_stats_panel(p)
+
+    def get_abilities(self, p):
+        """Oyuncunun kullanabildiği yetenekler: tuş, ad, bekleme durumu.
+
+        HUD burayı çizer; sınıfa/ekipmana göre liste değişir, tuşlar
+        update()'teki bağlarla birebir aynı tutulmalıdır.
+        """
+        abilities = [{
+            "key": "SPACE", "name": "Atılma", "color": "night",
+            "left": max(0.0, p.dash_timer), "total": p.dash_cooldown,
+        }]
+
+        art = p.inv_manager.equipped.get("artifact")
+        if art:
+            abilities.append({
+                "key": "Q", "name": art.get("name", "Eser"), "color": "arcane",
+                "left": max(0.0, getattr(p, "artifact_cooldown", 0)),
+                "total": max(1, art.get("cooldown", 30)),
+            })
+
+        spec = getattr(p, "specialization", None)
+        if getattr(p, "class_id", "") == "bloodwalker" and hasattr(spec, "activate_blood_absorb"):
+            abilities.append({
+                "key": "R", "name": "Kan Emme", "color": "blood",
+                "left": max(0.0, getattr(spec, "blood_absorb_timer", 0)),
+                "total": max(1.0, getattr(spec, "blood_absorb_cooldown", 20.0)),
+                "active": getattr(spec, "blood_absorb_active", False),
+            })
+        return abilities
+
+    def draw_ability_bar(self, p):
+        """Yetenek slotlarını ekranın alt ortasına çizer."""
+        import ui_theme
+        abilities = self.get_abilities(p)
+        if not abilities:
+            return
+
+        slot, gap, label_h = 58, 14, 20
+        total_w = len(abilities) * slot + (len(abilities) - 1) * gap
+        x0 = self.width // 2 - total_w // 2
+        y = self.height - slot - label_h - 18
+
+        for i, ab in enumerate(abilities):
+            rect = pygame.Rect(x0 + i * (slot + gap), y, slot, slot)
+            ready = ab["left"] <= 0
+            col = ui_theme.COLORS[ab["color"]]
+
+            ui_theme.draw_item_slot(self.screen, rect)
+            # Hazır yetenek aksan rengiyle çerçevelenir, bekleyende sönük kalır
+            tint = tuple(int(c * (0.55 if ready else 0.18)) for c in col)
+            overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(overlay, tint + (200 if ready else 90,),
+                             overlay.get_rect(), width=3, border_radius=3)
+            self.screen.blit(overlay, rect.topleft)
+
+            # Tuş harfi slotun ortasında
+            key_col = ui_theme.TEXT_COL if ready else (140, 134, 124)
+            key_txt = render_fit(ab["key"], 22 if len(ab["key"]) <= 2 else 15,
+                                 key_col, rect.width - 8, bold=True)
+            self.screen.blit(key_txt, key_txt.get_rect(center=rect.center))
+
+            # Bekleme: karartma + kalan saniye
+            if not ready:
+                ratio = min(1.0, ab["left"] / max(0.001, ab["total"]))
+                shade = pygame.Surface((rect.width, int(rect.height * ratio)), pygame.SRCALPHA)
+                shade.fill((0, 0, 0, 165))
+                self.screen.blit(shade, (rect.x, rect.y))
+                cd_txt = render_fit(f"{ab['left']:.0f}", 20, (238, 226, 200),
+                                    rect.width - 8, bold=True)
+                self.screen.blit(cd_txt, cd_txt.get_rect(center=rect.center))
+            elif ab.get("active"):
+                pulse = int((math.sin(time.time() * 9) + 1) * 50 + 90)
+                glow = pygame.Surface((rect.width + 10, rect.height + 10), pygame.SRCALPHA)
+                pygame.draw.rect(glow, ui_theme.readable(col) + (pulse,),
+                                 glow.get_rect(), width=3, border_radius=5)
+                self.screen.blit(glow, (rect.x - 5, rect.y - 5))
+
+            name_txt = render_fit(ab["name"], 15,
+                                  (206, 199, 184) if ready else (136, 130, 120),
+                                  slot + gap)
+            self.screen.blit(name_txt, name_txt.get_rect(
+                midtop=(rect.centerx, rect.bottom + 4)))
+
+    def _cast_fx(self, p, kind):
+        """Yetenek kullanıldığında açıklamasına uygun görsel efekt üretir."""
+        g = self.logic
+        if kind == "dash":
+            # Atılma: bakış yönünde hız çizgileri + arkada halka
+            g.add_event("shockwave", p.x, p.y, radius=70, color=(120, 190, 255), timer=0.22)
+            for _ in range(14):
+                a = p.facing_angle + math.pi + random.uniform(-0.5, 0.5)
+                v = random.uniform(6, 15)
+                g.particles.append({
+                    'x': p.x, 'y': p.y,
+                    'vx': math.cos(a) * v, 'vy': math.sin(a) * v,
+                    'timer': 0.28, 'color': (150, 205, 255), 'size': random.randint(2, 5)})
+            if getattr(p, "class_id", "") == "ninja":
+                # Ninja pasifi: atılma sonrası ilk vuruş 2 kat -> gölge patlaması
+                g.add_event("shockwave", p.x, p.y, radius=52, color=(60, 40, 90), timer=0.3)
+                g.add_event("damage_text", p.x, p.y - 42, value="GÖLGE!",
+                            color=(180, 150, 255), timer=0.5)
+
+        elif kind == "artifact":
+            # Eser: büyü halkası, dışa doğru mor kıvılcım
+            g.add_event("shockwave", p.x, p.y, radius=110, color=(170, 110, 240), timer=0.35)
+            for _ in range(18):
+                a = random.uniform(0, math.pi * 2)
+                v = random.uniform(4, 11)
+                g.particles.append({
+                    'x': p.x, 'y': p.y,
+                    'vx': math.cos(a) * v, 'vy': math.sin(a) * v,
+                    'timer': 0.4, 'color': (190, 130, 255), 'size': random.randint(2, 6)})
+
+        elif kind == "blood_absorb":
+            # Kan Emme: mermileri EMER -> parçacıklar İÇERİ doğru akar
+            g.add_event("shockwave", p.x, p.y, radius=130, color=(200, 30, 40), timer=0.4)
+            for _ in range(22):
+                a = random.uniform(0, math.pi * 2)
+                dist = random.uniform(70, 130)
+                sx, sy = p.x + math.cos(a) * dist, p.y + math.sin(a) * dist
+                g.particles.append({
+                    'x': sx, 'y': sy,
+                    'vx': -math.cos(a) * dist * 0.14, 'vy': -math.sin(a) * dist * 0.14,
+                    'timer': 0.45, 'color': (225, 45, 55), 'size': random.randint(2, 6)})
 
     @staticmethod
     def _format_stat_bonus(value, percent=False):
@@ -1317,8 +1509,7 @@ class GameScene(BaseScene):
         # İçerik ekran ortasına göre sağa kaymış durumda (kuşanılanlar ~510'da
         # başlar, filtre satırı ~1660'a kadar gider), panel de ona göre.
         import ui_nineslice as n9
-        n9.draw(self.screen, "panel_frame.png",
-                pygame.Rect(self.width // 2 - 520, 92, 1260, self.height - 150))
+        n9.draw(self.screen, "panel_frame.png", self._inventory_panel_rect())
 
         p = self.logic.players[self.logic.local_player_id]
         
@@ -1326,11 +1517,17 @@ class GameScene(BaseScene):
         for btn in self.tab_buttons:
             btn.draw(self.screen, self.font_sub, self.active_tab)
             
-        # Altın & Çıkış
-        gold_txt = self.font_sub.render(f"ALTIN: {p.gold}", True, (241, 196, 15))
-        self.screen.blit(gold_txt, (self.width - 400, 50))
-        
         import ui_theme
+        # Altın: sekme çubuğunun bittiği yer ile ÇIKIŞ butonu arasına sığdırılır
+        # (sabit width-400 konumu son sekmenin üstüne biniyordu).
+        tabs_right = self.tab_buttons[-1].rect.right
+        gold_max_w = max(80, self.exit_btn_rect.left - tabs_right - 40)
+        gold_txt = render_fit(f"ALTIN: {p.gold}", 26,
+                              ui_theme.readable(ui_theme.COLORS["gold"]),
+                              gold_max_w, bold=True)
+        self.screen.blit(gold_txt, (self.exit_btn_rect.left - gold_txt.get_width() - 20,
+                                    self.exit_btn_rect.centery - gold_txt.get_height() // 2))
+
         exit_state = "hover" if self.exit_btn_rect.collidepoint(pygame.mouse.get_pos()) else "normal"
         surf, over = ui_theme.render_banner_button(
             self.exit_btn_rect.width, self.exit_btn_rect.height, "SAVAŞA DÖN",
@@ -1356,14 +1553,14 @@ class GameScene(BaseScene):
             self.screen.blit(msg, (self.width // 2 - msg.get_width() // 2, self.height // 2))
 
     def draw_boss_healthbar(self):
-        boss = next((e for e in self.logic.enemies if e.type == "boss"), None)
+        boss = getattr(self, "_hud_boss", None)
         if not boss: return
-        
-        # Ekran Üst Orta
+
+        # Ekran Üst Orta (konum _layout_top_hud'dan)
         bar_w, bar_h = 700, 25
         x = self.width // 2 - bar_w // 2
-        y = 55
-        
+        y = self._hud_boss_bar_y
+
         ratio = max(0, boss.hp / boss.max_hp)
         import ui_nineslice as n9
         if not n9.draw_bar(self.screen, "bar_frame.png",
@@ -1372,186 +1569,209 @@ class GameScene(BaseScene):
             pygame.draw.rect(self.screen, (192, 57, 43), (x, y, int(bar_w * ratio), bar_h), border_radius=5)
             pygame.draw.rect(self.screen, (241, 196, 15), (x, y, bar_w, bar_h), width=2, border_radius=5)
         
-        # İsim (EchelionFinrod)
-        name_t = self.font_boss_name.render("ECHELION FINROD", True, (241, 196, 15))
-        self.screen.blit(name_t, (self.width // 2 - name_t.get_width() // 2, y - 35))
-        
+        # İsim boss'tan okunur (sabit metin iki yerde ayrı gömülüydü)
+        import ui_theme
+        name = getattr(boss, "name", "BOSS").upper()
+        name_t = render_fit(name, 28, ui_theme.readable(ui_theme.COLORS["gold"]),
+                            bar_w, bold=True)
+        self.screen.blit(name_t, (self.width // 2 - name_t.get_width() // 2,
+                                  self._hud_boss_name_y))
+
         # HP Text (Numerical)
         hp_str = f"{int(boss.hp):,} / {int(boss.max_hp):,}"
-        hp_txt = self.font_boss_hp.render(hp_str, True, (255, 255, 255))
-        self.screen.blit(hp_txt, (self.width // 2 - hp_txt.get_width() // 2, y + 2))
+        hp_txt = render_fit(hp_str, 17, ui_theme.TEXT_COL, bar_w - 40, bold=True)
+        self.screen.blit(hp_txt, hp_txt.get_rect(center=(self.width // 2, y + bar_h // 2)))
+
+    ORB_ROWS_PER_PAGE = 8
+    MARKET_ROWS_PER_PAGE = 5
+
+    def _craft_layout(self):
+        """Craft penceresinin TÜM rect'leri — çizim, tıklama ve tooltip tek kaynak.
+
+        Eskiden panel, kapat butonu ve orb satırları hem çizimde hem tıklama
+        handler'ında ayrı ayrı literal olarak yazılıydı; "AL" butonu iki farklı
+        formülle (rect.right-70 / panel.right-100) hesaplanıyordu.
+        """
+        # panel = içerik alanı; gotik çerçeve draw_panel ile DIŞINA çizilir
+        panel = pygame.Rect(self.width // 2 - 450, self.height // 2 - 300, 900, 600)
+        inner = panel.inflate(-36, -36)
+
+        # Sol sütun geniş: kısa orb satırlarında "SEÇ" butonu plakanın uç
+        # kapaklarına binmesin diye 270px.
+        left_w, right_w = 270, 250
+        left_x = inner.x
+        right_x = inner.right - right_w
+        pager_y = inner.bottom - 36
+
+        orb_rows, orb_use = [], []
+        for i in range(self.ORB_ROWS_PER_PAGE):
+            r = pygame.Rect(left_x, inner.y + 46 + i * 52, left_w, 44)
+            orb_rows.append(r)
+            orb_use.append(pygame.Rect(r.right - 90, r.y + 5, 60, 34))
+
+        # Market satırları sayfalama şeridinin ÜSTÜNDE bitmeli
+        mkt_rows, mkt_buy = [], []
+        for i in range(self.MARKET_ROWS_PER_PAGE):
+            r = pygame.Rect(right_x, inner.y + 76 + i * 80, right_w, 72)
+            mkt_rows.append(r)
+            mkt_buy.append(pygame.Rect(r.right - 62, r.centery - 19, 56, 38))
+
+        item_rect = pygame.Rect(panel.centerx - 140, inner.y + 46, 280, 360)
+        pager_y = inner.bottom - 36
+        return {
+            "panel": panel,
+            "inner": inner,
+            "close": pygame.Rect(inner.right - 40, inner.y, 40, 40),
+            "orb_rows": orb_rows, "orb_use": orb_use,
+            "mkt_rows": mkt_rows, "mkt_buy": mkt_buy,
+            "item": item_rect,
+            "take_back": pygame.Rect(panel.centerx - 75, item_rect.bottom + 12, 150, 40),
+            "orb_prev": pygame.Rect(left_x, pager_y, 110, 34),
+            "orb_next": pygame.Rect(left_x + left_w - 110, pager_y, 110, 34),
+            "mkt_prev": pygame.Rect(right_x, pager_y, 110, 34),
+            "mkt_next": pygame.Rect(right_x + right_w - 110, pager_y, 110, 34),
+        }
 
     def draw_craft_window(self):
-        # Overlay
+        import ui_theme
         self._overlay_surface.fill((0, 0, 0, 220))
         self.screen.blit(self._overlay_surface, (0, 0))
-        
-        panel = pygame.Rect(self.width // 2 - 450, self.height // 2 - 300, 900, 600)
-        pygame.draw.rect(self.screen, (30, 30, 45), panel, border_radius=15)
-        pygame.draw.rect(self.screen, (100, 100, 120), panel, width=3, border_radius=15)
-        
+
+        L = self._craft_layout()
+        panel = L["panel"]
+        ui_theme.draw_panel(self.screen, panel)
+
         item = self.crafting_target
         if not item: return
 
-        # 1. SOL: ENVANTERDEKİ ORBLAR
         p = self.logic.players[self.logic.local_player_id]
+        mouse_pos = pygame.mouse.get_pos()
+        night = ui_theme.readable(ui_theme.COLORS["night"])
+        gold = ui_theme.readable(ui_theme.COLORS["gold"])
+        blood = ui_theme.readable(ui_theme.COLORS["blood"])
+
+        def plate_btn(rect, label, key, enabled=True):
+            hovered = enabled and rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, rect,
+                                "hover" if hovered else ("normal" if enabled else "disabled"),
+                                ui_theme.COLORS[key] if enabled else None)
+            col = ui_theme.TEXT_COL if hovered else (176, 170, 158)
+            txt = render_fit(label, 17, col, rect.width - 30, bold=hovered)
+            self.screen.blit(txt, txt.get_rect(center=rect.center))
+
+        # 1. SOL: ENVANTERDEKİ ORBLAR
         orbs_in_inv = [x for x in p.inventory if x.get('type') == 'orb']
-        
-        title_l = self.font_sub.render(f"ORBLARIN ({self.orb_inv_page + 1})", True, (52, 152, 219))
-        self.screen.blit(title_l, (panel.x + 30, panel.y + 30))
-        
-        offset_i = self.orb_inv_page * 8
+        title_l = render_fit(f"ORBLARIN ({self.orb_inv_page + 1})", 22, night, 250, bold=True)
+        self.screen.blit(title_l, (L["inner"].x, L["inner"].y + 6))
+
+        offset_i = self.orb_inv_page * self.ORB_ROWS_PER_PAGE
         self.craft_orb_use_rects = []
-        for i in range(min(8, len(orbs_in_inv) - offset_i)):
+        for i in range(min(self.ORB_ROWS_PER_PAGE, len(orbs_in_inv) - offset_i)):
             orb = orbs_in_inv[offset_i + i]
-            y_off = panel.y + 80 + i * 55
-            rect = pygame.Rect(panel.x + 30, y_off, 250, 45)
-            pygame.draw.rect(self.screen, (45, 45, 60), rect, border_radius=5)
-
-            name = orb['name'].split(" (")[0]
-            stack = orb.get('stack', 1)
-            txt = self.font_desc.render(f"{name} x{stack}", True, (255, 255, 255))
-            self.screen.blit(txt, (rect.x + 10, rect.y + 12))
-
-            # Seç/Kullan Butonu - hitbox tek kaynak: rect saklanır
-            use_btn = pygame.Rect(rect.right - 70, rect.y + 5, 60, 35)
+            rect, use_btn = L["orb_rows"][i], L["orb_use"][i]
             self.craft_orb_use_rects.append((offset_i + i, use_btn))
-            pygame.draw.rect(self.screen, (39, 174, 96), use_btn, border_radius=5)
-            u_txt = self.font_desc.render("SEÇ", True, (255, 255, 255))
-            self.screen.blit(u_txt, u_txt.get_rect(center=use_btn.center))
 
-        # SAYFALAMA BUTONLARI (SOL)
-        if self.orb_inv_page > 0:
-            pygame.draw.rect(self.screen, (52, 152, 219), self.craft_orb_prev_rect, border_radius=5)
-            txt = self.font_desc.render("<<", True, (255, 255, 255))
-            self.screen.blit(txt, txt.get_rect(center=self.craft_orb_prev_rect.center))
-        if (self.orb_inv_page + 1) * 8 < len(orbs_in_inv):
-            pygame.draw.rect(self.screen, (52, 152, 219), self.craft_orb_next_rect, border_radius=5)
-            txt = self.font_desc.render(">>", True, (255, 255, 255))
-            self.screen.blit(txt, txt.get_rect(center=self.craft_orb_next_rect.center))
+            # Kısa satırda buton plakası: panel_frame_small'ın 40px köşe
+            # süsleri 44px'lik satırı boğuyordu.
+            ui_theme.draw_plate(self.screen, rect, "normal")
+            name = orb['name'].split(" (")[0]
+            txt = render_fit(f"{name} x{orb.get('stack', 1)}", 17, ui_theme.TEXT_COL,
+                             use_btn.left - rect.x - 42)
+            self.screen.blit(txt, (rect.x + 30, rect.centery - txt.get_height() // 2))
+            plate_btn(use_btn, "SEÇ", "moss")
+
+        plate_btn(L["orb_prev"], "<< GERİ", "night", self.orb_inv_page > 0)
+        plate_btn(L["orb_next"], "İLERİ >>", "night",
+                  (self.orb_inv_page + 1) * self.ORB_ROWS_PER_PAGE < len(orbs_in_inv))
+        self.craft_orb_prev_rect, self.craft_orb_next_rect = L["orb_prev"], L["orb_next"]
 
         # 2. ORTA: HEDEF EŞYA
-        title_c = self.font_sub.render("HEDEF EŞYA", True, (241, 196, 15))
-        self.screen.blit(title_c, (self.width // 2 - title_c.get_width() // 2, panel.y + 30))
-        
-        # Kutuyu daha uzun (380) yapıyoruz ki affixler sığsın
-        item_rect = pygame.Rect(self.width // 2 - 140, panel.y + 80, 280, 380)
-        pygame.draw.rect(self.screen, (20, 20, 30), item_rect, border_radius=12)
-        
-        # Nadirlik Rengi
-        rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
-        color = rarity_colors.get(item['rarity'], (255,255,255))
-        
-        # Kenarlık (Nadirlik renginde)
-        pygame.draw.rect(self.screen, color, item_rect, width=2, border_radius=12)
-        
-        # Başlık ve Alt Başlık (Tooltip stili)
-        name_t = self.font_sub.render(item['name'], True, color)
-        self.screen.blit(name_t, (item_rect.x + 15, item_rect.y + 15))
-        
-        type_t = self.font_desc.render(f"{item['rarity']} {item['type'].upper()}", True, (180, 180, 180))
-        self.screen.blit(type_t, (item_rect.x + 15, item_rect.y + 45))
-        
-        pygame.draw.line(self.screen, (60, 60, 80), (item_rect.x + 15, item_rect.y + 70), (item_rect.right - 15, item_rect.y + 70))
-        
-        # Statları Göster
-        y_s = item_rect.y + 85
-        base_stats = item.get('itemBase', {})
-        brown = (160, 82, 45) # Base Stat Rengi
-        for stat, val in base_stats.items():
-            st_t = self.font_desc.render(f"[*] {stat}: {val}", True, brown)
-            self.screen.blit(st_t, (item_rect.x + 15, y_s))
-            y_s += 25
+        title_c = render_fit("HEDEF EŞYA", 22, gold, 280, bold=True)
+        self.screen.blit(title_c, (panel.centerx - title_c.get_width() // 2, L["inner"].y + 6))
 
-        affixes = item.get('prefixes', []) + item.get('suffixes', [])
-        for aff in affixes:
+        item_rect = L["item"]
+        color = ui_theme.rarity_color(item.get('rarity', 'Normal'))
+        # pad=32: çerçevenin köşe taşları 40px, metin onların hizasından uzak dursun
+        ic = ui_theme.draw_inset_frame(
+            self.screen, item_rect, "panel_frame_small.png", fill=(20, 17, 24), alpha=248,
+            tint=tuple(int(c * 0.30) for c in color), pad=32)
+
+        name_t = render_fit(item['name'], 21, color, ic.width, bold=True)
+        self.screen.blit(name_t, (ic.x, ic.y))
+        type_t = render_fit(f"{item['rarity']} {item['type'].upper()}", 17,
+                            (172, 166, 154), ic.width)
+        self.screen.blit(type_t, (ic.x, ic.y + name_t.get_height() + 2))
+
+        line_y = ic.y + name_t.get_height() + type_t.get_height() + 8
+        pygame.draw.line(self.screen, ui_theme.METAL_LO, (ic.x, line_y), (ic.right, line_y))
+
+        y_s = line_y + 8
+        for stat, val in item.get('itemBase', {}).items():
+            st_t = render_fit(f"[*] {stat}: {val}", 17, (176, 122, 82), ic.width)
+            self.screen.blit(st_t, (ic.x, y_s))
+            y_s += 23
+
+        # Affix seviye renkleri paletten (T1 altın, T2 yeşil, T3 mavi)
+        tier_keys = {1: "gold", 2: "moss", 3: "night"}
+        for aff in item.get('prefixes', []) + item.get('suffixes', []):
             tier = aff.get('tier', 3)
-            label = aff.get('label', '?')
-            color = (46, 204, 113) # Yeşil (Standart)
-            icon = ""
-            if tier == 1:
-                color = (241, 196, 15) # Altın/Sarı
-                icon = "✨ "
-            elif tier == 3:
-                color = (52, 152, 219) # Cyan/Mavi
-            
-            tier_str = f"{icon}[{label} (T{tier})]"
-            af_t = self.font_desc.render(f"{tier_str} +{aff['val']} {aff['stat']}", True, color)
-            self.screen.blit(af_t, (item_rect.x + 15, y_s))
-            y_s += 25
+            a_col = ui_theme.readable(ui_theme.COLORS[tier_keys.get(tier, "night")])
+            label = f"[{aff.get('label', '?')} (T{tier})] +{aff['val']} {aff['stat']}"
+            af_t = render_fit(label, 17, a_col, ic.width)
+            self.screen.blit(af_t, (ic.x, y_s))
+            y_s += 23
 
-        # GERİ AL BUTONU (Kutunun biraz altına) - hitbox tek kaynak: bu rect saklanır
-        take_back_btn = pygame.Rect(self.width // 2 - 70, item_rect.bottom + 10, 140, 40)
-        self.craft_take_back_rect = take_back_btn
-        pygame.draw.rect(self.screen, (52, 152, 219), take_back_btn, border_radius=5)
-        tb_t = self.font_desc.render("GERİ AL", True, (255, 255, 255))
-        self.screen.blit(tb_t, tb_t.get_rect(center=take_back_btn.center))
+        self.craft_take_back_rect = L["take_back"]
+        plate_btn(L["take_back"], "GERİ AL", "night")
 
         # 3. SAĞ: ORB MARKET (DÜKKAN)
-        title_r = self.font_sub.render(f"ORB MARKET ∞ ({self.orb_market_page + 1})", True, (231, 76, 60))
-        self.screen.blit(title_r, (panel.right - 280, panel.y + 30))
-        
-        gold_t = self.font_sub.render(f"GOLD: {p.gold}", True, (241, 196, 15))
-        self.screen.blit(gold_t, (panel.right - 280, panel.y + 60))
-        
-        market_list = self.logic.orb_market
-        offset_m = self.orb_market_page * 5
-        for i in range(min(5, len(market_list) - offset_m)):
-            orb = market_list[offset_m + i]
-            y_off = panel.y + 110 + i * 90
-            rect = pygame.Rect(panel.right - 280, y_off, 250, 80)
-            pygame.draw.rect(self.screen, (45, 45, 60), rect, border_radius=8)
-            
-            name = orb['name'].split(" (")[0]
-            n_t = self.font_desc.render(name, True, (255, 255, 255))
-            p_t = self.font_desc.render(f"{orb['price']} GOLD", True, (241, 196, 15))
-            self.screen.blit(n_t, (rect.x + 10, rect.y + 10))
-            self.screen.blit(p_t, (rect.x + 10, rect.y + 35))
-            
-            # Sahip olunan sayı
-            owned = sum([x.get('stack', 1) for x in p.inventory if x.get('type') == 'orb' and x.get('orb_id') == orb['orb_id']])
-            o_t = self.font_desc.render(f"Sende: {owned}", True, (200, 200, 200))
-            self.screen.blit(o_t, (rect.x + 10, rect.y + 55))
-            
-            buy_btn = pygame.Rect(rect.right - 70, rect.y + 20, 60, 40)
-            pygame.draw.rect(self.screen, (231, 76, 60), buy_btn, border_radius=5)
-            b_t = self.font_desc.render("AL", True, (255, 255, 255))
-            self.screen.blit(b_t, b_t.get_rect(center=buy_btn.center))
+        title_r = render_fit(f"ORB MARKET ({self.orb_market_page + 1})", 22, blood, 250, bold=True)
+        self.screen.blit(title_r, (L["mkt_rows"][0].x, L["inner"].y + 6))
+        gold_t = render_fit(f"GOLD: {p.gold}", 20, gold, 250, bold=True)
+        self.screen.blit(gold_t, (L["mkt_rows"][0].x, L["inner"].y + 34))
 
-        # SAYFALAMA BUTONLARI (SAĞ)
-        if self.orb_market_page > 0:
-            pygame.draw.rect(self.screen, (52, 152, 219), self.craft_mkt_prev_rect, border_radius=5)
-            txt = self.font_desc.render("<<", True, (255, 255, 255))
-            self.screen.blit(txt, txt.get_rect(center=self.craft_mkt_prev_rect.center))
-        if (self.orb_market_page + 1) * 5 < len(market_list):
-            pygame.draw.rect(self.screen, (52, 152, 219), self.craft_mkt_next_rect, border_radius=5)
-            txt = self.font_desc.render(">>", True, (255, 255, 255))
-            self.screen.blit(txt, txt.get_rect(center=self.craft_mkt_next_rect.center))
+        market_list = self.logic.orb_market
+        offset_m = self.orb_market_page * self.MARKET_ROWS_PER_PAGE
+        for i in range(min(self.MARKET_ROWS_PER_PAGE, len(market_list) - offset_m)):
+            orb = market_list[offset_m + i]
+            rect, buy_btn = L["mkt_rows"][i], L["mkt_buy"][i]
+            ui_theme.draw_inset_frame(self.screen, rect, "panel_frame_small.png",
+                                      fill=(30, 26, 36), alpha=244, pad=10)
+            text_w = buy_btn.left - rect.x - 20
+            name = orb['name'].split(" (")[0]
+            self.screen.blit(render_fit(name, 17, ui_theme.TEXT_COL, text_w), (rect.x + 10, rect.y + 8))
+            self.screen.blit(render_fit(f"{orb['price']} GOLD", 16, gold, text_w), (rect.x + 10, rect.y + 30))
+            owned = sum(x.get('stack', 1) for x in p.inventory
+                        if x.get('type') == 'orb' and x.get('orb_id') == orb['orb_id'])
+            self.screen.blit(render_fit(f"Sende: {owned}", 15, (176, 170, 158), text_w),
+                             (rect.x + 10, rect.y + 50))
+            plate_btn(buy_btn, "AL", "moss", p.gold >= orb['price'])
+
+        plate_btn(L["mkt_prev"], "<< GERİ", "night", self.orb_market_page > 0)
+        plate_btn(L["mkt_next"], "İLERİ >>", "night",
+                  (self.orb_market_page + 1) * self.MARKET_ROWS_PER_PAGE < len(market_list))
+        self.craft_mkt_prev_rect, self.craft_mkt_next_rect = L["mkt_prev"], L["mkt_next"]
 
         # Çıkış Butonu
-        close_btn = pygame.Rect(panel.right - 50, panel.y + 10, 40, 40)
-        pygame.draw.rect(self.screen, (192, 57, 43), close_btn, border_radius=20)
-        c_t = self.font_sub.render("X", True, (255, 255, 255))
-        self.screen.blit(c_t, c_t.get_rect(center=close_btn.center))
-        
+        plate_btn(L["close"], "X", "ember")
+
         # Hata Mesajı
         if self.craft_error_msg:
-            err_t = self.font_sub.render(self.craft_error_msg, True, (231, 76, 60))
-            self.screen.blit(err_t, (self.width // 2 - err_t.get_width() // 2, panel.bottom - 60))
+            err_t = render_fit(self.craft_error_msg, 21, blood, panel.width - 120, bold=True)
+            self.screen.blit(err_t, (panel.centerx - err_t.get_width() // 2, panel.bottom - 52))
 
     def handle_tooltips(self, p):
         m_pos = pygame.mouse.get_pos()
         hovered_item = None
         
         if self.show_craft_window:
+            # Satır rect'leri çizimle aynı kaynaktan (paneli yeniden türetmiyoruz)
+            L = self._craft_layout()
             orbs_in_inv = [x for x in p.inventory if x.get('type') == 'orb']
-            offset_i = self.orb_inv_page * 8
-            for i in range(min(8, len(orbs_in_inv) - offset_i)):
-                orb = orbs_in_inv[offset_i + i]
-                y_off = (self.height // 2 - 300) + 80 + i * 55
-                rect = pygame.Rect((self.width // 2 - 450) + 30, y_off, 250, 45)
-                if rect.collidepoint(m_pos):
-                    hovered_item = orb
+            offset_i = self.orb_inv_page * self.ORB_ROWS_PER_PAGE
+            for i in range(min(self.ORB_ROWS_PER_PAGE, len(orbs_in_inv) - offset_i)):
+                if L["orb_rows"][i].collidepoint(m_pos):
+                    hovered_item = orbs_in_inv[offset_i + i]
                     break
             
             if hovered_item:
@@ -1565,8 +1785,9 @@ class GameScene(BaseScene):
                 if row.rect.collidepoint(m_pos) and row.item:
                     hovered_item = row.item
             
-            # Çanta - Filtreye göre senkronize (GDD 62)
-            filtered_inv = [item for item in p.inventory if not (self.hide_orbs and item.get('type') == 'orb')]
+            # Çanta - çizimle AYNI filtre (tek kaynak); eskiden burada yalnız
+            # orb gizleme uygulanıyor, filtre açıkken yanlış eşya gösteriliyordu
+            filtered_inv = self._filtered_inventory(p)
             offset = self.inventory_page * 12
             for card in self.bp_cards:
                 actual_idx = offset + card.idx
@@ -1586,17 +1807,29 @@ class GameScene(BaseScene):
             self.draw_item_tooltip(hovered_item, m_pos, p)
 
     def draw_market_tab(self, p):
+        import ui_theme
+        mouse_pos = pygame.mouse.get_pos()
+
+        def plate_btn(rect, label, key):
+            hovered = rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, rect, "hover" if hovered else "normal",
+                                ui_theme.COLORS[key])
+            col = ui_theme.TEXT_COL if hovered else (176, 170, 158)
+            txt = render_fit(label, 17, col, rect.width - 30, bold=hovered)
+            self.screen.blit(txt, txt.get_rect(center=rect.center))
+
         # Sekme Butonları
         for btn in self.market_tab_btns:
             btn.draw(self.screen, self.font_sub, self.market_tab)
-            
-        # Yenile Butonu (Sadece Eşyalar sekmesinde)
+
+        # Yenile Butonu (Sadece Eşyalar sekmesinde) — sekme plakalarının
+        # altına hizalanır (eskiden reset_btn_rect ile aynı bölgeye düşüyordu)
         if self.market_tab == "items":
             wave_level = self.logic.wave.get("level", 1)
             cost = 500 + max(0, (wave_level - 1) * 400)
-            pygame.draw.rect(self.screen, (39, 174, 96), self.refresh_btn_rect, border_radius=8)
-            rf_txt = self.font_desc.render(f"YENİLE ({cost} G)", True, (255, 255, 255))
-            self.screen.blit(rf_txt, rf_txt.get_rect(center=self.refresh_btn_rect.center))
+            self.refresh_btn_rect.update(self.market_tab_btns[-1].rect.right + 30,
+                                         self.market_tab_btns[-1].rect.y, 190, 40)
+            plate_btn(self.refresh_btn_rect, f"YENİLE ({cost} G)", "moss")
 
         # Eşyaları/Orbları Listele
         market_list = self.logic.market_inventory if self.market_tab == "items" else self.logic.orb_market
@@ -1622,165 +1855,122 @@ class GameScene(BaseScene):
                 card.draw(self.screen, self.font_sub, self.font_desc, owned_count=owned)
             else:
                 card.item = None
-                pygame.draw.rect(self.screen, (30, 30, 40), card.rect, border_radius=10, width=1)
+                ui_theme.draw_inset_frame(self.screen, card.rect, "panel_frame_small.png",
+                                          fill=(24, 21, 28), alpha=170, pad=10)
 
         # Market Sayfalama Butonları Çizimi
-        can_prev = self.market_page > 0
-        can_next = (self.market_page + 1) * 12 < len(market_list)
-        
-        if can_prev:
-            pygame.draw.rect(self.screen, (52, 152, 219), self.mkt_prev_rect, border_radius=5)
-            pt = self.font_desc.render("<< GERİ", True, (255, 255, 255))
-            self.screen.blit(pt, pt.get_rect(center=self.mkt_prev_rect.center))
-            
-        if can_next:
-            pygame.draw.rect(self.screen, (52, 152, 219), self.mkt_next_rect, border_radius=5)
-            nt = self.font_desc.render("İLERİ >>", True, (255, 255, 255))
-            self.screen.blit(nt, nt.get_rect(center=self.mkt_next_rect.center))
-        
-        # Sayfa No
-        page_t = self.font_desc.render(f"Sayfa {self.market_page + 1}", True, (200, 200, 200))
-        self.screen.blit(page_t, (self.width // 2 - page_t.get_width() // 2, 150 + 6 * 85 + 12))
+        if self.market_page > 0:
+            plate_btn(self.mkt_prev_rect, "<< GERİ", "night")
+        if (self.market_page + 1) * 12 < len(market_list):
+            plate_btn(self.mkt_next_rect, "İLERİ >>", "night")
+
+        # Sayfa No — sayfalama butonlarıyla aynı hizada (sabit y yerine)
+        page_t = render_fit(f"Sayfa {self.market_page + 1}", 18, (186, 180, 168), 200)
+        self.screen.blit(page_t, page_t.get_rect(
+            center=(self.width // 2, self.mkt_prev_rect.centery)))
 
 
-    def draw_item_tooltip(self, item, pos, p):
-        # Tooltip Panel (Dinamik Yükseklik)
-        affixes = item.get("prefixes", []) + item.get("suffixes", [])
-        base_stats = item.get("itemBase", {})
-        h = 140 + (max(1, len(base_stats)) * 25) + (len(affixes) * 25)
-        if item.get("setTag"): h += 60
-        
-        # Ekran sınır kontrolü
-        tx = pos[0] + 20
-        ty = pos[1] + 20
-        if tx + 280 > self.width: tx = pos[0] - 300
-        if ty + h > self.height: ty = pos[1] - h
-        
-        # Ekran Üst/Sol Sınır Koruması
-        tx = max(10, tx)
-        ty = max(10, ty)
-        
-        panel_rect = pygame.Rect(tx, ty, 280, h)
-        pygame.draw.rect(self.screen, (20, 20, 30, 240), panel_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (100, 100, 120), panel_rect, width=2, border_radius=10)
-        
-        # Nadirlik Rengi
-        rarity_colors = {"Normal": (255,255,255), "Magic": (52,152,219), "Rare": (241,196,15), "Unique": (231,76,60)}
+    def _tooltip_lines(self, item, p, text_w):
+        """Tooltip içeriğini önce ÜRETİR (çizmeden).
+
+        Yükseklik eskiden satır sayısından tahmin ediliyordu; sarılan açıklama
+        ve set bonusları hesaba girmediği için uzun eşyalarda metin panelin
+        altından taşıyordu. Artık gerçek yüzeylerden ölçülüyor.
+        Dönen liste: (surface, x_offset, kind) — kind: 'text' | 'rule' | 'bullet'
+        """
+        import ui_theme
+        from ui_elements import wrap_text
+        lines = []
         i_rarity = item.get('rarity', 'Normal')
-        color = rarity_colors.get(i_rarity, (255,255,255))
-        
-        # Name
-        name_t = self.font_sub.render(item['name'], True, color)
-        self.screen.blit(name_t, (tx + 15, ty + 15))
-        
-        # Type & Rarity
-        type_t = self.font_desc.render(f"{i_rarity} {item['type'].upper()}", True, (180, 180, 180))
-        self.screen.blit(type_t, (tx + 15, ty + 45))
-        
-        pygame.draw.line(self.screen, (60, 60, 80), (tx + 15, ty + 70), (tx + 265, ty + 70))
-        
-        y = ty + 85
-        # 🟢 ITEM BASE STATS (KAHVERENGİ)
-        brown = (160, 82, 45) # Sienna / Kahverengi
-        for stat, val in base_stats.items():
-            st_t = self.font_desc.render(f"[*] {stat}: {val}", True, brown)
-            self.screen.blit(st_t, (tx + 15, y))
-            y += 25
-            
-        # Affixes (GDD 62)
-        for aff in affixes:
+        color = ui_theme.rarity_color(i_rarity)
+
+        lines.append((render_fit(item['name'], 21, color, text_w, bold=True), 0, 'text'))
+        lines.append((render_fit(f"{i_rarity} {item['type'].upper()}", 17,
+                                 (172, 166, 154), text_w), 0, 'text'))
+        lines.append((None, 0, 'rule'))
+
+        for stat, val in item.get("itemBase", {}).items():
+            lines.append((render_fit(f"[*] {stat}: {val}", 17, (176, 122, 82), text_w), 0, 'text'))
+
+        # T1 altın, T2 yeşil, T3 mavi — renkler paletten
+        tier_keys = {1: "gold", 2: "moss", 3: "night"}
+        for aff in item.get("prefixes", []) + item.get("suffixes", []):
             tier = aff.get('tier', 3)
-            label = aff.get('label', '?')
-            # Renk Paleti: T1 (Sarı), T2 (Yeşil), T3 (Mavi)
-            color = (46, 204, 113) # Yeşil
-            icon = ""
-            if tier == 1:
-                color = (241, 196, 15) # Altın/Sarı
-                icon = "✨ "
-            elif tier == 3:
-                color = (52, 152, 219) # Cyan/Mavi
-            
-            tier_str = f"{icon}[{label} (T{tier})]"
-            af_t = self.font_desc.render(f"{tier_str} +{aff['val']} {aff['stat']}", True, color)
-            self.screen.blit(af_t, (tx + 15, y))
-            y += 25
-            
-        # 📘 ORB AÇIKLAMASI (GDD 62)
+            a_col = ui_theme.readable(ui_theme.COLORS[tier_keys.get(tier, "night")])
+            label = f"[{aff.get('label', '?')} (T{tier})] +{aff['val']} {aff['stat']}"
+            lines.append((render_fit(label, 17, a_col, text_w), 0, 'text'))
+
         if item.get('desc'):
-            pygame.draw.line(self.screen, (60, 60, 80), (tx + 15, y + 5), (tx + 265, y + 5))
-            y += 15
-            # Çok satırlı açıklama yapısı (Basit wrap)
-            words = item['desc'].split(' ')
-            line = ""
-            for word in words:
-                test_line = line + word + " "
-                if self.font_desc.size(test_line)[0] < 250:
-                    line = test_line
-                else:
-                    d_t = self.font_desc.render(line, True, (200, 200, 230))
-                    self.screen.blit(d_t, (tx + 15, y))
-                    y += 20
-                    line = word + " "
-            if line:
-                d_t = self.font_desc.render(line, True, (200, 200, 230))
-                self.screen.blit(d_t, (tx + 15, y))
-                y += 20
-            
-        # Set Tag & Bonuses
+            lines.append((None, 0, 'rule'))
+            for ln in wrap_text(self.font_desc, item['desc'], text_w):
+                lines.append((self.font_desc.render(ln, True, (196, 196, 222)), 0, 'text'))
+
         if item.get("setTag"):
             from logic.item_system import ItemSystem
             set_key = item['setTag']
-            set_data = ItemSystem.set_types[set_key]
-            
-            # Ayırıcı Çizgi
-            pygame.draw.line(self.screen, (241, 196, 15, 100), (tx + 15, y + 5), (tx + 265, y + 5))
-            y += 15
-            
-            set_title = self.font_desc.render(f"SET: {set_data['name']}", True, (241, 196, 15))
-            self.screen.blit(set_title, (tx + 15, y))
-            y += 22
-            
-            # Aktif parça sayısını hesapla
-            equipped_sets = [getattr(it, 'get', lambda x: None)('setTag') for it in p.inv_manager.equipped.values() if it]
-            count = equipped_sets.count(set_key)
-            
-            for piece_count, bonuses in set_data['bonuses'].items():
-                is_active = count >= piece_count
-                b_color = (46, 204, 113) if is_active else (120, 120, 120)
-                
-                # Bonus metnini oluştur
-                bonus_str = f"({piece_count}) " + ", ".join([f"{k}: {v}" for k, v in bonuses.items()])
-                b_surf = self.font_desc.render(bonus_str, True, b_color)
-                
-                # Aktifse yanına bir onay işareti veya yıldız ekle
-                if is_active:
-                    self.screen.blit(b_surf, (tx + 25, y))
-                    pygame.draw.circle(self.screen, (46, 204, 113), (tx + 18, y + 10), 3)
-                else:
-                    self.screen.blit(b_surf, (tx + 25, y))
-                
-                y += 20
+            set_data = ItemSystem.set_types.get(set_key)
+            if set_data:
+                gold = ui_theme.readable(ui_theme.COLORS["gold"])
+                moss = ui_theme.readable(ui_theme.COLORS["moss"])
+                lines.append((None, 0, 'rule'))
+                lines.append((render_fit(f"SET: {set_data['name']}", 17, gold, text_w, bold=True),
+                              0, 'text'))
+                equipped_sets = [it.get('setTag') for it in p.inv_manager.equipped.values() if it]
+                count = equipped_sets.count(set_key)
+                for piece_count, bonuses in set_data['bonuses'].items():
+                    is_active = count >= piece_count
+                    bonus_str = f"({piece_count}) " + ", ".join(f"{k}: {v}" for k, v in bonuses.items())
+                    surf = render_fit(bonus_str, 16, moss if is_active else (128, 123, 114),
+                                      text_w - 12)
+                    lines.append((surf, 12, 'bullet' if is_active else 'text'))
+        return lines
 
-    def draw_inventory_tab(self, p):
-        # Sol Taraf: Kuşanılanlar
-        title_l = self.font_sub.render("KUŞANILANLAR (SAĞ TIKLA ÇIKAR)", True, (230, 126, 34))
-        self.screen.blit(title_l, (self.width // 2 - 450, 200))
-        
-        for row in self.equip_rows:
-            # Kuşanılanları da biraz aşağı kaydıralım
-            row.rect.y = 240 + (self.equip_rows.index(row) * 75)
-            row.item = p.inv_manager.equipped.get(row.slot_type)
-            row.update(row.item)
-            row.draw(self.screen, self.font_sub)
-            
-        # Sağ Taraf: Çanta (Filtreleme, Grid & Sayfalama)
-        
-        # --- FİLTRELEME MANTIĞI ---
-        filtered_inv = []
+    def draw_item_tooltip(self, item, pos, p):
+        import ui_theme
+        PAD, W = 16, 290
+        text_w = W - PAD * 2
+        lines = self._tooltip_lines(item, p, text_w)
+
+        # Gerçek yükseklik: ölçülen satırlardan
+        h = PAD * 2
+        for surf, _, kind in lines:
+            h += 10 if kind == 'rule' else surf.get_height() + 3
+
+        # Ekran sınır kontrolü
+        tx, ty = pos[0] + 20, pos[1] + 20
+        if tx + W > self.width: tx = pos[0] - W - 20
+        if ty + h > self.height: ty = pos[1] - h
+        tx = max(10, min(tx, self.width - W - 10))
+        ty = max(10, min(ty, self.height - h - 10))
+
+        panel_rect = pygame.Rect(tx, ty, W, h)
+        ui_theme.draw_panel(self.screen, panel_rect, fill=(20, 17, 24), alpha=245,
+                            nineslice=False)
+
+        y = ty + PAD
+        for surf, x_off, kind in lines:
+            if kind == 'rule':
+                pygame.draw.line(self.screen, ui_theme.METAL_LO,
+                                 (tx + PAD, y + 4), (tx + W - PAD, y + 4))
+                y += 10
+                continue
+            if kind == 'bullet':
+                pygame.draw.circle(self.screen, ui_theme.readable(ui_theme.COLORS["moss"]),
+                                   (tx + PAD + 4, y + surf.get_height() // 2), 3)
+            self.screen.blit(surf, (tx + PAD + x_off, y))
+            y += surf.get_height() + 3
+
+    def _filtered_inventory(self, p):
+        """Aktif filtrelere göre çantayı süzer — TEK kaynak.
+
+        Bu mantık çizim, tıklama ve tooltip'te üç ayrı kopya halindeydi;
+        tooltip kopyası yalnız orb gizlemeyi uyguladığı için nadirlik/tip
+        filtresi açıkken YANLIŞ eşyanın tooltip'ini gösteriyordu.
+        """
+        out = []
         for it in p.inventory:
-            # ORB GİZLEME (Filtrelerden Önce)
-            if self.hide_orbs and it.get('type') == 'orb': continue
-
+            if self.hide_orbs and it.get('type') == 'orb':
+                continue
             if self.inv_filter_rarity != "TÜMÜ":
                 if self.inv_filter_rarity == "SET" and not it.get("setTag"): continue
                 if self.inv_filter_rarity != "SET" and it.get("rarity") != self.inv_filter_rarity: continue
@@ -1790,48 +1980,121 @@ class GameScene(BaseScene):
                 if self.inv_filter_type == "accessory" and it_type not in ["amulet", "ring"]: continue
                 if self.inv_filter_type == "special" and it_type not in ["artifact", "orb"]: continue
                 if self.inv_filter_type not in ["armor", "accessory", "special"] and it_type != self.inv_filter_type: continue
-            filtered_inv.append(it)
+            out.append(it)
+        return out
 
-        # FİLTRE BUTONLARINI ÇİZ
-        for i, rarity in enumerate(self.rarity_filters):
-            rect = self.filter_rects[i]
-            is_active = self.inv_filter_rarity == rarity
-            color = (46, 204, 113) if is_active else (52, 73, 94)
-            pygame.draw.rect(self.screen, color, rect, border_radius=5)
-            txt = self.font_desc.render(rarity, True, (255, 255, 255))
+    def _inventory_panel_rect(self):
+        """Tab menüsünün gotik zemin paneli."""
+        return pygame.Rect(self.width // 2 - 520, 92, 1260, self.height - 150)
+
+    def _apply_inventory_layout(self):
+        """Envanter sekmesinin TÜM rect'lerini panelden türetip yazar.
+
+        Çizim ve tıklama bu metodu çağırır. Eskiden filtreler/kartlar/sayfalama
+        init'te sabit y'lerle kuruluyor, çizimde başka y'lere eziliyordu; ekran
+        yüksekliği değişince ızgara toplu-satış şeridinin altına taşıyor ve
+        filtre şeridi panelin üst çerçevesinin üstüne biniyordu.
+        """
+        panel = self._inventory_panel_rect()
+        inner_top = panel.y + 52       # gotik çerçevenin iç kenarı
+        inner_bottom = panel.bottom - 52
+
+        # Filtre şeritleri (2 satır) -> başlıklar -> ızgara
+        filt_y = inner_top + 10
+        filt_h = 34
+        self._inv_title_y = filt_y + 2 * (filt_h + 6) + 10
+        grid_y = self._inv_title_y + 36
+
+        pager_h, mass_h = 34, 38
+        pager_y = inner_bottom - pager_h
+        mass_y = pager_y - mass_h - 8
+        grid_h = max(120, mass_y - 10 - grid_y)
+        row_h = max(64, min(86, grid_h // 6))
+
+        self._inv_grid_y = grid_y
+        self._inv_row_h = row_h
+
+        # Filtre butonları
+        start_x = self.width // 2 + 20
+        gap = 4
+        available = self.width - start_x - 20
+        fw = min(110, (available - gap * 5) // 6)
+        for i in range(10):
+            r = self.filter_rects[i]
+            r.update(start_x + (i % 5) * (fw + gap), filt_y + (i // 5) * (filt_h + 6),
+                     fw, filt_h)
+        self.orb_toggle_rect.update(start_x + 5 * (fw + gap), filt_y + filt_h + 6,
+                                    fw, filt_h)
+
+        # Kuşanılanlar (sol) ve çanta kartları (sağ)
+        eq_h = min(68, row_h - 6)
+        for i, row in enumerate(self.equip_rows):
+            row.rect.y = grid_y + i * row_h
+            row.rect.height = eq_h
+
+        for i, card in enumerate(self.bp_cards):
+            card.reposition(y=grid_y + (i // 2) * row_h, h=row_h - 6)
+
+        # Toplu satış + sayfalama
+        mass_gap = 6
+        mass_w = min(140, (available - mass_gap * 3) // 4)
+        for i, r in enumerate(self.mass_sell_rects):
+            r.update(start_x + i * (mass_w + mass_gap), mass_y, mass_w, mass_h)
+
+        self.inv_prev_rect.update(start_x, pager_y, 120, pager_h)
+        self.inv_next_rect.update(self.width - 160, pager_y, 120, pager_h)
+
+    def draw_inventory_tab(self, p):
+        import ui_theme
+        self._apply_inventory_layout()
+        acc = ui_theme.readable(ui_theme.COLORS["gold"])
+
+        # Sol Taraf: Kuşanılanlar
+        title_l = render_fit("KUŞANILANLAR (SAĞ TIKLA ÇIKAR)", 24, acc, 420, bold=True)
+        self.screen.blit(title_l, (self.width // 2 - 450, self._inv_title_y))
+
+        for row in self.equip_rows:
+            row.item = p.inv_manager.equipped.get(row.slot_type)
+            row.update(row.item)
+            row.draw(self.screen, self.font_sub)
+
+        # Sağ Taraf: Çanta (Filtreleme, Grid & Sayfalama)
+        filtered_inv = self._filtered_inventory(p)
+
+        # FİLTRE BUTONLARI (tema plakası; aktif = hover durumu)
+        mouse_pos = pygame.mouse.get_pos()
+
+        def filter_btn(rect, label, is_active, color_key):
+            hovered = rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, rect,
+                                "hover" if (is_active or hovered) else "normal",
+                                ui_theme.COLORS[color_key])
+            col = ui_theme.TEXT_COL if (is_active or hovered) else (170, 164, 152)
+            txt = render_fit(label, 17, col, rect.width - 30, bold=is_active)
             self.screen.blit(txt, txt.get_rect(center=rect.center))
+
+        for i, rarity in enumerate(self.rarity_filters):
+            filter_btn(self.filter_rects[i], rarity,
+                       self.inv_filter_rarity == rarity, "gold")
 
         for i, t_filter in enumerate(self.type_filters):
-            rect = self.filter_rects[i + 5]
-            is_active = self.inv_filter_type == t_filter
-            color = (52, 152, 219) if is_active else (52, 73, 94)
-            pygame.draw.rect(self.screen, color, rect, border_radius=5)
-            txt = self.font_desc.render(t_filter.upper(), True, (255, 255, 255))
-            self.screen.blit(txt, txt.get_rect(center=rect.center))
-            
-        # ORB TOGGLE BUTONU
-        color = (231, 76, 60) if self.hide_orbs else (46, 204, 113)
-        label = "ORB GÖSTER" if self.hide_orbs else "ORB GİZLE"
-        pygame.draw.rect(self.screen, color, self.orb_toggle_rect, border_radius=5)
-        txt = self.font_desc.render(label, True, (255, 255, 255))
-        self.screen.blit(txt, txt.get_rect(center=self.orb_toggle_rect.center))
+            filter_btn(self.filter_rects[i + 5], t_filter.upper(),
+                       self.inv_filter_type == t_filter, "night")
+
+        # ORB TOGGLE
+        filter_btn(self.orb_toggle_rect,
+                   "ORB GÖSTER" if self.hide_orbs else "ORB GİZLE",
+                   not self.hide_orbs, "arcane")
 
         max_pages = max(0, (len(filtered_inv) - 1) // 12)
         self.inventory_page = min(self.inventory_page, max_pages)
-        
-        page_t = self.font_sub.render(f"ÇANTA ({len(filtered_inv)}) - Sayfa {self.inventory_page + 1}", True, (230, 126, 34))
-        self.screen.blit(page_t, (self.width // 2 + 20, 200))
-        
+
+        page_t = render_fit(f"ÇANTA ({len(filtered_inv)}) - Sayfa {self.inventory_page + 1}",
+                            24, acc, 400, bold=True)
+        self.screen.blit(page_t, (self.width // 2 + 20, self._inv_title_y))
+
         offset = self.inventory_page * 12
         for i, card in enumerate(self.bp_cards):
-            # Kartın ve içindeki butonların koordinatlarını güncelle
-            card.rect.y = 240 + (i // 2 * 85)
-            # Buton y'lerini de güncelle (reposition mantığını manuel uyguluyoruz)
-            btn_y = card.rect.y + 35
-            card.use_rect.y = btn_y
-            card.sell_rect.y = btn_y
-            card.craft_rect.y = btn_y
-            
             actual_idx = offset + i
             item = filtered_inv[actual_idx] if actual_idx < len(filtered_inv) else None
             card.draw(self.screen, self.font_sub, item)
@@ -1839,38 +2102,59 @@ class GameScene(BaseScene):
         # TOPLU SATIŞ BUTONLARI
         for i, btn in enumerate(self.mass_sell_btns):
             rect = self.mass_sell_rects[i]
-            pygame.draw.rect(self.screen, btn['color'], rect, border_radius=8)
-            pygame.draw.rect(self.screen, (255, 255, 255), rect, width=1, border_radius=8)
-            st = self.font_desc.render(btn['label'], True, (255, 255, 255))
+            hovered = rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, rect,
+                                "hover" if hovered else "normal",
+                                ui_theme.COLORS[btn.get('color_key', 'steel')])
+            col = ui_theme.TEXT_COL if hovered else (176, 170, 158)
+            st = render_fit(btn['label'], 17, col, rect.width - 30, bold=hovered)
             self.screen.blit(st, st.get_rect(center=rect.center))
 
-        # Sayfalama Butonları Çizimi (Pozisyon Güncellendi)
-        self.inv_prev_rect.y = 750 + 45
-        self.inv_next_rect.y = 750 + 45
-        
+        # Sayfalama Butonları (konumları _apply_inventory_layout'tan)
         can_prev = self.inventory_page > 0
         can_next = (self.inventory_page + 1) * 12 < len(filtered_inv)
-        
-        if can_prev:
-            pygame.draw.rect(self.screen, (52, 152, 219), self.inv_prev_rect, border_radius=5)
-            pt = self.font_desc.render("<< GERİ", True, (255, 255, 255))
-            self.screen.blit(pt, pt.get_rect(center=self.inv_prev_rect.center))
-            
-        if can_next:
-            pygame.draw.rect(self.screen, (52, 152, 219), self.inv_next_rect, border_radius=5)
-            nt = self.font_desc.render("İLERİ >>", True, (255, 255, 255))
-            self.screen.blit(nt, nt.get_rect(center=self.inv_next_rect.center))
+
+        for rect, label, enabled in ((self.inv_prev_rect, "<< GERİ", can_prev),
+                                     (self.inv_next_rect, "İLERİ >>", can_next)):
+            if not enabled:
+                continue
+            hovered = rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, rect,
+                                "hover" if hovered else "normal",
+                                ui_theme.COLORS["night"])
+            col = ui_theme.TEXT_COL if hovered else (176, 170, 158)
+            txt = render_fit(label, 17, col, rect.width - 30)
+            self.screen.blit(txt, txt.get_rect(center=rect.center))
+
+    # Kahraman sekmesi geometrisi (çizim ve tıklama tek kaynak)
+    def _hero_panel_rect(self):
+        return pygame.Rect(self.width // 2 - 320, 165, 640, 545)
+
+    def _diff_button_rects(self):
+        """Zorluk butonları panelin ALTINA sabitlenir (eskiden y=570 gömülüydü,
+        panel taşınınca hitbox çizimden ayrı düşüyordu). -96: çerçevenin 40px
+        köşe süslerinin üstünde kalsınlar."""
+        panel = self._hero_panel_rect()
+        w, gap = 140, 8
+        total = 4 * w + 3 * gap
+        x0 = panel.centerx - total // 2
+        y = panel.bottom - 96
+        return [pygame.Rect(x0 + i * (w + gap), y, w, 42) for i in range(4)]
 
     def draw_hero_tab(self, p):
-        # Kahraman İstatistikleri
-        panel = pygame.Rect(self.width // 2 - 300, 150, 600, 500)
-        pygame.draw.rect(self.screen, (35, 35, 50), panel, border_radius=15)
-        
+        import ui_theme
+        panel = self._hero_panel_rect()
+        content = ui_theme.draw_inset_frame(
+            self.screen, panel, "panel_frame_small.png",
+            fill=(24, 21, 30), alpha=246, pad=26)
+
         # Sınıf Bilgisi ve Pasif
         c_name = getattr(p, 'class_name', 'Bilinmiyor')
-        class_name_txt = self.font_sub.render(f"Sınıf: {c_name}", True, (241, 196, 15))
-        self.screen.blit(class_name_txt, (panel.x + 40, panel.y + 15))
-        
+        class_name_txt = render_fit(f"Sınıf: {c_name}", 28,
+                                    ui_theme.readable(ui_theme.COLORS["gold"]),
+                                    content.width, bold=True)
+        self.screen.blit(class_name_txt, (content.x, content.y))
+
         passives = {
             "warrior": "Geniş Savuruş — Önündeki konide bulunan tüm düşmanlara aynı saldırıyla vurur.",
             "beastmaster": "Av Emri — Kamçıyla işaretlenen hedefe bütün minyonlar anında odaklanır.",
@@ -1882,9 +2166,11 @@ class GameScene(BaseScene):
             "bloodwalker": "Kan Öfkesi — Can %30'un altındayken hasar ve hız %40 artar; R ile mermi emilir.",
         }
         passive_desc = passives.get(getattr(p, 'class_id', 'warrior'), "")
-        self.draw_text_wrapped(f"Pasif: {passive_desc}", panel.x + 40, panel.y + 45, 520, (180, 200, 255), self.font_desc)
-        
-        y = panel.y + 85
+        # Stat listesi pasif metnin GERÇEK altından başlar (sabit y değil)
+        y = self.draw_text_wrapped(f"Pasif: {passive_desc}",
+                                   content.x, content.y + class_name_txt.get_height() + 8,
+                                   content.width, (176, 192, 226), self.font_desc) + 14
+
         stats = [
             ("MAKSİMUM CAN", f"{int(p.hp)} / {int(p.max_hp)}"),
             ("HAREKET HIZI", round(p.stats.get('speed', 0), 1)),
@@ -1897,55 +2183,81 @@ class GameScene(BaseScene):
             ("HASAR ÇARPANI", f"x{round(p.stats.get('dmgMult', 1), 2)}"),
             ("MİNYON HASARI", f"x{round(p.stats.get('minionDamage', 1), 2)}")
         ]
+        # Değer sütunu sağa dayalı: sabit offsetle hizalanınca uzun değerler
+        # (100 / 100) etikete giriyordu.
+        val_col_w = 150
         for label, val in stats:
-            l_surf = self.font_desc.render(label, True, (150, 150, 150))
-            v_surf = self.font_desc.render(str(val), True, (255, 255, 255))
-            self.screen.blit(l_surf, (panel.x + 40, y))
-            self.screen.blit(v_surf, (panel.right - 180, y))
+            l_surf = render_fit(label, 19, (154, 148, 138), content.width - val_col_w - 20)
+            v_surf = render_fit(str(val), 19, ui_theme.TEXT_COL, val_col_w, bold=True)
+            self.screen.blit(l_surf, (content.x, y))
+            self.screen.blit(v_surf, (content.right - v_surf.get_width(), y))
             y += 28
 
-        # ZORLUK SEÇİMİ (Alt Kısım)
-        pygame.draw.rect(self.screen, (30, 30, 45), (panel.x, 540, panel.width, 100), border_radius=10)
-        label = self.font_desc.render("ZORLUK SEÇİMİ (Dalga anında güncellenir)", True, (241, 196, 15))
-        self.screen.blit(label, (panel.x + 20, 545))
-        
+        # ZORLUK SEÇİMİ (panel altına sabit)
+        diff_rects = self._diff_button_rects()
+        label = render_fit("ZORLUK SEÇİMİ (Dalga anında güncellenir)", 18,
+                           ui_theme.readable(ui_theme.COLORS["gold"]), content.width)
+        self.screen.blit(label, (content.x, diff_rects[0].y - label.get_height() - 8))
+
         diff_names = ["Normal", "Hard", "Very Hard", "Impossible"]
-        diff_colors = {"Normal": (46, 204, 113), "Hard": (241, 196, 15), "Very Hard": (230, 126, 34), "Impossible": (231, 76, 60)}
-        
+        diff_colors = {"Normal": "moss", "Hard": "gold",
+                       "Very Hard": "blood", "Impossible": "ember"}
+        mouse_pos = pygame.mouse.get_pos()
         for i, name in enumerate(diff_names):
-            rect = self.diff_btn_rects[i]
+            rect = diff_rects[i]
             is_active = self.logic.wave["current_diff"] == name
-            bg = diff_colors[name] if is_active else (50, 50, 65)
-            pygame.draw.rect(self.screen, bg, rect, border_radius=5)
-            pygame.draw.rect(self.screen, (255, 255, 255), rect, width=2 if is_active else 1, border_radius=5)
-            
-            txt = self.font_desc.render(name, True, (255, 255, 255))
+            hovered = rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, rect,
+                                "hover" if (is_active or hovered) else "normal",
+                                ui_theme.COLORS[diff_colors[name]])
+            col = ui_theme.TEXT_COL if (is_active or hovered) else (170, 164, 152)
+            txt = render_fit(name, 19, col, rect.width - 34, bold=is_active)
             self.screen.blit(txt, txt.get_rect(center=rect.center))
 
     def draw_skills_tab(self, p):
-        # ÜST KATEGORİ BUTONLARI (Alt Sekme) - hitbox tek kaynak: rect'ler saklanır
-        self.skill_sub_tab_rects = []
-        for i, tab_name in enumerate(self.skill_sub_tabs):
-            tab_rect = pygame.Rect(self.width // 2 - 480 + i * 195, 140, 185, 40)
-            self.skill_sub_tab_rects.append(tab_rect)
-            color = (46, 204, 113) if self.active_skill_sub_tab == tab_name else (52, 73, 94)
-            pygame.draw.rect(self.screen, color, tab_rect, border_radius=5)
-            pygame.draw.rect(self.screen, (255, 255, 255), tab_rect, width=1, border_radius=5)
-            
-            txt = self.font_desc.render(tab_name, True, (255, 255, 255))
-            self.screen.blit(txt, txt.get_rect(center=tab_rect.center))
-            
-        # SIFIRLA BUTONU
+        import ui_theme
+        panel = self._inventory_panel_rect()
+        inner_top = panel.y + 52
+        mouse_pos = pygame.mouse.get_pos()
+
+        # SP sayacı ve SIFIRLA butonu panelin İÇİNDE, sekme çubuğunun altında
+        # (eskiden y=90'daydı, üstteki sekme plakalarının üstüne biniyordu).
+        sp_txt = render_fit(f"MEVCUT PUAN (SP): {p.skill_points}", 24,
+                            ui_theme.readable(ui_theme.COLORS["gold"]), 420, bold=True)
+        self.screen.blit(sp_txt, (panel.centerx - sp_txt.get_width() // 2, inner_top + 6))
+
         wave_level = self.logic.wave.get("level", 1)
         cost = 2000 + max(0, (wave_level - 1) * 400)
-        pygame.draw.rect(self.screen, (192, 57, 43), self.reset_btn_rect, border_radius=5)
-        reset_t = self.font_desc.render(f"SIFIRLA ({cost} G)", True, (255, 255, 255))
+        self.reset_btn_rect.update(panel.right - 250, inner_top + 2, 190, 36)
+        reset_hover = self.reset_btn_rect.collidepoint(mouse_pos)
+        ui_theme.draw_plate(self.screen, self.reset_btn_rect,
+                            "hover" if reset_hover else "normal",
+                            ui_theme.COLORS["ember"])
+        reset_t = render_fit(f"SIFIRLA ({cost} G)", 17,
+                             ui_theme.TEXT_COL if reset_hover else (176, 170, 158),
+                             self.reset_btn_rect.width - 30)
         self.screen.blit(reset_t, reset_t.get_rect(center=self.reset_btn_rect.center))
 
+        # ÜST KATEGORİ BUTONLARI (Alt Sekme) - hitbox tek kaynak: rect'ler saklanır
+        tabs_y = inner_top + 50
+        tab_w = min(185, (panel.width - 100) // len(self.skill_sub_tabs) - 10)
+        tabs_total = len(self.skill_sub_tabs) * (tab_w + 10) - 10
+        tabs_x0 = panel.centerx - tabs_total // 2
+        self.skill_sub_tab_rects = []
+        for i, tab_name in enumerate(self.skill_sub_tabs):
+            tab_rect = pygame.Rect(tabs_x0 + i * (tab_w + 10), tabs_y, tab_w, 40)
+            self.skill_sub_tab_rects.append(tab_rect)
+            is_active = self.active_skill_sub_tab == tab_name
+            hovered = tab_rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, tab_rect,
+                                "hover" if (is_active or hovered) else "normal",
+                                ui_theme.COLORS["gold" if is_active else "steel"])
+            col = ui_theme.TEXT_COL if (is_active or hovered) else (170, 164, 152)
+            txt = render_fit(tab_name, 17, col, tab_rect.width - 34, bold=is_active)
+            self.screen.blit(txt, txt.get_rect(center=tab_rect.center))
+
         # YETENEK BUTONLARINI FİLTRELE VE ÇİZ
-        sp_txt = self.font_sub.render(f"MEVCUT PUAN (SP): {p.skill_points}", True, (241, 196, 15))
-        self.screen.blit(sp_txt, (self.width // 2 - sp_txt.get_width() // 2, 90))
-        
+        grid_y = tabs_y + 60
         shown_count = 0
         for btn in self.skill_btns:
             sk_data = p.skills[btn.skill_id]
@@ -1953,9 +2265,9 @@ class GameScene(BaseScene):
                 # Pozisyonu dinamik ata (Grup içinde 2 sütun)
                 col = shown_count % 2
                 row = shown_count // 2
-                btn.rect.x = self.width // 2 - 350 + (col * 360)
-                btn.rect.y = 210 + (row * 85)
-                
+                btn.rect.x = panel.centerx - 360 + (col * 370)
+                btn.rect.y = grid_y + (row * 85)
+
                 btn.text = f"{sk_data['name']} ({sk_data['lvl']}/{sk_data['max']})"
                 btn.draw(
                     self.screen,
@@ -1985,8 +2297,16 @@ class GameScene(BaseScene):
         self._overlay_surface.fill((0, 0, 0, 200))
         self.screen.blit(self._overlay_surface, (0, 0))
         
-        title = self.font_main.render("KADERİNİ SEÇ", True, (241, 196, 15))
-        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 100))
+        import ui_theme
+        title = ui_theme.render_title("KADERİNİ SEÇ", 52,
+                                      ui_theme.readable(ui_theme.COLORS["gold"]))
+        tx = self.width // 2 - title.get_width() // 2
+        self.screen.blit(title, (tx, 90))
+        crest = get_skull_crest(44)
+        if crest is not None:
+            cy = 90 + title.get_height() // 2 - crest.get_height() // 2
+            self.screen.blit(crest, (tx - crest.get_width() - 22, cy))
+            self.screen.blit(crest, (tx + title.get_width() + 22, cy))
         
         # 3 Kartı Yan Yana Çiz
         cards = self.logic.pending_cards
@@ -1997,43 +2317,51 @@ class GameScene(BaseScene):
         card_h = max(280, min(400, controls_top - card_top - 20))
         start_x = self.width // 2 - (len(cards) * card_w + (len(cards)-1) * gap) // 2
         
+        m_pos = pygame.mouse.get_pos()
         self.card_rects = []
         for i, card in enumerate(cards):
             cx = start_x + i * (card_w + gap)
             cy = card_top
             rect = pygame.Rect(cx, cy, card_w, card_h)
             self.card_rects.append(rect)
-            
-            # Kart Arka Planı
-            pygame.draw.rect(self.screen, (35, 35, 50), rect, border_radius=15)
-            pygame.draw.rect(self.screen, (241, 196, 15), rect, width=2, border_radius=15)
-            
-            # Kart İsmi (keskin sığdırma)
-            c_name = render_fit(card["name"], 24, (255, 255, 255), card_w - 30, bold=True)
-            self.screen.blit(c_name, (cx + card_w//2 - c_name.get_width()//2, cy + 30))
+            hovered = rect.collidepoint(m_pos)
+
+            # Kart gövdesi: gotik çerçeve (sınıf kartlarıyla aynı dil)
+            gold = ui_theme.COLORS["gold"]
+            c = ui_theme.draw_inset_frame(
+                self.screen, rect, "panel_frame_small.png",
+                fill=(32, 27, 24) if hovered else (24, 21, 28), alpha=246,
+                tint=tuple(int(v * (0.42 if hovered else 0.26)) for v in gold),
+                glow=(ui_theme.readable(gold), 120) if hovered else None, pad=22)
+
+            c_name = render_fit(card["name"], 24,
+                                ui_theme.TEXT_COL if hovered else (206, 199, 184),
+                                c.width, bold=True)
+            self.screen.blit(c_name, (c.centerx - c_name.get_width() // 2, c.y))
 
             category, category_color = CARD_CATEGORY_LABELS.get(
                 card.get('category'), ('KART', (160, 160, 170))
             )
-            category_txt = self.font_desc.render(category, True, category_color)
-            self.screen.blit(category_txt, category_txt.get_rect(center=(rect.centerx, cy + 78)))
-            
+            category_txt = render_fit(category, 18, ui_theme.readable(category_color), c.width)
+            y_cat = c.y + c_name.get_height() + 6
+            self.screen.blit(category_txt, category_txt.get_rect(midtop=(c.centerx, y_cat)))
+
             # Açıklama
-            self.draw_text_wrapped(card["desc"], cx + 20, cy + 110, card_w - 40, (215, 215, 225), self.font_desc)
-            
+            self.draw_text_wrapped(card["desc"], c.x, y_cat + category_txt.get_height() + 12,
+                                   c.width, (208, 202, 190), self.font_desc)
+
             # Sinerji İpucu
             if hasattr(self.logic.card_system, 'synergy_system'):
-                p = self.logic.players[self.logic.local_player_id]
                 test_cards = self.logic.card_system.active_cards + [card["id"]]
                 active_syns = getattr(self.logic.card_system.synergy_system, 'active_synergies', [])
                 for syn in getattr(self.logic.card_system.synergy_system, 'SYNERGIES', []):
-                    if syn['id'] not in active_syns and all(c in test_cards for c in syn['required_cards']):
-                        hint_txt = render_fit(f"✨ Sinerji Sağlar: {syn['name']}", 18, (46, 204, 113), card_w - 40)
-                        self.screen.blit(hint_txt, (cx + 20, cy + card_h - 40))
+                    if syn['id'] not in active_syns and all(k in test_cards for k in syn['required_cards']):
+                        hint_txt = render_fit(f"Sinerji Sağlar: {syn['name']}", 18,
+                                              ui_theme.readable(ui_theme.COLORS["moss"]), c.width)
+                        self.screen.blit(hint_txt, (c.x, c.bottom - hint_txt.get_height()))
                         break
+
         # Yenile (Reroll) ve Kart Alma butonları (tema: banner)
-        import ui_theme
-        m_pos = pygame.mouse.get_pos()
         rerolls = getattr(self.logic, 'card_rerolls', 0)
         self.card_reroll_rect = pygame.Rect(self.width // 2 - 150, self.height - 230, 300, 60)
         rr_state = "disabled" if rerolls <= 0 else (
@@ -2062,11 +2390,14 @@ class GameScene(BaseScene):
         self._overlay_surface.fill((0, 0, 0, 220))
         self.screen.blit(self._overlay_surface, (0, 0))
 
-        title = self.font_main.render("⚡ SINIF EVRİMİ — YOLUNU SEÇ!", True, (230, 126, 34))
-        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 60))
+        import ui_theme
+        title = ui_theme.render_title("SINIF EVRİMİ — YOLUNU SEÇ", 48,
+                                      ui_theme.readable(ui_theme.COLORS["gold"]))
+        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 56))
 
-        sub = self.font_sub.render(f"Mevcut Sınıf: {p.class_name} → Level 20", True, (200, 200, 200))
-        self.screen.blit(sub, (self.width // 2 - sub.get_width() // 2, 120))
+        sub = render_fit(f"Mevcut Sınıf: {p.class_name} → Level 20", 24,
+                         (196, 190, 178), self.width - 200)
+        self.screen.blit(sub, (self.width // 2 - sub.get_width() // 2, 118))
 
         # 2 yolu yan yana göster
         card_w, card_h = 500, 380
@@ -2075,6 +2406,7 @@ class GameScene(BaseScene):
         card_y = 170
 
         self.evo_rects = []
+        self.evo_btn_rects = []   # SEÇ butonları da tıklanabilir olsun
         mouse_pos = pygame.mouse.get_pos()
 
         for i, (evo_id, evo_data) in enumerate(evos):
@@ -2083,44 +2415,52 @@ class GameScene(BaseScene):
             self.evo_rects.append((rect, evo_id))
 
             hovered = rect.collidepoint(mouse_pos)
-            bg_color = (50, 40, 20) if hovered else (25, 25, 35)
-            border_color = (255, 160, 40) if hovered else (150, 80, 20)
-
-            pygame.draw.rect(self.screen, bg_color, rect, border_radius=16)
-            pygame.draw.rect(self.screen, border_color, rect, width=3, border_radius=16)
+            gold = ui_theme.COLORS["gold"]
+            moss = ui_theme.readable(ui_theme.COLORS["moss"])
+            blood = ui_theme.readable(ui_theme.COLORS["blood"])
+            c = ui_theme.draw_inset_frame(
+                self.screen, rect, "panel_frame_small.png",
+                fill=(34, 28, 22) if hovered else (24, 21, 28), alpha=246,
+                tint=tuple(int(v * (0.46 if hovered else 0.26)) for v in gold),
+                glow=(ui_theme.readable(gold), 130) if hovered else None, pad=26)
 
             # İsim
-            ntxt = render_fit(evo_data["name"], 26, (255, 220, 120), card_w - 40, bold=True)
-            self.screen.blit(ntxt, (cx + card_w//2 - ntxt.get_width()//2, card_y + 20))
+            ntxt = render_fit(evo_data["name"], 26, ui_theme.readable(gold), c.width, bold=True)
+            self.screen.blit(ntxt, (c.centerx - ntxt.get_width() // 2, c.y))
 
-            # Açıklama
-            self.draw_text_wrapped(evo_data["desc"], cx + 20, card_y + 80, card_w - 40,
-                                   (210, 210, 210), self.font_desc)
+            # Açıklama (dönen alt y ile statlar üstüne binmiyor)
+            y_stat = self.draw_text_wrapped(evo_data["desc"], c.x, c.y + ntxt.get_height() + 10,
+                                            c.width, (208, 202, 190), self.font_desc) + 12
 
             # Stat bonusları
-            y_stat = card_y + 160
             for stat, val in list(evo_data["stats"].items())[:6]:
                 sign = "+" if val >= 0 else ""
-                s_txt = self.font_desc.render(f"{sign}{val:.1f} {stat}", True, (120, 255, 120))
-                self.screen.blit(s_txt, (cx + 20, y_stat))
+                s_txt = render_fit(f"{sign}{val:.1f} {stat}", 18, moss, c.width)
+                self.screen.blit(s_txt, (c.x, y_stat))
                 y_stat += 26
 
             # Max HP delta
             delta = evo_data.get("max_hp_delta", 0)
             if delta != 0:
-                col = (120, 255, 120) if delta > 0 else (255, 100, 100)
-                dtxt = self.font_desc.render(f"{'+'if delta>0 else ''}{delta} Max HP", True, col)
-                self.screen.blit(dtxt, (cx + 20, y_stat))
+                col = moss if delta > 0 else blood
+                dtxt = render_fit(f"{'+' if delta > 0 else ''}{delta} Max HP", 18, col, c.width)
+                self.screen.blit(dtxt, (c.x, y_stat))
                 y_stat += 26
 
-            # Pasif bilgisi
-            pasif_txt = render_fit(f"Pasif: {evo_data.get('passive','')}", 18, (180, 140, 255), card_w - 40)
-            self.screen.blit(pasif_txt, (cx + 20, card_y + card_h - 50))
+            # SEÇ butonu önce konumlanır, pasif satırı onun ÜSTÜNE yazılır
+            # (eskiden buton kartın 15px altına taşıyordu)
+            btn = pygame.Rect(c.centerx - 85, c.bottom - 42, 170, 40)
+            self.evo_btn_rects.append((btn, evo_id))
+            pasif_txt = render_fit(f"Pasif: {evo_data.get('passive', '')}", 18,
+                                   ui_theme.readable(ui_theme.COLORS["arcane"]), c.width)
+            self.screen.blit(pasif_txt, (c.x, btn.y - pasif_txt.get_height() - 8))
 
-            # Seç butonu
-            btn = pygame.Rect(cx + card_w//2 - 80, card_y + card_h - 25, 160, 40)
-            pygame.draw.rect(self.screen, (200, 100, 20) if hovered else (100, 60, 10), btn, border_radius=8)
-            btxt = self.font_desc.render("SEÇ →", True, (255, 255, 255))
+            btn_hover = btn.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, btn, "hover" if (hovered or btn_hover) else "normal",
+                                ui_theme.COLORS["gold"])
+            btxt = render_fit("SEÇ", 19,
+                              ui_theme.TEXT_COL if (hovered or btn_hover) else (176, 170, 158),
+                              btn.width - 34, bold=hovered)
             self.screen.blit(btxt, btxt.get_rect(center=btn.center))
 
     def draw_game_over_screen(self):
@@ -2129,9 +2469,17 @@ class GameScene(BaseScene):
         self.screen.blit(self._overlay_surface, (0, 0))
         
         # Title
-        title = self.font_main.render("ÖLDÜN", True, (231, 76, 60))
+        import ui_theme
+        title = ui_theme.render_title("ÖLDÜN", 64,
+                                      ui_theme.readable(ui_theme.COLORS["blood"]))
         t_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 150))
         self.screen.blit(title, t_rect)
+        crest = get_skull_crest(52)
+        if crest is not None:
+            self.screen.blit(crest, (t_rect.left - crest.get_width() - 24,
+                                     t_rect.centery - crest.get_height() // 2))
+            self.screen.blit(crest, (t_rect.right + 24,
+                                     t_rect.centery - crest.get_height() // 2))
         
         # Stats Display
         if hasattr(self, 'stats_tracker'):
@@ -2149,7 +2497,7 @@ class GameScene(BaseScene):
             ]
             sy = self.height // 2 - 80
             for st_str in stats:
-                st_txt = self.font_sub.render(st_str, True, (200, 200, 200))
+                st_txt = render_fit(st_str, 26, (204, 198, 186), 520)
                 self.screen.blit(st_txt, (self.width // 2 - st_txt.get_width() // 2, sy))
                 sy += 30
         
@@ -2159,31 +2507,52 @@ class GameScene(BaseScene):
         
         # Hover Kontrolü
         m_pos = pygame.mouse.get_pos()
-        
+
         # Yeniden Başla (tema: banner buton + kurukafa)
-        import ui_theme
         r_state = "hover" if restart_rect.collidepoint(m_pos) else "normal"
         surf, over = ui_theme.render_banner_button(
             400, 60, "ANA MENÜYE DÖN", ui_theme.COLORS["ember"], state=r_state, skull=True)
         self.screen.blit(surf, (restart_rect.centerx - surf.get_width() // 2, restart_rect.y - over))
         
         # Bilgi
-        info = self.font_desc.render("Sıradaki Dalga Seni Bekliyor!", True, (200, 200, 200))
+        info = render_fit("Sıradaki Dalga Seni Bekliyor!", 20, (176, 170, 158), 520)
         self.screen.blit(info, (self.width // 2 - info.get_width() // 2, self.height // 2 + 160))
+
+    def _aura_layout(self):
+        """Aura sekmesinin panel/kart/sayfalama geometrisi (tek kaynak)."""
+        panel = self._inventory_panel_rect()
+        inner = pygame.Rect(panel.x + 60, panel.y + 58,
+                            panel.width - 120, panel.height - 116)
+        essence = pygame.Rect(inner.x, inner.y, inner.width, 170)
+        shrine = pygame.Rect(inner.x, essence.bottom + 16,
+                             inner.width, inner.bottom - essence.bottom - 16)
+        card_w = (shrine.width - 60) // 2
+        return essence, shrine, card_w
+
     def draw_aura_tab(self, p):
-        # 1. ESSENCE (ÖZ) PANELİ (Üst Yarım)
-        essence_panel = pygame.Rect(self.width // 2 - 480, 140, 960, 200)
-        pygame.draw.rect(self.screen, (35, 35, 50), essence_panel, border_radius=15)
-        pygame.draw.rect(self.screen, (155, 89, 182), essence_panel, width=2, border_radius=15)
-        
-        title_e = self.font_sub.render("Kalıcı Öz İstatistikleri (Ascension)", True, (155, 89, 182))
-        self.screen.blit(title_e, (essence_panel.x + 20, essence_panel.y + 15))
-        
+        import ui_theme
+        essence_panel, aura_panel, card_w = self._aura_layout()
+        mouse_pos = pygame.mouse.get_pos()
+        arcane = ui_theme.readable(ui_theme.COLORS["arcane"])
+        gold = ui_theme.readable(ui_theme.COLORS["gold"])
+
+        # 1. ESSENCE (ÖZ) PANELİ
+        # Çerçeve tonunda HAM palet rengi kullanılır; readable() metin içindir
+        # ve panel çerçevesine uygulanınca taş dokuyu pembeye boyuyor.
+        e_content = ui_theme.draw_inset_frame(
+            self.screen, essence_panel, "panel_frame_small.png",
+            fill=(26, 21, 32), alpha=244,
+            tint=tuple(int(c * 0.30) for c in ui_theme.COLORS["arcane"]), pad=22)
+
+        title_e = render_fit("Kalıcı Öz İstatistikleri (Ascension)", 24, arcane,
+                             e_content.width, bold=True)
+        self.screen.blit(title_e, (e_content.x, e_content.y))
+
         if not p.is_essence_system_unlocked:
-            lock_t = self.font_desc.render("KİLİTLİ: Bu sistem 10. Wave Boss'u kesildiğinde aktifleşir.", True, (150, 150, 150))
-            self.screen.blit(lock_t, (essence_panel.x + 20, essence_panel.y + 60))
+            lock_t = render_fit("KİLİTLİ: Bu sistem 10. Wave Boss'u kesildiğinde aktifleşir.",
+                                19, (154, 148, 138), e_content.width)
+            self.screen.blit(lock_t, (e_content.x, e_content.y + 38))
         else:
-            # Öz İstatistiklerini Listele
             stats = [
                 f"Max HP: +{p.essence_stats['max_hp']}",
                 f"Fiziksel Hasar: +{p.essence_stats['phys_dmg']}",
@@ -2191,141 +2560,195 @@ class GameScene(BaseScene):
                 f"Zırh: +{p.essence_stats['armor']}",
                 f"Hız: +{round(p.essence_stats['speed'], 1)}"
             ]
+            col_w = e_content.width // 3
             for i, st in enumerate(stats):
-                txt = self.font_desc.render(f"✨ {st}", True, (255, 255, 255))
-                self.screen.blit(txt, (essence_panel.x + 20 + (i % 3) * 300, essence_panel.y + 60 + (i // 3) * 40))
+                txt = render_fit(st, 19, ui_theme.TEXT_COL, col_w - 16)
+                self.screen.blit(txt, (e_content.x + (i % 3) * col_w,
+                                       e_content.y + 38 + (i // 3) * 34))
 
-        # 2. AURA SHRINE (Alt Yarım)
-        aura_panel = pygame.Rect(self.width // 2 - 480, 360, 960, 480)
-        pygame.draw.rect(self.screen, (25, 25, 35), aura_panel, border_radius=15)
-        pygame.draw.rect(self.screen, (241, 196, 15), aura_panel, width=2, border_radius=15)
-        
-        limit_t = self.font_sub.render(f"Mistik Aura Tapınağı (Aktif: {len(p.active_auras)}/{p.aura_limit})", True, (241, 196, 15))
-        self.screen.blit(limit_t, (aura_panel.x + 20, aura_panel.y + 15))
-        
+        # 2. AURA SHRINE
+        a_content = ui_theme.draw_inset_frame(
+            self.screen, aura_panel, "panel_frame_small.png",
+            fill=(22, 19, 26), alpha=244,
+            tint=tuple(int(c * 0.30) for c in ui_theme.COLORS["gold"]), pad=22)
+
+        limit_t = render_fit(f"Mistik Aura Tapınağı (Aktif: {len(p.active_auras)}/{p.aura_limit})",
+                             24, gold, a_content.width, bold=True)
+        self.screen.blit(limit_t, (a_content.x, a_content.y))
+
         from logic.aura_system import AuraManager
         aura_mgr = AuraManager()
         all_auras = aura_mgr.get_all_auras()
-        
-        # Sayfalama
+
+        # Sayfalama alanı önce ayrılır, kartlar kalan yüksekliği paylaşır
+        pager_h = 34
+        grid_top = a_content.y + 38
+        grid_bottom = a_content.bottom - pager_h - 10
+        card_h = max(70, (grid_bottom - grid_top) // 4 - 10)
+
         self.aura_btn_rects = []
         offset = self.aura_page * 8
         for i in range(8):
             idx = offset + i
             if idx >= len(all_auras): break
-            
+
             aura = all_auras[idx]
-            ax = aura_panel.x + 20 + (i % 2) * 460
-            ay = aura_panel.y + 60 + (i // 2) * 100
-            card_rect = pygame.Rect(ax, ay, 440, 90)
+            ax = a_content.x + (i % 2) * (card_w + 20)
+            ay = grid_top + (i // 2) * (card_h + 10)
+            card_rect = pygame.Rect(ax, ay, card_w, card_h)
+            is_active = aura.id in p.active_auras
+            owned = aura.id in p.purchased_auras
 
-            # Kart Arkaplanı
-            bg_color = (45, 45, 60)
-            if aura.id in p.active_auras: bg_color = (60, 60, 80)
-            pygame.draw.rect(self.screen, bg_color, card_rect, border_radius=10)
+            tint_col = ui_theme.COLORS["moss"] if is_active else (
+                ui_theme.COLORS["night"] if owned else ui_theme.COLORS["steel"])
+            c = ui_theme.draw_inset_frame(
+                self.screen, card_rect, "panel_frame_small.png",
+                fill=(32, 28, 38) if is_active else (26, 23, 31), alpha=244,
+                tint=tuple(int(v * 0.30) for v in tint_col), pad=14)
 
-            # Aura İsmi ve Açıklama
-            name_t = self.font_sub.render(aura.name, True, (241, 196, 15))
-            self.screen.blit(name_t, (ax + 15, ay + 10))
-            # Açıklamayı sığdır (Wrap)
-            self.draw_text_wrapped(aura.description, ax + 15, ay + 42, 290, (200, 200, 200), self.font_desc)
-
-            # Buton (Satın Al veya Kuşan) - hitbox tek kaynak: rect saklanır
-            btn_rect = pygame.Rect(ax + 320, ay + 15, 100, 60)
+            # Buton önce konumlanır, metin genişliği ondan türetilir
+            btn_w = 104
+            btn_rect = pygame.Rect(c.right - btn_w, c.centery - 19, btn_w, 38)
             self.aura_btn_rects.append((idx, btn_rect))
-            if aura.id in p.purchased_auras:
-                is_active = aura.id in p.active_auras
-                btn_color = (46, 204, 113) if is_active else (52, 152, 219)
-                pygame.draw.rect(self.screen, btn_color, btn_rect, border_radius=8)
+            text_w = max(80, btn_rect.left - c.x - 16)
+
+            name_t = render_fit(aura.name, 21, gold, text_w, bold=True)
+            self.screen.blit(name_t, (c.x, c.y))
+            self.draw_text_wrapped(aura.description, c.x, c.y + name_t.get_height() + 4,
+                                   text_w, (188, 182, 170), self.font_desc)
+
+            hovered = btn_rect.collidepoint(mouse_pos)
+            if owned:
+                key = "moss" if is_active else "night"
                 label = "AKTİF" if is_active else "KUŞAN"
-                txt = self.font_desc.render(label, True, (255, 255, 255))
-                self.screen.blit(txt, txt.get_rect(center=btn_rect.center))
             else:
-                pygame.draw.rect(self.screen, (230, 126, 34), btn_rect, border_radius=8)
-                txt = self.font_desc.render(f"{aura.cost // 1000}K G", True, (255, 255, 255))
-                self.screen.blit(txt, txt.get_rect(center=btn_rect.center))
-                
+                key = "gold"
+                label = f"{aura.cost // 1000}K G"
+            ui_theme.draw_plate(self.screen, btn_rect,
+                                "hover" if (hovered or is_active) else "normal",
+                                ui_theme.COLORS[key])
+            txt = render_fit(label, 17,
+                             ui_theme.TEXT_COL if (hovered or is_active) else (176, 170, 158),
+                             btn_rect.width - 30, bold=is_active)
+            self.screen.blit(txt, txt.get_rect(center=btn_rect.center))
+
         # Aura Kilitli Overlay
         if not p.is_essence_system_unlocked:
-            if not hasattr(self, '_lock_overlay') or self._lock_overlay.get_size() != (aura_panel.width, aura_panel.height):
-                self._lock_overlay = pygame.Surface((aura_panel.width, aura_panel.height), pygame.SRCALPHA)
-            self._lock_overlay.fill((0, 0, 0, 180))
+            if not hasattr(self, '_lock_overlay') or self._lock_overlay.get_size() != aura_panel.size:
+                self._lock_overlay = pygame.Surface(aura_panel.size, pygame.SRCALPHA)
+            self._lock_overlay.fill((0, 0, 0, 185))
             self.screen.blit(self._lock_overlay, aura_panel)
-            lock_msg = self.font_sub.render("TAPINAK KİLİTLİ: Önce Wave 10 Boss'unu Yenmelisin!", True, (231, 76, 60))
+            lock_msg = render_fit("TAPINAK KİLİTLİ: Önce Wave 10 Boss'unu Yenmelisin!", 24,
+                                  ui_theme.readable(ui_theme.COLORS["blood"]),
+                                  aura_panel.width - 60, bold=True)
             self.screen.blit(lock_msg, lock_msg.get_rect(center=aura_panel.center))
-                
+
         # Sayfalama Butonları - hitbox tek kaynak: rect'ler saklanır
-        self.aura_prev_rect = pygame.Rect(aura_panel.x + 400, aura_panel.bottom - 40, 70, 30)
-        self.aura_next_rect = pygame.Rect(aura_panel.x + 490, aura_panel.bottom - 40, 70, 30)
-        if self.aura_page > 0:
-            pygame.draw.rect(self.screen, (52, 152, 219), self.aura_prev_rect, border_radius=5)
-            self.screen.blit(self.font_desc.render("<", True, (255, 255, 255)), (aura_panel.x + 430, aura_panel.bottom - 35))
-        if (self.aura_page + 1) * 8 < len(all_auras):
-            pygame.draw.rect(self.screen, (52, 152, 219), self.aura_next_rect, border_radius=5)
-            self.screen.blit(self.font_desc.render(">", True, (255, 255, 255)), (aura_panel.x + 520, aura_panel.bottom - 35))
+        pager_y = a_content.bottom - pager_h
+        self.aura_prev_rect = pygame.Rect(a_content.centerx - 96, pager_y, 88, pager_h)
+        self.aura_next_rect = pygame.Rect(a_content.centerx + 8, pager_y, 88, pager_h)
+        for rect, label, enabled in (
+                (self.aura_prev_rect, "<< GERİ", self.aura_page > 0),
+                (self.aura_next_rect, "İLERİ >>", (self.aura_page + 1) * 8 < len(all_auras))):
+            if not enabled:
+                continue
+            hovered = rect.collidepoint(mouse_pos)
+            ui_theme.draw_plate(self.screen, rect, "hover" if hovered else "normal",
+                                ui_theme.COLORS["night"])
+            # Metin rect'in MERKEZİNE (eskiden gözle hizalanmış sabit x'teydi)
+            txt = render_fit(label, 16,
+                             ui_theme.TEXT_COL if hovered else (176, 170, 158),
+                             rect.width - 30)
+            self.screen.blit(txt, txt.get_rect(center=rect.center))
 
     def draw_synergy_tab(self, p):
-        title = self.font_main.render("SİNERJİ REHBERİ", True, (241, 196, 15))
-        self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 120))
-        
+        import ui_theme
+        panel = self._inventory_panel_rect()
+        inner = pygame.Rect(panel.x + 60, panel.y + 58,
+                            panel.width - 120, panel.height - 116)
+        gold = ui_theme.readable(ui_theme.COLORS["gold"])
+        moss = ui_theme.readable(ui_theme.COLORS["moss"])
+
+        title = ui_theme.render_title("SİNERJİ REHBERİ", 34, gold)
+        self.screen.blit(title, (inner.centerx - title.get_width() // 2, inner.y))
+        y = inner.y + title.get_height() + 10
+
         synergies = getattr(self.logic.card_system.synergy_system, 'SYNERGIES', [])
         active_synergies = getattr(self.logic.card_system.synergy_system, 'active_synergies', [])
-        
         active_names = self.logic.card_system.get_active_card_names()
-                
-        cards_title = self.font_sub.render(f"Sahip Olduğun Kartlar ({len(active_names)} Adet):", True, (200, 200, 200))
-        self.screen.blit(cards_title, (self.width // 2 - 480, 160))
-        
-        if not active_names:
-            cards_text = "Henüz kart alınmadı."
-        else:
-            cards_text = " • ".join(active_names)
-            
-        self.draw_text_wrapped(cards_text, self.width // 2 - 480, 190, 960, (150, 255, 150), self.font_desc)
-        
-        # Açıklama ve gereksinim satırlarına ayrı alan bırak.
-        start_y = 240
-        col_w = 460
-        start_x_left = self.width // 2 - 480
-        start_x_right = self.width // 2 + 20
-        
+
+        cards_title = render_fit(f"Sahip Olduğun Kartlar ({len(active_names)} Adet):",
+                                 21, (196, 190, 178), inner.width, bold=True)
+        self.screen.blit(cards_title, (inner.x, y))
+        y += cards_title.get_height() + 4
+
+        cards_text = " • ".join(active_names) if active_names else "Henüz kart alınmadı."
+        y = self.draw_text_wrapped(cards_text, inner.x, y, inner.width, moss, self.font_desc) + 12
+
+        # Liste ekrana sığmıyor: kaydırılabilir alan (eskiden ızgara sınırsız
+        # büyüyüp panelin altından taşıyordu).
+        view = pygame.Rect(inner.x, y, inner.width, inner.bottom - y - 24)
+        col_w = (inner.width - 20) // 2
+        card_h = 115
+        rows = (len(synergies) + 1) // 2
+        self._synergy_max_scroll = max(0, rows * (card_h + 10) - view.height)
+
+        card_names = {card['id']: card['name'] for card in self.logic.card_system.CARDS}
+        prev_clip = self.screen.get_clip()
+        self.screen.set_clip(view)
+
         for i, syn in enumerate(synergies):
             is_active = syn['id'] in active_synergies
-            
-            x = start_x_left if i % 2 == 0 else start_x_right
-            y = start_y + (i // 2) * 125
-            
-            rect = pygame.Rect(x, y, col_w, 115)
-            
-            bg_color = (40, 50, 40) if is_active else (30, 30, 35)
-            pygame.draw.rect(self.screen, bg_color, rect, border_radius=10)
-            
-            border_color = (46, 204, 113) if is_active else (100, 100, 100)
-            pygame.draw.rect(self.screen, border_color, rect, 2, border_radius=10)
-            
-            name_txt = self.font_sub.render(syn['name'], True, (255, 215, 0) if is_active else (150, 150, 150))
-            self.screen.blit(name_txt, (x + 15, y + 10))
-            
+            x = inner.x + (i % 2) * (col_w + 20)
+            cy = view.y + (i // 2) * (card_h + 10) + self.synergy_scroll
+            if cy > view.bottom or cy + card_h < view.y:
+                continue  # görünmeyeni çizme
+
+            rect = pygame.Rect(x, cy, col_w, card_h)
+            tint_col = ui_theme.COLORS["moss"] if is_active else ui_theme.COLORS["steel"]
+            c = ui_theme.draw_inset_frame(
+                self.screen, rect, "panel_frame_small.png",
+                fill=(28, 34, 29) if is_active else (26, 23, 30), alpha=244,
+                tint=tuple(int(v * (0.34 if is_active else 0.18)) for v in tint_col),
+                pad=14)
+
+            # Kartın ÜST ve ALT satırları çerçevenin köşe taşları hizasında;
+            # bu iki satır yatayda ek pay alır, ortadaki açıklama tam genişlik.
+            edge = 18
+            ex, ew = c.x + edge, c.width - edge * 2
+
             status_str = "AKTİF!" if is_active else "KEŞFEDİLMEDİ"
-            status_txt = self.font_sub.render(status_str, True, (46, 204, 113) if is_active else (100, 100, 100))
-            self.screen.blit(status_txt, (x + col_w - status_txt.get_width() - 15, y + 10))
-            
+            status_txt = render_fit(status_str, 19, moss if is_active else (140, 134, 124),
+                                    ew // 2, bold=is_active)
+            self.screen.blit(status_txt, (ex + ew - status_txt.get_width(), c.y))
+
+            name_txt = render_fit(syn['name'], 20, gold if is_active else (156, 150, 140),
+                                  ew - status_txt.get_width() - 12, bold=True)
+            self.screen.blit(name_txt, (ex, c.y))
+
+            dy = self.draw_text_wrapped(
+                syn['desc'], c.x, c.y + name_txt.get_height() + 4, c.width,
+                (208, 202, 190) if is_active else (132, 127, 118), self.font_desc)
+
+            req_str = "Gereken: " + " + ".join(card_names.get(k, k) for k in syn['required_cards'])
             self.draw_text_wrapped(
-                syn['desc'], x + 15, y + 40, col_w - 30,
-                (220, 220, 220) if is_active else (120, 120, 120),
-                self.font_desc,
-            )
-            
-            card_names = {card['id']: card['name'] for card in self.logic.card_system.CARDS}
-            req_str = "Gereken: " + " + ".join(card_names.get(c, c) for c in syn['required_cards'])
-            self.draw_text_wrapped(
-                req_str, x + 15, y + 84, col_w - 30,
-                (180, 180, 180) if is_active else (90, 90, 90),
-                self.font_desc,
-            )
+                req_str, ex, min(dy + 2, c.bottom - self.font_desc.get_height()),
+                ew, (172, 166, 154) if is_active else (110, 106, 98),
+                self.font_desc)
+
+        self.screen.set_clip(prev_clip)
+
+        if self._synergy_max_scroll > 0:
+            hint = render_fit("Tekerlek: Kaydır", 16, (150, 144, 132), 240)
+            self.screen.blit(hint, (inner.right - hint.get_width(), inner.bottom - 20))
 
     def draw_text_wrapped(self, text, x, y, max_width, color, font):
-        """Metni belirtilen genişliğe göre satırlara bölerek çizer."""
+        """Metni max_width'e bölerek çizer ve bloğun ALT y'sini döndürür.
+
+        Dönen değer olmadan çağıranlar sonraki içeriği sabit bir y'ye koyuyor,
+        metin iki satıra çıkınca üstüne biniyordu.
+        """
+        text = strip_unsupported(text)   # fontta olmayan emoji -> □ olmasın
         words = text.split(' ')
         lines = []
         current_line = []
@@ -2341,10 +2764,13 @@ class GameScene(BaseScene):
         if current_line:
             lines.append(' '.join(current_line))
         
+        line_h = font.get_height() + 2
         for i, line in enumerate(lines):
             l_surf = font.render(line, True, color)
-            self.screen.blit(l_surf, (x, y + i * (font.get_height() + 2)))
-            
+            self.screen.blit(l_surf, (x, y + i * line_h))
+        return y + len(lines) * line_h
+
+
     def update_aura_clicks(self, pos, p):
         if not p.is_essence_system_unlocked: return False
 

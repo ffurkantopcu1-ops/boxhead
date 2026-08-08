@@ -5,6 +5,13 @@ class InventoryManager:
     # (veri dosyaları değişmez -> save uyumluluğu korunur)
     STAT_ALIASES = {"maxHp": "max_hp", "attack_speed_mult": "attack_speed_bonus"}
 
+    # Oynanabilir sınıflar. Bir silahın weaponClass'ı yalnızca bu kümedeyse
+    # sınıfı değiştirir; "general"/"none" gibi değerler sınıfsızdır.
+    CLASS_IDS = frozenset({
+        "warrior", "sniper", "engineer", "beastmaster",
+        "ninja", "alchemist", "sorcerer", "bloodwalker",
+    })
+
     # Azalan getiri + mutlak tavan tablosu: stat -> (knee, k, hard_cap)
     # knee üstü: knee + excess / (1 + excess * k); hard_cap None değilse min() ile kırpılır
     SOFT_CAPS = {
@@ -346,13 +353,18 @@ class InventoryManager:
             self.player.energy_shield = 0
         
         # Weapon check (Dinamik sınıf değişimi)
+        # Silahın weaponClass'ı sınıfı belirler. Silah yoksa ya da silah bir
+        # sınıfa ait değilse ("none", "general", tanınmayan değer) karakterin
+        # kendi sınıfına dönülür; aksi halde son takılan sınıf silahının
+        # saldırı mantığı üzerimizde kalıyordu.
         weapon = self.equipped.get("weapon")
-        if weapon:
-            w_class = weapon.get("weaponClass")
-            if w_class and w_class != "none" and w_class != self.player.class_id:
-                self.player.class_id = w_class 
-                self.player.reinit_specialization()
-                self.recalculate_stats()
+        w_class = weapon.get("weaponClass") if weapon else None
+        if w_class not in self.CLASS_IDS:
+            w_class = getattr(self.player, "base_class_id", None) or self.player.class_id
+        if w_class != self.player.class_id:
+            self.player.class_id = w_class
+            self.player.reinit_specialization()
+            self.recalculate_stats()
 
     def get_item_local_stats(self, slot):
         if slot not in self.equipped or not self.equipped[slot]:

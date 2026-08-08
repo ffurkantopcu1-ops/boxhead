@@ -177,7 +177,13 @@ class Player:
         ]
         
         self.class_id = class_id
+        # Karakterin kendi sınıfı. class_id silahın weaponClass'ıyla geçici
+        # olarak değişir; silah çıkarıldığında/sınıfsız bir silah takıldığında
+        # buraya dönülür (inventory_manager.recalculate_stats).
+        self.base_class_id = class_id
         self.class_name = self.class_id
+        self.evolution = ""
+        self.evolution_passive = ""
         self.inv_manager = InventoryManager(self)
         self.stats = {} 
         
@@ -200,23 +206,26 @@ class Player:
         cn = self.class_id
         starting_weapon = None
         
+        # weaponClass: silah takıldığında sınıf mantığını belirler
+        # (inventory_manager.recalculate_stats). Eksik olursa başka bir sınıf
+        # silahından geri dönüldüğünde eski sınıfın saldırısı takılı kalıyor.
         if cn == "warrior":
-            starting_weapon = {"name": "Eski Kılıç", "type": "weapon", "isMelee": True, "rarity": "Normal", "itemBase": {"physDmg": 12, "meleeRange": 50}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Eski Kılıç", "type": "weapon", "isMelee": True, "weaponClass": "warrior", "rarity": "Normal", "itemBase": {"physDmg": 12, "meleeRange": 50}, "prefixes": [], "suffixes": []}
         elif cn == "beastmaster":
             starting_weapon = {"name": "Küçük Kurt", "type": "pet", "rarity": "Normal", "itemBase": {"minionDamage": 0, "minionMaxHp": 50}, "prefixes": [], "suffixes": []}
         elif cn == "sniper":
-            starting_weapon = {"name": "Basit Arbalet", "type": "weapon", "isRanged": True, "rarity": "Normal", "itemBase": {"physDmg": 18}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Basit Arbalet", "type": "weapon", "isRanged": True, "weaponClass": "sniper", "rarity": "Normal", "itemBase": {"physDmg": 18}, "prefixes": [], "suffixes": []}
         elif cn == "ninja":
-            starting_weapon = {"name": "Paslı Katana", "type": "weapon", "isMelee": True, "rarity": "Magic", "itemBase": {"physDmg": 15, "attackCooldown": 450, "meleeRange": 20}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Paslı Katana", "type": "weapon", "isMelee": True, "weaponClass": "ninja", "rarity": "Magic", "itemBase": {"physDmg": 15, "attackCooldown": 450, "meleeRange": 20}, "prefixes": [], "suffixes": []}
         elif cn == "alchemist":
-            starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "rarity": "Normal", "itemBase": {"poisonDps": 4}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "weaponClass": "alchemist", "rarity": "Normal", "itemBase": {"poisonDps": 4}, "prefixes": [], "suffixes": []}
         elif cn == "sorcerer":
             # elementDmgMult 0.2: T4 baz (item_system.py) ile hizalı; 0.6 başlangıçta T2 gücü veriyordu (F6)
-            starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "rarity": "Magic", "itemBase": {"physDmg": 8, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "weaponClass": "sorcerer", "rarity": "Magic", "itemBase": {"physDmg": 8, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
         elif cn == "bloodwalker":
-            starting_weapon = {"name": "Kan Kılıcı", "type": "weapon", "isMelee": True, "rarity": "Normal", "itemBase": {"physDmg": 14, "lifesteal": 0.15, "meleeRange": 50}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Kan Kılıcı", "type": "weapon", "isMelee": True, "weaponClass": "bloodwalker", "rarity": "Normal", "itemBase": {"physDmg": 14, "lifesteal": 0.15, "meleeRange": 50}, "prefixes": [], "suffixes": []}
         elif cn == "engineer":
-            starting_weapon = {"name": "Taret Kiti", "type": "weapon", "isTurret": True, "rarity": "Magic", "itemBase": {"turretDmg": 1.0}, "prefixes": [], "suffixes": []}
+            starting_weapon = {"name": "Taret Kiti", "type": "weapon", "isTurret": True, "weaponClass": "engineer", "rarity": "Magic", "itemBase": {"turretDmg": 1.0}, "prefixes": [], "suffixes": []}
 
         # Sınıf mantığını kur (Renk vb.)
         # --- POWER SCALING SYSTEMS ---
@@ -242,8 +251,33 @@ class Player:
         # Statları Hesapla
         self.inv_manager.recalculate_stats()
 
+    # Gösterim adları: class_id ham kimliktir, arayüzde "bloodwalker" yazıyordu
+    CLASS_NAMES = {
+        "warrior": "Savaşçı",
+        "beastmaster": "Ruh Terbiyecisi",
+        "sniper": "Keskin Nişancı",
+        "engineer": "Mühendis",
+        "ninja": "Gölge Ninja",
+        "alchemist": "Simyacı",
+        "sorcerer": "Kadim Büyücü",
+        "bloodwalker": "Vampir",
+    }
+
+    def sync_class_name(self):
+        """Görünen sınıf adını mevcut sınıfla eşitler.
+
+        Evrim geçirilmişse ve evrim şu anki sınıfa aitse evrim adı korunur;
+        aksi halde sınıfın gösterim adı yazılır. (class_name yalnızca gösterim
+        içindir; kalıcı kimlik class_id'dir.)
+        """
+        evo = self.EVOLUTIONS.get(getattr(self, "evolution", "") or "")
+        if evo and evo.get("class_base") == self.class_id:
+            self.class_name = evo["name"]
+        else:
+            self.class_name = self.CLASS_NAMES.get(self.class_id, self.class_id)
+
     def reinit_specialization(self):
-        """Sınıf ID'sine göre yetenek setini ve rengini günceller."""
+        """Sınıf ID'sine göre yetenek setini, rengini ve görünen adını günceller."""
         cn = self.class_id
         if cn == "warrior":
             self.specialization = Warrior()
@@ -272,7 +306,9 @@ class Player:
         else:
             self.specialization = Warrior() # Fallback
             self.color = (255, 255, 255)
-        
+
+        self.sync_class_name()
+
     def update(self, dt, game):
         self.game = game # Reference for difficulty checks
         # --- STATUS EFFECTS ---
@@ -1154,8 +1190,8 @@ class Player:
             return
 
         self.evolution = evo_id
-        self.class_name = evo["name"]
         self.evolution_passive = evo.get("passive", "")
+        self.sync_class_name()
 
         if not hasattr(self, 'skills_permanent'):
             self.skills_permanent = {}
@@ -1447,7 +1483,8 @@ class Player:
             self.specialization.draw_visuals(screen, camera_x, camera_y)
         
         # Gun (Namlu) - Sadece Uzak Dövüşçüler ve Mühendis için (Eğer silahı varsa)
-        if self.class_name not in ["warrior", "beastmaster"]:
+        # class_name evrimle değişen gösterim adıdır; kimlik kontrolü class_id ile.
+        if self.class_id not in ["warrior", "beastmaster"]:
             gun_len = 20
             gun_w = 8
             gun_surf = pygame.Surface((gun_len, gun_w), pygame.SRCALPHA)
@@ -1464,18 +1501,21 @@ class Player:
         if self.max_energy_shield > 0:
             y_offset = -45
             
-        pygame.draw.rect(screen, (0, 0, 0), (draw_x - 20, draw_y + y_offset, 40, 6))
-        pygame.draw.rect(screen, (46, 204, 113), (draw_x - 20, draw_y + y_offset, 40 * hp_ratio, 6))
-        
+        import ui_theme
+        from ui_elements import get_font
+        ui_theme.draw_world_bar(
+            screen, pygame.Rect(int(draw_x - 20), int(draw_y + y_offset), 40, 6),
+            hp_ratio, "moss")
+
         if self.max_energy_shield > 0:
             es_ratio = self.energy_shield / max(1, self.max_energy_shield)
-            pygame.draw.rect(screen, (0, 0, 0), (draw_x - 20, draw_y - 38, 40, 4))
-            pygame.draw.rect(screen, (52, 152, 219), (draw_x - 20, draw_y - 38, 40 * es_ratio, 4))
-        
-        # Sayısal Can Gösterimi
-        hp_font = pygame.font.SysFont("Arial", 11, bold=True)
+            ui_theme.draw_world_bar(
+                screen, pygame.Rect(int(draw_x - 20), int(draw_y - 38), 40, 4),
+                es_ratio, "night")
+
+        # Sayısal Can Gösterimi (cache'li font; her karede SysFont açılıyordu)
         hp_text = f"{int(self.hp)}/{int(self.max_hp)}"
-        hp_surf = hp_font.render(hp_text, True, (255, 255, 255))
+        hp_surf = get_font(11, bold=True).render(hp_text, True, ui_theme.TEXT_COL)
         screen.blit(hp_surf, (draw_x - hp_surf.get_width() // 2, draw_y + y_offset - 15))
         
         # Status Effects
