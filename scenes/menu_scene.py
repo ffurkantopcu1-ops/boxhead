@@ -103,22 +103,18 @@ class MenuScene(BaseScene):
                 if opt_rect.collidepoint(mouse_pos):
                     self.selected_idx = i
                     if mouse_clicked:
-                        if i == 0: self.manager.global_settings['shake'] = not self.manager.global_settings['shake']
-                        elif i == 1: self.menu_state = "MAIN"
-            
+                        self._trigger_setting_action(i)
+
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.menu_state = "MAIN"
                     elif event.key == pygame.K_UP:
-                        self.selected_idx = (self.selected_idx - 1) % 2
+                        self.selected_idx = (self.selected_idx - 1) % 3
                     elif event.key == pygame.K_DOWN:
-                        self.selected_idx = (self.selected_idx + 1) % 2
+                        self.selected_idx = (self.selected_idx + 1) % 3
                     elif event.key == pygame.K_RETURN:
-                        if self.selected_idx == 0: # Shake
-                            self.manager.global_settings['shake'] = not self.manager.global_settings['shake']
-                        elif self.selected_idx == 1: # Back
-                            self.menu_state = "MAIN"
+                        self._trigger_setting_action(self.selected_idx)
 
         elif self.menu_state == "PATCH_NOTES":
             for event in events:
@@ -170,6 +166,15 @@ class MenuScene(BaseScene):
                         self.shop_message_timer = 2.5
                         self.shop_message_success = success
                         break
+
+    def _trigger_setting_action(self, idx):
+        if idx == 0:  # Shake
+            self.manager.global_settings['shake'] = not self.manager.global_settings['shake']
+            self.manager.save_settings()
+        elif idx == 1:  # Ekran Modu (fullscreen -> borderless -> windowed)
+            self.manager.cycle_display_mode()
+        elif idx == 2:  # Back
+            self.menu_state = "MAIN"
 
     def _trigger_main_action(self, idx):
         if idx == 0:
@@ -293,6 +298,7 @@ class MenuScene(BaseScene):
 
         opts = [
             f"EKRAN SARSINTISI: {'[AÇIK]' if self.manager.global_settings['shake'] else '[KAPALI]'}",
+            f"EKRAN MODU: [{self.manager.get_display_mode_label()}]",
             "ANA MENÜYE DÖN"
         ]
 

@@ -6,18 +6,19 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.getcwd())
 
-from scene_manager import SceneManager
+from scene_manager import SceneManager, load_global_settings, create_display
 
 def main():
     pygame.init()
-    
-    # Borderless Fullscreen ayarı
+
+    # Mantıksal çözünürlük her modda masaüstü çözünürlüğüdür (sahne yerleşimi sabit)
     display_info = pygame.display.Info()
     screen_width = display_info.current_w
     screen_height = display_info.current_h
-    
-    # Gerçek Borderless için NOFRAME ve FULLSCREEN kombinasyonu
-    screen = pygame.display.set_mode((screen_width, screen_height), pygame.NOFRAME | pygame.FULLSCREEN)
+
+    # Kayıtlı ekran moduna göre pencere: fullscreen / borderless / windowed
+    settings = load_global_settings()
+    screen = create_display(settings.get("display_mode", "fullscreen"), screen_width, screen_height)
     pygame.display.set_caption("Boxhead 2.0: Native Evolution")
     
     clock = pygame.time.Clock()

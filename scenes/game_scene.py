@@ -363,8 +363,8 @@ class GameScene(BaseScene):
                 # --- AYARLAR MENÜSÜ KLAVYE KONTROLÜ ---
                 if self.show_settings:
                     if self.setting_tab == "main":
-                        if event.key == pygame.K_UP: self.selected_setting_idx = (self.selected_setting_idx - 1) % 7
-                        elif event.key == pygame.K_DOWN: self.selected_setting_idx = (self.selected_setting_idx + 1) % 7
+                        if event.key == pygame.K_UP: self.selected_setting_idx = (self.selected_setting_idx - 1) % 8
+                        elif event.key == pygame.K_DOWN: self.selected_setting_idx = (self.selected_setting_idx + 1) % 8
                         elif event.key == pygame.K_RETURN:
                             self._trigger_setting_action(self.selected_setting_idx)
                     elif self.setting_tab == "save":
@@ -431,7 +431,7 @@ class GameScene(BaseScene):
                 self.show_settings = False
             
             if self.setting_tab == "main":
-                for i in range(7):
+                for i in range(8):
                     opt_rect = pygame.Rect(self.width // 2 - 200, panel.y + 100 + i * 50 - 15, 400, 40)
                     if opt_rect.collidepoint(mouse_pos):
                         self.selected_setting_idx = i
@@ -523,19 +523,22 @@ class GameScene(BaseScene):
         if idx == 0:
             self.logic.settings['shake'] = not self.logic.settings['shake']
             self.manager.global_settings['shake'] = self.logic.settings['shake']
+            self.manager.save_settings()
         elif idx == 1:
+            self.manager.cycle_display_mode()
+        elif idx == 2:
             self.logic.cheat_mode = not self.logic.cheat_mode
             status = "AÇIK" if self.logic.cheat_mode else "KAPALI"
             self.logic.add_event("damage_text", self.width//2, self.height//2, value=f"HİLE MODU: {status}", color=(241, 196, 15), timer=1.5)
-        elif idx == 2: self.setting_tab = "save"; self.selected_setting_idx = 0
-        elif idx == 3:
+        elif idx == 3: self.setting_tab = "save"; self.selected_setting_idx = 0
+        elif idx == 4:
             self.save_slots = self.logic.save_manager.get_save_slots()[:5]
             self.setting_tab = "load"; self.selected_setting_idx = 0
-        elif idx == 4:
+        elif idx == 5:
             self.logic.save_manager.save_game(self.logic, "last_save")
             self.manager.change_scene("MainMenu")
-        elif idx == 5: self.manager.change_scene("MainMenu")
-        elif idx == 6: self.show_settings = False
+        elif idx == 6: self.manager.change_scene("MainMenu")
+        elif idx == 7: self.show_settings = False
 
     def _toggle_auto_sell(self, p):
         modes = ["KAPALI", "BEYAZ", "MAVİ", "SARI", "TÜMÜ"]
@@ -1011,6 +1014,7 @@ class GameScene(BaseScene):
 
             options = [
                 f"EKRAN SARSINTISI: {'[AÇIK]' if self.logic.settings['shake'] else '[KAPALI]'}",
+                f"EKRAN MODU: [{self.manager.get_display_mode_label()}]",
                 f"HİLE MODU: {'[AÇIK]' if self.logic.cheat_mode else '[KAPALI]'}",
                 "OYUNU KAYDET",
                 "KAYITLI OYUNLAR",
