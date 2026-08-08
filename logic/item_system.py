@@ -47,6 +47,27 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Usta Terbiyeci Sopası (T2)', 'tier': 2, 'isMinion': True, 'weaponClass': 'beastmaster', 'icon_id': 'weapon_tamer_staff_master', 'itemBase': { 'minionDamage': 0.8, 'minionCount': 2, 'projectileCount': 1 } },
         { 'type': 'weapon', 'name': 'Sürü Liderinin Sopası (T1)', 'tier': 1, 'isMinion': True, 'weaponClass': 'beastmaster', 'icon_id': 'weapon_tamer_staff_lord', 'itemBase': { 'minionDamage': 1.5, 'minionCount': 3, 'projectileCount': 2, 'minionCrit': 0.2 } },
 
+        # --- YENİ SİLAHLAR (TÜM SINIFLAR İÇİN ORTAK 'general') ---
+        { 'type': 'weapon', 'name': 'Tahta Bumerang (T4)', 'tier': 4, 'isRanged': True, 'isBoomerang': True, 'weaponClass': 'general', 'icon_id': 'weapon_boomerang_wood', 'itemBase': { 'physDmg': 10 } },
+        { 'type': 'weapon', 'name': 'Keskin Çakram (T3)', 'tier': 3, 'isRanged': True, 'isBoomerang': True, 'weaponClass': 'general', 'icon_id': 'weapon_chakram_sharp', 'itemBase': { 'physDmg': 25, 'pierce': 1 } },
+        { 'type': 'weapon', 'name': 'Gölge Çakram (T2)', 'tier': 2, 'isRanged': True, 'isBoomerang': True, 'weaponClass': 'general', 'icon_id': 'weapon_chakram_shadow', 'itemBase': { 'physDmg': 50, 'pierce': 2, 'attackCooldown': -50 } },
+        { 'type': 'weapon', 'name': 'Güneş Fırtınası (T1)', 'tier': 1, 'isRanged': True, 'isBoomerang': True, 'weaponClass': 'general', 'icon_id': 'weapon_chakram_sun', 'itemBase': { 'physDmg': 100, 'pierce': 3, 'attackCooldown': -100, 'fireDamage': 40 } },
+
+        { 'type': 'weapon', 'name': 'Yırtık Boks Eldiveni (T4)', 'tier': 4, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_torn', 'itemBase': { 'physDmg': 8, 'attackCooldown': -150, 'meleeRange': -15, 'knockbackMult': 2.0 } },
+        { 'type': 'weapon', 'name': 'Deri Boks Eldiveni (T3)', 'tier': 3, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_leather', 'itemBase': { 'physDmg': 18, 'attackCooldown': -200, 'meleeRange': -15, 'knockbackMult': 2.5 } },
+        { 'type': 'weapon', 'name': 'Çelik Yumruk (T2)', 'tier': 2, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_steel', 'itemBase': { 'physDmg': 35, 'attackCooldown': -250, 'meleeRange': -10, 'knockbackMult': 3.5 } },
+        { 'type': 'weapon', 'name': 'Titanium Yumruk (T1)', 'tier': 1, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_titanium', 'itemBase': { 'physDmg': 75, 'attackCooldown': -300, 'meleeRange': -10, 'knockbackMult': 5.0, 'critChance': 0.15 } },
+
+        { 'type': 'weapon', 'name': 'Paslı Mayın (T4)', 'tier': 4, 'isTrapItem': True, 'weaponClass': 'general', 'icon_id': 'weapon_trap_rusty', 'itemBase': { 'trapDmg': 50, 'trapRadius': 80, 'attackCooldown': 1000 } },
+        { 'type': 'weapon', 'name': 'Patlayıcı Tuzak (T3)', 'tier': 3, 'isTrapItem': True, 'weaponClass': 'general', 'icon_id': 'weapon_trap_explosive', 'itemBase': { 'trapDmg': 120, 'trapRadius': 100, 'attackCooldown': 800 } },
+        { 'type': 'weapon', 'name': 'Gelişmiş Mayın (T2)', 'tier': 2, 'isTrapItem': True, 'weaponClass': 'general', 'icon_id': 'weapon_trap_advanced', 'itemBase': { 'trapDmg': 250, 'trapRadius': 120, 'attackCooldown': 600 } },
+        { 'type': 'weapon', 'name': 'Nükleer Tuzak (T1)', 'tier': 1, 'isTrapItem': True, 'weaponClass': 'general', 'icon_id': 'weapon_trap_nuke', 'itemBase': { 'trapDmg': 600, 'trapRadius': 180, 'attackCooldown': 400 } },
+
+        { 'type': 'weapon', 'name': 'Ağır Zincir (T4)', 'tier': 4, 'isMelee': True, 'isFlail': True, 'weaponClass': 'general', 'icon_id': 'weapon_flail_chain', 'itemBase': { 'physDmg': 6, 'meleeRange': 20 } },
+        { 'type': 'weapon', 'name': 'Demir Gürz (T3)', 'tier': 3, 'isMelee': True, 'isFlail': True, 'weaponClass': 'general', 'icon_id': 'weapon_flail_iron', 'itemBase': { 'physDmg': 14, 'meleeRange': 30 } },
+        { 'type': 'weapon', 'name': 'Gölge Tırpanı (T2)', 'tier': 2, 'isMelee': True, 'isFlail': True, 'weaponClass': 'general', 'icon_id': 'weapon_flail_shadow', 'itemBase': { 'physDmg': 30, 'meleeRange': 40, 'lifesteal': 0.1 } },
+        { 'type': 'weapon', 'name': 'Kaos Gürzü (T1)', 'tier': 1, 'isMelee': True, 'isFlail': True, 'weaponClass': 'general', 'icon_id': 'weapon_flail_chaos', 'itemBase': { 'physDmg': 60, 'meleeRange': 50, 'critChance': 0.2, 'lifesteal': 0.2 } },
+
         # --- ZIRHLAR ---
         { 'type': 'helmet', 'name': 'Deri Başlık (T4)', 'tier': 4, 'icon_id': 'armor_helmet_leather', 'itemBase': { 'armor': 4, 'maxHp': 10 } },
         { 'type': 'helmet', 'name': 'Demir Miğfer (T3)', 'tier': 3, 'icon_id': 'armor_helmet_iron', 'itemBase': { 'armor': 12, 'maxHp': 25 } },

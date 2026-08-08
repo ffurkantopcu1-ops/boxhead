@@ -592,6 +592,52 @@ class GameLogic:
             self.entity_id_counter += 1
             self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x + 20, enemy.y, 
                                                  {'type': 'gold', 'value': gold_value, 'rarity': 'Normal'}))
+                                                 
+        elif enemy.type == "web_weaver":
+            if random.random() < 0.25: # %25 ihtimalle yumurta
+                if not hasattr(self, '_pending_spawns'):
+                    self._pending_spawns = []
+                self.entity_id_counter += 1
+                from entities.enemy import Enemy
+                egg = Enemy(self.entity_id_counter, enemy.x, enemy.y, self, type="spider_egg", wave_level=self.wave["level"])
+                self._pending_spawns.append(egg)
+                
+        elif enemy.type == "mad_scientist":
+            # Geniş Zehir Bulutu
+            from entities.cloud import Cloud
+            self.entity_id_counter += 1
+            poison_cloud = Cloud(self.entity_id_counter, enemy.x, enemy.y, radius=150, duration=5.0, poison_dps=20)
+            self.clouds.append(poison_cloud)
+            
+        elif enemy.type == "pickpocket_imp":
+            # Çaldığı altının %50'sini geri verir
+            stolen = getattr(enemy, "stolen_gold", 0)
+            if stolen > 0:
+                gold_value = int(stolen * 0.5)
+                self.entity_id_counter += 1
+                self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x + 10, enemy.y + 10, 
+                                                    {'type': 'gold', 'value': gold_value, 'rarity': 'Normal'}))
+                                                    
+        elif enemy.type == "parasite":
+            # Parazit ölünce etraftaki bir düşmana yapışır (Infest)
+            targets = []
+            for e in self.iter_enemies_near(enemy.x, enemy.y, 300):
+                if not e.dead and not getattr(e, "has_parasite", False) and not getattr(e, "is_trap", False) and e.type != "parasite" and e.type != "war_tower":
+                    targets.append(e)
+            if targets:
+                target = random.choice(targets)
+                target.has_parasite = True
+                target.dmg *= 1.2 # Infested düşman biraz güçlenir
+                self.add_event("damage_text", target.x, target.y - 20, value="INFESTED!", color=(255, 100, 200), timer=1.5)
+
+        # Infested (Parazitli) düşman öldüğünde içinden tekrar parazit çıkar
+        if getattr(enemy, "has_parasite", False):
+            if not hasattr(self, '_pending_spawns'):
+                self._pending_spawns = []
+            self.entity_id_counter += 1
+            from entities.enemy import Enemy
+            p_enemy = Enemy(self.entity_id_counter, enemy.x, enemy.y, self, type="parasite", wave_level=self.wave["level"])
+            self._pending_spawns.append(p_enemy)
 
         # ALTIN DÜŞÜRME (Fiziksel Drop)
         if not enemy.is_trap:
@@ -879,21 +925,30 @@ class GameLogic:
         if wave >= 4:
             pool += ["shieldbearer"] * 2
             pool += ["venom_spider"] * 3
+            pool += ["parasite"] * 2
         if wave >= 5:
             pool += ["elite"] * 2
             pool += ["splitting_slime"] * 3
             pool += ["loot_goblin"] * 1
             pool += ["fire_shaman"] * 2
+            pool += ["web_weaver"] * 2
+            pool += ["pickpocket_imp"] * 1
         if wave >= 6:
             pool += ["burrowing_worm"] * 3
             pool += ["magnetar"] * 2
+            pool += ["mimic"] * 1
         if wave >= 7:
             pool += ["pack_leader"] * 1
         if wave >= 8:
             pool += ["necromancer"] * 2
+            pool += ["war_tower"] * 1
         if wave >= 10:
             pool += ["black_hole_caster"] * 2
         
+        # --- WAVE 20+ YENİ DÜŞMANLAR ---
+        if wave >= 20:
+            pool += ["mad_scientist"] * 2
+            
         # --- WAVE 30+ YENİ DÜŞMANLAR ---
         if wave >= 30:
             pool += ["void_walker"] * 3

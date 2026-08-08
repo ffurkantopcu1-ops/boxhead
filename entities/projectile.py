@@ -4,7 +4,7 @@ import time
 import random
 
 class Projectile:
-    def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False):
+    def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False, is_returning=False):
         self.id = id
         self.x = x
         self.y = y
@@ -13,11 +13,14 @@ class Projectile:
         self.dmg = dmg
         self.radius = 6
         self.lifetime = lifetime
+        self.initial_lifetime = lifetime
         self.dead = False
         self.type = p_type # 'normal', 'bomb', 'fire', 'frost', 'poison'
         self.aoe = aoe
         self.is_hostile = is_hostile
         self.is_crit = is_crit
+        self.is_returning = is_returning
+        self.has_returned = False
         
         # New: Elemental Components
         self.poison_dps = 0
@@ -41,7 +44,29 @@ class Projectile:
         self.pierce = pierce
         self.hit_history = [] 
         self.is_katana = (p_type == 'katana')        
+        
     def update(self, dt, game):
+        # Bumerang Geri Dönme Mantığı
+        if self.is_returning and not self.has_returned and self.lifetime <= self.initial_lifetime / 2:
+            self.has_returned = True
+            if not self.is_hostile:
+                p = game.players[game.local_player_id]
+                angle = math.atan2(p.y - self.y, p.x - self.x)
+                speed = math.hypot(self.vx, self.vy)
+                self.vx = math.cos(angle) * speed
+                self.vy = math.sin(angle) * speed
+            else:
+                self.vx *= -1
+                self.vy *= -1
+            self.hit_history.clear() # Dönerken aynı hedeflere tekrar vurabilmesi için sıfırla
+
+        if self.is_returning and self.has_returned and not self.is_hostile:
+            p = game.players[game.local_player_id]
+            dist = math.hypot(p.x - self.x, p.y - self.y)
+            if dist < getattr(p, "radius", 15) + 15:
+                self.dead = True
+                return
+
         self.x += self.vx * dt * 60
         self.y += self.vy * dt * 60
         self.lifetime -= dt * 60

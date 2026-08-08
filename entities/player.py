@@ -267,6 +267,12 @@ class Player:
         # --- STATUS EFFECTS ---
         self.effect_manager.update(dt, self, game)
         
+        # --- SILENCE TIMER ---
+        if getattr(self, "silence_timer", 0) > 0:
+            self.silence_timer -= dt
+            if self.silence_timer <= 0:
+                self.is_silenced = False
+        
         if self.i_frame_timer > 0:
             self.i_frame_timer -= dt
         if self.level_up_timer > 0:
@@ -544,6 +550,16 @@ class Player:
         if weapon and weapon.get('isCommander'):
             # Komuta silahı ateş etmez, sadece buff verir.
             return
+            
+        if weapon and weapon.get('isTrapItem'):
+            from entities.cloud import Cloud
+            trap_dmg = self.stats.get("trapDmg", 100) * self.stats.get("dmgMult", 1.0)
+            trap_radius = self.stats.get("trapRadius", 80)
+            # Mayını oyuncunun olduğu yere bırakıyoruz (5 dakika kalır)
+            mine = Cloud(game.entity_id_counter, self.x, self.y, radius=trap_radius, duration=300, is_mine=True, mine_dmg=trap_dmg)
+            game.clouds.append(mine)
+            game.entity_id_counter += 1
+            return
         
         is_katana = False
         if weapon:
@@ -709,10 +725,15 @@ class Player:
                     p_type_final = 'frost'
             
             dot_mult = 1.0 + self.stats.get("dotDmgMult", 0.0)
+            
+            is_boomerang = False
+            weapon_dict = self.inv_manager.equipped.get("weapon")
+            if weapon_dict:
+                is_boomerang = weapon_dict.get("isBoomerang", False)
 
             p = Projectile(game.entity_id_counter, sx, sy, vx, vy, 
                                              final_dmg, bounce, pierce, 
-                                             p_type=p_type_final, aoe=aoe, is_crit=is_crit, lifetime=proj_lifetime)
+                                             p_type=p_type_final, aoe=aoe, is_crit=is_crit, lifetime=proj_lifetime, is_returning=is_boomerang)
             
             if is_katana:
                 p.is_melee = True
@@ -760,8 +781,13 @@ class Player:
         range_val = 100 + self.stats.get("meleeRange", 0)
         angle = self.facing_angle
         
+        is_flail = weapon.get("isFlail", False) if weapon else False
+        
         # Görsel
-        game.add_event("sweep", self.x, self.y, angle=angle, range=range_val, arc=1.2, timer=0.15)
+        if is_flail:
+            game.add_event("sweep", self.x, self.y, angle=angle, range=range_val, arc=math.pi*2, timer=0.15)
+        else:
+            game.add_event("sweep", self.x, self.y, angle=angle, range=range_val, arc=1.2, timer=0.15)
         
         for e in game.iter_enemies_near(self.x, self.y, range_val + 160):
             if not e.dead and not e.is_trap:
@@ -769,10 +795,24 @@ class Player:
                 dy = e.y - self.y
                 hit_range = range_val + e.radius
                 if dx * dx + dy * dy < hit_range * hit_range:
-                    # Basit Açı Kontrolü
+                    # Basit Açı Kontrolü (Flail için 360 derece, yani açı sınırı yok)
                     angle_to_e = math.atan2(e.y - self.y, e.x - self.x)
-                    if abs(angle_to_e - angle) < 0.6: # Yaklaşık 70 derece
+                    if is_flail or abs(angle_to_e - angle) < 0.6: # Yaklaşık 70 derece
                         e.take_damage(final_dmg, game)
+                        
+                        # Knockback Uygula
+                        kb_mult = weapon.get("knockbackMult", 0.0) if weapon else 0.0
+                        if kb_mult > 0:
+                            push_force = 150 * kb_mult
+                            e.kb_x = math.cos(angle_to_e) * push_force
+                            e.kb_y = math.sin(angle_to_e) * push_force
+                        
+                        # Flail için Kendine Çekme (Reverse Knockback)
+                        if is_flail:
+                            pull_force = 200 # Sabit çekim gücü
+                            e.kb_x = math.cos(angle_to_e) * -pull_force
+                            e.kb_y = math.sin(angle_to_e) * -pull_force
+                        
                         if base_poison > 0:
                             e.apply_dot('poison', base_poison * mult * (1.0 + self.stats.get("dotDmgMult", 0)), 5.0)
         

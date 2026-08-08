@@ -3,7 +3,7 @@ import math
 import random
 
 class Cloud:
-    def __init__(self, id, x, y, radius, duration, poison_dps=0, fire_dmg=0, frost_dmg=0, is_black_hole=False):
+    def __init__(self, id, x, y, radius, duration, poison_dps=0, fire_dmg=0, frost_dmg=0, is_black_hole=False, is_web=False, is_mine=False, mine_dmg=0):
         self.id = id
         self.x = x
         self.y = y
@@ -15,24 +15,34 @@ class Cloud:
         self.dead = False
         
         self.is_black_hole = is_black_hole
+        self.is_web = is_web
+        self.is_mine = is_mine
+        self.mine_dmg = mine_dmg
         
         # Mixed color based on strength
-        # Zehir (Yeşil), Ateş (Kırmızı), Buz (Mavi), Kara Delik (Koyu Mor)
-        if self.is_black_hole: self.color = (44, 62, 80)
+        # Zehir (Yeşil), Ateş (Kırmızı), Buz (Mavi), Kara Delik (Koyu Mor), Ağ (Gri), Mayın (Kırmızı/Turuncu)
+        if self.is_mine: self.color = (255, 80, 0)
+        elif self.is_web: self.color = (180, 180, 180)
+        elif self.is_black_hole: self.color = (44, 62, 80)
         elif fire_dmg > poison_dps and fire_dmg > frost_dmg: self.color = (231, 76, 60)
         elif frost_dmg > fire_dmg and frost_dmg > poison_dps: self.color = (52, 152, 219)
         else: self.color = (46, 204, 113)
 
         diameter = max(2, int(self.radius * 2))
         self._visual = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
-        pygame.draw.circle(
-            self._visual, (*self.color, 100),
-            (diameter // 2, diameter // 2), int(self.radius),
-        )
-        pygame.draw.circle(
-            self._visual, (*self.color, 50),
-            (diameter // 2, diameter // 2), int(self.radius), 10,
-        )
+        if self.is_mine:
+            # Mayın için ortasında belirgin bir çekirdek
+            pygame.draw.circle(self._visual, (*self.color, 150), (diameter // 2, diameter // 2), 10)
+            pygame.draw.circle(self._visual, (*self.color, 50), (diameter // 2, diameter // 2), int(self.radius), 2)
+        else:
+            pygame.draw.circle(
+                self._visual, (*self.color, 100),
+                (diameter // 2, diameter // 2), int(self.radius),
+            )
+            pygame.draw.circle(
+                self._visual, (*self.color, 50),
+                (diameter // 2, diameter // 2), int(self.radius), 10,
+            )
             
     def update(self, dt, game):
         self.duration -= dt
@@ -40,12 +50,24 @@ class Cloud:
             self.dead = True
             return
             
-        # Düşmanlara DOT uygula
+        # Düşmanlara DOT veya Mayın patlaması uygula
         for e in game.iter_enemies_near(self.x, self.y, self.radius):
-            if not e.dead:
+            if not e.dead and getattr(e, 'is_trap', False) == False:
                 dx = e.x - self.x
                 dy = e.y - self.y
                 if dx * dx + dy * dy < self.radius * self.radius:
+                    if self.is_mine:
+                        # Mayın Patlaması
+                        game.add_event("explosion", self.x, self.y, radius=self.radius, color=(255, 80, 0), timer=0.3)
+                        for me in game.iter_enemies_near(self.x, self.y, self.radius):
+                            if not me.dead and getattr(me, 'is_trap', False) == False:
+                                mdx = me.x - self.x
+                                mdy = me.y - self.y
+                                if mdx * mdx + mdy * mdy < self.radius * self.radius:
+                                    me.take_damage(self.mine_dmg, game)
+                        self.dead = True
+                        return
+                    
                     # 1. Zehir Etkisi
                     if self.poison_dps > 0:
                         e.apply_dot('poison', self.poison_dps, 1.5)
@@ -79,6 +101,16 @@ class Cloud:
                 # Hasar ver
                 dmg = getattr(self, 'dmg', 10)
                 p.take_damage(dmg * dt, force=True)
+
+        # Ağ Etkisi (Oyuncuyu yavaşlatır ve susturur)
+        if getattr(self, 'is_web', False):
+            p = game.players[game.local_player_id]
+            dist_to_p = math.hypot(p.x - self.x, p.y - self.y)
+            if dist_to_p < self.radius:
+                p.speed_mod = min(p.speed_mod, 0.3) # %70 yavaşlama
+                # Silence (Ateş etmeyi engelleme) flag'i
+                p.is_silenced = True
+                p.silence_timer = 0.5 # Ağa bastığı sürece sürekli yenilenir
 
         # Oyuncuya Hasar Uygula - DEVRE DIŞI BIRAKILDI (GDD 62)
         # p = game.players[game.local_player_id]

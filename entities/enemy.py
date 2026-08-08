@@ -308,6 +308,80 @@ class Enemy:
             self.xp_reward = 120 * xp_mult
             self.cast_cooldown = 6.0
             self.cast_timer = self.cast_cooldown
+            
+        elif self.type == "mimic":
+            self.max_hp = 350 * wave_scale
+            self.hp = self.max_hp
+            self.speed = 0.0 # Başlangıçta sabit
+            self.base_mimic_speed = 4.0 # Uyanınca hızı
+            self.radius = 24
+            self.dmg = 40 * wave_scale
+            self.color = (139, 69, 19) # Ahşap kahverengi
+            self.xp_reward = 100 * xp_mult
+            self.is_awake = False
+            
+        elif self.type == "web_weaver":
+            self.max_hp = 140 * wave_scale
+            self.hp = self.max_hp
+            self.speed = 2.5
+            self.radius = 28
+            self.dmg = 8 * wave_scale
+            self.color = (169, 169, 169) # Açık gri
+            self.xp_reward = 45 * xp_mult
+            self.web_timer = 2.0 # Her 2 saniyede bir ağ bırakır
+
+        elif self.type == "spider_egg":
+            self.max_hp = 30 * wave_scale
+            self.hp = self.max_hp
+            self.speed = 0.0
+            self.radius = 16
+            self.dmg = 0
+            self.color = (255, 255, 255) # Beyaz
+            self.xp_reward = 0
+            self.egg_timer = 3.0 # 3 saniye kuluçka süresi
+
+        elif self.type == "war_tower":
+            self.max_hp = 800 * wave_scale
+            self.hp = self.max_hp
+            self.speed = 0.0
+            self.radius = 35
+            self.dmg = 30 * wave_scale
+            self.color = (80, 80, 80) # Koyu Taş Rengi
+            self.xp_reward = 150 * xp_mult
+            self.tower_shoot_timer = 1.5 # Her 1.5 saniyede bir ateş eder
+            self.aura_radius = 300
+            
+        elif self.type == "mad_scientist":
+            self.max_hp = 200 * wave_scale
+            self.hp = self.max_hp
+            self.speed = 1.8
+            self.radius = 24
+            self.dmg = 15 * wave_scale
+            self.color = (155, 255, 155) # Soluk fosforlu yeşil
+            self.xp_reward = 80 * xp_mult
+            self.mutate_timer = 5.0 # Her 5 saniyede bir buff atar
+            
+        elif self.type == "parasite":
+            self.max_hp = 60 * wave_scale
+            self.hp = self.max_hp
+            self.speed = 4.5
+            self.radius = 12
+            self.dmg = 5 * wave_scale
+            self.color = (255, 100, 200) # Pembe
+            self.xp_reward = 30 * xp_mult
+
+        elif self.type == "pickpocket_imp":
+            self.max_hp = 100 * wave_scale
+            self.hp = self.max_hp
+            self.speed = 5.0
+            self.radius = 18
+            self.dmg = 5 * wave_scale
+            self.color = (139, 0, 139) # Koyu mor
+            self.xp_reward = 40 * xp_mult
+            self.stolen_gold = 0
+            self.is_escaping = False
+            self.has_dodged = False # İlk vuruş dodge
+            self.escape_timer = 10.0 # Kaçış süresi
 
         self.base_max_hp = self.max_hp
         self.base_dmg = self.dmg
@@ -332,10 +406,28 @@ class Enemy:
         self.dmg = self.base_dmg * mult["dmg"]
         self.speed = self.base_speed * mult["speed"]
         self.armor = self.base_armor * mult["armor"]
+        self._is_boss_minion = False
+        
+        # Knockback (Savrulma) Vektörleri
+        self.kb_x = 0.0
+        self.kb_y = 0.0
+        
+        # --- Zırh ve Boss Scaling ---
 
     def update(self, dt, game):
         if self.dead: return
         self.effect_manager.update(dt, self, game)
+        
+        # Knockback Uygulama ve Sönümleme
+        if abs(self.kb_x) > 0.1 or abs(self.kb_y) > 0.1:
+            self.x += self.kb_x * dt * 60
+            self.y += self.kb_y * dt * 60
+            # Sürtünme (Friction)
+            self.kb_x *= 0.85
+            self.kb_y *= 0.85
+        else:
+            self.kb_x = 0
+            self.kb_y = 0
 
         # Pack Leader hız buff'ının süresi dolunca hızı normale döndür
         if getattr(self, '_pack_buff_timer', 0) > 0:
@@ -343,6 +435,17 @@ class Enemy:
             if self._pack_buff_timer <= 0 and hasattr(self, '_pack_base_speed'):
                 self.speed = self._pack_base_speed
                 del self._pack_base_speed
+                
+        # War Tower Aura
+        if getattr(self, 'war_tower_aura_timer', 0) > 0:
+            self.war_tower_aura_timer -= dt
+            if self.war_tower_aura_timer <= 0:
+                if hasattr(self, '_war_tower_base_speed'):
+                    self.speed = self._war_tower_base_speed
+                    del self._war_tower_base_speed
+                if hasattr(self, '_war_tower_base_dmg'):
+                    self.dmg = self._war_tower_base_dmg
+                    del self._war_tower_base_dmg
         
         # Target player
         p = game.players[game.local_player_id]
@@ -714,6 +817,125 @@ class Enemy:
                     game.add_event("explosion", bh_x, bh_y, radius=120, color=(44, 62, 80, 150), timer=0.5)
                     self.cast_timer = self.cast_cooldown
 
+            # --- MIMIC ---
+            elif self.type == "mimic":
+                if not getattr(self, "is_awake", False):
+                    # Uyku halinde (Hareket etmez, oyuncu yaklaşınca uyanır)
+                    if dist < 150: # Aggro range
+                        self.is_awake = True
+                        self.speed = getattr(self, "base_mimic_speed", 4.0)
+                        game.add_event("damage_text", self.x, self.y - 20, value="!!!", color=(255, 50, 50), timer=1.0)
+                else:
+                    # Uyanık ve agresif (düz takip)
+                    self.x += math.cos(angle) * self.speed * dt * 60
+                    self.y += math.sin(angle) * self.speed * dt * 60
+            
+            # --- WEB WEAVER ---
+            elif self.type == "web_weaver":
+                self.x += math.cos(angle) * self.speed * dt * 60
+                self.y += math.sin(angle) * self.speed * dt * 60
+                self.web_timer -= dt
+                if self.web_timer <= 0:
+                    self.web_timer = 2.0
+                    from entities.cloud import Cloud
+                    game.entity_id_counter += 1
+                    web = Cloud(game.entity_id_counter, self.x, self.y, radius=40, duration=8.0, frost_dmg=0, is_web=True)
+                    game.clouds.append(web)
+
+            # --- SPIDER EGG ---
+            elif self.type == "spider_egg":
+                self.egg_timer -= dt
+                if self.egg_timer <= 0:
+                    self.take_damage(self.max_hp * 999, game) # Yumurta patlar
+                    if not hasattr(game, '_pending_spawns'):
+                        game._pending_spawns = []
+                    # 3 swarm bat çıkar
+                    for _ in range(3):
+                        game.entity_id_counter += 1
+                        from entities.enemy import Enemy
+                        bat = Enemy(game.entity_id_counter, self.x + random.uniform(-10, 10), self.y + random.uniform(-10, 10), game, type="swarm_bat", wave_level=game.wave["level"])
+                        game._pending_spawns.append(bat)
+
+            # --- WAR TOWER ---
+            elif self.type == "war_tower":
+                self.tower_shoot_timer -= dt
+                if self.tower_shoot_timer <= 0:
+                    self.tower_shoot_timer = 1.5
+                    from entities.projectile import Projectile
+                    game.entity_id_counter += 1
+                    base_angle = math.atan2(p.y - self.y, p.x - self.x)
+                    # 3 mermi (spread)
+                    for spread in [-0.2, 0, 0.2]:
+                        proj_angle = base_angle + spread
+                        vx = math.cos(proj_angle) * 300
+                        vy = math.sin(proj_angle) * 300
+                        game.projectiles.append(Projectile(
+                            game.entity_id_counter, self.x, self.y, vx, vy,
+                            dmg=self.dmg, p_type="normal", is_hostile=True, lifetime=120
+                        ))
+                        game.entity_id_counter += 1
+                
+                # Aura Etkisi: Yakındaki düşmanları buffla
+                for e in game.iter_enemies_near(self.x, self.y, self.aura_radius):
+                    if not e.dead and e.type != "war_tower" and not getattr(e, "is_trap", False):
+                        if getattr(e, "war_tower_aura_timer", 0) <= 0:
+                            e._war_tower_base_speed = e.speed
+                            e._war_tower_base_dmg = e.dmg
+                            e.speed = e.speed * 1.15
+                            e.dmg = e.dmg * 1.25
+                        e.war_tower_aura_timer = 0.5 # 0.5 saniye sürer, kule yaşadıkça yenilenir
+
+            # --- MAD SCIENTIST ---
+            elif self.type == "mad_scientist":
+                # Kiting AI
+                if dist < 300:
+                    self.x -= math.cos(angle) * self.speed * dt * 60
+                    self.y -= math.sin(angle) * self.speed * dt * 60
+                elif dist > 450:
+                    self.x += math.cos(angle) * self.speed * dt * 60
+                    self.y += math.sin(angle) * self.speed * dt * 60
+                
+                self.mutate_timer -= dt
+                if self.mutate_timer <= 0:
+                    self.mutate_timer = 5.0
+                    targets = []
+                    for e in game.iter_enemies_near(self.x, self.y, 400):
+                        if not e.dead and e != self and not getattr(e, "is_mutated", False) and e.type != "war_tower" and not getattr(e, "is_trap", False):
+                            targets.append(e)
+                    if targets:
+                        target = random.choice(targets)
+                        target.is_mutated = True
+                        target.max_hp *= 1.5
+                        target.hp += target.max_hp * 0.5
+                        target.dmg *= 1.3
+                        target.radius *= 1.3
+                        target.color = (155, 255, 155) # Mutasyon Rengi
+                        game.add_event("damage_text", target.x, target.y - 20, value="MUTATED!", color=(155, 255, 155), timer=1.5)
+
+            # --- PICKPOCKET IMP ---
+            elif self.type == "pickpocket_imp":
+                if not getattr(self, "is_escaping", False):
+                    # Oyuncuya koş ve çal
+                    self.x += math.cos(angle) * self.speed * dt * 60
+                    self.y += math.sin(angle) * self.speed * dt * 60
+                    if dist < self.radius + 15:
+                        steal_amount = min(p.gold, random.randint(50, 150))
+                        if steal_amount > 0:
+                            p.gold -= steal_amount
+                            self.stolen_gold += steal_amount
+                            game.add_event("damage_text", self.x, self.y - 20, value=f"-{steal_amount} Gold!", color=(255, 215, 0), timer=1.5)
+                        self.is_escaping = True
+                else:
+                    # Kaçış modu (oyuncunun tersine)
+                    self.x -= math.cos(angle) * self.speed * dt * 60
+                    self.y -= math.sin(angle) * self.speed * dt * 60
+                    self.escape_timer -= dt
+                    if self.escape_timer <= 0:
+                        self.hp = 0
+                        self.dead = True
+                        # Drop atmaması için game_logic'te kill_enemy tetiklenmeden ölecek, ya da no_drop flag
+                        self.no_drop = True
+
             # --- STANDART AI ---
             else:
                 offset = math.sin(self.id * 0.5 + time.time() * 2) * 0.2
@@ -754,6 +976,12 @@ class Enemy:
         if getattr(self, 'is_invulnerable', False): return
         # Lava pits remain invulnerable, pillars take damage.
         if getattr(self, 'is_trap', False) and self.type == "lava_pit": return
+        
+        # Hırsız Cin ilk vuruş garantili dodge
+        if self.type == "pickpocket_imp" and not getattr(self, "has_dodged", False):
+            self.has_dodged = True
+            game.add_event("damage_text", self.x, self.y - 20, value="DODGE!", color=(200, 200, 200), timer=1.0)
+            return
         
         # --- ZIRH HESABI ---
         player = game.players[game.local_player_id]
@@ -951,10 +1179,58 @@ class Enemy:
                 pygame.draw.circle(screen, self.color, (int(draw_x), int(draw_y)), self.radius)
                 pygame.draw.circle(screen, (255, 255, 255), (int(draw_x), int(draw_y)), self.radius, 2)
 
-        elif self.type in ["necromancer", "zombie", "black_hole_caster"]:
+        elif self.type in ["necromancer", "zombie", "black_hole_caster", "web_weaver", "mad_scientist"]:
             # Normal düşmanlar gibi ama kendi renkleriyle kare
             pygame.draw.rect(screen, self.color, (draw_x - self.radius, draw_y - self.radius, self.radius*2, self.radius*2), border_radius=4)
             pygame.draw.rect(screen, (255, 255, 255), (draw_x - self.radius, draw_y - self.radius, self.radius*2, self.radius*2), 2, border_radius=4)
+            if getattr(self, "is_mutated", False):
+                # Mutasyon glow'u
+                pygame.draw.circle(screen, (155, 255, 155), (int(draw_x), int(draw_y)), int(self.radius + pulse + 5), 2)
+            
+        elif self.type == "war_tower":
+            # Kule şeklinde çizim (Büyük Kare ve Taret Ucu)
+            s_rect = (draw_x - self.radius, draw_y - self.radius, self.radius*2, self.radius*2)
+            pygame.draw.rect(screen, self.color, s_rect)
+            pygame.draw.rect(screen, (40, 40, 40), s_rect, 4)
+            # Üzerine kule tepesi (X işareti veya mazgallar)
+            pygame.draw.line(screen, (40, 40, 40), (draw_x - self.radius, draw_y - self.radius), (draw_x + self.radius, draw_y + self.radius), 3)
+            pygame.draw.line(screen, (40, 40, 40), (draw_x + self.radius, draw_y - self.radius), (draw_x - self.radius, draw_y + self.radius), 3)
+            # Aura Çemberi
+            pygame.draw.circle(screen, (200, 50, 50), (int(draw_x), int(draw_y)), self.aura_radius, 1)
+            
+        elif self.type == "spider_egg":
+            pygame.draw.ellipse(screen, self.color, (draw_x - self.radius, draw_y - self.radius*1.2, self.radius*2, self.radius*2.4))
+            pygame.draw.ellipse(screen, (50, 200, 50), (draw_x - self.radius, draw_y - self.radius*1.2, self.radius*2, self.radius*2.4), 2)
+
+        elif self.type == "parasite":
+            # Küçük pembe parazit
+            pygame.draw.circle(screen, self.color, (int(draw_x), int(draw_y)), int(self.radius + pulse))
+            pygame.draw.circle(screen, (200, 50, 150), (int(draw_x), int(draw_y)), int(self.radius + pulse), 2)
+            
+        elif self.type == "pickpocket_imp":
+            # Hırsız Cin - Ters Üçgen ve Kese
+            points = [
+                (draw_x, draw_y + self.radius),
+                (draw_x - self.radius, draw_y - self.radius),
+                (draw_x + self.radius, draw_y - self.radius)
+            ]
+            pygame.draw.polygon(screen, self.color, points)
+            pygame.draw.polygon(screen, (255, 215, 0), points, 2)
+            # Eğer çalınmış altını varsa arkasında altın bir kese çizer
+            if getattr(self, "stolen_gold", 0) > 0:
+                pygame.draw.circle(screen, (255, 215, 0), (int(draw_x + self.radius), int(draw_y)), 6)
+            
+        elif self.type == "mimic":
+            # Sandık Şekli
+            pygame.draw.rect(screen, self.color, (draw_x - self.radius, draw_y - self.radius*0.8, self.radius*2, self.radius*1.6), border_radius=2)
+            pygame.draw.rect(screen, (255, 215, 0), (draw_x - self.radius, draw_y - self.radius*0.8, self.radius*2, self.radius*1.6), 2, border_radius=2)
+            if getattr(self, "is_awake", False):
+                # Gözler
+                pygame.draw.circle(screen, (255, 50, 50), (int(draw_x - 8), int(draw_y - 4)), 4)
+                pygame.draw.circle(screen, (255, 50, 50), (int(draw_x + 8), int(draw_y - 4)), 4)
+                # Dişler
+                for i in range(-12, 13, 6):
+                    pygame.draw.polygon(screen, (255,255,255), [(draw_x + i - 3, draw_y + 4), (draw_x + i + 3, draw_y + 4), (draw_x + i, draw_y + 10)])
             
         elif self.type == "loot_goblin":
             # GOBLİN: Altın sarısı elmas (diamond)
