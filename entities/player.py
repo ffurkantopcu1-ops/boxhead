@@ -931,18 +931,18 @@ class Player:
         },
         # ALCHEMIST
         "alchemist_grandmaster": {
-            "name": "🧪 Büyük Usta", "class_base": "alchemist",
-            "stats": {"poisonDps": 20, "toxicAura": 30, "cooldownReduction": 0.3},
-            "max_hp_delta": 0,
-            "passive": "double_potion",
-            "desc": "+20 zehir DPS ve +%30 yetenek bekleme süresi azaltımı."
+            "name": "🧪 Çılgın Simyacı", "class_base": "alchemist",
+            "stats": {"projectileCount": 2, "aoe": 0.3, "attack_speed_bonus": 0.2, "combatRegen": 2.0},
+            "max_hp_delta": 20,
+            "passive": "mad_bomber",
+            "desc": "Aynı anda +2 bomba fırlatır! Atış hızı ve patlama alanı artar."
         },
         "alchemist_poison_god": {
             "name": "🍄 Zehir Tanrısı", "class_base": "alchemist",
-            "stats": {"poisonDps": 50, "toxicAura": 60, "dotDmgMult": 0.5},
+            "stats": {"poisonDps": 25, "toxicAura": 50, "dotDmgMult": 0.5},
             "max_hp_delta": -30,
             "passive": "death_cloud",
-            "desc": "+50 zehir DPS ve +%50 süreli hasar (DoT) bonusu. Can -30."
+            "desc": "+25 zehir DPS ve +%50 süreli hasar (DoT) bonusu. Can -30."
         },
         # SORCERER
         "sorcerer_firelord": {
