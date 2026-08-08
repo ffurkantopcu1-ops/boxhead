@@ -1,6 +1,25 @@
 from logic.item_system import ItemSystem
 
 class InventoryManager:
+    # Eşya/set/aura verilerindeki eski anahtarları stat sistemine bağlar
+    # (veri dosyaları değişmez -> save uyumluluğu korunur)
+    STAT_ALIASES = {"maxHp": "max_hp", "attack_speed_mult": "attack_speed_bonus"}
+
+    # Azalan getiri + mutlak tavan tablosu: stat -> (knee, k, hard_cap)
+    # knee üstü: knee + excess / (1 + excess * k); hard_cap None değilse min() ile kırpılır
+    SOFT_CAPS = {
+        "dmgMult":        (2.0,  0.3, None),
+        "critChance":     (0.75, 2.0, 1.0),
+        "lifesteal":      (0.30, 3.0, 0.50),
+        "dodgeChance":    (0.40, 2.0, 0.60),
+        "critDmg":        (2.0,  0.5, 4.0),
+        "dotDmgMult":     (1.0,  0.5, 2.0),
+        "elementDmgMult": (1.5,  0.5, 3.0),
+        "minionDamage":   (2.0,  0.5, 4.0),
+        "fireDmgMult":    (1.0,  0.5, 2.0),
+        "frostDmgMult":   (1.0,  0.5, 2.0),
+    }
+
     def __init__(self, player):
         self.player = player
         self.equipped = {
@@ -105,7 +124,9 @@ class InventoryManager:
             "fireDmgFlat": 0, "fireDmgMult": 0,
             "frostDmgFlat": 0, "frostDmgMult": 0,
             "elementDmgMult": 0,
-            "minionCount": 1, "minionDamage": 1.0, "minionRate": 1.0, "minionMaxHp": 1.0, "minionArmor": 0,
+            # minionCount/minionDamage tabanı 0: tüketim noktaları (player.py 1+,
+            # minion.py 1.0+) tabanı zaten ekliyor; 1/1.0 çift sayım yaratıyordu (F5)
+            "minionCount": 0, "minionDamage": 0.0, "minionRate": 1.0, "minionMaxHp": 1.0, "minionArmor": 0,
             "minionRange": 1.0, 
             "minionPhysDmgFlat": 0, "minionPhysDmgMult": 0,
             "minionFireDmgFlat": 0, "minionFireDmgMult": 0,
@@ -119,8 +140,12 @@ class InventoryManager:
         # 🟡 STEP 2: SUM ITEM BASE AND AFFIXES
         totals = base_stats.copy()
         
-        # 🧪 ESSENCE BONUSES (Kalıcı Base Stat Artışları)
+        # 🧪 ESSENCE BONUSES (Kalıcı Base Stat Artışları) - tavanlı (S9)
+        essence_caps = getattr(self.player, 'ESSENCE_CAPS', {})
         for stat, val in self.player.essence_stats.items():
+            cap = essence_caps.get(stat)
+            if cap is not None:
+                val = min(val, cap)
             if stat == "phys_dmg":
                 totals["physDmgFlat"] += val
             elif stat == "element_dmg":
@@ -138,6 +163,7 @@ class InventoryManager:
                 is_commander = item.get("isCommander", False) and slot == "weapon"
                 
                 def add_stat(s_name, s_val):
+                    s_name = self.STAT_ALIASES.get(s_name, s_name)
                     # Commander Weapon ise mermi/hasar statlarını minyona aktar
                     target_stat = s_name
                     if is_commander:
@@ -182,8 +208,10 @@ class InventoryManager:
         new_stats = totals.copy()
         
         # Apply Class % Bonuses
+        # dmgMult additive: çarpımsal olması kart/skill toplamını sınıf çarpanıyla
+        # katlayıp yüksek çarpanlı sınıflarda stacking loophole yaratıyordu (S2)
         if "dmgMult" in class_mods:
-            new_stats["dmgMult"] *= (1.0 + class_mods["dmgMult"])
+            new_stats["dmgMult"] += class_mods["dmgMult"]
         if "max_hp_mult" in class_mods:
             new_stats["max_hp"] *= (1.0 + class_mods["max_hp_mult"])
         if "attack_speed_mult" in class_mods:
@@ -203,6 +231,7 @@ class InventoryManager:
                 for threshold, bonus in set_data["bonuses"].items():
                     if count >= threshold:
                         for stat, val in bonus.items():
+                            stat = self.STAT_ALIASES.get(stat, stat)
                             if stat in new_stats: new_stats[stat] += val
                             else: new_stats[stat] = val
 
@@ -217,6 +246,7 @@ class InventoryManager:
             aura = aura_mgr.get_aura(aura_id)
             if aura:
                 for stat, val in aura.stats.items():
+                    stat = self.STAT_ALIASES.get(stat, stat)
                     actual_val = val * aura_mult
                     if stat in new_stats: new_stats[stat] += actual_val
                     else: new_stats[stat] = actual_val
@@ -273,23 +303,26 @@ class InventoryManager:
         new_stats["meleeRange"] = 1.0 + melee_bonus
 
         if getattr(self.player, '_bloodwalker_rage_active', False):
-            new_stats["dmgMult"] = new_stats.get("dmgMult", 1.0) * 1.40
-            new_stats["speed"]   = new_stats.get("speed", 5.0)  * 1.40
+            new_stats["dmgMult"] = new_stats.get("dmgMult", 1.0) * 1.25
+            new_stats["speed"]   = new_stats.get("speed", 5.0)  * 1.25
 
-        # Diminishing Returns for multiplicative stats
-        for dr_stat in ['dmgMult', 'critChance', 'attack_speed_bonus', 'lifesteal']:
+        # Diminishing Returns + mutlak tavanlar (SOFT_CAPS tablosu)
+        for dr_stat, (knee, k, hard) in self.SOFT_CAPS.items():
             if dr_stat in new_stats:
                 raw = new_stats[dr_stat]
-                if raw > 1.0 and dr_stat == 'dmgMult':
-                    if raw > 2.0:
-                        excess = raw - 2.0
-                        new_stats[dr_stat] = 2.0 + excess / (1.0 + excess * 0.3)
-                elif dr_stat == 'critChance' and raw > 0.75:
-                    excess = raw - 0.75
-                    new_stats[dr_stat] = 0.75 + excess / (1.0 + excess * 2.0)
-                elif dr_stat == 'lifesteal' and raw > 0.30:
-                    excess = raw - 0.30
-                    new_stats[dr_stat] = 0.30 + excess / (1.0 + excess * 3.0)
+                if raw > knee:
+                    excess = raw - knee
+                    raw = knee + excess / (1.0 + excess * k)
+                if hard is not None:
+                    raw = min(hard, raw)
+                new_stats[dr_stat] = raw
+
+        # 💀 Ölüm Anlaşması: max_hp bedeli çarpımsal; additive havuzda Canlılık
+        # skiliyle sulandırılamaz (S5). Kart durumu save'den de otomatik gelir.
+        game_ref = getattr(self.player, 'game', None)
+        card_sys = getattr(game_ref, 'card_system', None) if game_ref else None
+        if card_sys and 'death_pact' in getattr(card_sys, 'active_cards', []):
+            new_stats["max_hp"] = max(1, new_stats["max_hp"] * 0.10)
 
         # Sonuçları Player Statlarına Yaz
         self.player.stats.update(new_stats)

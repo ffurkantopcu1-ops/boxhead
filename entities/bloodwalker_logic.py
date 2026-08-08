@@ -37,7 +37,7 @@ class Bloodwalker:
         visual = "sweep" if not is_punch else "slash"
         game.add_event(visual, player.x, player.y, angle=player.facing_angle, range=range_val, arc=0.9, timer=0.12)
 
-        dmg = (dmg_base + phys_flat) * player.stats.get("dmgMult", 1.0)
+        dmg = (dmg_base + phys_flat) * player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult()
         is_crit = random.random() < player.stats.get("critChance", 0.05)
         final_dmg = dmg * (2.0 + player.stats.get("critDmg", 0)) if is_crit else dmg
         

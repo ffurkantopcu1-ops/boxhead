@@ -27,7 +27,7 @@ class Sniper:
         # Basit kılıç savurma (Warrior'dan basitleştirildi)
         angle = player.facing_angle
         dmg_base = 25 if not is_punch else 5
-        dmg = dmg_base * player.stats["dmgMult"]
+        dmg = dmg_base * player.stats["dmgMult"] * player.get_conditional_dmg_mult()
         visual_timer = 0.1 if not is_punch else 0.08
         game.add_event("slash", player.x, player.y, angle=angle, range=100, arc=1.2, timer=visual_timer)
         

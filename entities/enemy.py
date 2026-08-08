@@ -824,12 +824,10 @@ class Enemy:
                 ls_perc *= 0.5 # Can çalma etkisi yarıya iner
             heal = final_dmg * ls_perc
             
-            if getattr(player, "class_id", "") == "bloodwalker":
-                # Vampir (Bloodwalker) anında can çalar
-                player.hp = min(player.max_hp, player.hp + heal)
-            else:
-                # Diğer sınıflar havuzda biriktirir (GDD 62) ve en fazla max_hp kadar biriktirebilir
-                player.lifesteal_buffer = min(player.max_hp, player.lifesteal_buffer + heal)
+            # Tüm sınıflar havuzda biriktirir (GDD 62) ve en fazla max_hp kadar biriktirebilir.
+            # Bloodwalker'ın eski "anında heal" dalı 10k+ HP/s sonsuz sustain yaratıyordu (F3);
+            # vampir kimliği artık hızlandırılmış havuz boşaltmayla korunur (player.py).
+            player.lifesteal_buffer = min(player.max_hp, player.lifesteal_buffer + heal)
                 
             # AYNI ANDA ÇOKLU CAN ÇALMAYI ENGELLE (Sadece 1 hedeften can çalar)
             player.lifesteal_cooldown_timer = 0.2

@@ -23,7 +23,7 @@ class Ninja:
         # Denge: Sabit 35 yerine katananın physDmg değeri baz alınır (silahla ölçeklenir)
         dmg_base = (12 + player.stats.get("physDmg", 0)) if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)
-        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"]
+        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult()
 
         # Kritik Vuruş (Shadow/Storm evrimlerinin critDmg bonusları artık melee'de işler)
         is_crit = random.random() < player.stats.get("critChance", 0.05)

@@ -22,7 +22,7 @@ class Beastmaster:
 
         # Beastmaster Özel: Minyon Komutu
         is_punch = (weapon is None)
-        dmg = 30 * player.stats.get("dmgMult", 1.0) if not is_punch else 5
+        dmg = 30 * player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult() if not is_punch else 5
         angle = player.facing_angle
         arc = 1.0
         range_val = 120 + player.stats.get("meleeRange", 0)

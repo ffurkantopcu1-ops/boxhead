@@ -25,21 +25,28 @@ class StatusEffect:
         # Apply DPS
         if self.dps > 0:
             damage = self.dps * dt
-            if hasattr(target, 'hp'):
+            is_enemy = hasattr(target, 'type') and target.type != 'player' and hasattr(target, 'take_damage')
+            if is_enemy:
+                # DoT zırh/kalkan formülünden geçsin diye take_damage üzerinden akar;
+                # take_damage ölümde kill_enemy'yi zaten çağırır (çift çağrı olmasın)
+                target.take_damage(damage, game, is_dot=True, from_player=True)
+            elif hasattr(target, 'hp'):
                 target.hp -= damage
+
+            if hasattr(target, 'hp'):
                 self.vis_accum += damage
                 self.tick_timer -= dt
                 if self.tick_timer <= 0:
                     accum_int = int(self.vis_accum)
                     if accum_int >= 1:
                         # Show damage text if it's an enemy or if it's significant for player
-                        if hasattr(target, 'type') and target.type != 'player':
+                        if is_enemy:
                             game.add_event("damage_text", target.x, target.y, value=accum_int, color=self.color, timer=0.5)
                         self.vis_accum -= accum_int
                     self.tick_timer = 0.5
-            
-            # Check for death if it's an enemy
-            if hasattr(target, 'hp') and target.hp <= 0:
+
+            # Check for death (oyuncu olmayan ve take_damage'i olmayan hedefler için)
+            if not is_enemy and hasattr(target, 'hp') and target.hp <= 0:
                 if hasattr(target, 'dead'):
                     target.dead = True
                     if hasattr(game, 'kill_enemy'):
@@ -54,7 +61,9 @@ class StatusEffectManager:
         for existing in self.effects:
             if existing.name == effect.name:
                 if existing.name == "Poison":
-                    existing.dps += effect.dps
+                    # Additive yığın en fazla 4 katına çıkabilir; sınırsız yığın
+                    # saldırı hızıyla karesel DPS büyümesi yaratıyordu (F1)
+                    existing.dps = min(existing.dps + effect.dps, effect.dps * 4)
                 else:
                     existing.dps = max(existing.dps, effect.dps)
                 existing.timer = max(existing.timer, effect.duration)

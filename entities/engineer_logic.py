@@ -32,7 +32,7 @@ class Engineer:
         # Yakın Dövüş Modu (Silah varsa Keser, yoksa Yumruk)
         angle = player.facing_angle
         is_punch = (weapon is None)
-        dmg = 25 * player.stats["dmgMult"] if not is_punch else 5
+        dmg = 25 * player.stats["dmgMult"] * player.get_conditional_dmg_mult() if not is_punch else 5
         
         game.add_event("slash", player.x, player.y, angle=angle, range=90, arc=1.0, timer=0.1)
         

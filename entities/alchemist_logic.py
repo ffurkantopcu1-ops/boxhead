@@ -39,7 +39,7 @@ class Alchemist:
         angle = player.facing_angle
         dmg_base = 20 if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)
-        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"]
+        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult()
         
         # Yumruk ise "slash", kılıç ise "slash" (Alchemist için ikisi de slash ama görsel süresi farklı)
         visual_type = "slash"

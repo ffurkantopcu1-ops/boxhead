@@ -100,11 +100,10 @@
   {
     "id": "death_pact",
     "name": "💀 Ölüm Anlaşması",
-    "desc": "Etki: Tüm saldırıların kritik vurur. Bedel: Maksimum canın 1'e düşer.",
+    "desc": "Etki: Tüm saldırıların kritik vurur. Bedel: Maksimum canın %90 azalır.",
     "category": "offense",
     "apply": "_apply_death_pact",
     "stats": {
-      "max_hp": -99,
       "critChance": 1.0
     }
   },
@@ -235,12 +234,13 @@
   {
     "id": "swarmlord",
     "name": "🐜 Sürü Lordu",
-    "desc": "Etki: Minyon limitin 3, minyon saldırı hızın %20 artar. Bedeli yoktur.",
+    "desc": "Etki: Minyon limitin 2, minyon saldırı hızın %20 artar. Bedel: Kendi saldırı hasarın %20 azalır.",
     "category": "minion",
     "apply": "_apply_swarmlord",
     "stats": {
-      "minionCount": 3,
-      "minionAttackSpeed": 0.2
+      "minionCount": 2,
+      "minionAttackSpeed": 0.2,
+      "dmgMult": -0.2
     }
   },
   {

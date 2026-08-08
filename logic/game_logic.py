@@ -97,7 +97,9 @@ class GameLogic:
             "biome": "normal",
             "event": None,
             "special": None,
-            "special_timer": 0
+            "special_timer": 0,
+            "announce_lines": [],
+            "announce_timer": 0.0
         }
         
         # Market & Crafting (Wave bilgisinden sonra çağrılmalı!)
@@ -211,6 +213,10 @@ class GameLogic:
             if not h.active:
                 self.hazards.remove(h)
                 
+        # Dalga duyurusu sayacı
+        if self.wave.get("announce_timer", 0) > 0:
+            self.wave["announce_timer"] -= dt
+
         # Kan Ayı Sayacı
         if self.wave["is_blood_moon"]:
             self.wave["blood_moon_timer"] -= dt
@@ -220,8 +226,9 @@ class GameLogic:
         p = self.players[self.local_player_id]
         p.update(dt, self)
         
-        # Sınıf Evrimi Kontrolü (Level 20)
-        if p.level >= 20 and not getattr(p, "evolution", ""):
+        # Sınıf Evrimi Kontrolü (Level 20; Erken Evrim kristal yükseltmesiyle 15)
+        evo_level = 15 if getattr(p, "_early_evolution", False) else 20
+        if p.level >= evo_level and not getattr(p, "evolution", ""):
             self.state = "EVOLUTION_SELECT"
             return
         
@@ -480,8 +487,8 @@ class GameLogic:
         
         p = self.players[self.local_player_id]
         
-        # Kill Speed Boost (On Kill temporary speed buff)
-        speed_boost = p.stats.get("killSpeedBoost", 0)
+        # Kill Speed Boost (On Kill temporary speed buff) - tavan +%75 (S8)
+        speed_boost = min(0.75, p.stats.get("killSpeedBoost", 0))
         if speed_boost > 0:
             from logic.status_effects import StatusEffect
             p.effect_manager.add_effect(StatusEffect("Kill Speed", 2.0, speed_mult=(1.0 + speed_boost), color=(255, 255, 0)))
@@ -814,23 +821,23 @@ class GameLogic:
             
         self.spawn_traps()
         
-        # New Wave Notification
+        # New Wave Notification (ekran-alanı banner'ı game_scene çizer)
         txt = f"DALGA {self.wave['level']} BAŞLIYOR!"
         if self.wave["is_blood_moon"]:
             txt = "⚠️ LANETLİ KAN AYI BAŞLADI! ⚠️"
         if self.wave["special"]:
             txt = f"🌟 ÖZEL DALGA: {self.wave['special']['name']}! 🌟"
-            
-        self.add_event("damage_text", self.width // 2, self.height // 2, value=txt, color=(231, 76, 60), timer=3.0)
-        
+
+        self.wave["announce_lines"] = [txt]
         if self.wave["event"]:
-            self.add_event("damage_text", self.width // 2, self.height // 2 + 30, value=self.wave["event"]["desc"], color=(255, 165, 0), timer=4.0)
-        
+            self.wave["announce_lines"].append(self.wave["event"]["desc"])
+        self.wave["announce_timer"] = 4.0
+
         # --- BOSS WAVE EVERY 10 ---
         if self.wave["level"] % 10 == 0:
             self.wave["enemies_to_spawn"] = 0
             self.spawn_enemy("boss")
-            self.add_event("damage_text", self.width // 2, self.height // 2 + 50, value="⚠️ BOSS GELİYOR! ⚠️", color=(231, 76, 60), timer=3.0)
+            self.wave["announce_lines"].append("⚠️ BOSS GELİYOR! ⚠️")
             
         # 4. Bounty (Wanted) Sistemi
         self.wave["bounty_assigned"] = False

@@ -37,7 +37,7 @@ class Warrior:
         # Hasar Kontrolü
         hit_any = False
         phys_flat = player.stats.get("physDmgFlat", 0)
-        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"]
+        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult()
         
         for e in game.iter_enemies_near(player.x, player.y, range_val + 160):
             if not e.dead and not e.is_trap:

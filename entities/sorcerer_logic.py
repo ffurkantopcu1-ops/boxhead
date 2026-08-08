@@ -50,7 +50,7 @@ class Sorcerer:
         angle = player.facing_angle
         dmg_base = 20 if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)
-        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"]
+        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult()
         visual_color = (52, 152, 219) if not is_punch else (255, 255, 255)
         visual_timer = 0.1 if not is_punch else 0.08
         

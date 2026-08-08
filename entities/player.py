@@ -200,7 +200,8 @@ class Player:
         elif cn == "alchemist":
             starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "rarity": "Normal", "itemBase": {"poisonDps": 8}, "prefixes": [], "suffixes": []}
         elif cn == "sorcerer":
-            starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "rarity": "Magic", "itemBase": {"physDmg": 8, "elementDmgMult": 0.6}, "prefixes": [], "suffixes": []}
+            # elementDmgMult 0.2: T4 baz (item_system.py) ile hizalı; 0.6 başlangıçta T2 gücü veriyordu (F6)
+            starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "rarity": "Magic", "itemBase": {"physDmg": 8, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
         elif cn == "bloodwalker":
             starting_weapon = {"name": "Kan Kılıcı", "type": "weapon", "isMelee": True, "rarity": "Normal", "itemBase": {"physDmg": 14, "lifesteal": 0.15, "meleeRange": 50}, "prefixes": [], "suffixes": []}
         elif cn == "engineer":
@@ -411,8 +412,8 @@ class Player:
         # Havuzdan can yenileme (Sadece cooldown yoksa ve can eksikse)
         if self.lifesteal_buffer > 0 and self.lifesteal_cooldown_timer <= 0:
             if self.hp < self.max_hp:
-                # Saniyede 10 HP yenileme
-                heal_rate = 10 
+                # Saniyede 10 HP yenileme (Bloodwalker sınıf kimliği: 3x hızlı boşaltma)
+                heal_rate = 30 if getattr(self, "class_id", "") == "bloodwalker" else 10
                 heal_amount = heal_rate * dt
                 
                 can_heal = min(self.lifesteal_buffer, heal_amount)
@@ -485,8 +486,17 @@ class Player:
         # Low HP Rage (Bloodwalker Martyr evrimi)
         if getattr(self, 'evolution_passive', '') == 'low_hp_rage':
             ratio = self.hp / max(1, self.max_hp)
-            mult_bonus = max(0, (1.0 - ratio) * 2.0)  # max +2.0 (3x toplam)
+            mult_bonus = max(0, (1.0 - ratio) * 1.0)  # max +1.0 (2x toplam)
             self._low_hp_rage_mult = 1.0 + mult_bonus
+
+    def get_conditional_dmg_mult(self):
+        """Koşullu hasar çarpanları: Berserker Rage kartı ve Şehit (low_hp_rage) evrimi.
+        Bu bayraklar update() içinde hesaplanıyordu ama hiçbir hasar formülü okumuyordu (S6)."""
+        m = 1.0
+        if getattr(self, '_berserker_active', False):
+            m *= 1.8
+        m *= getattr(self, '_low_hp_rage_mult', 1.0)
+        return m
 
     def gain_xp(self, amount):
         self.xp += amount
@@ -547,7 +557,7 @@ class Player:
         if not weapon:
             # EĞER SİLAH YOKSA: Yumruk
             phys_flat = self.stats.get("physDmgFlat", 0)
-            final_dmg = (20 + phys_flat) * self.stats.get("dmgMult", 1.0)
+            final_dmg = (20 + phys_flat) * self.stats.get("dmgMult", 1.0) * self.get_conditional_dmg_mult()
             game.add_event("damage_text", self.x, self.y - 20, value="YUMRUK!", color=(200, 200, 200), timer=0.3)
             # Görsel Efekt
             r_val = 80 + self.stats.get("meleeRange", 0)
@@ -567,9 +577,12 @@ class Player:
         base_poison = self.stats.get("poisonDps", 0)
         
         # Çarpanlar
-        mult = self.stats.get("dmgMult", 1.0)
+        mult = self.stats.get("dmgMult", 1.0) * self.get_conditional_dmg_mult()
         # Element hasar çarpanı (Sorcerer sınıf kimliği + Elementalist skill + auralar)
         elem_mult = 1.0 + self.stats.get("elementDmgMult", 0.0)
+        # Ateş/Buz yüzde skilleri artık gerçekten hasara girer (S7)
+        fire_mult = 1.0 + self.stats.get("fireDmgMult", 0.0)
+        frost_mult = 1.0 + self.stats.get("frostDmgMult", 0.0)
 
         # Sabit Hasar Bonusunu (Flat) ekle
         phys_flat = self.stats.get("physDmgFlat", 0)
@@ -620,10 +633,10 @@ class Player:
                 # Element Etkileri
                 sorcerer_elem = getattr(self, '_sorcerer_override_element', None)
                 if sorcerer_elem == 'fire':
-                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
+                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * fire_mult
                     e.apply_dot('fire', fire_dmg, 4.0)
                 elif sorcerer_elem == 'frost':
-                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
+                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * frost_mult
                     e.apply_dot('frost', frost_dmg * 0.5, 4.0)
                 elif sorcerer_elem == 'poison':
                     poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
@@ -631,9 +644,9 @@ class Player:
                 else:
                     poison_dps = base_poison * mult * dot_mult * elem_mult
                     if poison_dps > 0: e.apply_dot('poison', poison_dps, 5.0)
-                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult
+                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult * fire_mult
                     if fire_dmg > 0: e.apply_dot('fire', fire_dmg, 4.0)
-                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult
+                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult * frost_mult
                     if frost_dmg > 0: e.apply_dot('frost', frost_dmg * 0.5, 4.0)
             
             # Görsel
@@ -703,15 +716,15 @@ class Player:
             
             # Elementel Statları Aktar
             if sorcerer_elem == 'fire':
-                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
+                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * fire_mult
             elif sorcerer_elem == 'frost':
-                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult
+                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * frost_mult
             elif sorcerer_elem == 'poison' or (is_bomb and base_poison > 0):
                 p.poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
             else:
                 p.poison_dps = base_poison * mult * dot_mult * elem_mult
-                p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult
-                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult
+                p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult * fire_mult
+                p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult * frost_mult
             
             game.projectiles.append(p)
             game.entity_id_counter += 1
@@ -798,6 +811,7 @@ class Player:
         count = 1 + int(local_stats.get("projectileCount", 0))
         # Eğer Ordulu (minionCount) skilli varsa onu ekleyelim çünkü o ÖZEL minyon skilli
         count += int(self.stats.get("minionCount", 0))
+        count = min(count, 8)  # Sürü tavanı: 20+ minyon AFK-clear yaratıyordu (F5)
         
         # Mevcut minyon sayım
         my_minions = [m for m in game.minions if m.owner == self]
@@ -840,9 +854,9 @@ class Player:
         "beastmaster_emperor": {
             "name": "👑 Pet İmparatoru", "class_base": "beastmaster",
             "stats": {"minionCount": 2, "minionDamage": 0.3, "minionMaxHp": 0.4, "minionRange": 0.2},
-            "max_hp_delta": 0,
+            "max_hp_delta": -20,
             "passive": "wind_minions",
-            "desc": "+2 minyon sayısı ve sürü genelinde hasar/can bonusu."
+            "desc": "+2 minyon sayısı ve sürü genelinde hasar/can bonusu. Can -20."
         },
         "beastmaster_hunter": {
             "name": "🦅 Avcı", "class_base": "beastmaster",
@@ -861,10 +875,10 @@ class Player:
         },
         "sniper_phantom": {
             "name": "🌑 Hayalet Nişancı", "class_base": "sniper",
-            "stats": {"critDmg": 3.0, "dodgeChance": 0.3},
-            "max_hp_delta": 0,
+            "stats": {"critDmg": 2.0, "dodgeChance": 0.1},
+            "max_hp_delta": -30,
             "passive": "first_shot_invisible",
-            "desc": "Kritik vuruşlar 5x hasar verir; +%30 kaçınma."
+            "desc": "Kritik vuruşlar 4x hasar verir; +%10 kaçınma. Can -30."
         },
         # ENGINEER
         "engineer_architect": {
@@ -899,10 +913,10 @@ class Player:
         # NINJA
         "ninja_shadow": {
             "name": "🗡️ Ölüm Gölgesi", "class_base": "ninja",
-            "stats": {"critChance": 0.3, "critDmg": 2.5, "dodgeChance": 0.35},
-            "max_hp_delta": 0,
+            "stats": {"critChance": 0.3, "critDmg": 2.5, "dodgeChance": 0.15},
+            "max_hp_delta": -20,
             "passive": "kill_invisible",
-            "desc": "Suikastçı: +%30 krit şansı, +%250 krit hasarı, +%35 kaçınma."
+            "desc": "Suikastçı: +%30 krit şansı, +%250 krit hasarı, +%15 kaçınma. Can -20."
         },
         "ninja_storm": {
             "name": "🌀 Fırtına Bıçağı", "class_base": "ninja",
@@ -921,18 +935,18 @@ class Player:
         },
         "alchemist_poison_god": {
             "name": "🍄 Zehir Tanrısı", "class_base": "alchemist",
-            "stats": {"poisonDps": 80, "toxicAura": 60, "dotDmgMult": 0.5},
-            "max_hp_delta": 0,
+            "stats": {"poisonDps": 50, "toxicAura": 60, "dotDmgMult": 0.5},
+            "max_hp_delta": -30,
             "passive": "death_cloud",
-            "desc": "+80 zehir DPS ve +%50 süreli hasar (DoT) bonusu."
+            "desc": "+50 zehir DPS ve +%50 süreli hasar (DoT) bonusu. Can -30."
         },
         # SORCERER
         "sorcerer_firelord": {
             "name": "🌋 Ateş Başbüyücüsü", "class_base": "sorcerer",
-            "stats": {"fireDamage": 60, "fireDmgFlat": 30, "elementDmgMult": 1.0},
+            "stats": {"fireDamage": 60, "fireDmgFlat": 30, "elementDmgMult": 0.8},
             "max_hp_delta": -20,
             "passive": "fire_aoe",
-            "desc": "+90 ateş hasarı ve +%100 element hasarı. Can -20."
+            "desc": "+90 ateş hasarı ve +%80 element hasarı. Can -20."
         },
         "sorcerer_icemage": {
             "name": "❄️ Buz Büyücüsü", "class_base": "sorcerer",
@@ -944,10 +958,10 @@ class Player:
         # BLOODWALKER
         "bloodwalker_noble": {
             "name": "🧛 Asil Vampir", "class_base": "bloodwalker",
-            "stats": {"lifesteal": 0.4, "dmgMult": 0.3, "hpRegen": 2.0},
-            "max_hp_delta": 50,
+            "stats": {"lifesteal": 0.2, "dmgMult": 0.2, "hpRegen": 2.0},
+            "max_hp_delta": 30,
             "passive": "full_hp_bonus",
-            "desc": "Can çalma +%40, +50 can ve saniyede 2 can yenileme."
+            "desc": "Can çalma +%20, +30 can ve saniyede 2 can yenileme."
         },
         "bloodwalker_martyr": {
             "name": "💔 Şehit", "class_base": "bloodwalker",
@@ -1089,7 +1103,8 @@ class Player:
         if not force and self.i_frame_timer > 0: return
         
         # --- DODGE (Kaçınma) ---
-        if not is_self_damage and random.random() < self.stats.get("dodgeChance", 0):
+        # Kullanım noktası clamp'i: recalc dışı geçici buff'lar bile %60'ı aşamaz (F2)
+        if not is_self_damage and random.random() < min(0.60, self.stats.get("dodgeChance", 0)):
             # Sürekli hasarda (Tick damage) dodge şansını biraz azaltabiliriz veya aynı bırakabiliriz
             return
             
@@ -1238,6 +1253,10 @@ class Player:
         # Statları güncelle
         self.inv_manager.recalculate_stats()
 
+    # Kalıcı öz (essence) tavanları: sınırsız stat akışı geç oyunda tüm
+    # denge zarflarını anlamsızlaştırıyordu (S9)
+    ESSENCE_CAPS = {"max_hp": 200, "phys_dmg": 60, "element_dmg": 0.60, "armor": 60, "speed": 1.5}
+
     def consume_essence(self, essence_type, value):
         """Öz tüketerek kalıcı stat artışı sağlar."""
         if essence_type == "xp":
@@ -1245,6 +1264,11 @@ class Player:
             return True
 
         if essence_type in self.essence_stats:
+            cap = self.ESSENCE_CAPS.get(essence_type)
+            if cap is not None:
+                if self.essence_stats[essence_type] >= cap:
+                    return False  # Tavana ulaşıldı
+                value = min(value, cap - self.essence_stats[essence_type])
             self.essence_stats[essence_type] += value
             # HP ise anlık canı da güncelle
             if essence_type == "max_hp":
@@ -1260,9 +1284,11 @@ class Player:
         if not essences:
             return 0
         
-        count = len(essences)
+        count = 0
         for it in essences:
-            self.consume_essence(it['essence_type'], it['val'])
-            self.inventory.remove(it)
-            
+            # Tavana ulaşan özler tüketilmez ve envanterde kalır
+            if self.consume_essence(it['essence_type'], it['val']):
+                self.inventory.remove(it)
+                count += 1
+
         return count

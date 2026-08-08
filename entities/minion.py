@@ -42,10 +42,16 @@ class Minion:
     def update(self, dt, game):
         if not self.owner: return
         
-        # 0. RECHARGE KONTROLÜ (DEVRE DIŞI - GDD 62)
-        # Minyonlar artık ölümsüzdür ve recharge olmazlar.
-        self.is_recharging = False
-        self.hp = self.max_hp
+        # 0. RECHARGE KONTROLÜ: Minyon canı biterse 5 sn devre dışı kalır,
+        # sonra yarı canla döner (kalıcı ölümsüzlük EHP'yi tanımsız yapıyordu, F5)
+        if self.is_recharging:
+            self.recharge_timer -= dt
+            if self.recharge_timer <= 0:
+                self.is_recharging = False
+                self.hp = self.max_hp * 0.5
+        elif self.hp <= 0:
+            self.is_recharging = True
+            self.recharge_timer = 5.0
 
         # 1. HAREKET SENKRONİZASYONU (Sync)
         # Oyuncunun anlık yer değiştirmesini minyona aktar (Yetişme sorunu çözümü)
@@ -162,7 +168,7 @@ class Minion:
         if not self.target or self.is_recharging: return
         
         # --- STAT MİRASI (Minyon Statları) ---
-        minion_dmg_mult = self.owner.stats.get("minionDamage", 1.0)
+        minion_dmg_mult = self.owner.stats.get("minionDamage", 0.0)
         minion_phys_mult = self.owner.stats.get("minionPhysDmgMult", 0)
         minion_fire_mult = self.owner.stats.get("minionFireDmgMult", 0)
         minion_frost_mult = self.owner.stats.get("minionFrostDmgMult", 0)

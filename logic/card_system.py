@@ -147,12 +147,17 @@ class CardSystem:
         player.damage_taken_mult = getattr(player, "damage_taken_mult", 1.0) * 2.0
 
     def _apply_death_pact(self, player):
-        """💀 Ölüm Anlaşması — Krit şans +%100, Max HP = 1."""
+        """💀 Ölüm Anlaşması — Krit şans +%100, Max HP %90 azalır (çarpımsal).
+        Bedel recalculate_stats'ta aktif kart kontrolüyle uygulanır; additive
+        havuzda Canlılık skiliyle sulandırılamaz (S5)."""
         sp = getattr(player, "skills_permanent", {})
-        sp["max_hp"] = sp.get("max_hp", 0) - 99
         sp["critChance"] = sp.get("critChance", 0) + 1.0
         player.skills_permanent = sp
-        player.hp = 1
+        # Recalc'ın kartı görmesi için aktif listeye şimdi ekle (apply_card idempotent)
+        if "death_pact" not in self.active_cards:
+            self.active_cards.append("death_pact")
+        player.inv_manager.recalculate_stats()
+        player.hp = min(player.hp, player.max_hp)
 
     def _apply_double_edge(self, player):
         """⚔️ Çift Ağız — Hasar +%120, her vuruşta %2 Max HP kendine hasar."""
@@ -248,10 +253,11 @@ class CardSystem:
         player.skills_permanent = sp
 
     def _apply_swarmlord(self, player):
-        """🐜 Sürü Lordu — Minyon sayısı +3, minyon saldırı hızı +%20."""
+        """🐜 Sürü Lordu — Minyon sayısı +2, minyon saldırı hızı +%20, kendi hasarı -%20."""
         sp = getattr(player, "skills_permanent", {})
-        sp["minionCount"] = sp.get("minionCount", 0) + 3
+        sp["minionCount"] = sp.get("minionCount", 0) + 2
         sp["minionAttackSpeed"] = sp.get("minionAttackSpeed", 0) + 0.20
+        sp["dmgMult"] = sp.get("dmgMult", 0) - 0.20
         player.skills_permanent = sp
 
     def _apply_alpha_bond(self, player):
