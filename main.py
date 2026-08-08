@@ -11,10 +11,10 @@ from scene_manager import SceneManager, load_global_settings, create_display
 def main():
     pygame.init()
 
-    # Mantıksal çözünürlük her modda masaüstü çözünürlüğüdür (sahne yerleşimi sabit)
-    display_info = pygame.display.Info()
-    screen_width = display_info.current_w
-    screen_height = display_info.current_h
+    # Oyunun UI'ı 1920x1080 çözünürlüğüne göre tasarlandığı için mantıksal çözünürlüğü sabitliyoruz.
+    # pygame.SCALED bu 1920x1080 yüzeyi her ekrana bozulmadan (siyah barlarla) sığdırır.
+    screen_width = 1920
+    screen_height = 1080
 
     # Kayıtlı ekran moduna göre pencere: fullscreen / borderless / windowed
     settings = load_global_settings()
@@ -29,11 +29,26 @@ def main():
         dt = clock.tick(144) / 1000.0 # 144 FPS hedefi, dt saniye cinsinden
         
         events = pygame.event.get()
+        
+        # Fare koordinatlarını fiziksel pencereden mantıksal çözünürlüğe ölçekle
+        scale_x = screen_width / scene_manager.real_screen.get_width()
+        scale_y = screen_height / scene_manager.real_screen.get_height()
+        
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
+                event.pos = (int(event.pos[0] * scale_x), int(event.pos[1] * scale_y))
+        
+        # Sahneler içinde anlık fare pozisyonu okuyan (pygame.mouse.get_pos) fonksiyonu geçici olarak yamala
+        old_get_pos = pygame.mouse.get_pos
+        pygame.mouse.get_pos = lambda: (int(old_get_pos()[0] * scale_x), int(old_get_pos()[1] * scale_y))
         
         scene_manager.update(dt, events)
+        
+        # Orijinal fonksiyona geri dön
+        pygame.mouse.get_pos = old_get_pos
+        
         scene_manager.draw()
         
         pygame.display.flip()

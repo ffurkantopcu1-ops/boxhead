@@ -40,26 +40,45 @@ def save_global_settings(settings):
         pass
 
 
-def create_display(mode, width, height):
-    """İstenen ekran modunda pencereyi oluşturur.
-
-    Mantıksal çözünürlük her modda (width, height) kalır; 'windowed' modda
-    pygame.SCALED içeriği pencere boyutuna ölçekler ve fare koordinatlarını
-    otomatik çevirir — sahne yerleşimleri hiçbir modda bozulmaz.
+def create_display(mode, logical_w, logical_h):
+    """İstenen ekran modunda fiziksel pencereyi oluşturur.
+    Mantıksal çözünürlük 1920x1080'de kalır; manuel ölçekleme yapılır.
     """
+    desktop_sizes = pygame.display.get_desktop_sizes()
+    desktop_w, desktop_h = desktop_sizes[0] if desktop_sizes else (1920, 1080)
+    
     if mode == "windowed":
-        return pygame.display.set_mode((width, height), pygame.SCALED | pygame.RESIZABLE)
+        os.environ["SDL_VIDEO_WINDOW_POS"] = "center"
+        screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+        try:
+            import pygame._sdl2 as sdl2
+            win = sdl2.Window.from_display_module()
+            win.position = sdl2.WINDOWPOS_CENTERED
+        except Exception:
+            pass
+        return screen
+    
     if mode == "borderless":
         os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
-        return pygame.display.set_mode((width, height), pygame.NOFRAME)
-    return pygame.display.set_mode((width, height), pygame.NOFRAME | pygame.FULLSCREEN)
+        screen = pygame.display.set_mode((desktop_w, desktop_h), pygame.NOFRAME)
+        try:
+            import pygame._sdl2 as sdl2
+            win = sdl2.Window.from_display_module()
+            win.position = (0, 0)
+        except Exception:
+            pass
+        return screen
+
+    return pygame.display.set_mode((desktop_w, desktop_h), pygame.FULLSCREEN)
 
 
 class SceneManager:
     def __init__(self, screen, width, height):
-        self.screen = screen
+        self.real_screen = screen
         self.width = width
         self.height = height
+        self.logical_surface = pygame.Surface((width, height))
+        self.screen = self.logical_surface
 
         # Scene constructors may consult shared preferences. Initialize these
         # before creating scenes and only enter the active scene at startup.
@@ -67,9 +86,9 @@ class SceneManager:
         self.pending_save_slot = None
 
         self.scenes = {
-            "MainMenu": MenuScene(self, screen, width, height),
-            "Game": GameScene(self, screen, width, height),
-            "ClassSelect": ClassSelectScene(self, screen, width, height)
+            "MainMenu": MenuScene(self, self.screen, width, height),
+            "Game": GameScene(self, self.screen, width, height),
+            "ClassSelect": ClassSelectScene(self, self.screen, width, height)
         }
         self.current_scene_name = "MainMenu"
         self.current_scene = self.scenes[self.current_scene_name]
@@ -91,10 +110,8 @@ class SceneManager:
     def set_display_mode(self, mode):
         self.global_settings["display_mode"] = mode
         new_screen = create_display(mode, self.width, self.height)
-        # set_mode yeni surface döndürebilir; tüm sahne referanslarını tazele
-        self.screen = new_screen
-        for scene in self.scenes.values():
-            scene.screen = new_screen
+        self.real_screen = new_screen
+        # scene'lerin screen referansı zaten self.logical_surface olarak sabit
         self.save_settings()
 
     def save_settings(self):
@@ -133,3 +150,11 @@ class SceneManager:
     def draw(self):
         self.screen.fill((20, 20, 30)) # Koyu arka plan
         self.current_scene.draw()
+        
+        # Manuel ölçekleme: logical_surface'ı fiziksel ekrana çiz
+        rs_size = self.real_screen.get_size()
+        if rs_size != (self.width, self.height):
+            scaled = pygame.transform.smoothscale(self.screen, rs_size)
+            self.real_screen.blit(scaled, (0, 0))
+        else:
+            self.real_screen.blit(self.screen, (0, 0))

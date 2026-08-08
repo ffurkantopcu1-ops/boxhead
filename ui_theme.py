@@ -182,22 +182,29 @@ def render_banner_button(width, height, text, color, state="normal", skull=False
         sk = render_skull(1, glow=hover)
         surf.blit(sk, (nw // 2 - SKULL_W // 2, (1 if pressed else 0)))
 
-    # Metin: native boyutta serif render -> bütünle birlikte ölçeklenir
-    f_size = max(7, int(bh * 0.62))
-    font = pygame.font.SysFont(_FONT_NAME, f_size, bold=True)
+    # Banner yüzeyini önce ölçeklendir
+    out = pygame.transform.scale(surf, (nw * s, (nh + over_n) * s))
+
+    # Metni direkt olarak ölçeklenmiş yüzeye (out) kendi net font boyutuyla çiz
+    f_size_scaled = max(7 * s, int(bh * 0.62 * s))
+    font = pygame.font.SysFont(_FONT_NAME, f_size_scaled, bold=True)
     t_col = (150, 148, 142) if disabled else TEXT_COL
     txt = font.render(text, True, t_col)
-    max_tw = bw - 2 * inset - 6
-    if txt.get_width() > max_tw and max_tw > 0:
-        ratio = max_tw / txt.get_width()
-        txt = pygame.transform.scale(txt, (max_tw, max(1, int(txt.get_height() * ratio))))
-    tx_ = nw // 2 - txt.get_width() // 2
-    ty_ = by + bh // 2 - txt.get_height() // 2 + 1
-    sh = pygame.transform.scale(font.render(text, True, (20, 10, 8)), txt.get_size())
-    surf.blit(sh, (tx_ + 1, ty_ + 1))
-    surf.blit(txt, (tx_, ty_))
-
-    out = pygame.transform.scale(surf, (nw * s, (nh + over_n) * s))
+    
+    max_tw_scaled = (bw - 2 * inset - 6) * s
+    if txt.get_width() > max_tw_scaled and max_tw_scaled > 0:
+        ratio = max_tw_scaled / txt.get_width()
+        txt = pygame.transform.smoothscale(txt, (max_tw_scaled, max(1, int(txt.get_height() * ratio))))
+        
+    tx_scaled = (nw * s) // 2 - txt.get_width() // 2
+    ty_scaled = (by * s) + (bh * s) // 2 - txt.get_height() // 2 + s
+    
+    # Gölge
+    sh = font.render(text, True, (20, 10, 8))
+    if sh.get_size() != txt.get_size():
+        sh = pygame.transform.smoothscale(sh, txt.get_size())
+    out.blit(sh, (tx_scaled + max(1, s // 2), ty_scaled + max(1, s // 2)))
+    out.blit(txt, (tx_scaled, ty_scaled))
     result = (out, over_n * s)
     _button_cache[key] = result
     return result
