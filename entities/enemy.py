@@ -134,7 +134,10 @@ class Enemy:
         elif self.type == "kamikaze":
             self.max_hp = 60 * wave_scale
             self.hp = self.max_hp
-            self.speed = 5.0 + min(wave_level * 0.12, 3.0)
+            # Rusher: en hızlı düşman OLMALI ama en hızlı sınıfı (ninja 7.2)
+            # GEÇMEMELI — yoksa geç oyunda kimse kaçamaz, konumlama karşı-oyunu
+            # yok olur. Tavan 3.0->2.2 ile üst hız 8.0->7.2'ye çekildi.
+            self.speed = 5.0 + min(wave_level * 0.12, 2.2)
             self.dmg = 40 * wave_scale
             self.color = (230, 140, 30)     # Koyu Turuncu
             self.xp_reward = 25 * xp_mult

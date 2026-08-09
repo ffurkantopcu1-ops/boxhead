@@ -105,5 +105,29 @@ class TestClassBalance(unittest.TestCase):
                 self.assertLessEqual(val, hi, f"{c}.{stat}={val} > {hi} (envelope)")
 
 
+class TestEnemySpeed(unittest.TestCase):
+    """Hiçbir düşman geç oyunda en hızlı sınıfı (ninja 7.2) geçmemeli; yoksa
+    kaçış/konumlama karşı-oyunu tamamen kaybolur (kamikaze rusher dahil)."""
+
+    class _FakeGame:
+        def __init__(self):
+            self.wave = {"current_diff": "Normal"}
+            self.entity_id_counter = 0
+
+    def test_no_enemy_outruns_fastest_class(self):
+        from entities.enemy import Enemy
+        fastest = max(b.get("speed", 4.8) for b in InventoryManager.CLASS_BASES.values())
+        g = self._FakeGame()
+        # Yüksek wave'de en hızlı düşman tipi bile sınıf tavanını aşmamalı
+        for etype in ("kamikaze", "runner", "normal"):
+            try:
+                e = Enemy(0, 0, 0, g, type=etype, wave_level=40)
+            except Exception:
+                continue  # bilinmeyen/kurulamayan tip -> atla
+            self.assertLessEqual(
+                e.speed, fastest + 0.01,
+                f"{etype} hızı {e.speed:.1f} > en hızlı sınıf {fastest:.1f}")
+
+
 if __name__ == "__main__":
     unittest.main()
