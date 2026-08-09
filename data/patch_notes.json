@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "1.17.0",
+      "date": "2026-08-09",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "mini harita, eşya kıyas tooltip'i, gotik yazı tipi ve ağaç kaydır/yakınlaştır",
+          "devasa PoE-tarzı yetenek ağacı (çark, ~230 düğüm)"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "yanlış silahla sınıf değişimi (savaş ailesi kuralı) + bombacı erken hasar dengesi",
+          "düşman mermileri ekran ölçeklemesinde kaybolup titriyordu (blink)"
+        ]
+      }
+    },
+    {
       "version": "1.16.0",
       "date": "2026-08-09",
       "categories": {
@@ -9,6 +23,7 @@
           "node tabanlı yetenek ağacı (skill tree)"
         ],
         "📦 Diğer": [
+          "release: v1.16.0",
           "erken erişim (early access) etiketi ve CLAUDE.md"
         ]
       }
