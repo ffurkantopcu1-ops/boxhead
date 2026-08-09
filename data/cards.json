@@ -218,6 +218,7 @@
         "name": "💀 Ölümsüz Ordu",
         "desc": "Etki: Düşmanların minyona dönüşme şansı %15 olur. Bedel: Kendi hasarın %15 azalır.",
         "category": "minion",
+        "affinity": ["beastmaster"],
         "apply": "_apply_undead_army",
         "stats": {
             "dmgMult": -0.15
@@ -228,6 +229,7 @@
         "name": "🎖️ Savaş Komutanı",
         "desc": "Etki: Minyon hasarı %80 artar. Bedel: Kendi saldırı hasarın %30 azalır.",
         "category": "minion",
+        "affinity": ["beastmaster"],
         "apply": "_apply_war_commander",
         "stats": {
             "minionDamage": 0.8,
@@ -239,6 +241,7 @@
         "name": "🐜 Sürü Lordu",
         "desc": "Etki: Minyon limitin 2, minyon saldırı hızın %20 artar. Bedel: Kendi saldırı hasarın %20 azalır.",
         "category": "minion",
+        "affinity": ["beastmaster"],
         "apply": "_apply_swarmlord",
         "stats": {
             "minionCount": 2,
@@ -251,6 +254,7 @@
         "name": "🐺 Alfa Bağı",
         "desc": "Etki: Tek aktif petin 2 kat hasar verir. Bedel: Aynı anda yalnızca 1 pet kullanabilirsin.",
         "category": "minion",
+        "affinity": ["beastmaster"],
         "apply": "_apply_alpha_bond",
         "stats": {
             "minionDamage": 1.0
@@ -261,6 +265,7 @@
         "name": "🔗 Vahşi Bağı",
         "desc": "Etki: Minyonların kritik şansı %30 artar. Bedel: 20 zırh kaybedersin.",
         "category": "minion",
+        "affinity": ["beastmaster"],
         "apply": "_apply_spirit_link",
         "stats": {
             "minionCrit": 0.3,
@@ -463,6 +468,7 @@
         "name": "⚙️ Seri Üretim",
         "desc": "Etki: +1 taret şarjı (aynı anda daha fazla taret kurabilirsin). Bedel: Verdiğin hasar %15 azalır.",
         "category": "support",
+        "affinity": ["engineer"],
         "apply": "_apply_mass_production",
         "stats": {
             "turretCharges": 1,
@@ -474,6 +480,7 @@
         "name": "🏭 Fabrika Hattı",
         "desc": "Etki: +1 taret limiti ve taretler %25 daha hızlı ateş eder. Bedel: Hareket hızın %20 azalır.",
         "category": "support",
+        "affinity": ["engineer"],
         "apply": "_apply_factory_line",
         "stats": {
             "turretLimit": 1,
@@ -486,6 +493,7 @@
         "name": "🔧 Aşırı Yükleme",
         "desc": "Etki: +2 taret limiti, +1 şarj ve taretler %40 daha sert vurur. Bedel: Taretlerin canı yarıya iner ve maksimum canın %15 azalır.",
         "category": "support",
+        "affinity": ["engineer"],
         "apply": "_apply_overclock",
         "stats": {
             "turretLimit": 2,
@@ -493,5 +501,192 @@
             "turretDmg": 0.4,
             "max_hp_pct": -15
         }
+    },
+
+    {
+        "id": "bomb_barrage",
+        "name": "💣 Bomba Yağmuru",
+        "desc": "Etki: Alan etkin %30 artar. Bedel: Saldırı hızın %15 azalır.",
+        "category": "offense",
+        "affinity": ["bomber"],
+        "apply": "_apply_bomb_barrage",
+        "stats": { "aoe_bonus": 0.30, "fireRate": -0.15 }
+    },
+    {
+        "id": "cluster_bomb",
+        "name": "🧷 Küme Bombası",
+        "desc": "Etki: Hasarın %25, alan etkin %15 artar. Bedel: Hareket hızın 0.4 azalır.",
+        "category": "offense",
+        "affinity": ["bomber"],
+        "apply": "_apply_cluster_bomb",
+        "stats": { "dmgMult": 0.25, "aoe_bonus": 0.15, "speed": -0.4 }
+    },
+    {
+        "id": "napalm",
+        "name": "🔥 Napalm",
+        "desc": "Etki: +12 sabit ateş hasarı ve %15 alan etkisi. Bedel: Maksimum can %15 azalır.",
+        "category": "elemental",
+        "affinity": ["bomber"],
+        "apply": "_apply_napalm",
+        "stats": { "fireDmgFlat": 12, "aoe_bonus": 0.15, "max_hp_pct": -15 }
+    },
+    {
+        "id": "shrapnel",
+        "name": "🔩 Şarapnel",
+        "desc": "Etki: +10 fiziksel hasar ve +1 delme. Bedel: Hareket hızın 0.3 azalır.",
+        "category": "offense",
+        "affinity": ["bomber"],
+        "apply": "_apply_shrapnel",
+        "stats": { "physDmgFlat": 10, "pierce": 1, "speed": -0.3 }
+    },
+    {
+        "id": "demolition",
+        "name": "☢️ Yıkım Uzmanı",
+        "desc": "Etki: Alan etkin %50, hasarın %20 artar. Bedel: %30 daha fazla hasar alırsın.",
+        "category": "offense",
+        "affinity": ["bomber"],
+        "apply": "_apply_demolition",
+        "stats": { "aoe_bonus": 0.50, "dmgMult": 0.20 }
+    },
+
+    {
+        "id": "armor_piercing",
+        "name": "🎯 Zırh Delici",
+        "desc": "Etki: +2 delme ve düşman zırhının %50'sini yok sayarsın. Bedel: Saldırı hızın %15 azalır.",
+        "category": "offense",
+        "affinity": ["sniper"],
+        "apply": "_apply_armor_piercing",
+        "stats": { "pierce": 2, "armorPen": 0.5, "fireRate": -0.15 }
+    },
+    {
+        "id": "headhunter",
+        "name": "💀 Kelle Avcısı",
+        "desc": "Etki: Kritik hasarın %40 artar. Bedel: 30 zırh kaybedersin.",
+        "category": "offense",
+        "affinity": ["sniper"],
+        "apply": "_apply_headhunter",
+        "stats": { "critDmg": 0.4, "armor": -30 }
+    },
+    {
+        "id": "deadeye",
+        "name": "👁️ Keskin Göz",
+        "desc": "Etki: Kritik şansın %15 artar. Bedel: Saldırı hızın %20 azalır.",
+        "category": "offense",
+        "affinity": ["sniper"],
+        "apply": "_apply_deadeye",
+        "stats": { "critChance": 0.15, "fireRate": -0.20 }
+    },
+    {
+        "id": "long_barrel",
+        "name": "🔭 Uzun Namlu",
+        "desc": "Etki: Hasarın %30 ve mermi hızın artar. Bedel: Hareket hızın 0.5 azalır.",
+        "category": "offense",
+        "affinity": ["sniper"],
+        "apply": "_apply_long_barrel",
+        "stats": { "dmgMult": 0.30, "bullet_speed": 2, "speed": -0.5 }
+    },
+
+    {
+        "id": "shadow_step",
+        "name": "🌑 Gölge Adımı",
+        "desc": "Etki: Kaçınma şansın %20 artar. Bedel: 20 zırh kaybedersin.",
+        "category": "survival",
+        "affinity": ["ninja"],
+        "apply": "_apply_shadow_step",
+        "stats": { "dodgeChance": 0.20, "armor": -20 }
+    },
+    {
+        "id": "thousand_cuts",
+        "name": "🗡️ Bin Kesik",
+        "desc": "Etki: Saldırı hızın %30 artar. Bedel: Vuruş başına hasarın %20 azalır.",
+        "category": "offense",
+        "affinity": ["ninja"],
+        "apply": "_apply_thousand_cuts",
+        "stats": { "attack_speed_bonus": 0.30, "dmgMult": -0.20 }
+    },
+    {
+        "id": "assassinate",
+        "name": "🔪 Suikast",
+        "desc": "Etki: Canı %25'in altındaki düşmanları anında infaz edersin. Bedel: Maksimum can %15 azalır.",
+        "category": "offense",
+        "affinity": ["ninja"],
+        "apply": "_apply_assassinate",
+        "stats": { "lowHpExec": 0.25, "max_hp_pct": -15 }
+    },
+    {
+        "id": "swift_reflexes",
+        "name": "💨 Hızlı Refleks",
+        "desc": "Etki: +0.8 hız ve %10 kaçınma. Bedel: Maksimum can %15 azalır.",
+        "category": "survival",
+        "affinity": ["ninja"],
+        "apply": "_apply_swift_reflexes",
+        "stats": { "speed": 0.8, "dodgeChance": 0.10, "max_hp_pct": -15 }
+    },
+
+    {
+        "id": "rampage",
+        "name": "⚔️ Cinnet",
+        "desc": "Etki: Hasarın %40, yakın menzilin artar. Bedel: Maksimum can %20 azalır.",
+        "category": "offense",
+        "affinity": ["warrior"],
+        "apply": "_apply_rampage",
+        "stats": { "dmgMult": 0.40, "meleeRangeFlat": 30, "max_hp_pct": -20 }
+    },
+    {
+        "id": "juggernaut",
+        "name": "🐗 Ezici Güç",
+        "desc": "Etki: +60 zırh ve +80 maksimum can. Bedel: Hareket hızın 0.6 azalır.",
+        "category": "survival",
+        "affinity": ["warrior"],
+        "apply": "_apply_juggernaut",
+        "stats": { "armor": 60, "max_hp": 80, "speed": -0.6 }
+    },
+
+    {
+        "id": "auto_targeting",
+        "name": "🎯 Otomatik Nişan",
+        "desc": "Etki: Taret hasarı %30 artar. Bedel: Kendi hasarın %15 azalır.",
+        "category": "support",
+        "affinity": ["engineer"],
+        "apply": "_apply_auto_targeting",
+        "stats": { "turretDmg": 0.30, "dmgMult": -0.15 }
+    },
+    {
+        "id": "reinforced_turrets",
+        "name": "🛠️ Takviyeli Taret",
+        "desc": "Etki: +100 taret canı ve %20 taret atış hızı. Bedel: Hareket hızın 0.4 azalır.",
+        "category": "support",
+        "affinity": ["engineer"],
+        "apply": "_apply_reinforced_turrets",
+        "stats": { "turretMaxHp": 100, "turretRate": 0.20, "speed": -0.4 }
+    },
+
+    {
+        "id": "toxic_cloud",
+        "name": "☁️ Zehirli Bulut",
+        "desc": "Etki: DoT hasarın %30, alan etkin %20 artar. Bedel: Doğrudan vuruş hasarın %20 azalır.",
+        "category": "elemental",
+        "affinity": ["alchemist"],
+        "apply": "_apply_toxic_cloud",
+        "stats": { "dotDmgMult": 0.30, "aoe_bonus": 0.20, "dmgMult": -0.20 }
+    },
+    {
+        "id": "corrosion",
+        "name": "🧪 Aşındırma",
+        "desc": "Etki: Düşman zırhını tamamen yok sayar ve saniyede +15 zehir hasarı verirsin. Bedel: Maksimum can %15 azalır.",
+        "category": "elemental",
+        "affinity": ["alchemist"],
+        "apply": "_apply_corrosion",
+        "stats": { "armorPen": 1.0, "poisonDps": 15, "max_hp_pct": -15 }
+    },
+
+    {
+        "id": "arcane_surge",
+        "name": "🔮 Gizem Dalgası",
+        "desc": "Etki: Elemental hasarın %40 artar. Bedel: Maksimum can %20 azalır.",
+        "category": "elemental",
+        "affinity": ["sorcerer"],
+        "apply": "_apply_arcane_surge",
+        "stats": { "elementDmgMult": 0.40, "max_hp_pct": -20 }
     }
 ]

@@ -44,7 +44,7 @@ class CardSystem:
         if not self.pending_start_card:
             return None
         self.pending_start_card = False
-        offered = self.offer_cards(1)
+        offered = self.offer_cards(1, player_class=getattr(player, "base_class_id", None))
         if not offered:
             return None
         self.apply_card(offered[0]["id"], player)
@@ -86,16 +86,33 @@ class CardSystem:
                     return True
         return False
 
-    def offer_cards(self, count: int = None) -> list:
+    @staticmethod
+    def _card_allowed(card, player_class):
+        """Sinif-uyumu (affinity) filtresi.
+
+        `affinity` alani olmayan kartlar EVRENSELDIR (herkese sunulur). Alani
+        olanlar yalnizca listedeki siniflara sunulur; boylece bir savasciya
+        taret karti, bir nisanciya minyon karti gibi OLU secimler gelmez.
+        player_class None ise (sinif bilinmiyor) filtre uygulanmaz - geriye
+        donuk uyumluluk."""
+        aff = card.get("affinity")
+        if not aff or player_class is None:
+            return True
+        return player_class in aff
+
+    def offer_cards(self, count: int = None, player_class: str = None) -> list:
         """Henüz aktif olmayan kartlardan rastgele `count` adet sunar.
 
         count verilmezse taban 3 + "Kart Görünürlüğü" kristal yükseltmesi
         kullanılır. "Efsane Kart Şansı" yükseltmesi her slot için lanetli
-        kartların çıkma olasılığını artırır (G2).
+        kartların çıkma olasılığını artırır (G2). player_class verilirse
+        sinif-uyumlu olmayan (affinity) kartlar elenir (bkz. _card_allowed).
         """
         if count is None:
             count = 3 + self.bonus_card_count
-        available = [c for c in self.CARDS if c["id"] not in self.active_cards]
+        available = [c for c in self.CARDS
+                     if c["id"] not in self.active_cards
+                     and self._card_allowed(c, player_class)]
         count = min(count, len(available))
         if count <= 0:
             return []
@@ -514,6 +531,178 @@ class CardSystem:
         sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
         player.skills_permanent = sp
         setattr(player, "turret_hp_penalty", 0.5)
+
+    # ------------------------------------------------------------------
+    # SINIF KİMLİK KARTLARI (v1.16) — sinif-uyumlu (affinity) havuz.
+    # Her biri bir bedel tasir (AGENTS.md guc butcesi). Cogu yalnizca
+    # skills_permanent'a yazar; recalculate_stats bunlari toplar.
+    # ------------------------------------------------------------------
+
+    # --- BOMBACI: AoE / tuzak ---
+    def _apply_bomb_barrage(self, player):
+        """💣 Bomba Yağmuru — +%30 Alan. Bedel: -%15 saldırı hızı."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["aoe_bonus"] = sp.get("aoe_bonus", 0) + 0.30
+        sp["fireRate"] = sp.get("fireRate", 0) - 0.15
+        player.skills_permanent = sp
+
+    def _apply_cluster_bomb(self, player):
+        """🧷 Küme Bombası — +%25 Hasar, +%15 Alan. Bedel: -0.4 hız."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["dmgMult"] = sp.get("dmgMult", 0) + 0.25
+        sp["aoe_bonus"] = sp.get("aoe_bonus", 0) + 0.15
+        sp["speed"] = sp.get("speed", 0) - 0.4
+        player.skills_permanent = sp
+
+    def _apply_napalm(self, player):
+        """🔥 Napalm — +12 Ateş Hasarı, +%15 Alan. Bedel: Max Can %15 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["fireDmgFlat"] = sp.get("fireDmgFlat", 0) + 12
+        sp["aoe_bonus"] = sp.get("aoe_bonus", 0) + 0.15
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
+        player.skills_permanent = sp
+        player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
+
+    def _apply_shrapnel(self, player):
+        """🔩 Şarapnel — +10 Fiziksel Hasar, +1 Delme. Bedel: -0.3 hız."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["physDmgFlat"] = sp.get("physDmgFlat", 0) + 10
+        sp["pierce"] = sp.get("pierce", 0) + 1
+        sp["speed"] = sp.get("speed", 0) - 0.3
+        player.skills_permanent = sp
+
+    def _apply_demolition(self, player):
+        """☢️ Yıkım Uzmanı — +%50 Alan, +%20 Hasar. Bedel: %30 daha fazla hasar alırsın."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["aoe_bonus"] = sp.get("aoe_bonus", 0) + 0.50
+        sp["dmgMult"] = sp.get("dmgMult", 0) + 0.20
+        player.skills_permanent = sp
+        player.damage_taken_mult = getattr(player, "damage_taken_mult", 1.0) * 1.30
+
+    # --- NİŞANCI: kritik / delme / menzil ---
+    def _apply_armor_piercing(self, player):
+        """🎯 Zırh Delici — +2 Delme, +%50 Zırh Delme. Bedel: -%15 saldırı hızı."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["pierce"] = sp.get("pierce", 0) + 2
+        sp["armorPen"] = sp.get("armorPen", 0) + 0.5
+        sp["fireRate"] = sp.get("fireRate", 0) - 0.15
+        player.skills_permanent = sp
+
+    def _apply_headhunter(self, player):
+        """💀 Kelle Avcısı — +%40 Kritik Hasar. Bedel: 30 zırh kaybedersin."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["critDmg"] = sp.get("critDmg", 0) + 0.4
+        sp["armor"] = sp.get("armor", 0) - 30
+        player.skills_permanent = sp
+
+    def _apply_deadeye(self, player):
+        """👁️ Keskin Göz — +%15 Kritik Şans. Bedel: -%20 saldırı hızı."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["critChance"] = sp.get("critChance", 0) + 0.15
+        sp["fireRate"] = sp.get("fireRate", 0) - 0.20
+        player.skills_permanent = sp
+
+    def _apply_long_barrel(self, player):
+        """🔭 Uzun Namlu — +%30 Hasar, +2 Mermi Hızı. Bedel: -0.5 hız."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["dmgMult"] = sp.get("dmgMult", 0) + 0.30
+        sp["bullet_speed"] = sp.get("bullet_speed", 0) + 2
+        sp["speed"] = sp.get("speed", 0) - 0.5
+        player.skills_permanent = sp
+
+    # --- NİNJA: kaçınma / saldırı hızı / infaz ---
+    def _apply_shadow_step(self, player):
+        """🌑 Gölge Adımı — +%20 Kaçınma. Bedel: 20 zırh kaybedersin."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["dodgeChance"] = sp.get("dodgeChance", 0) + 0.20
+        sp["armor"] = sp.get("armor", 0) - 20
+        player.skills_permanent = sp
+
+    def _apply_thousand_cuts(self, player):
+        """🗡️ Bin Kesik — +%30 Saldırı Hızı. Bedel: Vuruş başına hasar %20 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["attack_speed_bonus"] = sp.get("attack_speed_bonus", 0) + 0.30
+        sp["dmgMult"] = sp.get("dmgMult", 0) - 0.20
+        player.skills_permanent = sp
+
+    def _apply_assassinate(self, player):
+        """🔪 Suikast — Canı %25 altındaki düşmanları infaz. Bedel: Max Can %15 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["lowHpExec"] = sp.get("lowHpExec", 0) + 0.25
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
+        player.skills_permanent = sp
+        player.execute_threshold = max(getattr(player, "execute_threshold", 0.0), 0.25)
+        player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
+
+    def _apply_swift_reflexes(self, player):
+        """💨 Hızlı Refleks — +0.8 Hız, +%10 Kaçınma. Bedel: Max Can %15 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["speed"] = sp.get("speed", 0) + 0.8
+        sp["dodgeChance"] = sp.get("dodgeChance", 0) + 0.10
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
+        player.skills_permanent = sp
+        player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
+
+    # --- SAVAŞÇI: yakın dövüş / tank ---
+    def _apply_rampage(self, player):
+        """⚔️ Cinnet — +%40 Hasar, +30 Yakın Menzil. Bedel: Max Can %20 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["dmgMult"] = sp.get("dmgMult", 0) + 0.40
+        sp["meleeRangeFlat"] = sp.get("meleeRangeFlat", 0) + 30
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 20
+        player.skills_permanent = sp
+        player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
+
+    def _apply_juggernaut(self, player):
+        """🐗 Ezici Güç — +60 Zırh, +80 Max Can. Bedel: -0.6 hız."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["armor"] = sp.get("armor", 0) + 60
+        sp["max_hp"] = sp.get("max_hp", 0) + 80
+        sp["speed"] = sp.get("speed", 0) - 0.6
+        player.skills_permanent = sp
+
+    # --- MÜHENDİS: taret ---
+    def _apply_auto_targeting(self, player):
+        """🎯 Otomatik Nişan — +%30 Taret Hasarı. Bedel: Kendi hasarın %15 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["turretDmg"] = sp.get("turretDmg", 0) + 0.30
+        sp["dmgMult"] = sp.get("dmgMult", 0) - 0.15
+        player.skills_permanent = sp
+
+    def _apply_reinforced_turrets(self, player):
+        """🛠️ Takviyeli Taret — +100 Taret Canı, +%20 Taret Hızı. Bedel: -0.4 hız."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["turretMaxHp"] = sp.get("turretMaxHp", 0) + 100
+        sp["turretRate"] = sp.get("turretRate", 0) + 0.20
+        sp["speed"] = sp.get("speed", 0) - 0.4
+        player.skills_permanent = sp
+
+    # --- SİMYACI: DoT / alan ---
+    def _apply_toxic_cloud(self, player):
+        """☁️ Zehirli Bulut — +%30 DoT, +%20 Alan. Bedel: Doğrudan hasar %20 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["dotDmgMult"] = sp.get("dotDmgMult", 0) + 0.30
+        sp["aoe_bonus"] = sp.get("aoe_bonus", 0) + 0.20
+        sp["dmgMult"] = sp.get("dmgMult", 0) - 0.20
+        player.skills_permanent = sp
+
+    def _apply_corrosion(self, player):
+        """🧪 Aşındırma — Zırh delme tam, +15 Zehir DPS. Bedel: Max Can %15 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["armorPen"] = sp.get("armorPen", 0) + 1.0
+        sp["poisonDps"] = sp.get("poisonDps", 0) + 15
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
+        player.skills_permanent = sp
+        player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
+
+    # --- BÜYÜCÜ: elemental ---
+    def _apply_arcane_surge(self, player):
+        """🔮 Gizem Dalgası — +%40 Elemental Hasar. Bedel: Max Can %20 azalır."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["elementDmgMult"] = sp.get("elementDmgMult", 0) + 0.40
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 20
+        player.skills_permanent = sp
+        player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
 
 
 # --- Veri dogrulamasi (acilista bir kez) ---

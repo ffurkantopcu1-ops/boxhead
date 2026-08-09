@@ -1293,7 +1293,8 @@ class GameLogic:
             
         # 5. Pasif Kart Sistemi (Her 3 Dalgada Bir)
         if self.wave["level"] > 1 and self.wave["level"] % 3 == 0:
-            cards = self.card_system.offer_cards()
+            _pc = getattr(self.players[self.local_player_id], "base_class_id", None)
+            cards = self.card_system.offer_cards(player_class=_pc)
             if cards:
                 self.pending_cards = cards
                 self.state = "CARD_SELECT"
