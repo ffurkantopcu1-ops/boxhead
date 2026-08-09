@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.18.2",
+      "date": "2026-08-10",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "kamikaze hız tavanı 8.0->7.2 (en hızlı sınıfı geçmesin)"
+        ]
+      }
+    },
+    {
       "version": "1.18.1",
       "date": "2026-08-10",
       "categories": {
@@ -8,6 +17,7 @@
           "büyücü ve bombacı erken oyun güçlendirmesi"
         ],
         "📦 Diğer": [
+          "release: v1.18.1",
           "sınıf denge regresyon testi (dalga-1 DPS/EHP + class_bases envelope)"
         ]
       }
