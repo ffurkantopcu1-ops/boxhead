@@ -2,6 +2,7 @@ import math
 import pygame
 import random
 import vfx
+import audio
 
 class Ninja:
     """
@@ -49,6 +50,8 @@ class Ninja:
             dmg *= 2.0
             game.add_event("damage_text", player.x, player.y - 30, value="BACKSTAB!", color=(255, 50, 50), timer=0.5)
             player.next_attack_is_backstab = False
+            
+        audio.play('melee')
             
         game.add_event(visual_type, player.x, player.y, angle=angle, range=range_visual, arc=1.4, timer=visual_timer)
         

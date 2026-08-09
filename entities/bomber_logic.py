@@ -2,6 +2,7 @@ import math
 import pygame
 import random
 import vfx
+import audio
 
 
 class Bomber:
@@ -88,6 +89,7 @@ class Bomber:
                * player.get_conditional_dmg_mult())
 
         range_val = 110 * player.stats.get("aoe", 1.0)
+        audio.play('melee')
         game.add_event("explosion", player.x + math.cos(angle) * 40,
                        player.y + math.sin(angle) * 40,
                        radius=int(range_val * 0.6), color=(255, 140, 40), timer=0.15)

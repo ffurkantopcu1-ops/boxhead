@@ -2,6 +2,7 @@ import math
 import pygame
 import random
 import vfx
+import audio
 
 class Beastmaster:
     """
@@ -60,6 +61,7 @@ class Beastmaster:
                 if m.owner == player:
                     m.priority_target = target_enemy
                     m.last_attack_time = 0 # Saldırı bekleme süresini sıfırla (Anında saldır)
+                    audio.play('melee')
                     game.add_event("slash", target_enemy.x, target_enemy.y, color=(155, 89, 182), timer=0.2)
 
     def update(self, dt, player, game):

@@ -1,6 +1,7 @@
 import math
 import random
 import vfx
+import audio
 
 class Bloodwalker:
     """
@@ -75,6 +76,7 @@ class Bloodwalker:
                     p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0) * elem_mult
 
                     if fire_dmg > 0:
+                        audio.play('melee')
                         game.add_event("explosion", e.x, e.y, radius=70, color=(200, 60, 0), timer=0.12)
                         for other in game.iter_enemies_near(e.x, e.y, 70):
                             if not other.dead and not other.is_trap and other != e:

@@ -1,6 +1,7 @@
 import math
 import pygame
 import vfx
+import audio
 
 class Engineer:
     """
@@ -37,6 +38,7 @@ class Engineer:
         tick_dmg = base_fire * dmg_mult * fire_mult
         burn_dps = tick_dmg * 0.9
 
+        audio.play('flame')
         vfx.flamethrower(game, player.x, player.y, angle, rng, arc)
 
         hit_any = False
@@ -79,14 +81,19 @@ class Engineer:
         # (bkz. player.try_place_turret / game_scene R tuşu). Eskiden taret kiti
         # takılıyken execute_attack koşulsuz return ediyordu, yani Mühendis
         # bekleme süresi boyunca hiçbir hasar veremiyordu.
-        if weapon and weapon.get("isTurret"):
-            # Taret kiti bir "ekipman"; elde silah gibi vurmaz.
-            return
+        # Taret kiti bir EKİPMAN: taretleri güçlendirir, silah gibi vurmaz.
+        # Ama saldırıyı ÖLDÜRMEMELİ — koşulsuz return ediyordu ve kiti
+        # kuşanan oyuncu hiç hasar veremiyordu, yani kit bir TUZAK eşyaydı.
+        # Artık zayıf yumrukla dövüşür: güçlü taret / zayıf şahsi hasar
+        # dengesi kurulur.
+        is_turret_kit = bool(weapon and weapon.get("isTurret"))
 
         # Yakın Dövüş Modu (Silah varsa Keser, yoksa Yumruk)
         angle = player.facing_angle
-        is_punch = (weapon is None)
+        is_punch = (weapon is None) or is_turret_kit
         dmg = 25 * player.stats["dmgMult"] * player.get_conditional_dmg_mult() if not is_punch else 5
+        
+        audio.play('melee')
         
         game.add_event("slash", player.x, player.y, angle=angle, range=90, arc=1.0, timer=0.1)
         

@@ -4,6 +4,7 @@ import time
 import random
 
 import vfx
+import audio
 
 # Bombacı mayınının yerde bekleme süresi (saniye). Tetiklenmezse söner —
 # aksi halde oyuncu haritayı sınırsız mayınla doldurup performansı düşürür.
@@ -255,6 +256,7 @@ class Projectile:
                 _elem = 'poison'
             else:
                 _elem = 'phys'
+            # Ses vfx.hit() içinde çalınır (tek kaynak); burada tekrar etme.
             vfx.hit(game, self.x, self.y, _elem, is_crit=self.is_crit,
                     angle=math.atan2(self.vy, self.vx) + math.pi)
 
@@ -327,6 +329,7 @@ class Projectile:
         # mermide taşınan toplam hasardan türetilir (bomba hasarı poisonDps
         # üzerinden aktığı için burada tek seferlik fiziksel patlamaya çevrilir
         # — Bombacı'da zehir DoT'u kalmaz, kimlik Simyacı'dan ayrışır).
+        audio.play('explosion')
         if self.becomes_mine and not small:
             mine_radius = radius * self.mine_radius_mult
             burst = (self.dmg + self.fire_dmg + self.poison_dps) * self.mine_dmg_mult

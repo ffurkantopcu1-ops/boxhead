@@ -20,7 +20,10 @@ DISPLAY_MODE_LABELS = {
 
 def load_global_settings():
     """saves/settings.json'dan kalıcı ayarları okur (yoksa varsayılanlar)."""
-    settings = {"shake": True, "sound": True, "display_mode": "fullscreen"}
+    # sound: eski sürümlerde açık/kapalı bir bayraktı ve HİÇBİR ŞEYE bağlı
+    # değildi (oyunda ses yoktu). Artık 0-100 arası yüzde. Eski kayıtlarla
+    # uyumluluk: True -> 70, False -> 0.
+    settings = {"shake": True, "sound": 70, "display_mode": "fullscreen"}
     try:
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             settings.update(json.load(f))
@@ -28,6 +31,15 @@ def load_global_settings():
         pass
     if settings.get("display_mode") not in DISPLAY_MODES:
         settings["display_mode"] = "fullscreen"
+
+    vol = settings.get("sound", 70)
+    if isinstance(vol, bool):
+        vol = 70 if vol else 0
+    try:
+        vol = int(vol)
+    except (TypeError, ValueError):
+        vol = 70
+    settings["sound"] = max(0, min(100, vol))
     return settings
 
 

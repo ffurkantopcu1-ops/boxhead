@@ -6,6 +6,7 @@ import random
 import pygame
 
 import vfx
+import audio
 
 # --- BULUT GÖRSELİ ---
 # Tek bir yeşil zehir sprite'ı üretildi; diğer tipler (ateş/buz/ağ/kara delik/
@@ -142,6 +143,7 @@ class Cloud:
         if self.dead:
             return
         self.dead = True
+        audio.play('explosion')
         game.add_event("explosion", self.x, self.y, radius=self.radius,
                        color=(255, 80, 0), timer=0.3)
         for me in game.iter_enemies_near(self.x, self.y, self.radius):

@@ -42,6 +42,10 @@ def main():
 
     # Kayıtlı ekran moduna göre pencere: fullscreen / borderless / windowed
     settings = load_global_settings()
+
+    # Ses katmanı. Başarısız olursa oyun sessiz devam eder (bloke etmez).
+    import audio
+    audio.init(settings.get("sound", 70))
     screen = create_display(settings.get("display_mode", "fullscreen"), screen_width, screen_height)
     pygame.display.set_caption("Boxhead 2.0: Native Evolution")
     

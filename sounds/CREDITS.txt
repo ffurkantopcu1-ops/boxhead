@@ -1,0 +1,16 @@
+Ses efektleri
+=============
+
+Kaynak : Kenney (https://kenney.nl) - asagidaki CC0 paketleri
+           Sci-fi Sounds, Impact Sounds, RPG Audio, Interface Sounds
+Lisans : Creative Commons Zero (CC0)
+         http://creativecommons.org/publicdomain/zero/1.0/
+         Kisisel ve ticari projelerde serbestce kullanilabilir.
+         Atif zorunlu degildir; kaynak yine de burada belgelenmistir.
+
+Dosyalar oyun icindeki olay adlariyla yeniden adlandirildi
+(ornek: impactPunch_medium_000.ogg -> hit_1.ogg). Sik tekrarlanan
+seslerin birden cok varyasyonu vardir (_1, _2, ...); audio.py her
+calisinda rastgele birini secer.
+
+'fira hit.mp3' projeye ait, Kenney kaynakli degildir.

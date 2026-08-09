@@ -494,9 +494,16 @@ def element(name):
 # Oyun kodu bunları çağırır; efekt tipi/parametre seçimi burada merkezî kalır.
 
 def hit(game, x, y, elem='phys', is_crit=False, angle=None):
-    """İsabet geri bildirimi. Eskiden normal vuruşun HİÇBİR görseli yoktu."""
+    """İsabet geri bildirimi. Eskiden normal vuruşun HİÇBİR görseli yoktu.
+
+    Ses de buradan çalınır: hem menzilli (Projectile.on_hit) hem yakın dövüş
+    sınıfları bu fonksiyondan geçiyor. Sesi çağrı noktalarına tek tek koymak
+    yarısını atlamaya yol açıyordu — isabet geri bildirimi tek kavram.
+    """
     if not hasattr(game, 'add_event'):
         return
+    import audio
+    audio.play('crit' if is_crit else 'hit')
     e = element(elem)
     if is_crit:
         game.add_event("fx", x, y, tex="crit", size=54, grow=0.9,

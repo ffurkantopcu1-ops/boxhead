@@ -1,6 +1,28 @@
 {
     "versions": [
         {
+            "version": "1.15.0",
+            "date": "2026-08-09",
+            "categories": {
+                "🔊 Oyunun sesi var artık": [
+                    "Oyunda hiç ses yoktu. Vuruş, kritik, düşman ölümü, hasar alma, patlama, alev, mermi, yakın dövüş savurması, sıyırma, iyileşme, seviye atlama, altın toplama, taret kurma ve arayüz sesleri eklendi.",
+                    "Sık duyulan sesler (isabet, ölüm) birden çok varyasyonla çalınıyor; aynı örneğin üst üste binmesi kulak tırmalıyordu.",
+                    "Ses dosyaları Kenney'nin CC0 paketlerinden: Sci-fi Sounds, Impact Sounds, RPG Audio, Interface Sounds.",
+                    "Ses kartı yoksa veya açılamazsa oyun sessiz devam eder, hata vermez."
+                ],
+                "🎚️ Yüzdesel ses ayarı": [
+                    "Duraklatma menüsüne ses seviyesi eklendi: 0-100 arası, %10'luk adımlarla. Sol/sağ ok tuşlarıyla veya tıklayarak ayarlanır ve çubukla gösterilir.",
+                    "Ayar kaydediliyor; her açılışta kaldığın seviyeden devam ediyor.",
+                    "Ayarlardaki eski 'ses açık/kapalı' anahtarı hiçbir şeye bağlı değildi (oyunda ses yoktu). Artık yüzde olarak çalışıyor; eski kayıtlar otomatik dönüştürülüyor."
+                ],
+                "🐞 Düzeltmeler": [
+                    "Mühendis taret kitiyle başlıyordu ama taret R tuşuna taşındığından kit artık vurmayan bir ekipman: sınıf hiç hasar veremeden başlıyordu. Artık alev silahıyla başlıyor.",
+                    "Yerden düşen 4 taret kiti de kuşanıldığında saldırıyı tamamen kesiyordu (tuzak eşya). Artık kit takan oyuncu zayıf yumrukla dövüşebiliyor: güçlü taret / zayıf şahsi hasar dengesi.",
+                    "Duraklatma menüsünün son satırı ('Oyuna geri dön') ne çiziliyor ne tıklanabiliyordu; satır sayısı sabit yazılmıştı."
+                ]
+            }
+        },
+        {
             "version": "1.14.0",
             "date": "2026-08-09",
             "categories": {

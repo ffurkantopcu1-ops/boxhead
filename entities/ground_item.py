@@ -2,6 +2,7 @@ import pygame
 import math
 from ui_elements import ImageLoader
 import vfx
+import audio
 
 class GroundItem:
     def __init__(self, id, x, y, item_data):
@@ -105,6 +106,7 @@ class GroundItem:
             if hasattr(game, 'track_quest'):
                 game.track_quest("earn_gold", amount)
             game.add_event("damage_text", self.x, self.y - 40, value=f"+{amount}G", color=(241, 196, 15), timer=0.8)
+            audio.play('pickup_gold')
             vfx.pickup(game, self.x, self.y, 'gold')
             self.dead = True
         elif self.type == 'potion':

@@ -15,6 +15,7 @@ from logic.quest_system import QuestSystem
 from logic.biome_system import BiomeSystem
 from logic.elite_system import EliteSystem
 from logic.crystal_shop import CrystalShop
+import audio
 
 class GameLogic:
     MAX_ACTIVE_ENEMIES = 220
@@ -1013,6 +1014,7 @@ class GameLogic:
             # Maç sonu özeti için en yüksek combo (kill_streak sıfırlanıyor)
             if self.kill_streak > self.stats.get('max_combo', 0):
                 self.stats['max_combo'] = self.kill_streak
+            audio.play('enemy_death')
             self.stats['enemies_killed'] = self.stats.get('enemies_killed', 0) + 1
             # Özel dalga (kill_race) skoru: süre sonunda ödüle çevrilir
             if self.wave.get("special"):

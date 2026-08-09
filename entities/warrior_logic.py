@@ -1,6 +1,7 @@
 import math
 import pygame
 import vfx
+import audio
 
 class Warrior:
     """
@@ -33,6 +34,7 @@ class Warrior:
         visual_timer = 0.15 if not is_punch else 0.1
         
         # Görsel Efekt
+        audio.play('melee')
         game.add_event(visual_type, player.x, player.y, angle=angle, range=range_val, arc=self.attack_arc, timer=visual_timer)
         
         # Hasar Kontrolü

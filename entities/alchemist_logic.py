@@ -2,6 +2,7 @@ import math
 import pygame
 import random
 import vfx
+import audio
 
 class Alchemist:
     """
@@ -66,6 +67,8 @@ class Alchemist:
         # Yumruk ise "slash", kılıç ise "slash" (Alchemist için ikisi de slash ama görsel süresi farklı)
         visual_type = "slash"
         visual_timer = 0.1 if not is_punch else 0.08
+        
+        audio.play('melee')
         
         game.add_event(visual_type, player.x, player.y, angle=angle, range=90, arc=1.0, timer=visual_timer)
         

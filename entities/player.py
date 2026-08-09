@@ -23,6 +23,7 @@ from entities.bloodwalker_logic import Bloodwalker
 from logic.inventory_manager import InventoryManager
 from logic.save_manager import SaveManager
 from logic.crystal_shop import CrystalShop
+import audio
 
 class Player:
     def __init__(self, id, x, y, class_id="warrior"):
@@ -259,7 +260,10 @@ class Player:
         elif cn == "bloodwalker":
             starting_weapon = {"name": "Kan Kılıcı", "type": "weapon", "isMelee": True, "weaponClass": "bloodwalker", "rarity": "Normal", "itemBase": {"physDmg": 14, "lifesteal": 0.15, "meleeRange": 50}, "prefixes": [], "suffixes": []}
         elif cn == "engineer":
-            starting_weapon = {"name": "Taret Kiti", "type": "weapon", "isTurret": True, "weaponClass": "engineer", "rarity": "Magic", "itemBase": {"turretDmg": 1.0}, "prefixes": [], "suffixes": []}
+            # Taret artık R yeteneği; taret kiti ise "vurmayan ekipman".
+            # Mühendis onunla başlayınca HİÇ doğrudan hasar veremiyordu.
+            # Başlangıç silahı sınıfın gerçek hasar kolu olan alev silahı.
+            starting_weapon = {"name": "Sızdıran Alev Tabancası", "type": "weapon", "isFlamethrower": True, "weaponClass": "engineer", "rarity": "Normal", "itemBase": {"fireDamage": 4, "attackCooldown": 115}, "prefixes": [], "suffixes": []}
 
         # Sınıf mantığını kur (Renk vb.)
         # --- POWER SCALING SYSTEMS ---
@@ -778,6 +782,7 @@ class Player:
         self.level_up_timer = 2.0 # 2 saniye ekranda yazı kalsın
         # Seviye atlamanın tek göstergesi bir yazıydı; artık görsel patlama var
         if hasattr(self, 'game') and self.game is not None:
+            audio.play('level_up')
             vfx.level_up(self.game, self.x, self.y)
         print(f"LEVEL UP! Yeni Seviye: {self.level}")
         
@@ -1132,6 +1137,7 @@ class Player:
             
             # Namlu Ateşi: dokulu parlama + kıvılcım konisi
             if i == 0:
+                audio.play('shoot')
                 vfx.muzzle(game, sx, sy, angle)
             vfx.emit(game, sx, sy, count=3, color=(255, 235, 180),
                      speed=(5.0, 10.0), size=(2, 5), life=(0.08, 0.14),
@@ -1276,6 +1282,7 @@ class Player:
         game.turrets.append(new_turret)
         game.entity_id_counter += 1
         # Kurulum geri bildirimi
+        audio.play('turret')
         game.add_event("shockwave", self.x, self.y, radius=70,
                        color=(120, 200, 255), timer=0.3)
         game.add_event("fx", self.x, self.y, tex="magic", size=64, grow=0.5,
@@ -1660,6 +1667,7 @@ class Player:
         # Küçük tikleri boğmamak için eşik: yalnız hissedilir şifada göster.
         _g = getattr(self, 'game', None)
         if _g is not None and actual_heal >= max(2.0, self.max_hp * 0.01):
+            audio.play('heal')
             vfx.heal(_g, self.x, self.y, actual_heal)
 
         # Kan Bankası (Blood Bank) overheal birikimi
@@ -1686,6 +1694,7 @@ class Player:
                 game.track_quest("dodge_hits", 1)
             # Görsel geri bildirim: eskiden hasarı savuşturduğun anlaşılmıyordu
             if game is not None:
+                audio.play('dodge')
                 vfx.dodge(game, self.x, self.y)
                 game.add_event("damage_text", self.x, self.y - 46,
                                value="SIYIRDI", color=(190, 220, 255), timer=0.5)
@@ -1706,6 +1715,8 @@ class Player:
             # kazanma) oluşuyordu (C3)
             final_dmg = amount * (100.0 / max(1.0, 100.0 + armor)) * getattr(self, "damage_taken_mult", 1.0)
             final_dmg = max(0.0, final_dmg)
+            if final_dmg > 0:
+                audio.play('player_hurt')
         else:
             final_dmg = amount
         

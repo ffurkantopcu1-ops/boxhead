@@ -425,8 +425,15 @@ class GameScene(BaseScene):
                 # --- AYARLAR MENÜSÜ KLAVYE KONTROLÜ ---
                 if self.show_settings:
                     if self.setting_tab == "main":
-                        if event.key == pygame.K_UP: self.selected_setting_idx = (self.selected_setting_idx - 1) % 8
-                        elif event.key == pygame.K_DOWN: self.selected_setting_idx = (self.selected_setting_idx + 1) % 8
+                        # Satır sayısı sabit yazılmıştı; ses satırı eklenince
+                        # son satır klavyeyle seçilemez hale geliyordu.
+                        n_rows = len(self._pause_labels())
+                        if event.key == pygame.K_UP: self.selected_setting_idx = (self.selected_setting_idx - 1) % n_rows
+                        elif event.key == pygame.K_DOWN: self.selected_setting_idx = (self.selected_setting_idx + 1) % n_rows
+                        elif event.key in (pygame.K_LEFT, pygame.K_RIGHT) \
+                                and self.selected_setting_idx == self.SOUND_ROW:
+                            self.adjust_volume(self.VOLUME_STEP if event.key == pygame.K_RIGHT
+                                               else -self.VOLUME_STEP)
                         elif event.key == pygame.K_RETURN:
                             self._trigger_setting_action(self.selected_setting_idx)
                     elif self.setting_tab == "save":
@@ -619,26 +626,46 @@ class GameScene(BaseScene):
             self.manager.change_scene("MainMenu") # New Game için geri at
 
 
+    SOUND_ROW = 0       # ayarlar listesindeki ses satırının indeksi
+    VOLUME_STEP = 10    # ok tuşu / tıklama başına yüzde adımı
+
+    def adjust_volume(self, delta):
+        """Sesi yüzde olarak değiştirir, kaydeder ve örnek ses çalar."""
+        import audio
+        vol = max(0, min(100, audio.get_volume() + delta))
+        audio.set_volume(vol)
+        self.logic.settings['sound'] = vol
+        self.manager.global_settings['sound'] = vol
+        self.manager.save_settings()
+        if vol > 0:
+            audio.play('ui_click')      # yeni seviyeyi duyarak ayarla
+
     def _trigger_setting_action(self, idx):
-        if idx == 0:
+        if idx == self.SOUND_ROW:
+            # Tıklama sesi artırır; sıfıra gelince başa döner (tek tuşla
+            # gezinilebilir olsun, ok tuşları da ayrıca çalışıyor)
+            import audio
+            self.adjust_volume(self.VOLUME_STEP if audio.get_volume() < 100
+                               else -100)
+        elif idx == 1:
             self.logic.settings['shake'] = not self.logic.settings['shake']
             self.manager.global_settings['shake'] = self.logic.settings['shake']
             self.manager.save_settings()
-        elif idx == 1:
-            self.manager.cycle_display_mode()
         elif idx == 2:
+            self.manager.cycle_display_mode()
+        elif idx == 3:
             self.logic.cheat_mode = not self.logic.cheat_mode
             status = "AÇIK" if self.logic.cheat_mode else "KAPALI"
             self.logic.add_event("damage_text", self.width//2, self.height//2, value=f"HİLE MODU: {status}", color=(241, 196, 15), timer=1.5)
-        elif idx == 3: self.setting_tab = "save"; self.selected_setting_idx = 0
-        elif idx == 4:
+        elif idx == 4: self.setting_tab = "save"; self.selected_setting_idx = 0
+        elif idx == 5:
             self.save_slots = self.logic.save_manager.get_save_slots()[:5]
             self.setting_tab = "load"; self.selected_setting_idx = 0
-        elif idx == 5:
+        elif idx == 6:
             self.logic.save_manager.save_game(self.logic, "last_save")
             self.manager.change_scene("MainMenu")
-        elif idx == 6: self.manager.change_scene("MainMenu")
-        elif idx == 7: self.show_settings = False
+        elif idx == 7: self.manager.change_scene("MainMenu")
+        elif idx == 8: self.show_settings = False
 
     def _toggle_auto_sell(self, p):
         modes = ["KAPALI", "BEYAZ", "MAVİ", "SARI", "TÜMÜ"]
@@ -1126,7 +1153,8 @@ class GameScene(BaseScene):
     # Satır rect'leri hem draw_settings_menu hem update() tarafından buradan
     # alınır; iki yerde ayrı hesaplanınca hizalama sürekli kayıyordu.
 
-    PAUSE_OPTION_COLORS = ["steel", "steel", "steel", "moss",
+    # Satır sırası _pause_labels() ile birebir aynı olmalı (0: SES)
+    PAUSE_OPTION_COLORS = ["steel", "steel", "steel", "steel", "moss",
                            "night", "night", "ember", "blood"]
 
     def _pause_panel_rect(self):
@@ -1140,8 +1168,10 @@ class GameScene(BaseScene):
         """
         panel = self._pause_panel_rect()
         if self.setting_tab == "main":
-            return [pygame.Rect(panel.centerx - 210, panel.y + 116 + i * 54, 420, 42)
-                    for i in range(8)]
+            # Satır sayısı sabit 8 yazılmıştı; ses satırı eklenince son satır
+            # ("OYUNA GERİ DÖN") ne çiziliyor ne tıklanabiliyordu.
+            return [pygame.Rect(panel.centerx - 210, panel.y + 104 + i * 50, 420, 40)
+                    for i in range(len(self._pause_labels()))]
         if self.setting_tab == "save":
             return [pygame.Rect(panel.centerx - 210, panel.y + 170 + i * 80, 420, 56)
                     for i in range(2)]
@@ -1151,7 +1181,18 @@ class GameScene(BaseScene):
     def _pause_labels(self):
         """Aktif sekmedeki satır metinleri (main/save); load kendi çizer."""
         if self.setting_tab == "main":
+            import audio
+            vol = audio.get_volume()
+            # Yüzdeyi çubukla da göster: sayı tek başına "ne kadar yüksek"
+            # hissini vermiyor. NOT: '█' ve '·' arayüz fontunda YOK, kutu
+            # olarak veya hiç çizilmiyordu — yalnızca ASCII kullanılıyor.
+            bars = int(round(vol / 10))
+            meter = "|" * bars + "." * (10 - bars)
+            vol_txt = "[KAPALI]" if vol <= 0 else f"{meter}  %{vol}"
+            if not audio.is_ready():
+                vol_txt = "[SES YOK]"
             return [
+                f"SES: {vol_txt}   < >",
                 f"EKRAN SARSINTISI: {'[AÇIK]' if self.logic.settings['shake'] else '[KAPALI]'}",
                 f"EKRAN MODU: [{self.manager.get_display_mode_label()}]",
                 f"HİLE MODU: {'[AÇIK]' if self.logic.cheat_mode else '[KAPALI]'}",
