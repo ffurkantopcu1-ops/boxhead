@@ -193,9 +193,10 @@ class Player:
         ]
         
         self.class_id = class_id
-        # Karakterin kendi sınıfı. class_id silahın weaponClass'ıyla geçici
-        # olarak değişir; silah çıkarıldığında/sınıfsız bir silah takıldığında
-        # buraya dönülür (inventory_manager.recalculate_stats).
+        # Karakterin KENDİ (kalıcı) sınıfı. class_id yalnızca FARKLI savaş
+        # ailesinden bir silah takılınca (ör. ninja -> arbalet) geçici değişir;
+        # aynı aileden silah (ninja -> kan/vampir kılıcı) sınıfı değiştirmez.
+        # Bkz. inventory_manager.recalculate_stats + WEAPON_FAMILIES.
         self.base_class_id = class_id
         # --- YETENEK AĞACI (koşu-kapsamlı, yollu) ---
         # Sınıfın başlangıç düğümü bedava tahsis edilir; recalculate_stats bunu

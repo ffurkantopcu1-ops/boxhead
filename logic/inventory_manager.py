@@ -18,6 +18,19 @@ class InventoryManager:
         "ninja", "alchemist", "sorcerer", "bloodwalker", "bomber",
     })
 
+    # Silahın "savaş ailesi". Aynı ailedeki bir silah sınıfı karakterin
+    # SINIFINI DEĞİŞTİRMEZ (kimlik korunur): ninja bir vampir/kan kılıcı
+    # (bloodwalker = melee) takınca ninja kalır, bloodwalker'a dönüşmez.
+    # Yalnızca FARKLI aileden bir silah (ör. arbalet=ranged, taret kiti=turret)
+    # sınıfı o silahın sınıfına çevirir; çünkü o saldırı tipini ancak o sınıfın
+    # uzmanlığı (specialization) doğru çalıştırır.
+    WEAPON_FAMILIES = {
+        "warrior": "melee", "ninja": "melee", "bloodwalker": "melee",
+        "sniper": "ranged", "sorcerer": "ranged",
+        "alchemist": "bomb", "bomber": "bomb",
+        "engineer": "turret", "beastmaster": "minion",
+    }
+
     # Azalan getiri + mutlak tavan tablosu: stat -> (knee, k, hard_cap)
     # knee üstü: knee + excess / (1 + excess * k); hard_cap None değilse min() ile kırpılır
     SOFT_CAPS = {
@@ -137,9 +150,11 @@ class InventoryManager:
         "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 5.0, "attack_cooldown": 900},
         # Bombacı: TUZAKÇI. Simyacı'nın uç versiyonu DEĞİL — bombası
         # patlamaz, yere tetiklemeli mayın bırakır (bkz. bomber_logic).
-        # Anlık hasar yok, hasar mayın tetiklenince tek seferde gelir;
-        # bedeli oyunun en uzun vuruş aralığı (1500ms).
-        "bomber":      {"aoe": 0.6,      "dmgMult": 0.2,      "speed": 4.4, "attack_cooldown": 1500},
+        # Anlık hasar yok, hasar mayın tetiklenince tek seferde gelir.
+        # Erken oyun hasarı çok düşük hissettiriyordu: dmgMult 0.2->0.35
+        # (dmgMult bomba/poisonDps'i çarpar) ve vuruş aralığı 1500->1300ms
+        # (daha hızlı mayın döşeme). Yine de oyunun en yavaş sınıfı.
+        "bomber":      {"aoe": 0.6,      "dmgMult": 0.35,     "speed": 4.4, "attack_cooldown": 1300},
         # --- YENİ SINIFLAR ---
         "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.8, "attack_cooldown": 400},
         "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 5.5, "regen": 0.5},
@@ -492,17 +507,24 @@ class InventoryManager:
         else:
             self.player.energy_shield = 0
         
-        # Weapon check (Dinamik sınıf değişimi)
-        # Silahın weaponClass'ı sınıfı belirler. Silah yoksa ya da silah bir
-        # sınıfa ait değilse ("none", "general", tanınmayan değer) karakterin
-        # kendi sınıfına dönülür; aksi halde son takılan sınıf silahının
-        # saldırı mantığı üzerimizde kalıyordu.
+        # Weapon check (Dinamik sınıf değişimi) — AİLE KURALI (bkz. WEAPON_FAMILIES)
+        # Silah yoksa / sınıfsızsa ("none", "general") ya da silah karakterle
+        # AYNI savaş ailesindeyse: karakterin KENDİ sınıfı korunur. Yalnızca
+        # farklı aileden bir sınıf silahı sınıfı o silaha çevirir (o saldırı
+        # tipini doğru çalıştırmak için). Böylece ninja bir kan/vampir kılıcı
+        # takınca ninja kalır; sadece bir arbalet/taret gibi farklı tip silah
+        # sınıfı değiştirir.
+        base_class = getattr(self.player, "base_class_id", None) or self.player.class_id
         weapon = self.equipped.get("weapon")
         w_class = weapon.get("weaponClass") if weapon else None
         if w_class not in self.CLASS_IDS:
-            w_class = getattr(self.player, "base_class_id", None) or self.player.class_id
-        if w_class != self.player.class_id:
-            self.player.class_id = w_class
+            target_class = base_class
+        elif self.WEAPON_FAMILIES.get(w_class) == self.WEAPON_FAMILIES.get(base_class):
+            target_class = base_class
+        else:
+            target_class = w_class
+        if target_class != self.player.class_id:
+            self.player.class_id = target_class
             self.player.reinit_specialization()
             self.recalculate_stats()
 
