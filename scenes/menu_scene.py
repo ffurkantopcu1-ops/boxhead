@@ -276,7 +276,7 @@ class MenuScene(BaseScene):
 
         # Sürüm ve Telif Hakkı (Alt Köşe)
         from logic.version import get_version
-        version_surf = self.font_sub.render(f"v{get_version()}", True, (80, 80, 80))
+        version_surf = self.font_sub.render(f"v{get_version()}  •  ERKEN ERİŞİM", True, (80, 80, 80))
         self.screen.blit(version_surf, (20, self.height - 40))
 
     def draw_patch_notes_menu(self):

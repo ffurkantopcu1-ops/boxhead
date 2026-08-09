@@ -2,6 +2,10 @@
 
 Top-down arena action game built with Python and Pygame.
 
+> ⚠️ **Erken Erişim / Early Access** — oyun hâlâ aktif geliştirme altındadır.
+> Sürüm numaraları (v1.x) güncelleyici (launcher) uyumluluğu için artan biçimde
+> ilerler; "gerçek" 1.0 lansmanı henüz yapılmamıştır.
+
 ## Quick Start
 
 ### Play from Source
