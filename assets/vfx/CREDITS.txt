@@ -1,0 +1,16 @@
+VFX dokulari
+============
+
+burst, ring, glow, spark, crit, smoke, flame, lightning, magic,
+muzzle, slashfx, twirl, scorch, debris, trail
+
+Kaynak : Kenney Particle Pack 1.1 - https://kenney.nl/assets/particle-pack
+Lisans : Creative Commons Zero (CC0)
+         http://creativecommons.org/publicdomain/zero/1.0/
+         Kisisel ve ticari projelerde serbestce kullanilabilir.
+         Atif zorunlu degildir; yine de kaynak burada belgelenmistir.
+
+Not    : Kaynaklar 512x512'den 128x128'e indirildi (bkz. tools/).
+         Dokular beyaz/gri tonludur; vfx.get_tinted() carpma ile renklendirir.
+
+cloud_poison.png projeye ait, Kenney kaynakli degildir.

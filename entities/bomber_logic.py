@@ -2,18 +2,26 @@ import math
 import pygame
 import random
 
+
 class Bomber:
     """
-    Bombacı (Bomber) - Patlayıcı ve alan hasarı uzmanı.
-    - Şişe/bomba fırlatırken alan yarıçapını x1.5 büyütür.
-    - Taban saldırı süresi 1500ms: oyunun en yavaş ama en geniş vuruşu.
+    Bombacı (Bomber) - Tuzakçı / patlayıcı uzmanı.
 
-    NOT: Sınıf henüz sınıf seçim ekranında yok. Etkinleştirmek için gereken
-    değişiklikler rapordaki DEVİR bölümündedir (class_select_scene.py,
-    player.reinit_specialization, InventoryManager.CLASS_IDS, başlangıç silahı).
+    KİMLİK (Simyacı'dan ayrım):
+      Bombacı fırlattığı bombayı PATLATMAZ; yere tetiklemeli bir MAYIN bırakır.
+      Mayın düşman yaklaşana kadar bekler, sonra tek seferlik büyük fiziksel
+      patlama verir ve komşu mayınları zincirleme tetikler. Zehir/DoT yoktur.
+      Oyun hissi: pozisyon kur, düşmanı tuzağa çek, zinciri patlat.
+
+      Simyacı ise şişeyi anında patlatıp geride KALICI ZEHİR BULUTU bırakır —
+      birikimli, sürekli hasar. İkisi aynı bomba yolunu kullanır ama patlama
+      sonrası davranışları Projectile.becomes_mine / cloud_duration_mult ile
+      ayrışır.
     """
 
-    AOE_MULT = 1.5
+    AOE_MULT = 1.5          # Mayın yarıçapı çarpanı
+    MINE_DMG_MULT = 1.9     # Mayın beklediği için vuruş başına hasarı yüksektir
+    MAX_MINES = 8           # Aynı anda yerde durabilecek mayın sayısı
 
     def __init__(self):
         self.attack_cooldown = 1500
@@ -34,14 +42,40 @@ class Bomber:
             player.shoot(game)
             return
 
-        # Bombacı: normal atıştan daha büyük alan hasarı (AoE)
+        # Yerdeki mayın sayısı tavandaysa en eskisini patlat: oyuncu mayın
+        # döşemeye devam edebilsin ama harita sınırsız dolmasın.
+        self._enforce_mine_cap(player, game)
+
+        # Bombacı: normal atıştan daha büyük alan, ama patlama yerine mayın.
         orig_aoe = player.stats.get("aoe", 1.0)
         player.stats["aoe"] = orig_aoe * self.AOE_MULT
+        before = len(game.projectiles)
         try:
             player.shoot(game, is_bomb=True)
         finally:
-            # İstisna çıksa bile aoe statı şişmiş kalmamalı
             player.stats["aoe"] = orig_aoe
+
+        # shoot() mermileri kendi içinde üretip listeye ekler; yeni eklenenleri
+        # mayına çeviriyoruz (çoklu atış varsa hepsi mayın olur).
+        mine_dmg_mult = self.MINE_DMG_MULT
+        radius_mult = 1.0
+        if (getattr(player, "evolution_passive", "") == "mine_master"):
+            # 🧨 Mayın Uzmanı evrimi: daha geniş ve daha sert mayınlar
+            mine_dmg_mult *= 1.35
+            radius_mult = 1.4
+        for p in game.projectiles[before:]:
+            p.becomes_mine = True
+            p.mine_dmg_mult = mine_dmg_mult
+            p.mine_radius_mult = radius_mult
+            # Mayın anlık fiziksel patlama verir; zehir DoT'u Simyacı'ya ait.
+            p.poison_dps = 0
+
+    def _enforce_mine_cap(self, player, game):
+        mines = [c for c in getattr(game, 'clouds', [])
+                 if getattr(c, 'is_mine', False) and not c.dead]
+        cap = self.MAX_MINES + (4 if (getattr(player, "evolution_passive", "") == "mine_master") else 0)
+        if len(mines) >= cap:
+            mines[0].detonate(game)
 
     def execute_melee(self, player, game, is_punch=False):
         """Silah yoksa/melee silahtayken kısa menzilli patlayıcı savurma."""

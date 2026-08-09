@@ -16,7 +16,7 @@ class ClassSelectScene(BaseScene):
             {"id": "alchemist", "name": "Simyacı", "color": (241, 196, 15), "desc": ["Zehir ve patlayıcılar."], "stats": {"Hız": 4.2, "Alan": "+40%", "DoT": "+30%"}},
             {"id": "sorcerer", "name": "Kadim Büyücü", "color": (148, 88, 230), "desc": ["3 Elementli Döngü."], "stats": {"HP": "-30%", "Elem": "+60%", "Hız": 4.0}},
             {"id": "bloodwalker", "name": "Vampir", "color": (192, 40, 40), "desc": ["Can çalan savaşçı."], "stats": {"Hız": 4.6, "Emme": "+20%", "Hasar": "+40%"}},
-            {"id": "bomber", "name": "Bombacı", "color": (211, 84, 0), "desc": ["Patlayıcı alan uzmanı."], "stats": {"Hız": 4.4, "Alan": "+60%", "Hasar": "+20%"}}
+            {"id": "bomber", "name": "Bombacı", "color": (211, 84, 0), "desc": ["Mayın döşeyen tuzakçı."], "stats": {"Hız": 4.4, "Alan": "+60%", "Hasar": "+20%"}}
         ]
 
         detailed_desc = {
@@ -25,10 +25,10 @@ class ClassSelectScene(BaseScene):
             "sniper": ["Güvenli mesafeden tek hedef avlar.", "Basit Arbalet ile başlar.", "+1 sekme, +1 delme, +%20 kritik."],
             "engineer": ["Alanı otomatik taretlerle tutar.", "Taret Kiti ile başlar.", "+10 zırh; 5 sn'de bir taret."],
             "ninja": ["Hızlı ve kaçınmaya dayalı suikastçı.", "Paslı Katana ile başlar.", "Atılma sonrası ilk vuruş 2 kat."],
-            "alchemist": ["Zehir ve alan hasarı uzmanı.", "Zehir Şişesi ile başlar.", "+%40 patlama alanı, +%30 DoT."],
+            "alchemist": ["Şişesi anında patlar ve kalıcı zehir bulutu bırakır.", "Zehir Şişesi ile başlar.", "+%40 patlama alanı, +%30 DoT. Hasar birikimlidir: alanı zehirle, düşmanı içine sür."],
             "sorcerer": ["Ateş, buz ve zehir arasında döner.", "Sihir Asası ile başlar.", "Her 4. saldırı kritik ve 2 kat alanlı."],
             "bloodwalker": ["Can çalarak riskli oynar.", "Kan Kılıcı ile başlar.", "%30 can altında hasar ve hız +%40."],
-            "bomber": ["Devasa patlamalarla kalabalık siler.", "El Bombası Çantası ile başlar.", "En geniş alan; en yavaş atış."],
+            "bomber": ["Bombası patlamaz, yere mayın döşer.", "Mayın düşman yaklaşınca tetiklenir ve komşu mayınları zincirler.", "En geniş alan; en yavaş atış. Zehir yok, tek seferlik büyük patlama."],
         }
 
         # Kartları Oluştur

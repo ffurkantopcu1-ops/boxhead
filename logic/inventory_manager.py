@@ -131,9 +131,10 @@ class InventoryManager:
             "beastmaster": {"minionDamage": 0.3, "max_hp_mult": 0.1, "speed": 5.5},
             "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 7.2, "regen": 0.5},
             "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 5.0, "attack_cooldown": 900},
-            # Bombacı: Simyacı'nın "yavaş ama geniş" uç versiyonu. aoe 0.6
-            # Bomber.AOE_MULT (x1.5) ile çarpıldığı için Simyacı'nın belirgin
-            # üstünde; bedeli oyunun en uzun vuruş aralığı (1500ms).
+            # Bombacı: TUZAKÇI. Simyacı'nın uç versiyonu DEĞİL — bombası
+            # patlamaz, yere tetiklemeli mayın bırakır (bkz. bomber_logic).
+            # Anlık hasar yok, hasar mayın tetiklenince tek seferde gelir;
+            # bedeli oyunun en uzun vuruş aralığı (1500ms).
             "bomber":      {"aoe": 0.6,      "dmgMult": 0.2,      "speed": 4.4, "attack_cooldown": 1500},
             # --- YENİ SINIFLAR ---
             "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.8, "attack_cooldown": 400},

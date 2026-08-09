@@ -9,6 +9,7 @@ import math
 import time
 import random
 import sys
+import vfx
 
 SKILL_HELP = {
     'max_hp': 'Daha fazla hasara dayanmanı sağlar; mevcut canı da artırır.',
@@ -950,6 +951,9 @@ class GameScene(BaseScene):
             if visible(e, max(80, e.radius * 4)): e.draw(world_surf, final_cam_x, final_cam_y)
         
         # Partiküller
+        # VFX katmanı: parçacıklar ve efektler buraya çizilir, kare sonunda
+        # tek seferde toplamalı (additive) basılır. Bkz. vfx.begin_frame.
+        fx = vfx.begin_frame(world_surf.get_size())
         for part in getattr(self.logic, 'particles', []):
             if not (
                 final_cam_x - 20 <= part['x'] <= final_cam_x + internal_w + 20
@@ -957,7 +961,7 @@ class GameScene(BaseScene):
             ):
                 continue
             px, py = part['x'] - final_cam_x, part['y'] - final_cam_y
-            pygame.draw.circle(world_surf, part['color'], (int(px), int(py)), part['size'])
+            vfx.draw_particle(fx, part, px, py)
             
         # Görsel Efektler (Events)
         for ev in self.logic.events:
@@ -969,35 +973,19 @@ class GameScene(BaseScene):
                 txt = self.font_sub.render(v_str, True, ev.get('color', (255, 255, 255)))
                 world_surf.blit(txt, (dx, dy))
             elif ev['type'] == 'slash':
-                r = ev.get('range', 80) * 0.4
-                pygame.draw.line(world_surf, (255, 255, 255), (dx - r, dy - r), (dx + r, dy + r), 4)
-                pygame.draw.line(world_surf, (255, 255, 255), (dx + r*0.3, dy - r*0.6), (dx - r*0.3, dy + r*0.6), 4)
+                vfx.draw_slash(fx, ev, dx, dy)
             elif ev['type'] == 'sweep':
-                angle, r_v, a_v = ev['angle'], ev['range'], ev['arc']
-                pts = [(dx, dy)]
-                steps = 10
-                sa = angle - a_v / 2
-                for i in range(steps + 1):
-                    a = sa + (a_v / steps) * i
-                    pts.append((dx + math.cos(a) * r_v, dy + math.sin(a) * r_v))
-                if len(pts) > 2:
-                    # Yalnızca süpürmenin sınırlayıcı kutusu kadar yüzey kullan
-                    min_x = int(min(px for px, _ in pts)) - 1
-                    min_y = int(min(py for _, py in pts)) - 1
-                    box_w = max(1, int(max(px for px, _ in pts)) - min_x + 2)
-                    box_h = max(1, int(max(py for _, py in pts)) - min_y + 2)
-                    surf = self._get_sweep_surface(box_w, box_h)
-                    local_pts = [(px - min_x, py - min_y) for px, py in pts]
-                    pygame.draw.polygon(surf, (255, 255, 255, 120), local_pts)
-                    world_surf.blit(surf, (min_x, min_y), area=pygame.Rect(0, 0, box_w, box_h))
-                    pygame.draw.lines(world_surf, (255, 255, 255), False, pts[1:], 3)
-            elif ev['type'] == 'shockwave' or ev['type'] == 'explosion':
-                rad = ev.get('radius', 100)
-                clr = ev.get('color', (255, 255, 255))
-                pygame.draw.circle(world_surf, clr, (int(dx), int(dy)), int(rad), 2)
-                if ev['type'] == 'explosion':
-                    # Patlama için iç halka
-                    pygame.draw.circle(world_surf, (255, 255, 255), (int(dx), int(dy)), int(rad * 0.7), 1)
+                vfx.draw_sweep(fx, ev, dx, dy, self._get_sweep_surface)
+            elif ev['type'] == 'explosion':
+                vfx.draw_explosion(fx, ev, dx, dy)
+            elif ev['type'] == 'shockwave':
+                vfx.draw_shockwave(fx, ev, dx, dy)
+            elif ev['type'] == 'fx':
+                # Genel dokulu efekt (isabet, kritik, dodge, şifa, toplama...)
+                vfx.draw_fx(fx, ev, dx, dy)
+
+        # Efekt katmanını dünyaya bas (kare başına tek toplamalı işlem)
+        vfx.end_frame(world_surf)
 
         # Oyuncuyu çiz
         p = self.logic.players[self.logic.local_player_id]

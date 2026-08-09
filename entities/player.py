@@ -3,6 +3,8 @@ import math
 import time
 import random
 
+import vfx
+
 # Simyacı şişesi imlecin bulunduğu yere düşer. BOMB_THROW_RANGE bunun ÜST
 # SINIRI: imleç daha uzaktaysa şişe menzilin sonuna kadar gider. Alt sınır,
 # menzilin sıfıra düşüp şişenin normal mermiye dönmesini engeller.
@@ -764,6 +766,9 @@ class Player:
         self.skill_points += 1
         self.hp = self.max_hp # Can tazele
         self.level_up_timer = 2.0 # 2 saniye ekranda yazı kalsın
+        # Seviye atlamanın tek göstergesi bir yazıydı; artık görsel patlama var
+        if hasattr(self, 'game') and self.game is not None:
+            vfx.level_up(self.game, self.x, self.y)
         print(f"LEVEL UP! Yeni Seviye: {self.level}")
         
         # Mutation Kartı Kontrolü
@@ -1115,15 +1120,12 @@ class Player:
             game.projectiles.append(p)
             game.entity_id_counter += 1
             
-            # Namlu Ateşi
-            for _ in range(3):
-                p_angle = angle + random.uniform(-0.5, 0.5)
-                p_v = random.uniform(5, 10)
-                game.particles.append({
-                    'x': sx, 'y': sy,
-                    'vx': math.cos(p_angle) * p_v, 'vy': math.sin(p_angle) * p_v,
-                    'timer': 0.1, 'color': (255, 255, 200), 'size': random.randint(2, 5)
-                })
+            # Namlu Ateşi: dokulu parlama + kıvılcım konisi
+            if i == 0:
+                vfx.muzzle(game, sx, sy, angle)
+            vfx.emit(game, sx, sy, count=3, color=(255, 235, 180),
+                     speed=(5.0, 10.0), size=(2, 5), life=(0.08, 0.14),
+                     tex="spark", spread=1.0, angle=angle, drag=0.12)
 
         self.emit_shockwave(game)
 
@@ -1348,12 +1350,15 @@ class Player:
             "passive": "chain_explosion",
             "desc": "+%80 hasar ve +%50 patlama alanı. Can -30."
         },
+        # Eski hâli "🌊 Kimyager" idi (poisonDps + toxic_cloud) — bu, Simyacı'nın
+        # "Zehir Tanrısı" kimliğinin kopyasıydı. Bombacı'nın mayın kimliğine
+        # uygun şekilde yeniden temalandı; zehir tamamen Simyacı'ya bırakıldı.
         "bomber_chemist": {
-            "name": "🌊 Kimyager", "class_base": "bomber",
-            "stats": {"poisonDps": 40, "dmgMult": 0.4, "aoe_bonus": 0.3},
+            "name": "🧨 Mayın Uzmanı", "class_base": "bomber",
+            "stats": {"dmgMult": 0.4, "aoe_bonus": 0.3},
             "max_hp_delta": 10,
-            "passive": "toxic_cloud",
-            "desc": "+40 zehir DPS, +%40 hasar ve +%30 patlama alanı."
+            "passive": "mine_master",
+            "desc": "Mayınlar +%35 hasar, +%40 yarıçap ve aynı anda 4 fazla mayın. +%40 hasar."
         },
         # NINJA
         "ninja_shadow": {
@@ -1573,7 +1578,13 @@ class Player:
         overheal = max(0, amount - needed)
         
         self.hp += actual_heal
-        
+
+        # Şifa geri bildirimi (can çalma, regen, kart iyileştirmeleri).
+        # Küçük tikleri boğmamak için eşik: yalnız hissedilir şifada göster.
+        _g = getattr(self, 'game', None)
+        if _g is not None and actual_heal >= max(2.0, self.max_hp * 0.01):
+            vfx.heal(_g, self.x, self.y, actual_heal)
+
         # Kan Bankası (Blood Bank) overheal birikimi
         if getattr(self, "has_blood_bank", False):
             self.blood_bank_amount = getattr(self, "blood_bank_amount", 0) + overheal
@@ -1596,6 +1607,11 @@ class Player:
             game = getattr(self, 'game', None)
             if game is not None and hasattr(game, 'track_quest'):
                 game.track_quest("dodge_hits", 1)
+            # Görsel geri bildirim: eskiden hasarı savuşturduğun anlaşılmıyordu
+            if game is not None:
+                vfx.dodge(game, self.x, self.y)
+                game.add_event("damage_text", self.x, self.y - 46,
+                               value="SIYIRDI", color=(190, 220, 255), timer=0.5)
             return
             
         # --- ARMOR (Zırh) ---

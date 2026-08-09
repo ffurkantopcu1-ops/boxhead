@@ -383,8 +383,21 @@ class GameLogic:
         # Update Particles
         live_particles = []
         for particle in self.particles[-self.MAX_PARTICLES:]:
+            # t0 yoksa (eski üretim noktaları) ilk karede sabitlenir; vfx
+            # katmanı sönme oranını buradan hesaplar.
+            if 't0' not in particle:
+                particle['t0'] = particle['timer']
             particle['x'] += particle['vx'] * dt * 60
             particle['y'] += particle['vy'] * dt * 60
+            # Yerçekimi ve sürtünme (varsayılan 0: eski davranış birebir korunur)
+            g = particle.get('gravity', 0)
+            if g:
+                particle['vy'] += g * dt * 60
+            d = particle.get('drag', 0)
+            if d:
+                f = max(0.0, 1.0 - d * dt * 60)
+                particle['vx'] *= f
+                particle['vy'] *= f
             particle['timer'] -= dt
             if particle['timer'] > 0:
                 live_particles.append(particle)
@@ -987,8 +1000,12 @@ class GameLogic:
     def add_event(self, event_type, x, y, **kwargs):
         if len(self.events) >= self.MAX_VISUAL_EVENTS:
             self.events.pop(0)
-        event = {"type": event_type, "x": x, "y": y, "timer": kwargs.get("timer", 0.5)}
+        _t = kwargs.get("timer", 0.5)
+        # t0: başlangıç ömrü. vfx.life_progress bununla 0->1 ilerleme hesaplar
+        # (sönme/genişleme eğrileri). Eskiden yoktu, efektler sönmüyordu.
+        event = {"type": event_type, "x": x, "y": y, "timer": _t, "t0": _t}
         event.update(kwargs)
+        event["t0"] = _t
         self.events.append(event)
 
     def apply_enemy_modifiers(self, enemy):

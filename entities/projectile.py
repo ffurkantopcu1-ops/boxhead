@@ -3,6 +3,13 @@ import math
 import time
 import random
 
+import vfx
+
+# Bombacı mayınının yerde bekleme süresi (saniye). Tetiklenmezse söner —
+# aksi halde oyuncu haritayı sınırsız mayınla doldurup performansı düşürür.
+MINE_LIFETIME = 12.0
+
+
 class Projectile:
     def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False, is_returning=False, bounce_dmg_mult=1.0, throw_range=0):
         self.id = id
@@ -33,6 +40,18 @@ class Projectile:
         self.poison_dps = 0
         self.fire_dmg = 0
         self.frost_dmg = 0
+
+        # --- SINIF KİMLİĞİ: MAYIN vs BULUT ---
+        # Bombacı ile Simyacı aynı bomba yolunu kullanıyor ama patlama sonrası
+        # davranışları burada ayrışır. Varsayılanlar hiçbir şeyi değiştirmez.
+        #   becomes_mine        : patlamak yerine yere tetiklemeli mayın bırakır (Bombacı)
+        #   cloud_duration_mult : geride kalan bulutun süresi (Simyacı uzatır)
+        #   mine_dmg_mult       : mayın patlama hasarı çarpanı
+        #   mine_radius_mult    : mayın tetikleme/patlama yarıçapı çarpanı
+        self.becomes_mine = False
+        self.cloud_duration_mult = 1.0
+        self.mine_dmg_mult = 1.0
+        self.mine_radius_mult = 1.0
         
         # Renk Belirleme
         if p_type == 'bomb':
@@ -224,7 +243,21 @@ class Projectile:
 
         if self.poison_dps > 0:
             enemy.apply_dot('poison', self.poison_dps * _dm, 5.0)
-        
+
+        # İsabet geri bildirimi: normal vuruşun eskiden hiçbir görseli yoktu,
+        # sadece hasar sayısı çıkıyordu. Element mermiye göre seçilir.
+        if not self.is_hostile:
+            if self.fire_dmg > 0:
+                _elem = 'fire'
+            elif self.frost_dmg > 0:
+                _elem = 'frost'
+            elif self.poison_dps > 0:
+                _elem = 'poison'
+            else:
+                _elem = 'phys'
+            vfx.hit(game, self.x, self.y, _elem, is_crit=self.is_crit,
+                    angle=math.atan2(self.vy, self.vx) + math.pi)
+
         # Hasar Uygula
         # is_crit AKTARILMALI: mermi kritik bilgisini taşıyordu ama take_damage'a
         # verilmiyordu, bu yüzden krite bağlı efektler (Tetikçi evrimi
@@ -286,13 +319,31 @@ class Projectile:
     def explode(self, game, small=False):
         # AOE Yerine BULUT (Cloud) Oluştur
         radius = self.aoe if not small else self.aoe * 0.4
-        
+
         from entities.cloud import Cloud
-        new_cloud = Cloud(game.entity_id_counter, self.x, self.y, 
-                         radius=radius, 
-                         duration=1.3, # Sabitlendi: 1.3 saniye yerde kalır
-                         poison_dps=self.poison_dps, 
-                         fire_dmg=self.fire_dmg, 
+
+        # --- BOMBACI: patlama yerine tetiklemeli MAYIN ---
+        # Anlık hasar vermez; düşman yaklaşana kadar yerde bekler. Hasarı
+        # mermide taşınan toplam hasardan türetilir (bomba hasarı poisonDps
+        # üzerinden aktığı için burada tek seferlik fiziksel patlamaya çevrilir
+        # — Bombacı'da zehir DoT'u kalmaz, kimlik Simyacı'dan ayrışır).
+        if self.becomes_mine and not small:
+            mine_radius = radius * self.mine_radius_mult
+            burst = (self.dmg + self.fire_dmg + self.poison_dps) * self.mine_dmg_mult
+            game.entity_id_counter += 1
+            game.clouds.append(Cloud(game.entity_id_counter, self.x, self.y,
+                                     radius=mine_radius,
+                                     duration=MINE_LIFETIME,
+                                     is_mine=True, mine_dmg=burst))
+            game.add_event("explosion", self.x, self.y, radius=int(mine_radius * 0.3),
+                           color=(255, 140, 40), timer=0.12)
+            return
+
+        new_cloud = Cloud(game.entity_id_counter, self.x, self.y,
+                         radius=radius,
+                         duration=1.3 * self.cloud_duration_mult,  # Simyacı bunu uzatır
+                         poison_dps=self.poison_dps,
+                         fire_dmg=self.fire_dmg,
                          frost_dmg=self.frost_dmg)
         # --- AOE HASAR (Özellikle Ateş Patlaması için) ---
         if self.fire_dmg > 0:

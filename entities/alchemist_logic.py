@@ -4,11 +4,23 @@ import random
 
 class Alchemist:
     """
-    Simyacı (Alchemist) - Alan hasarı (AoE) ve DoT uzmanı.
-    - +%40 alan yarıçapı ve +%30 süreli hasar (DoT) bonusu.
-    - Bombaları x1.4 alan çarpanıyla fırlatır; yavaş ama geniş etkili vuruş
-      (taban saldırı süresi 900ms - diğer sınıflardan yavaş).
+    Simyacı (Alchemist) - Alan kontrolü ve süreli hasar (DoT) uzmanı.
+
+    KİMLİK (Bombacı'dan ayrım):
+      Şişe çarptığı yerde anında patlar ve geride UZUN SÜRELİ ZEHİR BULUTU
+      bırakır. Hasar birikimlidir: tek vuruş zayıf, ama bulutun içinde kalan
+      düşman erir. Oyun hissi: alanı zehirle, düşmanı bulutun içine sür.
+
+      Bombacı ise patlamaz — yere tetiklemeli mayın bırakır ve tek seferlik
+      büyük fiziksel patlama verir. İkisi aynı bomba yolunu kullanır; ayrım
+      Projectile.cloud_duration_mult (Simyacı) ve becomes_mine (Bombacı) ile
+      yapılır.
     """
+
+    AOE_MULT = 1.4
+    # Şişenin bıraktığı bulut normalin bu katı kadar yerde kalır (1.3s -> ~4.5s)
+    CLOUD_DURATION_MULT = 3.5
+
     def __init__(self):
         # Bomber'dan (1500) daha hızlı
         self.attack_cooldown = 1200
@@ -28,9 +40,18 @@ class Alchemist:
         
         orig_aoe = player.stats.get("aoe", 1.0)
         if is_bomb:
-            player.stats["aoe"] = orig_aoe * 1.4 
-            player.shoot(game, is_bomb=True)
-            player.stats["aoe"] = orig_aoe
+            player.stats["aoe"] = orig_aoe * self.AOE_MULT
+            before = len(game.projectiles)
+            try:
+                player.shoot(game, is_bomb=True)
+            finally:
+                # İstisna çıksa bile aoe statı şişmiş kalmamalı
+                player.stats["aoe"] = orig_aoe
+            # Simyacı kimliği: geride kalan zehir bulutu çok daha uzun yaşar.
+            # statusDuration statı buluta da yansır (set/affix bonusları işe yarar).
+            dur_mult = self.CLOUD_DURATION_MULT * (1.0 + player.stats.get("statusDuration", 0))
+            for p in game.projectiles[before:]:
+                p.cloud_duration_mult = dur_mult
         else:
             # Ranged silah (Arbalet vb.)
             player.shoot(game)

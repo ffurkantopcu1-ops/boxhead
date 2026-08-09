@@ -3,6 +3,23 @@ import math
 import random
 import time
 
+import vfx
+
+# Düşman üzerindeki durum etkisinin görsel karşılığı: (renk, doku).
+# Etki adları logic/status_effects.py'daki apply_* fonksiyonlarından gelir.
+_STATUS_FX = {
+    "Burn":       ((255, 130, 40),  "flame"),
+    "Poison":     ((120, 230, 90),  "smoke"),
+    "Slow":       ((110, 200, 255), "spark"),
+    "DeepFreeze": ((150, 220, 255), "spark"),
+    "IceMage":    ((110, 200, 255), "spark"),
+    "FrostAura":  ((110, 200, 255), "spark"),
+    "Frostbite":  ((110, 200, 255), "spark"),
+    "Stun":       ((255, 215, 70),  "crit"),
+    "Silence":    ((170, 170, 180), "smoke"),
+    "Paladin":    ((255, 235, 170), "glow"),
+}
+
 class Enemy:
     def __init__(self, id, x, y, game, type="normal", wave_level=1):
         self.id = id
@@ -425,6 +442,18 @@ class Enemy:
     def update(self, dt, game):
         if self.dead: return
         self.effect_manager.update(dt, self, game)
+
+        # --- DURUM ETKİSİ GERİ BİLDİRİMİ ---
+        # Yanan/zehirlenen/donmuş/sersemlemiş düşman eskiden normal görünüyordu;
+        # oyuncu uyguladığı etkinin işe yarayıp yaramadığını göremiyordu.
+        # Seyrek parçacık: kare başına değil, ~%8 ihtimalle bir tane.
+        if self.effect_manager.effects and random.random() < 0.08:
+            _st = self.effect_manager.effects[0].name
+            _sc = _STATUS_FX.get(_st)
+            if _sc is not None:
+                vfx.emit(game, self.x, self.y - 6, count=1, color=_sc[0],
+                         speed=(0.2, 0.9), size=(2, 4), life=(0.3, 0.55),
+                         tex=_sc[1], gravity=-0.02)
         
         # Knockback Uygulama ve Sönümleme
         if abs(self.kb_x) > 0.1 or abs(self.kb_y) > 0.1:

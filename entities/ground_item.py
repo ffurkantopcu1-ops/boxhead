@@ -1,6 +1,7 @@
 import pygame
 import math
 from ui_elements import ImageLoader
+import vfx
 
 class GroundItem:
     def __init__(self, id, x, y, item_data):
@@ -104,11 +105,13 @@ class GroundItem:
             if hasattr(game, 'track_quest'):
                 game.track_quest("earn_gold", amount)
             game.add_event("damage_text", self.x, self.y - 40, value=f"+{amount}G", color=(241, 196, 15), timer=0.8)
+            vfx.pickup(game, self.x, self.y, 'gold')
             self.dead = True
         elif self.type == 'potion':
             heal = int(player.max_hp * 0.20 * (1.0 + player.stats.get('orbHealMult', 0.0)))
             player.hp = min(player.max_hp, player.hp + heal)
             game.add_event("damage_text", self.x, self.y - 40, value=f"+{heal} Can", color=(46, 204, 113), timer=1.0)
+            vfx.heal(game, player.x, player.y, heal)
             self.dead = True
         else:
             # --- OTO-SATIŞ KONTROLÜ (Pickup Aşamasında) ---
