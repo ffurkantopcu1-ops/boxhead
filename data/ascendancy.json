@@ -1,0 +1,1516 @@
+[
+  {
+    "id": "warrior_gladiator_a0",
+    "name": "🏟️ Gladyatör",
+    "desc": "",
+    "subclass": "warrior_gladiator",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "warrior_gladiator_a1",
+      "warrior_gladiator_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "warrior_gladiator_a1",
+    "name": "Kan Sarhoşu",
+    "desc": "+%15 Hasar",
+    "subclass": "warrior_gladiator",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.15
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "warrior_gladiator_a2",
+    "name": "Keskin Refleks",
+    "desc": "+%8 Kritik",
+    "subclass": "warrior_gladiator",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.08
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "warrior_gladiator_a3",
+    "name": "🩸 Arena Ustası",
+    "desc": "+%20 Hasar, +12 Fiziksel",
+    "subclass": "warrior_gladiator",
+    "type": "notable",
+    "stats": {
+      "dmgMult": 0.2,
+      "physDmgFlat": 12
+    },
+    "connects": [
+      "warrior_gladiator_a1",
+      "warrior_gladiator_a2",
+      "warrior_gladiator_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "warrior_gladiator_a4",
+    "name": "⚔️ Kan Meydanı",
+    "desc": "+%30 Hasar, Max Can %10 azalır",
+    "subclass": "warrior_gladiator",
+    "type": "keystone",
+    "stats": {
+      "dmgMult": 0.3,
+      "max_hp_pct": -10
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "warrior_paladin_a0",
+    "name": "🛡️ Paladin",
+    "desc": "",
+    "subclass": "warrior_paladin",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "warrior_paladin_a1",
+      "warrior_paladin_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "warrior_paladin_a1",
+    "name": "Kutsal Zırh",
+    "desc": "+20 Zırh",
+    "subclass": "warrior_paladin",
+    "type": "minor",
+    "stats": {
+      "armor": 20
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "warrior_paladin_a2",
+    "name": "Dayanıklılık",
+    "desc": "+80 Can",
+    "subclass": "warrior_paladin",
+    "type": "minor",
+    "stats": {
+      "max_hp": 80
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "warrior_paladin_a3",
+    "name": "✨ Aziz Koruması",
+    "desc": "+25 Zırh, +2.0 Rejen",
+    "subclass": "warrior_paladin",
+    "type": "notable",
+    "stats": {
+      "armor": 25,
+      "regen": 2.0
+    },
+    "connects": [
+      "warrior_paladin_a1",
+      "warrior_paladin_a2",
+      "warrior_paladin_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "warrior_paladin_a4",
+    "name": "🛡️ Kutsal Kalkan",
+    "desc": "+150 Can, +20 Zırh",
+    "subclass": "warrior_paladin",
+    "type": "keystone",
+    "stats": {
+      "max_hp": 150,
+      "armor": 20
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "beastmaster_emperor_a0",
+    "name": "👑 Pet İmparatoru",
+    "desc": "",
+    "subclass": "beastmaster_emperor",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "beastmaster_emperor_a1",
+      "beastmaster_emperor_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "beastmaster_emperor_a1",
+    "name": "Sürü Emri",
+    "desc": "+%20 Minyon Hasarı",
+    "subclass": "beastmaster_emperor",
+    "type": "minor",
+    "stats": {
+      "minionDamage": 0.2
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "beastmaster_emperor_a2",
+    "name": "Çoğalma",
+    "desc": "+1 Minyon",
+    "subclass": "beastmaster_emperor",
+    "type": "minor",
+    "stats": {
+      "minionCount": 1
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "beastmaster_emperor_a3",
+    "name": "🐺 Sürü Efendisi",
+    "desc": "+%30 Minyon Hasarı, +%20 Minyon Hızı",
+    "subclass": "beastmaster_emperor",
+    "type": "notable",
+    "stats": {
+      "minionDamage": 0.3,
+      "minionRate": 0.2
+    },
+    "connects": [
+      "beastmaster_emperor_a1",
+      "beastmaster_emperor_a2",
+      "beastmaster_emperor_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "beastmaster_emperor_a4",
+    "name": "👑 Sürü İmparatorluğu",
+    "desc": "+2 Minyon, +%30 Minyon Hasarı",
+    "subclass": "beastmaster_emperor",
+    "type": "keystone",
+    "stats": {
+      "minionCount": 2,
+      "minionDamage": 0.3
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "beastmaster_hunter_a0",
+    "name": "🦅 Avcı",
+    "desc": "",
+    "subclass": "beastmaster_hunter",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "beastmaster_hunter_a1",
+      "beastmaster_hunter_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "beastmaster_hunter_a1",
+    "name": "Vahşi Güç",
+    "desc": "+%30 Minyon Hasarı",
+    "subclass": "beastmaster_hunter",
+    "type": "minor",
+    "stats": {
+      "minionDamage": 0.3
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "beastmaster_hunter_a2",
+    "name": "Kalın Post",
+    "desc": "+100 Minyon Canı",
+    "subclass": "beastmaster_hunter",
+    "type": "minor",
+    "stats": {
+      "minionMaxHpFlat": 100
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "beastmaster_hunter_a3",
+    "name": "🐾 Dev Yoldaş",
+    "desc": "+%40 Minyon Hasarı, +100 Minyon Canı",
+    "subclass": "beastmaster_hunter",
+    "type": "notable",
+    "stats": {
+      "minionDamage": 0.4,
+      "minionMaxHpFlat": 100
+    },
+    "connects": [
+      "beastmaster_hunter_a1",
+      "beastmaster_hunter_a2",
+      "beastmaster_hunter_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "beastmaster_hunter_a4",
+    "name": "🐺 Alfa Canavar",
+    "desc": "+%60 Minyon Hasarı, +%-10 Hasar",
+    "subclass": "beastmaster_hunter",
+    "type": "keystone",
+    "stats": {
+      "minionDamage": 0.6,
+      "dmgMult": -0.1
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "sniper_marksman_a0",
+    "name": "💥 Tetikçi",
+    "desc": "",
+    "subclass": "sniper_marksman",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "sniper_marksman_a1",
+      "sniper_marksman_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "sniper_marksman_a1",
+    "name": "Nişan",
+    "desc": "+%10 Kritik",
+    "subclass": "sniper_marksman",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.1
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "sniper_marksman_a2",
+    "name": "Sertlik",
+    "desc": "+%40 Krit Hasar",
+    "subclass": "sniper_marksman",
+    "type": "minor",
+    "stats": {
+      "critDmg": 0.4
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "sniper_marksman_a3",
+    "name": "🎯 Keskin Göz",
+    "desc": "+%10 Kritik, +%50 Krit Hasar",
+    "subclass": "sniper_marksman",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.1,
+      "critDmg": 0.5
+    },
+    "connects": [
+      "sniper_marksman_a1",
+      "sniper_marksman_a2",
+      "sniper_marksman_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "sniper_marksman_a4",
+    "name": "💥 İnfaz Atışı",
+    "desc": "+%100 Krit Hasar, Max Can %10 azalır",
+    "subclass": "sniper_marksman",
+    "type": "keystone",
+    "stats": {
+      "critDmg": 1.0,
+      "max_hp_pct": -10
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "sniper_phantom_a0",
+    "name": "🌑 Hayalet Nişancı",
+    "desc": "",
+    "subclass": "sniper_phantom",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "sniper_phantom_a1",
+      "sniper_phantom_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "sniper_phantom_a1",
+    "name": "Ölümcül",
+    "desc": "+%50 Krit Hasar",
+    "subclass": "sniper_phantom",
+    "type": "minor",
+    "stats": {
+      "critDmg": 0.5
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "sniper_phantom_a2",
+    "name": "Sıyrılma",
+    "desc": "+%8 Kaçınma",
+    "subclass": "sniper_phantom",
+    "type": "minor",
+    "stats": {
+      "dodgeChance": 0.08
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "sniper_phantom_a3",
+    "name": "🌫️ Gölge Atış",
+    "desc": "+%60 Krit Hasar, +1 Delme",
+    "subclass": "sniper_phantom",
+    "type": "notable",
+    "stats": {
+      "critDmg": 0.6,
+      "pierce": 1
+    },
+    "connects": [
+      "sniper_phantom_a1",
+      "sniper_phantom_a2",
+      "sniper_phantom_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "sniper_phantom_a4",
+    "name": "🌑 Hayalet Kurşun",
+    "desc": "+%15 Kritik, +%80 Krit Hasar, Max Can %10 azalır",
+    "subclass": "sniper_phantom",
+    "type": "keystone",
+    "stats": {
+      "critChance": 0.15,
+      "critDmg": 0.8,
+      "max_hp_pct": -10
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "engineer_architect_a0",
+    "name": "🏰 Kale Mimarı",
+    "desc": "",
+    "subclass": "engineer_architect",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "engineer_architect_a1",
+      "engineer_architect_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "engineer_architect_a1",
+    "name": "Ek Slot",
+    "desc": "+1 Taret Limiti",
+    "subclass": "engineer_architect",
+    "type": "minor",
+    "stats": {
+      "turretLimit": 1
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "engineer_architect_a2",
+    "name": "Takviye",
+    "desc": "+100 Taret Canı",
+    "subclass": "engineer_architect",
+    "type": "minor",
+    "stats": {
+      "turretMaxHp": 100
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "engineer_architect_a3",
+    "name": "🏭 Fabrika",
+    "desc": "+1 Taret Limiti, +%20 Taret Hasarı",
+    "subclass": "engineer_architect",
+    "type": "notable",
+    "stats": {
+      "turretLimit": 1,
+      "turretDmg": 0.2
+    },
+    "connects": [
+      "engineer_architect_a1",
+      "engineer_architect_a2",
+      "engineer_architect_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "engineer_architect_a4",
+    "name": "🏰 Kale Ağı",
+    "desc": "+2 Taret Limiti, +%25 Taret Hasarı",
+    "subclass": "engineer_architect",
+    "type": "keystone",
+    "stats": {
+      "turretLimit": 2,
+      "turretDmg": 0.25
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "engineer_electrician_a0",
+    "name": "⚡ Elektrikçi",
+    "desc": "",
+    "subclass": "engineer_electrician",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "engineer_electrician_a1",
+      "engineer_electrician_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "engineer_electrician_a1",
+    "name": "Voltaj",
+    "desc": "+%25 Taret Hasarı",
+    "subclass": "engineer_electrician",
+    "type": "minor",
+    "stats": {
+      "turretDmg": 0.25
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "engineer_electrician_a2",
+    "name": "Hızlı Ateş",
+    "desc": "+%20 Taret Hızı",
+    "subclass": "engineer_electrician",
+    "type": "minor",
+    "stats": {
+      "turretRate": 0.2
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "engineer_electrician_a3",
+    "name": "⚙️ Aşırı Gerilim",
+    "desc": "+%35 Taret Hasarı, +%20 Taret Hızı",
+    "subclass": "engineer_electrician",
+    "type": "notable",
+    "stats": {
+      "turretDmg": 0.35,
+      "turretRate": 0.2
+    },
+    "connects": [
+      "engineer_electrician_a1",
+      "engineer_electrician_a2",
+      "engineer_electrician_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "engineer_electrician_a4",
+    "name": "⚡ Aşırı Şarj",
+    "desc": "+%60 Taret Hasarı, Max Can %10 azalır",
+    "subclass": "engineer_electrician",
+    "type": "keystone",
+    "stats": {
+      "turretDmg": 0.6,
+      "max_hp_pct": -10
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "bomber_nuclear_a0",
+    "name": "☢️ Nükleer Bombacı",
+    "desc": "",
+    "subclass": "bomber_nuclear",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "bomber_nuclear_a1",
+      "bomber_nuclear_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "bomber_nuclear_a1",
+    "name": "Geniş Patlama",
+    "desc": "+%20 Alan",
+    "subclass": "bomber_nuclear",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.2
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "bomber_nuclear_a2",
+    "name": "Ağır Dolgu",
+    "desc": "+%15 Hasar",
+    "subclass": "bomber_nuclear",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.15
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "bomber_nuclear_a3",
+    "name": "💥 Serpinti",
+    "desc": "+%25 Alan, +%15 Hasar",
+    "subclass": "bomber_nuclear",
+    "type": "notable",
+    "stats": {
+      "aoe_bonus": 0.25,
+      "dmgMult": 0.15
+    },
+    "connects": [
+      "bomber_nuclear_a1",
+      "bomber_nuclear_a2",
+      "bomber_nuclear_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "bomber_nuclear_a4",
+    "name": "☢️ Nükleer Kış",
+    "desc": "+%40 Alan, +%20 Hasar, Max Can %10 azalır",
+    "subclass": "bomber_nuclear",
+    "type": "keystone",
+    "stats": {
+      "aoe_bonus": 0.4,
+      "dmgMult": 0.2,
+      "max_hp_pct": -10
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "bomber_chemist_a0",
+    "name": "🧨 Mayın Uzmanı",
+    "desc": "",
+    "subclass": "bomber_chemist",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "bomber_chemist_a1",
+      "bomber_chemist_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "bomber_chemist_a1",
+    "name": "Fazla Mayın",
+    "desc": "+%15 Alan",
+    "subclass": "bomber_chemist",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.15
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "bomber_chemist_a2",
+    "name": "Güçlü Dolgu",
+    "desc": "+%15 Hasar",
+    "subclass": "bomber_chemist",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.15
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "bomber_chemist_a3",
+    "name": "🧷 Küme Mayın",
+    "desc": "+%20 Alan, +12 Fiziksel",
+    "subclass": "bomber_chemist",
+    "type": "notable",
+    "stats": {
+      "aoe_bonus": 0.2,
+      "physDmgFlat": 12
+    },
+    "connects": [
+      "bomber_chemist_a1",
+      "bomber_chemist_a2",
+      "bomber_chemist_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "bomber_chemist_a4",
+    "name": "🧨 Mayın Tarlası",
+    "desc": "+%30 Hasar, +%20 Alan",
+    "subclass": "bomber_chemist",
+    "type": "keystone",
+    "stats": {
+      "dmgMult": 0.3,
+      "aoe_bonus": 0.2
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "ninja_shadow_a0",
+    "name": "🗡️ Ölüm Gölgesi",
+    "desc": "",
+    "subclass": "ninja_shadow",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "ninja_shadow_a1",
+      "ninja_shadow_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "ninja_shadow_a1",
+    "name": "Sessiz Adım",
+    "desc": "+%10 Kritik",
+    "subclass": "ninja_shadow",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.1
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "ninja_shadow_a2",
+    "name": "Ölümcül",
+    "desc": "+%60 Krit Hasar",
+    "subclass": "ninja_shadow",
+    "type": "minor",
+    "stats": {
+      "critDmg": 0.6
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "ninja_shadow_a3",
+    "name": "🌑 Suikast",
+    "desc": "+%10 Kritik, +%8 Kaçınma",
+    "subclass": "ninja_shadow",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.1,
+      "dodgeChance": 0.08
+    },
+    "connects": [
+      "ninja_shadow_a1",
+      "ninja_shadow_a2",
+      "ninja_shadow_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "ninja_shadow_a4",
+    "name": "🗡️ Ölüm Fısıltısı",
+    "desc": "+%100 Krit Hasar, Düşük canı infaz",
+    "subclass": "ninja_shadow",
+    "type": "keystone",
+    "stats": {
+      "critDmg": 1.0,
+      "lowHpExec": 0.2
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "ninja_storm_a0",
+    "name": "🌀 Fırtına Bıçağı",
+    "desc": "",
+    "subclass": "ninja_storm",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "ninja_storm_a1",
+      "ninja_storm_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "ninja_storm_a1",
+    "name": "Hız",
+    "desc": "+%15 Saldırı Hızı",
+    "subclass": "ninja_storm",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.15
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "ninja_storm_a2",
+    "name": "Çeviklik",
+    "desc": "+0.5 Hız",
+    "subclass": "ninja_storm",
+    "type": "minor",
+    "stats": {
+      "speed": 0.5
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "ninja_storm_a3",
+    "name": "🌀 Kasırga",
+    "desc": "+%15 Saldırı Hızı, +%8 Kaçınma",
+    "subclass": "ninja_storm",
+    "type": "notable",
+    "stats": {
+      "attack_speed_bonus": 0.15,
+      "dodgeChance": 0.08
+    },
+    "connects": [
+      "ninja_storm_a1",
+      "ninja_storm_a2",
+      "ninja_storm_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "ninja_storm_a4",
+    "name": "⚔️ Bin Bıçak",
+    "desc": "+%25 Saldırı Hızı, +%-10 Hasar",
+    "subclass": "ninja_storm",
+    "type": "keystone",
+    "stats": {
+      "attack_speed_bonus": 0.25,
+      "dmgMult": -0.1
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "alchemist_grandmaster_a0",
+    "name": "🧪 Çılgın Simyacı",
+    "desc": "",
+    "subclass": "alchemist_grandmaster",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "alchemist_grandmaster_a1",
+      "alchemist_grandmaster_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "alchemist_grandmaster_a1",
+    "name": "Yayılım",
+    "desc": "+%15 Alan",
+    "subclass": "alchemist_grandmaster",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.15
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "alchemist_grandmaster_a2",
+    "name": "Hızlı Karışım",
+    "desc": "+%10 Saldırı Hızı",
+    "subclass": "alchemist_grandmaster",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.1
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "alchemist_grandmaster_a3",
+    "name": "🍶 Ek Şişe",
+    "desc": "+1 Mermi, +%15 Alan",
+    "subclass": "alchemist_grandmaster",
+    "type": "notable",
+    "stats": {
+      "projectileCount": 1,
+      "aoe_bonus": 0.15
+    },
+    "connects": [
+      "alchemist_grandmaster_a1",
+      "alchemist_grandmaster_a2",
+      "alchemist_grandmaster_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "alchemist_grandmaster_a4",
+    "name": "🧪 Çılgın Karışım",
+    "desc": "+1 Mermi, +%15 Hasar",
+    "subclass": "alchemist_grandmaster",
+    "type": "keystone",
+    "stats": {
+      "projectileCount": 1,
+      "dmgMult": 0.15
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "alchemist_poison_god_a0",
+    "name": "🍄 Zehir Tanrısı",
+    "desc": "",
+    "subclass": "alchemist_poison_god",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "alchemist_poison_god_a1",
+      "alchemist_poison_god_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "alchemist_poison_god_a1",
+    "name": "Zehir",
+    "desc": "+%20 DoT",
+    "subclass": "alchemist_poison_god",
+    "type": "minor",
+    "stats": {
+      "dotDmgMult": 0.2
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "alchemist_poison_god_a2",
+    "name": "Toksin",
+    "desc": "+15 Zehir DPS",
+    "subclass": "alchemist_poison_god",
+    "type": "minor",
+    "stats": {
+      "poisonDps": 15
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "alchemist_poison_god_a3",
+    "name": "☣️ Salgın",
+    "desc": "+%30 DoT, +%15 Alan",
+    "subclass": "alchemist_poison_god",
+    "type": "notable",
+    "stats": {
+      "dotDmgMult": 0.3,
+      "aoe_bonus": 0.15
+    },
+    "connects": [
+      "alchemist_poison_god_a1",
+      "alchemist_poison_god_a2",
+      "alchemist_poison_god_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "alchemist_poison_god_a4",
+    "name": "🍄 Veba Tanrısı",
+    "desc": "+%50 DoT, +%-15 Hasar",
+    "subclass": "alchemist_poison_god",
+    "type": "keystone",
+    "stats": {
+      "dotDmgMult": 0.5,
+      "dmgMult": -0.15
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "sorcerer_firelord_a0",
+    "name": "🌋 Ateş Başbüyücüsü",
+    "desc": "",
+    "subclass": "sorcerer_firelord",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "sorcerer_firelord_a1",
+      "sorcerer_firelord_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "sorcerer_firelord_a1",
+    "name": "Kor",
+    "desc": "+10 Ateş",
+    "subclass": "sorcerer_firelord",
+    "type": "minor",
+    "stats": {
+      "fireDmgFlat": 10
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "sorcerer_firelord_a2",
+    "name": "Alev Gücü",
+    "desc": "+%15 Element",
+    "subclass": "sorcerer_firelord",
+    "type": "minor",
+    "stats": {
+      "elementDmgMult": 0.15
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "sorcerer_firelord_a3",
+    "name": "🔥 Yangın",
+    "desc": "+15 Ateş, +%15 Element",
+    "subclass": "sorcerer_firelord",
+    "type": "notable",
+    "stats": {
+      "fireDmgFlat": 15,
+      "elementDmgMult": 0.15
+    },
+    "connects": [
+      "sorcerer_firelord_a1",
+      "sorcerer_firelord_a2",
+      "sorcerer_firelord_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "sorcerer_firelord_a4",
+    "name": "🌋 Cehennem",
+    "desc": "+%50 Element, Max Can %15 azalır",
+    "subclass": "sorcerer_firelord",
+    "type": "keystone",
+    "stats": {
+      "elementDmgMult": 0.5,
+      "max_hp_pct": -15
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "sorcerer_icemage_a0",
+    "name": "❄️ Buz Büyücüsü",
+    "desc": "",
+    "subclass": "sorcerer_icemage",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "sorcerer_icemage_a1",
+      "sorcerer_icemage_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "sorcerer_icemage_a1",
+    "name": "Ayaz",
+    "desc": "+10 Buz",
+    "subclass": "sorcerer_icemage",
+    "type": "minor",
+    "stats": {
+      "frostDmgFlat": 10
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "sorcerer_icemage_a2",
+    "name": "Buz Gücü",
+    "desc": "+%15 Element",
+    "subclass": "sorcerer_icemage",
+    "type": "minor",
+    "stats": {
+      "elementDmgMult": 0.15
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "sorcerer_icemage_a3",
+    "name": "🧊 Buzul",
+    "desc": "+15 Buz, +%15 Element",
+    "subclass": "sorcerer_icemage",
+    "type": "notable",
+    "stats": {
+      "frostDmgFlat": 15,
+      "elementDmgMult": 0.15
+    },
+    "connects": [
+      "sorcerer_icemage_a1",
+      "sorcerer_icemage_a2",
+      "sorcerer_icemage_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "sorcerer_icemage_a4",
+    "name": "❄️ Sonsuz Kış",
+    "desc": "+%40 Element, +20 Zırh",
+    "subclass": "sorcerer_icemage",
+    "type": "keystone",
+    "stats": {
+      "elementDmgMult": 0.4,
+      "armor": 20
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "bloodwalker_noble_a0",
+    "name": "🧛 Asil Vampir",
+    "desc": "",
+    "subclass": "bloodwalker_noble",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "bloodwalker_noble_a1",
+      "bloodwalker_noble_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "bloodwalker_noble_a1",
+    "name": "Kan İçici",
+    "desc": "+%5 Can Çalma",
+    "subclass": "bloodwalker_noble",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.05
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "bloodwalker_noble_a2",
+    "name": "Dayanıklılık",
+    "desc": "+80 Can",
+    "subclass": "bloodwalker_noble",
+    "type": "minor",
+    "stats": {
+      "max_hp": 80
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "bloodwalker_noble_a3",
+    "name": "🩸 Soylu Kan",
+    "desc": "+%6 Can Çalma, +2.0 Rejen",
+    "subclass": "bloodwalker_noble",
+    "type": "notable",
+    "stats": {
+      "lifesteal": 0.06,
+      "regen": 2.0
+    },
+    "connects": [
+      "bloodwalker_noble_a1",
+      "bloodwalker_noble_a2",
+      "bloodwalker_noble_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "bloodwalker_noble_a4",
+    "name": "🧛 Ölümsüz Asalet",
+    "desc": "+%10 Can Çalma, +100 Can",
+    "subclass": "bloodwalker_noble",
+    "type": "keystone",
+    "stats": {
+      "lifesteal": 0.1,
+      "max_hp": 100
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  },
+  {
+    "id": "bloodwalker_martyr_a0",
+    "name": "💔 Şehit",
+    "desc": "",
+    "subclass": "bloodwalker_martyr",
+    "type": "start",
+    "stats": {},
+    "connects": [
+      "bloodwalker_martyr_a1",
+      "bloodwalker_martyr_a2"
+    ],
+    "pos": [
+      300,
+      80
+    ],
+    "start": true
+  },
+  {
+    "id": "bloodwalker_martyr_a1",
+    "name": "Öfke",
+    "desc": "+%15 Hasar",
+    "subclass": "bloodwalker_martyr",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.15
+    },
+    "connects": [],
+    "pos": [
+      190,
+      210
+    ]
+  },
+  {
+    "id": "bloodwalker_martyr_a2",
+    "name": "Kan İçici",
+    "desc": "+%5 Can Çalma",
+    "subclass": "bloodwalker_martyr",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.05
+    },
+    "connects": [],
+    "pos": [
+      410,
+      210
+    ]
+  },
+  {
+    "id": "bloodwalker_martyr_a3",
+    "name": "🔥 Kızıl Gazap",
+    "desc": "+%20 Hasar, +%5 Can Çalma",
+    "subclass": "bloodwalker_martyr",
+    "type": "notable",
+    "stats": {
+      "dmgMult": 0.2,
+      "lifesteal": 0.05
+    },
+    "connects": [
+      "bloodwalker_martyr_a1",
+      "bloodwalker_martyr_a2",
+      "bloodwalker_martyr_a4"
+    ],
+    "pos": [
+      300,
+      330
+    ]
+  },
+  {
+    "id": "bloodwalker_martyr_a4",
+    "name": "💔 Kan Şehidi",
+    "desc": "+%40 Hasar, Max Can %20 azalır",
+    "subclass": "bloodwalker_martyr",
+    "type": "keystone",
+    "stats": {
+      "dmgMult": 0.4,
+      "max_hp_pct": -20
+    },
+    "connects": [],
+    "pos": [
+      300,
+      470
+    ],
+    "start": false
+  }
+]

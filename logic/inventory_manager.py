@@ -327,6 +327,14 @@ class InventoryManager:
             else:
                 totals[stat] = val
 
+        # 🔺 ASCENDANCY (alt-sınıf) düğümleri — aynı şekilde toplanır
+        from logic.ascendancy import Ascendancy
+        for stat, val in Ascendancy.resolve_stats(getattr(self.player, 'ascendancy_nodes', ())).items():
+            if stat in totals:
+                totals[stat] += val
+            else:
+                totals[stat] = val
+
         # Final multipliers
         new_stats = totals.copy()
         

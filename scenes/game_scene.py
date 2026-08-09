@@ -232,13 +232,14 @@ class GameScene(BaseScene):
         from ui_elements import TabButton, EquippedRow, BackpackItemCard, MarketCard
         
         # TABLAR
+        _tabs = [("ENVANTER", "inventory"), ("KAHRAMAN", "hero"), ("YETENEK", "skills"),
+                 ("YÜKSELİŞ", "ascendancy"), ("KERVAN", "market"), ("AURA", "aura"),
+                 ("SİNERJİ", "synergy")]
+        _tw, _gap = 138, 6
+        _x0 = self.width // 2 - (len(_tabs) * (_tw + _gap) - _gap) // 2
         self.tab_buttons = [
-            TabButton(self.width // 2 - 475, 40, 150, 50, "ENVANTER", "inventory"),
-            TabButton(self.width // 2 - 315, 40, 150, 50, "KAHRAMAN", "hero"),
-            TabButton(self.width // 2 - 155, 40, 150, 50, "YETENEK", "skills"),
-            TabButton(self.width // 2 + 5, 40, 150, 50, "KERVAN", "market"),
-            TabButton(self.width // 2 + 165, 40, 150, 50, "AURA", "aura"),
-            TabButton(self.width // 2 + 325, 40, 150, 50, "SİNERJİ", "synergy")
+            TabButton(_x0 + i * (_tw + _gap), 40, _tw, 50, lbl, tid)
+            for i, (lbl, tid) in enumerate(_tabs)
         ]
         
         # KUŞANILANLAR (SOL)
@@ -963,6 +964,25 @@ class GameScene(BaseScene):
                 else:
                     self.logic.add_event("damage_text", p.x, p.y-60, value="Yetersiz Altın!", color=(231, 76, 60))
                 return
+
+        elif self.active_tab == "ascendancy":
+            from logic.ascendancy import Ascendancy
+            if getattr(self, 'asc_reset_rect', None) and self.asc_reset_rect.collidepoint(pos):
+                wave_level = self.logic.wave.get("level", 1)
+                cost = 1500 + max(0, (wave_level - 1) * 300)
+                if p.gold >= cost:
+                    p.gold -= cost
+                    Ascendancy.refund_all(p)
+                    self.logic.add_event("damage_text", p.x, p.y-60, value="Yükseliş Sıfırlandı!", color=(46, 204, 113))
+                else:
+                    self.logic.add_event("damage_text", p.x, p.y-60, value="Yetersiz Altın!", color=(231, 76, 60))
+                return
+            for nid, rect in getattr(self, 'ascendancy_node_hit', []):
+                if rect.collidepoint(pos):
+                    ok, msg = Ascendancy.allocate(p, nid)
+                    self.logic.add_event("damage_text", p.x, p.y-60, value=msg,
+                                         color=(241, 196, 15) if ok else (231, 76, 60))
+                    return
 
         elif self.active_tab == "hero":
             diff_names = ["Normal", "Hard", "Very Hard", "Impossible"]
@@ -1858,6 +1878,8 @@ class GameScene(BaseScene):
             self.draw_hero_tab(p)
         elif self.active_tab == "skills":
             self.draw_skills_tab(p)
+        elif self.active_tab == "ascendancy":
+            self.draw_ascendancy_tab(p)
         elif self.active_tab == "market":
             self.draw_market_tab(p)
         elif self.active_tab == "aura":
@@ -2816,6 +2838,99 @@ class GameScene(BaseScene):
         p.gold -= cost
         SkillTree.refund_all(p)
         return True
+
+    # ======================= YÜKSELİŞ (ASCENDANCY) =======================
+    def draw_ascendancy_tab(self, p):
+        import ui_theme
+        from logic.ascendancy import Ascendancy
+        panel = self._inventory_panel_rect()
+        inner_top = panel.y + 52
+        mouse_pos = pygame.mouse.get_pos()
+        gold = ui_theme.readable(ui_theme.COLORS["gold"])
+        self.ascendancy_node_hit = []
+
+        if not Ascendancy.is_unlocked(p):
+            msg = render_fit(
+                "Yükseliş (Alt-Sınıf) ağacı Seviye 20'de sınıf evrimini seçince açılır.",
+                26, gold, panel.width - 180, bold=True)
+            self.screen.blit(msg, (panel.centerx - msg.get_width() // 2, panel.centery - 20))
+            hint = render_fit("Seviye 20'den itibaren her seviyede +1 Yükseliş Puanı kazanırsın.",
+                              19, (176, 170, 158), panel.width - 180)
+            self.screen.blit(hint, (panel.centerx - hint.get_width() // 2, panel.centery + 24))
+            return
+
+        # Başlık: alt-sınıf adı + puan + sıfırla
+        sub_name = p.EVOLUTIONS.get(p.evolution, {}).get("name", p.evolution)
+        title = render_fit(sub_name, 30, gold, 720, bold=True)
+        self.screen.blit(title, (panel.centerx - title.get_width() // 2, inner_top + 6))
+        pts = render_fit(f"YÜKSELİŞ PUANI: {p.ascendancy_points}", 22,
+                         ui_theme.readable(ui_theme.COLORS["arcane"]), 440, bold=True)
+        self.screen.blit(pts, (panel.x + 44, inner_top + 12))
+
+        wave_level = self.logic.wave.get("level", 1)
+        cost = 1500 + max(0, (wave_level - 1) * 300)
+        self.asc_reset_rect = pygame.Rect(panel.right - 250, inner_top + 8, 190, 36)
+        rh = self.asc_reset_rect.collidepoint(mouse_pos)
+        ui_theme.draw_plate(self.screen, self.asc_reset_rect, "hover" if rh else "normal",
+                            ui_theme.COLORS["ember"])
+        rt = render_fit(f"SIFIRLA ({cost} G)", 17,
+                        ui_theme.TEXT_COL if rh else (176, 170, 158), self.asc_reset_rect.width - 30)
+        self.screen.blit(rt, rt.get_rect(center=self.asc_reset_rect.center))
+
+        # Mini ağaç: alt-sınıfın düğümlerini panele sığdır (pan/zoom yok)
+        area = pygame.Rect(panel.x + 40, inner_top + 64, panel.width - 80, panel.height - 140)
+        nodes = Ascendancy.nodes_for(p.evolution)
+        xs = [n["pos"][0] for n in nodes]
+        ys = [n["pos"][1] for n in nodes]
+        minx, miny, maxx, maxy = min(xs), min(ys), max(xs), max(ys)
+        bw, bh = max(1, maxx - minx), max(1, maxy - miny)
+        pad = 90
+        scale = min((area.width - 2 * pad) / bw, (area.height - 2 * pad) / bh)
+        ox = area.x + (area.width - bw * scale) / 2 - minx * scale
+        oy = area.y + (area.height - bh * scale) / 2 - miny * scale
+
+        def tf(pos):
+            return (int(pos[0] * scale + ox), int(pos[1] * scale + oy))
+
+        allocated = Ascendancy._ensure_set(p)
+        allocatable = set(Ascendancy.allocatable_nodes(allocated))
+
+        # Kenarlar
+        drawn = set()
+        for n in nodes:
+            for m in n.get("connects", []):
+                if m not in Ascendancy.BY_ID:
+                    continue
+                key = (n["id"], m) if n["id"] < m else (m, n["id"])
+                if key in drawn:
+                    continue
+                drawn.add(key)
+                p1, p2 = tf(n["pos"]), tf(Ascendancy.BY_ID[m]["pos"])
+                both = n["id"] in allocated and m in allocated
+                pygame.draw.line(self.screen, gold if both else (70, 62, 58), p1, p2, 5 if both else 3)
+
+        # Düğümler (az sayıda -> büyük) + altına isim
+        hover = None
+        order = sorted(nodes, key=lambda n: (n["id"] in allocated, n["id"] in allocatable))
+        for node in order:
+            cx, cy = tf(node["pos"])
+            r = self._tree_node_radius(node["type"]) + 9
+            rect = pygame.Rect(cx - r, cy - r, 2 * r, 2 * r)
+            self.ascendancy_node_hit.append((node["id"], rect))
+            if node["id"] in allocated:
+                state = "allocated"
+            elif node["id"] in allocatable:
+                state = "open"
+            else:
+                state = "locked"
+            self._draw_tree_node(node, (cx, cy), r, state)
+            nm = render_fit(node["name"], 17, ui_theme.TEXT_COL, 200, bold=(node["type"] != "minor"))
+            self.screen.blit(nm, (cx - nm.get_width() // 2, cy + r + 5))
+            if rect.collidepoint(mouse_pos):
+                hover = node
+
+        if hover:
+            self._draw_tree_tooltip(hover, mouse_pos, allocated, allocatable)
 
     def buy_skill(self, p, skill_idx):
         if p.skill_points <= 0: return

@@ -198,6 +198,9 @@ class SaveManager:
                 "skills": p.skills,
                 # Yetenek ağacı: koşu-kapsamlı tahsis (meta.json'a DEĞİL buraya).
                 "allocated_nodes": sorted(getattr(p, 'allocated_nodes', [])),
+                # Ascendancy (alt-sınıf) tahsisi + puanı
+                "ascendancy_points": getattr(p, 'ascendancy_points', 0),
+                "ascendancy_nodes": sorted(getattr(p, 'ascendancy_nodes', [])),
                 "skills_permanent": getattr(p, 'skills_permanent', {}),
                 "x": p.x,
                 "y": p.y,
@@ -302,6 +305,16 @@ class SaveManager:
         p.evolution = pd.get("evolution") or SaveManager._find_evolution_id(p, p.class_name)
         p.evolution_passive = pd.get("evolution_passive") or \
             p.EVOLUTIONS.get(p.evolution, {}).get("passive", "")
+
+        # --- ASCENDANCY (alt-sınıf) — evrim yukarıda çözüldükten SONRA ---
+        from logic.ascendancy import Ascendancy
+        p.ascendancy_points = pd.get("ascendancy_points", 0)
+        p.ascendancy_nodes = set(pd.get("ascendancy_nodes") or [])
+        if p.evolution:  # evrim seçilmişse başlangıç düğümü garanti (eski kayıt)
+            start = Ascendancy.start_for(p.evolution)
+            if start:
+                p.ascendancy_nodes.add(start)
+
         if "color" in pd:
             p.color = tuple(pd["color"])
 

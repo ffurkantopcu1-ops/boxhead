@@ -24,6 +24,7 @@ from logic.inventory_manager import InventoryManager
 from logic.save_manager import SaveManager
 from logic.crystal_shop import CrystalShop
 from logic.skill_tree import SkillTree
+from logic.ascendancy import Ascendancy
 import audio
 
 class Player:
@@ -203,6 +204,10 @@ class Player:
         # kart havuzuyla aynı şekilde toplar. Eski düz "skills" ızgarası artık
         # yükseltilmez (bkz. SKILL_TREE.md); p.skills lvl 0'da kalır.
         self.allocated_nodes = set(SkillTree.start_nodes_for(class_id))
+        # --- ASCENDANCY (alt-sınıf) — seviye 20 evrimiyle açılır ---
+        # Ayrı para birimi: seviye 20'den itibaren seviye başına +1 puan.
+        self.ascendancy_points = 0
+        self.ascendancy_nodes = set()
         self.class_name = self.class_id
         self.evolution = ""
         self.evolution_passive = ""
@@ -785,6 +790,10 @@ class Player:
         # YENİ DENGELEME: Katlanarak değil doğrusal artış (Wave 10 -> L14, Wave 20 -> L30 hedefine uygun)
         self.xp_to_next_level = 100 + self.level * 250
         self.skill_points += 1
+        # Ascendancy puanı: seviye 20'den itibaren her seviyede +1 (evrim
+        # seviye 20'de seçilir; sonraki seviyeler alt-sınıf ağacını besler).
+        if self.level >= 20:
+            self.ascendancy_points += 1
         self.hp = self.max_hp # Can tazele
         self.level_up_timer = 2.0 # 2 saniye ekranda yazı kalsın
         # Seviye atlamanın tek göstergesi bir yazıydı; artık görsel patlama var
@@ -1544,6 +1553,9 @@ class Player:
             self._phantom_first_shot = True
 
         self.inv_manager.recalculate_stats()
+
+        # Ascendancy (alt-sınıf) ağacını AÇ: bu evrimin başlangıç düğümünü tohumla
+        Ascendancy.seed_start(self)
 
         # Görev takibi: apply_evolution SADECE oyuncu evrim seçtiğinde çağrılır
         # (scenes/game_scene.py). Save yüklemesi evrimi doğrudan alan ataması
