@@ -1124,8 +1124,12 @@ class GameScene(BaseScene):
         p.draw(world_surf, final_cam_x, final_cam_y)
         
         # --- WORLD SURF'Ü EKRANA BAS (ZOOM) ---
-        final_scaled = pygame.transform.scale(world_surf, (self.width, self.height))
-        self.screen.blit(final_scaled, (0, 0))
+        # Zoom 1.0'da world_surf zaten ekran boyutunda -> ölçekleme kimlik işlemi;
+        # tam kare transform.scale (~3ms/kare) atlanır, doğrudan blit edilir.
+        if world_surf.get_size() == (self.width, self.height):
+            self.screen.blit(world_surf, (0, 0))
+        else:
+            self.screen.blit(pygame.transform.scale(world_surf, (self.width, self.height)), (0, 0))
 
         # 4. Gece/Gündüz Döngüsü
         is_night = (self.logic.wave["level"] % 2 == 0)
@@ -1415,8 +1419,11 @@ class GameScene(BaseScene):
             self._hud_phase_warning_y = y + 22
             y += 48
 
-        if self.logic.wave.get("event"):
-            self._hud_event_y = y + 14
+        # _hud_event_y HER ZAMAN tanımlı olmalı: özel dalga şeridi (draw_hud)
+        # onu okuyor ama eskiden yalnız "event" varken atanıyordu -> olaysız
+        # özel dalgalarda (ör. survival) AttributeError ile ÇÖKÜYORDU.
+        self._hud_event_y = y + 14
+        if self.logic.wave.get("event") or self.logic.wave.get("special"):
             y += 42
 
         self._hud_combo_y = y + 6

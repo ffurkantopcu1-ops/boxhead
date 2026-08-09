@@ -147,6 +147,7 @@ class GameLogic:
         self.last_hit_damage = 0.0
         self.max_dps = 0.0
         self._dps_events = deque()  # (zaman, hasar) - son 1 saniyelik pencere
+        self._dps_sum = 0.0         # pencere toplamı (artımlı; her vuruşta yeniden toplamayız)
 
         self.kill_streak = 0
         self.streak_timer = 0
@@ -166,18 +167,21 @@ class GameLogic:
             self.last_hit_damage = amount
         now = time.time()
         self._dps_events.append((now, amount))
+        # Artımlı toplam: her vuruşta tüm pencereyi yeniden TOPLAMAK profilde
+        # update süresinin ~%38'iydi (yoğun sahnede saniyede binlerce vuruş ->
+        # O(n^2)). Artık pencereye ekleyip çıkardıkça toplamı güncelliyoruz.
+        self._dps_sum += amount
         while self._dps_events and now - self._dps_events[0][0] > 1.0:
-            self._dps_events.popleft()
-        current = sum(dmg for _, dmg in self._dps_events)
-        if current > self.max_dps:
-            self.max_dps = current
+            self._dps_sum -= self._dps_events.popleft()[1]
+        if self._dps_sum > self.max_dps:
+            self.max_dps = self._dps_sum
 
     def get_current_dps(self):
         """Son 1 saniyede verilen toplam hasar (anlık DPS)."""
         now = time.time()
         while self._dps_events and now - self._dps_events[0][0] > 1.0:
-            self._dps_events.popleft()
-        return sum(dmg for _, dmg in self._dps_events)
+            self._dps_sum -= self._dps_events.popleft()[1]
+        return max(0.0, self._dps_sum)
 
     def setup_boss_test(self):
         """Skip directly to the boss fight with decent gear."""
