@@ -482,6 +482,39 @@ class CardSystem:
     def _apply_furnace(self, player):
         setattr(player, "has_furnace", True)
 
+    # --- TARET KARTLARI (Mühendis) ---
+    # turretCharges = R yeteneğinin şarj kapasitesi (aynı anda kaç taret
+    # kurabilirsin), turretLimit = yerde aynı anda durabilecek taret sayısı.
+    # İkisi farklı: şarj "ne kadar hızlı kurarsın", limit "kaç tanesi yaşar".
+
+    def _apply_mass_production(self, player):
+        """⚙️ Seri Üretim — +1 taret şarjı. Bedel: -%15 hasar."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["turretCharges"] = sp.get("turretCharges", 0) + 1
+        sp["dmgMult"] = sp.get("dmgMult", 0) - 0.15
+        player.skills_permanent = sp
+
+    def _apply_factory_line(self, player):
+        """🏭 Fabrika Hattı — +1 taret limiti, +%25 taret atış hızı.
+        Bedel: -%20 hareket hızı."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["turretLimit"] = sp.get("turretLimit", 0) + 1
+        sp["turretRate"] = sp.get("turretRate", 0) + 0.25
+        # Hız cezası skills_permanent üzerinden: speed_mod her karede siliniyor (H3)
+        sp["speed"] = sp.get("speed", 0) - 0.6
+        player.skills_permanent = sp
+
+    def _apply_overclock(self, player):
+        """🔧 Aşırı Yükleme — +2 limit, +1 şarj, +%40 taret hasarı.
+        Bedel: taret canı yarıya iner, max can -%15."""
+        sp = getattr(player, "skills_permanent", {})
+        sp["turretLimit"] = sp.get("turretLimit", 0) + 2
+        sp["turretCharges"] = sp.get("turretCharges", 0) + 1
+        sp["turretDmg"] = sp.get("turretDmg", 0) + 0.4
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
+        player.skills_permanent = sp
+        setattr(player, "turret_hp_penalty", 0.5)
+
 
 # --- Veri dogrulamasi (acilista bir kez) ---
 _card_ids = {c['id'] for c in CardSystem.CARDS}

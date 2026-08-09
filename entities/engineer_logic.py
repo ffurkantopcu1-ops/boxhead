@@ -14,20 +14,73 @@ class Engineer:
         self.attack_range = 300
         self.turret_cooldown = 0
         
+    # --- ALEV SİLAHI (Flamethrower) ---
+    # Diğer arketiplerden farkı: mermi üretmez, her saldırıda ÖNÜNDEKİ KONİYİ
+    # tarar. Atış aralığı çok kısa olduğu için sürekli bir akış hissi verir;
+    # tek vuruş hasarı düşük, asıl hasar yanma (burn) yığılmasından gelir.
+    FLAME_ARC = 0.62            # ~35 derece koni
+    FLAME_BASE_RANGE = 210      # taban menzil (silah 'range' ile artırır)
+
+    def execute_flamethrower(self, player, game, weapon):
+        angle = player.facing_angle
+        local = player.inv_manager.get_item_local_stats("weapon") or {}
+
+        rng = (self.FLAME_BASE_RANGE + local.get("range", 0)) * \
+              player.stats.get("meleeRangeMult", 1.0)
+        arc = self.FLAME_ARC
+
+        fire_mult, _frost_mult, elem_mult = player.get_elemental_mults()
+        dmg_mult = player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult()
+        # Alev hasarı ateş statlarından okunur; fiziksel taban yok.
+        base_fire = (player.stats.get("fireDamage", 0)
+                     + player.stats.get("fireDmgFlat", 0))
+        tick_dmg = base_fire * dmg_mult * fire_mult
+        burn_dps = tick_dmg * 0.9
+
+        vfx.flamethrower(game, player.x, player.y, angle, rng, arc)
+
+        hit_any = False
+        for e in game.iter_enemies_near(player.x, player.y, rng + 80):
+            if e.dead or getattr(e, 'is_trap', False):
+                continue
+            dx, dy = e.x - player.x, e.y - player.y
+            hit_range = rng + e.radius
+            if dx * dx + dy * dy > hit_range * hit_range:
+                continue
+            angle_to_e = math.atan2(dy, dx)
+            diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)
+            # Yakında koni genişler: dipte dar olması silahı kullanılmaz yapıyor
+            dist = math.hypot(dx, dy)
+            eff_arc = arc + (0.9 if dist < 70 else 0.0)
+            if diff > eff_arc / 2:
+                continue
+            if tick_dmg > 0:
+                e.take_damage(tick_dmg, game, from_player=True)
+            # Yanma yığılır: alevin içinde kalmak cezalandırır
+            e.apply_dot('fire', burn_dps, 2.0)
+            hit_any = True
+
+        return hit_any
+
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
-        
+
+        # Alev silahı: koni taraması (mermi üretmez)
+        if weapon and weapon.get("isFlamethrower"):
+            self.execute_flamethrower(player, game, weapon)
+            return
+
         # Menzilli / Bomba Kontrolü
         if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
             player.shoot(game)
             return
 
-        # Sadece Taret Kiti Varsa Taret Kur
+        # Taret artık saldırıya bağlı DEĞİL: R tuşuyla kullanılan bir yetenek
+        # (bkz. player.try_place_turret / game_scene R tuşu). Eskiden taret kiti
+        # takılıyken execute_attack koşulsuz return ediyordu, yani Mühendis
+        # bekleme süresi boyunca hiçbir hasar veremiyordu.
         if weapon and weapon.get("isTurret"):
-            current_time = pygame.time.get_ticks()
-            if current_time - self.turret_cooldown >= 5000:
-                player.place_turret(game)
-                self.turret_cooldown = current_time
+            # Taret kiti bir "ekipman"; elde silah gibi vurmaz.
             return
 
         # Yakın Dövüş Modu (Silah varsa Keser, yoksa Yumruk)

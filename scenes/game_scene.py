@@ -491,7 +491,7 @@ class GameScene(BaseScene):
                         if art_ready:
                             self._cast_fx(p, "artifact")
                     if event.key == pygame.K_r and not modal_open:
-                        self._use_blood_absorb(p)
+                        self._use_r_ability(p)
                     if event.key == pygame.K_SPACE and not modal_open:
                         if p.dash():
                             self._cast_fx(p, "dash")
@@ -646,12 +646,26 @@ class GameScene(BaseScene):
         m_str = modes[p.auto_sell_mode]
         self.logic.add_event("damage_text", p.x, p.y-80, value=f"OTO-SATIŞ: {m_str}", color=(241, 196, 15), timer=1.0)
 
-    def _use_blood_absorb(self, p):
+    def _use_r_ability(self, p):
+        """R tuşu: sınıfa göre yetenek. Bloodwalker kan emer, Mühendis taret kurar."""
         # class_name evrimle değişir; kalıcı kimlik class_id'dir (Bloodwalker Q evrim sonrası da çalışsın)
         if getattr(p, 'class_id', '') == "bloodwalker" and hasattr(p.specialization, 'activate_blood_absorb'):
             if p.specialization.activate_blood_absorb(p):
                 self.logic.add_event("damage_text", p.x, p.y - 60, value="KAN EMME!", color=(255, 50, 50), timer=1.0)
                 self._cast_fx(p, "blood_absorb")
+            return
+
+        # Mühendis: taret kurma yeteneği (eskiden saldırı tuşuna bağlıydı ve
+        # taret kiti takılıyken oyuncunun hiç hasar vermesini engelliyordu)
+        if p.can_place_turret():
+            if p.try_place_turret(self.logic):
+                self.logic.add_event("damage_text", p.x, p.y - 60,
+                                     value="TARET KURULDU!", color=(120, 200, 255), timer=0.9)
+        elif p.is_engineer():
+            left = max(0.0, p.get_turret_cooldown() - getattr(p, 'turret_recharge', 0))
+            self.logic.add_event("damage_text", p.x, p.y - 60,
+                                 value=f"TARET DOLUYOR: {left:.1f}s",
+                                 color=(160, 160, 170), timer=0.6)
 
     def _handle_inventory_mouse(self, p, pos, right_click=False):
         # 0. SAĞ TIK: yalnızca kuşanılan eşyayı çıkarır (etiket "SAĞ TIKLA ÇIKAR"
@@ -1047,7 +1061,8 @@ class GameScene(BaseScene):
             ui_theme.draw_plate(self.screen, empty_rect, "disabled")
             art_surf = render_fit("ARTIFACT: EKSİK", 18, (140, 134, 124), empty_rect.width - 40)
             self.screen.blit(art_surf, art_surf.get_rect(center=empty_rect.center))
-        
+
+
         # 4. Kan Ayı Filtresi
         if self.logic.wave.get("is_blood_moon"):
             self.screen.blit(self.blood_moon_surf, (0, 0))
@@ -1383,6 +1398,18 @@ class GameScene(BaseScene):
                 "total": max(1.0, getattr(spec, "blood_absorb_cooldown", 20.0)),
                 "active": getattr(spec, "blood_absorb_active", False),
             })
+        elif p.is_engineer():
+            # Taret şarjlı bir yetenek: en az bir şarj varsa "hazır" sayılır,
+            # bekleme göstergesi dolmakta olan bir sonraki şarjı gösterir.
+            charges = getattr(p, "turret_charges", 0)
+            cd = p.get_turret_cooldown()
+            abilities.append({
+                "key": "R", "name": "Taret", "color": "night",
+                "left": 0.0 if charges > 0 else max(0.0, cd - getattr(p, "turret_recharge", 0)),
+                "total": cd,
+                "charges": charges,
+                "max_charges": p.get_turret_max_charges(),
+            })
         return abilities
 
     def draw_ability_bar(self, p):
@@ -1431,6 +1458,23 @@ class GameScene(BaseScene):
                 pygame.draw.rect(glow, ui_theme.readable(col) + (pulse,),
                                  glow.get_rect(), width=3, border_radius=5)
                 self.screen.blit(glow, (rect.x - 5, rect.y - 5))
+
+            # Şarj göstergesi (taret gibi biriken yetenekler): slotun üstünde
+            # kapasite kadar nokta, dolu olanlar aksan renginde yanar.
+            if ab.get("max_charges"):
+                mx = int(ab["max_charges"])
+                cur = int(ab.get("charges", 0))
+                pip_r, pip_gap = 4, 5
+                total_pw = mx * (pip_r * 2) + (mx - 1) * pip_gap
+                px = rect.centerx - total_pw // 2 + pip_r
+                py = rect.top - pip_r - 4
+                for c in range(mx):
+                    filled = c < cur
+                    pc = ui_theme.readable(col) if filled else (78, 74, 70)
+                    pygame.draw.circle(self.screen, pc, (px + c * (pip_r * 2 + pip_gap), py), pip_r)
+                    if filled:
+                        pygame.draw.circle(self.screen, ui_theme.DARK_OUT,
+                                           (px + c * (pip_r * 2 + pip_gap), py), pip_r, 1)
 
             name_txt = render_fit(ab["name"], 15,
                                   (206, 199, 184) if ready else (136, 130, 120),

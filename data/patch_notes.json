@@ -1,6 +1,31 @@
 {
     "versions": [
         {
+            "version": "1.13.0",
+            "date": "2026-08-09",
+            "categories": {
+                "🔧 Mühendis yeniden tasarlandı": [
+                    "Taret artık saldırı tuşuna değil, R tuşuna bağlı bir YETENEK. Eskiden taret kiti takılıyken Mühendis hiç doğrudan hasar veremiyordu; saldırı tuşu 5 saniye boyunca hiçbir şey yapmıyordu.",
+                    "Taret 2 ŞARJ biriktiriyor: iki tareti arka arkaya kurup sonra bekleyebilirsin. Her şarj 5 saniyede doluyor.",
+                    "Yetenek çubuğunda (Atılma'nın yanında) R butonu ve üstünde şarj noktaları görünüyor.",
+                    "Taret kurunca mavi bir enerji dalgası çıkıyor; limit dolduğu için en eski taret sökülünce duman ve enkaz efekti veriyor (eskiden sessizce yok oluyordu)."
+                ],
+                "🔥 Yeni silah türü: Alev Silahı": [
+                    "Mühendis'e alev silahı geldi. Mermi atmaz — önündeki koniyi tarar, saniyede ~10 kez vurur ve yanma yığar.",
+                    "Asıl hasar tek vuruştan değil, alevin içinde kalan düşmanın biriken yanmasından gelir.",
+                    "Dipte koni genişler: yakınındaki düşmanları da yakalar.",
+                    "4 tier: Sızdıran Alev Tabancası (T4), Basınçlı Alev Silahı (T3), Ağır Alev Püskürtücü (T2), Ejderha Nefesi (T1).",
+                    "Üst tier'ler daha uzun menzil, daha yüksek ateş hasarı ve daha uzun yanma süresi veriyor.",
+                    "Alev için özel görsel: sıcak koni, savrulan alev dilleri ve namlu parlaması."
+                ],
+                "🃏 Yeni kartlar (taret)": [
+                    "⚙️ Seri Üretim — +1 taret şarjı. Bedel: verdiğin hasar %15 azalır.",
+                    "🏭 Fabrika Hattı — +1 taret limiti ve taretler %25 hızlı ateş eder. Bedel: hareket hızın %20 azalır.",
+                    "🔧 Aşırı Yükleme — +2 taret limiti, +1 şarj, taretler %40 sert vurur. Bedel: taret canı yarıya iner, maksimum canın %15 azalır."
+                ]
+            }
+        },
+        {
             "version": "1.12.2",
             "date": "2026-08-09",
             "categories": {

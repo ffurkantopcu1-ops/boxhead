@@ -536,6 +536,34 @@ def pickup(game, x, y, kind='gold'):
                    color=e['color'], timer=0.3, rise=40)
 
 
+def flamethrower(game, x, y, angle, length, arc):
+    """Alev silahı akışı: sıcak koni + ileri savrulan alev dilleri.
+
+    Saldırı aralığı çok kısa olduğu için efekt de KISA ömürlü ve az parçacıklı
+    tutulur; yoksa saniyede onlarca kez tetiklenip hem ekranı boğar hem
+    parçacık tavanını doldurur.
+    """
+    import random as _r
+    # Sıcak çekirdek konisi. Rengi bilinçli olarak sönük: koni dolgusu tek
+    # başına parlak olunca düz turuncu bir kama gibi okunuyor, alev hissini
+    # asıl parçacıklar veriyor. Koni de parçacıklardan kısa tutulur ki
+    # diller ucundan taşsın.
+    game.add_event("sweep", x, y, angle=angle, range=length * 0.72, arc=arc * 0.92,
+                   color=(150, 60, 15), timer=0.09)
+    # Namlu ağzı parlaması
+    game.add_event("fx", x + math.cos(angle) * 26, y + math.sin(angle) * 26,
+                   tex="flame", size=44, grow=0.35, color=(255, 190, 80),
+                   timer=0.10, curve="flash")
+    # İleri savrulan alev dilleri: koninin içine dağılır, uçta söner
+    for _ in range(5):
+        a = angle + _r.uniform(-arc / 2, arc / 2)
+        d = _r.uniform(0.15, 1.0) * length
+        emit(game, x + math.cos(a) * d * 0.55, y + math.sin(a) * d * 0.55,
+             count=1, color=(255, _r.randint(120, 205), 45),
+             speed=(3.0, 7.5), size=(7, 15), life=(0.18, 0.34),
+             tex="flame", spread=arc * 0.8, angle=a, drag=0.10)
+
+
 def muzzle(game, x, y, angle, color=(255, 220, 150)):
     game.add_event("fx", x, y, tex="muzzle", size=26, grow=0.3,
                    color=color, timer=0.09)

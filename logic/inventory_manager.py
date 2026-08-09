@@ -157,6 +157,9 @@ class InventoryManager:
             # çarpan olarak kullanıldığı için 1.0 kalır.
             "xpGain": 0.0, "goldGain": 0.0, "magnetRadius": 50,
             "turretMaxHp": 150, "turretDmg": 1.0, "turretRate": 1.0, "turretLimit": 1,
+            # R yeteneğinin şarj kapasitesine EKLENEN bonus (taban 2, bkz.
+            # Player.TURRET_BASE_CHARGES). Taret kartlarıyla artar.
+            "turretCharges": 0,
             "cooldownReduction": 0, "attack_speed_bonus": 0, "aoe_bonus": 0,
             "minionProjectileCount": 1,
             # ELEMENTAL & SPECIALS

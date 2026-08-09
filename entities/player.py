@@ -106,6 +106,9 @@ class Player:
 
         # --- ARTIFACT & ACTIVE EFFECTS ---
         self.artifact_cooldown = 0
+        # Taret yeteneği (Mühendis, R tuşu): şarj sayısı ve dolum sayacı
+        self.turret_charges = self.TURRET_BASE_CHARGES
+        self.turret_recharge = 0.0
         self.artifact_timer = 0 # Aktif efekt süresi (Görünmezlik, Kalkan vb.)
         # Süreli stat çarpanları (örn. Kan Ritüeli). recalculate_stats bunları
         # kalıcı statların ÜSTÜNE uygular; böylece araya giren bir yeniden
@@ -377,6 +380,8 @@ class Player:
         # --- ARTIFACT & EFFECT TIMERS ---
         if self.artifact_cooldown > 0:
             self.artifact_cooldown -= dt
+        if self.is_engineer():
+            self.update_turret_charges(dt)
             
         if self.artifact_timer > 0:
             self.artifact_timer -= dt
@@ -1186,25 +1191,92 @@ class Player:
 
         self.emit_shockwave(game)
 
+    # --- TARET YETENEĞİ (R) ---
+    # ŞARJ SİSTEMİ: tek bekleme yerine biriken şarj. Taban 2 şarj; biri
+    # harcandığında dolum sayacı işlemeye başlar, dolunca bir şarj geri gelir.
+    # Böylece oyuncu iki tareti arka arkaya kurup sonra bekleyebilir.
+    TURRET_BASE_CD = 5.0        # bir şarjın dolum süresi (saniye)
+    TURRET_BASE_CHARGES = 2     # taban şarj kapasitesi
+
+    def get_turret_cooldown(self):
+        """Bir şarjın dolum süresi (cooldownReduction kısaltır)."""
+        cdr = min(0.7, self.stats.get("cooldownReduction", 0))
+        return self.TURRET_BASE_CD * (1.0 - cdr)
+
+    def get_turret_max_charges(self):
+        """Şarj kapasitesi. turretCharges statı kartlarla artar."""
+        return max(1, self.TURRET_BASE_CHARGES + int(self.stats.get("turretCharges", 0)))
+
+    def is_engineer(self):
+        return getattr(self, 'base_class_id', getattr(self, 'class_id', '')) == "engineer"
+
+    def update_turret_charges(self, dt):
+        """Şarjları doldurur. Her karede player.update'ten çağrılır."""
+        cap = self.get_turret_max_charges()
+        if self.turret_charges >= cap:
+            # Dolu: sayaç boşta beklesin, bir sonraki harcamada baştan işlesin
+            self.turret_charges = cap
+            self.turret_recharge = 0.0
+            return
+        self.turret_recharge += dt
+        need = self.get_turret_cooldown()
+        while self.turret_recharge >= need and self.turret_charges < cap:
+            self.turret_recharge -= need
+            self.turret_charges += 1
+        if self.turret_charges >= cap:
+            self.turret_recharge = 0.0
+
+    def can_place_turret(self):
+        """Taret kurulabilir mi? (sınıf + şarj + susturulma)"""
+        if not self.is_engineer():
+            return False
+        if getattr(self, 'is_silenced', False):
+            return False
+        return self.turret_charges >= 1
+
+    def try_place_turret(self, game):
+        """R yeteneği: taret kur. Başarılıysa True döner."""
+        if not self.can_place_turret():
+            return False
+        self.place_turret(game)
+        self.turret_charges -= 1
+        return True
+
     def place_turret(self, game):
         limit = int(self.stats.get("turretLimit", 1))
-        
+
         # Limit kontrolü (En eski tareti sil)
         if len(game.turrets) >= limit:
-            game.turrets.pop(0)
-            
+            old = game.turrets.pop(0)
+            # Eskiden sessizce yok oluyordu; oyuncu hangi taretin gittiğini
+            # göremiyordu. Artık sökülme efekti var.
+            game.add_event("fx", old.x, old.y, tex="smoke", size=56, grow=1.1,
+                           color=(150, 150, 160), timer=0.45)
+            vfx.emit(game, old.x, old.y, count=6, color=(170, 170, 180),
+                     speed=(0.8, 2.4), size=(2, 5), life=(0.3, 0.6),
+                     tex="debris", gravity=0.05)
+
         from entities.turret import Turret
         # SADECE SİLAH SLOTUNDAKİ TARET KİTİNİN STATLARINI AL (Global yetenekleri alma)
         local_stats = self.inv_manager.get_item_local_stats("weapon")
         
-        new_turret = Turret(game.entity_id_counter, self.x, self.y, 
-                           hp=self.stats.get("turretMaxHp", 150),
+        # Aşırı Yükleme kartının bedeli: taretler daha kırılgan
+        _hp_pen = getattr(self, "turret_hp_penalty", 1.0)
+        new_turret = Turret(game.entity_id_counter, self.x, self.y,
+                           hp=self.stats.get("turretMaxHp", 150) * _hp_pen,
                            dmg_mult=self.stats.get("turretDmg", 1.0),
                            fire_rate=self.stats.get("turretRate", 1.0),
                            local_stats=local_stats,
                            owner=self)
         game.turrets.append(new_turret)
         game.entity_id_counter += 1
+        # Kurulum geri bildirimi
+        game.add_event("shockwave", self.x, self.y, radius=70,
+                       color=(120, 200, 255), timer=0.3)
+        game.add_event("fx", self.x, self.y, tex="magic", size=64, grow=0.5,
+                       color=(150, 220, 255), timer=0.35, curve="flash")
+        vfx.emit(game, self.x, self.y, count=10, color=(160, 220, 255),
+                 speed=(1.0, 3.0), size=(2, 4), life=(0.25, 0.5), tex="spark")
         print("Taret Kuruldu!")
             
     def check_minions(self, game):

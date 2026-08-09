@@ -51,6 +51,18 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Lazer Taret Kiti (T2)', 'tier': 2, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_laser', 'itemBase': { 'turretDmg': 1.6, 'projectileCount': 2, 'turretRate': 0.2, 'pierce': 1 } },
         { 'type': 'weapon', 'name': 'Kıyamet Tareti Kiti (T1)', 'tier': 1, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_doom', 'itemBase': { 'turretDmg': 2.2, 'projectileCount': 3, 'turretRate': 0.4, 'pierce': 2, 'bounce': 1 } },
 
+        # Mühendis — ALEV SİLAHLARI. Taret kiti bir "ekipman" (elde vurmaz);
+        # alev silahı Mühendis'in doğrudan hasar veren kolu. Mermi üretmez,
+        # önündeki koniyi tarar (engineer_logic.execute_flamethrower).
+        # Hasar 'fireDamage' üzerinden okunur; asıl hasar yığılan yanmadan
+        # gelir. 'range' koniyi uzatır. attackCooldown çok kısa: akış hissi.
+        # Menzil ve tek vuruş hasarı düşük tutuldu çünkü saniyede ~10 tick
+        # vuruyor ve her tick yanma tazeliyor.
+        { 'type': 'weapon', 'name': 'Sızdıran Alev Tabancası (T4)', 'tier': 4, 'isFlamethrower': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_flamethrower_leaky', 'itemBase': { 'fireDamage': 4, 'attackCooldown': 115 } },
+        { 'type': 'weapon', 'name': 'Basınçlı Alev Silahı (T3)', 'tier': 3, 'isFlamethrower': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_flamethrower_pressure', 'itemBase': { 'fireDamage': 9, 'attackCooldown': 105, 'range': 45 } },
+        { 'type': 'weapon', 'name': 'Ağır Alev Püskürtücü (T2)', 'tier': 2, 'isFlamethrower': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_flamethrower_heavy', 'itemBase': { 'fireDamage': 17, 'attackCooldown': 95, 'range': 90, 'fireDmgMult': 0.2 } },
+        { 'type': 'weapon', 'name': 'Ejderha Nefesi (T1)', 'tier': 1, 'isFlamethrower': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_flamethrower_dragon', 'itemBase': { 'fireDamage': 31, 'attackCooldown': 85, 'range': 150, 'fireDmgMult': 0.45, 'statusDuration': 0.3 } },
+
         { 'type': 'weapon', 'name': 'Kırık Terbiyeci Sopası (T4)', 'tier': 4, 'isMinion': True, 'weaponClass': 'beastmaster', 'icon_id': 'weapon_tamer_staff_broken', 'itemBase': { 'minionDamage': 0.2 } },
         { 'type': 'weapon', 'name': 'Çırak Terbiyeci Sopası (T3)', 'tier': 3, 'isMinion': True, 'weaponClass': 'beastmaster', 'icon_id': 'weapon_tamer_staff_apprentice', 'itemBase': { 'minionDamage': 0.4, 'minionCount': 1 } },
         { 'type': 'weapon', 'name': 'Usta Terbiyeci Sopası (T2)', 'tier': 2, 'isMinion': True, 'weaponClass': 'beastmaster', 'icon_id': 'weapon_tamer_staff_master', 'itemBase': { 'minionDamage': 0.8, 'minionCount': 2, 'projectileCount': 1 } },
