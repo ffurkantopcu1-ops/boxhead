@@ -128,6 +128,20 @@ def _chrome_dir():
 
 CHROME_DIR = _chrome_dir()
 
+
+def _asset_path(name):
+    """Ortak launcher varlığını kaynakta, pakette veya kurulumda bul."""
+    rel = ('assets', name)
+    candidates = []
+    if getattr(sys, 'frozen', False):
+        meipass = getattr(sys, '_MEIPASS', None)
+        if meipass:
+            candidates.append(os.path.join(meipass, *rel))
+        candidates.append(os.path.join(os.path.dirname(sys.executable), *rel))
+    candidates.append(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), *rel))
+    return next((path for path in candidates if os.path.isfile(path)), candidates[0])
+
 # tools/generate_launcher_chrome.py ile BİREBİR aynı olmalı; PNG'ler o
 # ölçülerde hazır çizildiği için buradaki sayılar değişirse chrome yeniden
 # üretilmeli.
@@ -407,6 +421,7 @@ class LauncherApp:
 
         self.root = tk.Tk()
         self.root.title(WINDOW_TITLE)
+        self._set_window_icon()
         self.root.geometry("720x540")
         self.root.resizable(False, False)
         self.root.configure(bg='#0d1018')
@@ -414,6 +429,20 @@ class LauncherApp:
         self.release_info = None
         self._build_ui()
         self.root.after(100, self._check_updates)
+
+    def _set_window_icon(self):
+        """Tk penceresi ve Windows görev çubuğu için ortak marka ikonunu ayarla."""
+        try:
+            self._window_icon = tk.PhotoImage(file=_asset_path('boxhead_icon.png'))
+            self.root.iconphoto(True, self._window_icon)
+        except (OSError, tk.TclError) as error:
+            print(f"[launcher] PNG ikonu yüklenemedi: {error}")
+
+        if os.name == 'nt':
+            try:
+                self.root.iconbitmap(default=_asset_path('boxhead_icon.ico'))
+            except (OSError, tk.TclError) as error:
+                print(f"[launcher] ICO ikonu yüklenemedi: {error}")
 
     # --- tema paleti (oyunla ortak; bkz. ui_theme.COLORS) ---
     PALETTE = {

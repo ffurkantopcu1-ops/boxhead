@@ -7,7 +7,11 @@ a = Analysis(
     binaries=[],
     # Launcher, oyun kurulmadan once de calisir; gotik arayuz parcalarini
     # (413 KB) kendi icine gomer, yoksa klasik widget arayuzune duser.
-    datas=[('assets/ui/gothic/launcher', 'assets/ui/gothic/launcher')],
+    datas=[
+        ('assets/ui/gothic/launcher', 'assets/ui/gothic/launcher'),
+        ('assets/boxhead_icon.png', 'assets'),
+        ('assets/boxhead_icon.ico', 'assets'),
+    ],
     # HTTPS guven zinciri. Ikisi de get_ssl_context icinde tembel import
     # edildigi icin PyInstaller'in statik analizi bulamiyor; certifi hook'u da
     # ancak import gorulurse cacert.pem'i pakete koyar.
@@ -38,6 +42,7 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
+    icon='assets/boxhead_icon.ico',
     codesign_identity=None,
     entitlements_file=None,
 )

@@ -18,8 +18,22 @@ sys.path.append(os.getcwd())
 
 from scene_manager import SceneManager, load_global_settings, create_display
 
+
+def _set_window_icon():
+    """Kaynak kodda ve PyInstaller paketinde ortak pencere ikonunu yükle."""
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    icon_path = os.path.join(base_path, "assets", "boxhead_icon.png")
+    try:
+        pygame.display.set_icon(pygame.image.load(icon_path))
+    except (FileNotFoundError, OSError, pygame.error) as error:
+        print(f"[icon] Oyun ikonu yüklenemedi: {error}")
+
+
 def main():
     pygame.init()
+
+    # Pencere oluşturulmadan önce ayarla; ilk karede doğru ikon kullanılsın.
+    _set_window_icon()
 
     # Oyunun UI'ı 1920x1080 çözünürlüğüne göre tasarlandığı için mantıksal çözünürlüğü sabitliyoruz.
     # pygame.SCALED bu 1920x1080 yüzeyi her ekrana bozulmadan (siyah barlarla) sığdırır.

@@ -1,6 +1,16 @@
 {
     "versions": [
         {
+            "version": "1.13.2",
+            "date": "2026-08-09",
+            "categories": {
+                "🖼️ Uygulama ikonu": [
+                    "Oyun ve launcher artık kendi ikonunu kullanıyor; görev çubuğunda ve alt+tab listesinde jenerik ikon yerine Boxhead logosu görünüyor.",
+                    "İkon 16x16'dan 256x256'ya kadar yedi boyutta hazırlandı, böylece küçük ve büyük gösterimlerde bulanıklaşmıyor."
+                ]
+            }
+        },
+        {
             "version": "1.13.1",
             "date": "2026-08-09",
             "categories": {
