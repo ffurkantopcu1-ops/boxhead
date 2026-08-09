@@ -1,11 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.18.6",
+      "date": "2026-08-10",
+      "categories": {
+        "⚙️ İyileştirmeler": [
+          "ölü kod temizliği + font önbelleği + SKILL_TREE.md güncelleme"
+        ]
+      }
+    },
+    {
       "version": "1.18.5",
       "date": "2026-08-10",
       "categories": {
         "⚖️ Denge Değişiklikleri": [
           "zorluk yeniden dengelemesi — HP süngeri yerine TEHLİKE ölçekleme"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.5"
         ]
       }
     },
