@@ -48,10 +48,10 @@ class SkillTree:
         if n.get("type") == "start" or n.get("start")
     }
 
-    # Bir sinifin kendi kolu yoksa (tanimsiz/gelecekteki sinif) cekirdek
-    # buradan acilir: core_heart bedava tahsis edilir ki paylasilan cekirdek
-    # yine de yollanabilsin. Su an tum oynanabilir siniflarin kendi kolu var.
-    ARMLESS_FALLBACK = "core_heart"
+    # Bilinmeyen/tanımsız sınıf için güvenlik ağı: ilk çekirdek (junction)
+    # düğümü bedava tohumlanır ki paylaşılan çember yine de yollanabilsin.
+    # Tüm gerçek sınıfların kendi başlangıcı var; bu yalnız edge-case içindir.
+    ARMLESS_FALLBACK = next((n["id"] for n in NODES if n.get("arm") == "core"), None)
 
     # ------------------------------------------------------------------
     # Baslangic / kosu kurulumu

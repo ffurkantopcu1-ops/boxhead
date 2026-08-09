@@ -1,680 +1,4205 @@
 [
-    {
-        "id": "core_heart",
-        "name": "🖤 Çekirdek Yürek",
-        "desc": "+%10 Hasar, +60 Max Can",
-        "arm": "core",
-        "type": "notable",
-        "stats": { "dmgMult": 0.10, "max_hp": 60 },
-        "connects": ["core_might", "core_ward"],
-        "pos": [700, 500]
-    },
-    {
-        "id": "core_might",
-        "name": "💪 Çekirdek Kudreti",
-        "desc": "+%15 Hasar, +8 Fiziksel Hasar",
-        "arm": "core",
-        "type": "notable",
-        "stats": { "dmgMult": 0.15, "physDmgFlat": 8 },
-        "connects": [],
-        "pos": [630, 500]
-    },
-    {
-        "id": "core_ward",
-        "name": "🛡️ Çekirdek Kalkanı",
-        "desc": "+80 Max Can, +10 Zırh",
-        "arm": "core",
-        "type": "notable",
-        "stats": { "max_hp": 80, "armor": 10 },
-        "connects": [],
-        "pos": [770, 500]
-    },
-    {
-        "id": "core_gate_armor",
-        "name": "Zırh Geçidi (+8 Zırh)",
-        "desc": "+8 Zırh",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "armor": 8 },
-        "connects": ["core_gate_crit", "core_gate_regen", "core_heart"],
-        "pos": [700, 650]
-    },
-    {
-        "id": "core_gate_crit",
-        "name": "Kritik Geçidi (+%4 Krit)",
-        "desc": "+%4 Kritik Şansı",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "critChance": 0.04 },
-        "connects": ["core_gate_dmg", "core_heart"],
-        "pos": [806, 606]
-    },
-    {
-        "id": "core_gate_dmg",
-        "name": "Hasar Geçidi (+%10 Hasar)",
-        "desc": "+%10 Hasar",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "dmgMult": 0.10 },
-        "connects": ["core_gate_hp", "core_heart"],
-        "pos": [850, 500]
-    },
-    {
-        "id": "core_gate_hp",
-        "name": "Can Geçidi (+40 Can)",
-        "desc": "+40 Max Can",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "max_hp": 40 },
-        "connects": ["core_gate_ls", "core_heart"],
-        "pos": [806, 394]
-    },
-    {
-        "id": "core_gate_ls",
-        "name": "Can Emme Geçidi (+%3)",
-        "desc": "+%3 Can Çalma",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "lifesteal": 0.03 },
-        "connects": ["core_gate_spd", "core_heart"],
-        "pos": [700, 350]
-    },
-    {
-        "id": "core_gate_spd",
-        "name": "Hız Geçidi (+0.3 Hız)",
-        "desc": "+0.3 Hareket Hızı",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "speed": 0.3 },
-        "connects": ["core_gate_as", "core_heart"],
-        "pos": [594, 394]
-    },
-    {
-        "id": "core_gate_as",
-        "name": "Saldırı Hızı Geçidi (+%8)",
-        "desc": "+%8 Saldırı Hızı",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "attack_speed_bonus": 0.08 },
-        "connects": ["core_gate_regen", "core_heart"],
-        "pos": [550, 500]
-    },
-    {
-        "id": "core_gate_regen",
-        "name": "Yenilenme Geçidi (+1.0 Rej)",
-        "desc": "+1.0 Can Yenilenmesi",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "regen": 1.0 },
-        "connects": ["core_heart"],
-        "pos": [594, 606]
-    },
-    {
-        "id": "core_gate_aoe",
-        "name": "Alan Geçidi (+%10 Alan)",
-        "desc": "+%10 Alan Etkisi",
-        "arm": "core",
-        "type": "minor",
-        "stats": { "aoe_bonus": 0.10 },
-        "connects": ["core_heart", "core_gate_armor", "core_gate_regen"],
-        "pos": [648, 640]
-    },
-
-    {
-        "id": "start_warrior",
-        "name": "⚔️ Savaşçı Başlangıcı",
-        "desc": "Savaşçı yolunun kökü.",
-        "arm": "warrior",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_armor", "w_hide"],
-        "pos": [700, 740]
-    },
-    {
-        "id": "w_hide",
-        "name": "🛡️ Sertleşmiş Deri",
-        "desc": "+10 Zırh",
-        "arm": "warrior",
-        "type": "minor",
-        "stats": { "armor": 10 },
-        "connects": ["w_vigor"],
-        "pos": [700, 800]
-    },
-    {
-        "id": "w_vigor",
-        "name": "💖 Dayanıklılık",
-        "desc": "+50 Max Can",
-        "arm": "warrior",
-        "type": "minor",
-        "stats": { "max_hp": 50 },
-        "connects": ["w_bulwark", "w_reach"],
-        "pos": [700, 860]
-    },
-    {
-        "id": "w_reach",
-        "name": "📏 Geniş Salınım",
-        "desc": "+25 Yakın Menzil, +6 Fiziksel Hasar",
-        "arm": "warrior",
-        "type": "minor",
-        "stats": { "meleeRangeFlat": 25, "physDmgFlat": 6 },
-        "connects": [],
-        "pos": [620, 860]
-    },
-    {
-        "id": "w_bulwark",
-        "name": "🏰 Siper",
-        "desc": "+80 Max Can, +12 Zırh",
-        "arm": "warrior",
-        "type": "notable",
-        "stats": { "max_hp": 80, "armor": 12 },
-        "connects": ["w_berserk"],
-        "pos": [700, 920]
-    },
-    {
-        "id": "w_berserk",
-        "name": "🩸 Berserker Kalbi",
-        "desc": "+%30 Hasar. Bedel: Max Can %15 azalır.",
-        "arm": "warrior",
-        "type": "keystone",
-        "stats": { "dmgMult": 0.30, "max_hp_pct": -15 },
-        "connects": [],
-        "pos": [700, 985]
-    },
-
-    {
-        "id": "start_sniper",
-        "name": "🎯 Nişancı Başlangıcı",
-        "desc": "Nişancı yolunun kökü.",
-        "arm": "sniper",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_crit", "s_focus"],
-        "pos": [898, 698]
-    },
-    {
-        "id": "s_focus",
-        "name": "🔎 Odak",
-        "desc": "+%5 Kritik Şansı",
-        "arm": "sniper",
-        "type": "minor",
-        "stats": { "critChance": 0.05 },
-        "connects": ["s_pierce"],
-        "pos": [958, 758]
-    },
-    {
-        "id": "s_pierce",
-        "name": "🏹 Delici Atış",
-        "desc": "+1 Delme",
-        "arm": "sniper",
-        "type": "minor",
-        "stats": { "pierce": 1 },
-        "connects": ["s_eagle", "s_power"],
-        "pos": [1018, 818]
-    },
-    {
-        "id": "s_power",
-        "name": "💥 Ağır Kalibre",
-        "desc": "+%10 Hasar",
-        "arm": "sniper",
-        "type": "minor",
-        "stats": { "dmgMult": 0.10 },
-        "connects": [],
-        "pos": [1078, 758]
-    },
-    {
-        "id": "s_eagle",
-        "name": "🦅 Kartal Gözü",
-        "desc": "+%6 Kritik Şansı, +%50 Kritik Hasar",
-        "arm": "sniper",
-        "type": "notable",
-        "stats": { "critChance": 0.06, "critDmg": 0.5 },
-        "connects": ["s_headshot"],
-        "pos": [1078, 878]
-    },
-    {
-        "id": "s_headshot",
-        "name": "☠️ Kafadan Vuruş",
-        "desc": "+%10 Kritik Şansı, +%20 Hasar. Bedel: Max Can %10 azalır.",
-        "arm": "sniper",
-        "type": "keystone",
-        "stats": { "critChance": 0.10, "dmgMult": 0.20, "max_hp_pct": -10 },
-        "connects": [],
-        "pos": [1138, 878]
-    },
-
-    {
-        "id": "start_engineer",
-        "name": "🤖 Mühendis Başlangıcı",
-        "desc": "Mühendis yolunun kökü.",
-        "arm": "engineer",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_dmg", "e_plating"],
-        "pos": [980, 500]
-    },
-    {
-        "id": "e_plating",
-        "name": "🔩 Zırhlı Taret",
-        "desc": "+%20 Taret Hasarı",
-        "arm": "engineer",
-        "type": "minor",
-        "stats": { "turretDmg": 0.2 },
-        "connects": ["e_autoload"],
-        "pos": [1050, 500]
-    },
-    {
-        "id": "e_autoload",
-        "name": "⚙️ Otomatik Besleme",
-        "desc": "+%15 Taret Atış Hızı",
-        "arm": "engineer",
-        "type": "minor",
-        "stats": { "turretRate": 0.15 },
-        "connects": ["e_capacity", "e_bunker"],
-        "pos": [1120, 500]
-    },
-    {
-        "id": "e_bunker",
-        "name": "🧱 Sığınak",
-        "desc": "+80 Taret Canı, +8 Zırh",
-        "arm": "engineer",
-        "type": "minor",
-        "stats": { "turretMaxHp": 80, "armor": 8 },
-        "connects": [],
-        "pos": [1120, 430]
-    },
-    {
-        "id": "e_capacity",
-        "name": "📡 Kapasite",
-        "desc": "+1 Taret Limiti, +%20 Taret Hasarı",
-        "arm": "engineer",
-        "type": "notable",
-        "stats": { "turretLimit": 1, "turretDmg": 0.2 },
-        "connects": ["e_overdrive"],
-        "pos": [1190, 500]
-    },
-    {
-        "id": "e_overdrive",
-        "name": "🔧 Aşırı Yükleme",
-        "desc": "+%50 Taret Hasarı, +%25 Taret Hızı. Bedel: Max Can %15 azalır.",
-        "arm": "engineer",
-        "type": "keystone",
-        "stats": { "turretDmg": 0.5, "turretRate": 0.25, "max_hp_pct": -15 },
-        "connects": [],
-        "pos": [1258, 500]
-    },
-
-    {
-        "id": "start_sorcerer",
-        "name": "🔮 Büyücü Başlangıcı",
-        "desc": "Büyücü yolunun kökü.",
-        "arm": "sorcerer",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_hp", "so_spark"],
-        "pos": [898, 302]
-    },
-    {
-        "id": "so_spark",
-        "name": "🔥 Kıvılcım",
-        "desc": "+2 Ateş Hasarı, +%10 Elemental Hasar",
-        "arm": "sorcerer",
-        "type": "minor",
-        "stats": { "fireDmgFlat": 2, "elementDmgMult": 0.10 },
-        "connects": ["so_frost"],
-        "pos": [958, 242]
-    },
-    {
-        "id": "so_frost",
-        "name": "❄️ Ayaz",
-        "desc": "+2 Buz Hasarı, +%10 Elemental Hasar",
-        "arm": "sorcerer",
-        "type": "minor",
-        "stats": { "frostDmgFlat": 2, "elementDmgMult": 0.10 },
-        "connects": ["so_arcane", "so_ward"],
-        "pos": [1018, 182]
-    },
-    {
-        "id": "so_ward",
-        "name": "🧿 Büyü Kalkanı",
-        "desc": "+60 Max Can",
-        "arm": "sorcerer",
-        "type": "minor",
-        "stats": { "max_hp": 60 },
-        "connects": [],
-        "pos": [1078, 242]
-    },
-    {
-        "id": "so_arcane",
-        "name": "🌀 Gizemli Odak",
-        "desc": "+%20 Elemental Hasar, +%10 Hasar",
-        "arm": "sorcerer",
-        "type": "notable",
-        "stats": { "elementDmgMult": 0.20, "dmgMult": 0.10 },
-        "connects": ["so_overload"],
-        "pos": [1078, 122]
-    },
-    {
-        "id": "so_overload",
-        "name": "💥 Element Taşması",
-        "desc": "+%50 Elemental Hasar. Bedel: Max Can %20 azalır.",
-        "arm": "sorcerer",
-        "type": "keystone",
-        "stats": { "elementDmgMult": 0.5, "max_hp_pct": -20 },
-        "connects": [],
-        "pos": [1138, 122]
-    },
-
-    {
-        "id": "start_bloodwalker",
-        "name": "🩸 Kan Yürüyen Başlangıcı",
-        "desc": "Kan Yürüyen yolunun kökü.",
-        "arm": "bloodwalker",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_ls", "b_leech"],
-        "pos": [700, 220]
-    },
-    {
-        "id": "b_leech",
-        "name": "🦇 Sülük",
-        "desc": "+%3 Can Çalma",
-        "arm": "bloodwalker",
-        "type": "minor",
-        "stats": { "lifesteal": 0.03 },
-        "connects": ["b_gore"],
-        "pos": [700, 160]
-    },
-    {
-        "id": "b_gore",
-        "name": "🔪 Kan Dökücü",
-        "desc": "+%10 Hasar",
-        "arm": "bloodwalker",
-        "type": "minor",
-        "stats": { "dmgMult": 0.10 },
-        "connects": ["b_sanguine", "b_thick"],
-        "pos": [700, 100]
-    },
-    {
-        "id": "b_thick",
-        "name": "🫀 Koyu Kan",
-        "desc": "+60 Max Can, +1.0 Rejenerasyon",
-        "arm": "bloodwalker",
-        "type": "minor",
-        "stats": { "max_hp": 60, "regen": 1.0 },
-        "connects": [],
-        "pos": [620, 100]
-    },
-    {
-        "id": "b_sanguine",
-        "name": "🩸 Kızıl Zafer",
-        "desc": "+%5 Can Çalma, +%10 Hasar",
-        "arm": "bloodwalker",
-        "type": "notable",
-        "stats": { "lifesteal": 0.05, "dmgMult": 0.10 },
-        "connects": ["b_thirst"],
-        "pos": [700, 40]
-    },
-    {
-        "id": "b_thirst",
-        "name": "🧛 Kan Susuzluğu",
-        "desc": "+%8 Can Çalma, +%20 Hasar. Bedel: Max Can %15 azalır.",
-        "arm": "bloodwalker",
-        "type": "keystone",
-        "stats": { "lifesteal": 0.08, "dmgMult": 0.20, "max_hp_pct": -15 },
-        "connects": [],
-        "pos": [770, 40]
-    },
-
-    {
-        "id": "start_ninja",
-        "name": "🥷 Ninja Başlangıcı",
-        "desc": "Ninja yolunun kökü.",
-        "arm": "ninja",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_spd", "n_step"],
-        "pos": [502, 302]
-    },
-    {
-        "id": "n_step",
-        "name": "👟 Hafif Adım",
-        "desc": "+0.3 Hareket Hızı",
-        "arm": "ninja",
-        "type": "minor",
-        "stats": { "speed": 0.3 },
-        "connects": ["n_evade"],
-        "pos": [442, 242]
-    },
-    {
-        "id": "n_evade",
-        "name": "💨 Sıyrılma",
-        "desc": "+%5 Kaçınma",
-        "arm": "ninja",
-        "type": "minor",
-        "stats": { "dodgeChance": 0.05 },
-        "connects": ["n_flurry", "n_shadow"],
-        "pos": [382, 182]
-    },
-    {
-        "id": "n_shadow",
-        "name": "🌑 Gölge Vuruşu",
-        "desc": "+%5 Kritik Şansı",
-        "arm": "ninja",
-        "type": "minor",
-        "stats": { "critChance": 0.05 },
-        "connects": [],
-        "pos": [442, 122]
-    },
-    {
-        "id": "n_flurry",
-        "name": "🌀 Bıçak Fırtınası",
-        "desc": "+%10 Saldırı Hızı, +0.2 Hız",
-        "arm": "ninja",
-        "type": "notable",
-        "stats": { "attack_speed_bonus": 0.10, "speed": 0.2 },
-        "connects": ["n_phantom"],
-        "pos": [322, 122]
-    },
-    {
-        "id": "n_phantom",
-        "name": "👻 Hayalet Dans",
-        "desc": "+%15 Kaçınma, +%15 Saldırı Hızı. Bedel: Max Can %15 azalır.",
-        "arm": "ninja",
-        "type": "keystone",
-        "stats": { "dodgeChance": 0.15, "attack_speed_bonus": 0.15, "max_hp_pct": -15 },
-        "connects": [],
-        "pos": [262, 122]
-    },
-
-    {
-        "id": "start_alchemist",
-        "name": "⚗️ Simyacı Başlangıcı",
-        "desc": "Simyacı yolunun kökü.",
-        "arm": "alchemist",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_as", "a_brew"],
-        "pos": [420, 500]
-    },
-    {
-        "id": "a_brew",
-        "name": "🧪 Kaynayan Karışım",
-        "desc": "+%15 DoT Hasarı",
-        "arm": "alchemist",
-        "type": "minor",
-        "stats": { "dotDmgMult": 0.15 },
-        "connects": ["a_spread"],
-        "pos": [350, 500]
-    },
-    {
-        "id": "a_spread",
-        "name": "🌫️ Yayılım",
-        "desc": "+%15 Alan Etkisi",
-        "arm": "alchemist",
-        "type": "minor",
-        "stats": { "aoe_bonus": 0.15 },
-        "connects": ["a_toxin", "a_vial"],
-        "pos": [280, 500]
-    },
-    {
-        "id": "a_vial",
-        "name": "🍶 Fazla Doz",
-        "desc": "+%15 DoT Hasarı",
-        "arm": "alchemist",
-        "type": "minor",
-        "stats": { "dotDmgMult": 0.15 },
-        "connects": [],
-        "pos": [280, 430]
-    },
-    {
-        "id": "a_toxin",
-        "name": "☣️ Toksin Ustası",
-        "desc": "+%25 DoT Hasarı, +%15 Alan Etkisi",
-        "arm": "alchemist",
-        "type": "notable",
-        "stats": { "dotDmgMult": 0.25, "aoe_bonus": 0.15 },
-        "connects": ["a_plague"],
-        "pos": [210, 500]
-    },
-    {
-        "id": "a_plague",
-        "name": "💀 Veba Bulutu",
-        "desc": "+%50 DoT Hasarı. Bedel: Doğrudan hasar %20 azalır.",
-        "arm": "alchemist",
-        "type": "keystone",
-        "stats": { "dotDmgMult": 0.5, "dmgMult": -0.20 },
-        "connects": [],
-        "pos": [140, 500]
-    },
-
-    {
-        "id": "start_beastmaster",
-        "name": "🐺 Canavar Efendisi Başlangıcı",
-        "desc": "Canavar Efendisi yolunun kökü.",
-        "arm": "beastmaster",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_regen", "bm_pack"],
-        "pos": [502, 698]
-    },
-    {
-        "id": "bm_pack",
-        "name": "🐾 Sürü Öfkesi",
-        "desc": "+%25 Minyon Hasarı",
-        "arm": "beastmaster",
-        "type": "minor",
-        "stats": { "minionDamage": 0.25 },
-        "connects": ["bm_howl"],
-        "pos": [442, 758]
-    },
-    {
-        "id": "bm_howl",
-        "name": "🌙 Uluma",
-        "desc": "+%20 Minyon Saldırı Hızı",
-        "arm": "beastmaster",
-        "type": "minor",
-        "stats": { "minionRate": 0.2 },
-        "connects": ["bm_alpha", "bm_ward"],
-        "pos": [382, 818]
-    },
-    {
-        "id": "bm_ward",
-        "name": "🦴 Kalın Post",
-        "desc": "+80 Minyon Canı",
-        "arm": "beastmaster",
-        "type": "minor",
-        "stats": { "minionMaxHpFlat": 80 },
-        "connects": [],
-        "pos": [442, 878]
-    },
-    {
-        "id": "bm_alpha",
-        "name": "🐺 Alfa Sürüsü",
-        "desc": "+%30 Minyon Hasarı, +1 Minyon",
-        "arm": "beastmaster",
-        "type": "notable",
-        "stats": { "minionDamage": 0.30, "minionCount": 1 },
-        "connects": ["bm_bond"],
-        "pos": [322, 878]
-    },
-    {
-        "id": "bm_bond",
-        "name": "🔗 Vahşi Bağ",
-        "desc": "+%50 Minyon Hasarı. Bedel: Kendi hasarın %25 azalır.",
-        "arm": "beastmaster",
-        "type": "keystone",
-        "stats": { "minionDamage": 0.5, "dmgMult": -0.25 },
-        "connects": [],
-        "pos": [262, 878]
-    },
-
-    {
-        "id": "start_bomber",
-        "name": "💣 Bombacı Başlangıcı",
-        "desc": "Bombacı yolunun kökü.",
-        "arm": "bomber",
-        "type": "start",
-        "start": true,
-        "stats": {},
-        "connects": ["core_gate_aoe", "bo_fuse"],
-        "pos": [613, 712]
-    },
-    {
-        "id": "bo_fuse",
-        "name": "🧨 Uzun Fitil",
-        "desc": "+%15 Alan Etkisi",
-        "arm": "bomber",
-        "type": "minor",
-        "stats": { "aoe_bonus": 0.15 },
-        "connects": ["bo_shrapnel"],
-        "pos": [585, 772]
-    },
-    {
-        "id": "bo_shrapnel",
-        "name": "🔩 Şarapnel",
-        "desc": "+8 Fiziksel Hasar",
-        "arm": "bomber",
-        "type": "minor",
-        "stats": { "physDmgFlat": 8 },
-        "connects": ["bo_cluster", "bo_charge"],
-        "pos": [557, 832]
-    },
-    {
-        "id": "bo_charge",
-        "name": "💥 Ağır Dolgu",
-        "desc": "+%10 Hasar",
-        "arm": "bomber",
-        "type": "minor",
-        "stats": { "dmgMult": 0.10 },
-        "connects": [],
-        "pos": [632, 838]
-    },
-    {
-        "id": "bo_cluster",
-        "name": "🧷 Küme Mayın",
-        "desc": "+%20 Alan Etkisi, +%10 Hasar",
-        "arm": "bomber",
-        "type": "notable",
-        "stats": { "aoe_bonus": 0.20, "dmgMult": 0.10 },
-        "connects": ["bo_detonator"],
-        "pos": [529, 892]
-    },
-    {
-        "id": "bo_detonator",
-        "name": "☢️ Zincirleme Patlama",
-        "desc": "+%30 Alan Etkisi, +%30 Hasar. Bedel: Max Can %15 azalır.",
-        "arm": "bomber",
-        "type": "keystone",
-        "stats": { "aoe_bonus": 0.30, "dmgMult": 0.30, "max_hp_pct": -15 },
-        "connects": [],
-        "pos": [501, 952]
-    }
+  {
+    "id": "start_warrior",
+    "name": "Warrior Başlangıcı",
+    "desc": "",
+    "arm": "warrior",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1500,
+      1060
+    ],
+    "start": true,
+    "connects": [
+      "warrior_C0"
+    ]
+  },
+  {
+    "id": "junc_warrior_sniper",
+    "name": "Geçit",
+    "desc": "+40 Can",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      1582,
+      1074
+    ],
+    "connects": [
+      "start_sniper",
+      "start_warrior"
+    ]
+  },
+  {
+    "id": "warrior_L0",
+    "name": "+45 Can",
+    "desc": "+45 Can",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "max_hp": 45
+    },
+    "pos": [
+      1415,
+      930
+    ],
+    "connects": [
+      "warrior_L1"
+    ]
+  },
+  {
+    "id": "warrior_L1",
+    "name": "+8 Fiziksel",
+    "desc": "+8 Fiziksel",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 8
+    },
+    "pos": [
+      1379,
+      774
+    ],
+    "connects": [
+      "warrior_L2"
+    ]
+  },
+  {
+    "id": "warrior_L2",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1343,
+      618
+    ],
+    "connects": [
+      "warrior_L3"
+    ]
+  },
+  {
+    "id": "warrior_L3",
+    "name": "+20 Menzil",
+    "desc": "+20 Menzil",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "meleeRangeFlat": 20
+    },
+    "pos": [
+      1307,
+      462
+    ],
+    "connects": [
+      "warrior_L4"
+    ]
+  },
+  {
+    "id": "warrior_L4",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1271,
+      306
+    ],
+    "connects": [
+      "warrior_L5"
+    ]
+  },
+  {
+    "id": "warrior_L5",
+    "name": "🏰 Siper",
+    "desc": "+80 Can, +12 Zırh",
+    "arm": "warrior",
+    "type": "notable",
+    "stats": {
+      "max_hp": 80,
+      "armor": 12
+    },
+    "pos": [
+      1235,
+      150
+    ],
+    "connects": []
+  },
+  {
+    "id": "warrior_C0",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1500,
+      920
+    ],
+    "connects": [
+      "warrior_C1",
+      "warrior_L0",
+      "warrior_R0"
+    ]
+  },
+  {
+    "id": "warrior_C1",
+    "name": "+45 Can",
+    "desc": "+45 Can",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "max_hp": 45
+    },
+    "pos": [
+      1500,
+      760
+    ],
+    "connects": [
+      "warrior_C2",
+      "warrior_L1",
+      "warrior_R1"
+    ]
+  },
+  {
+    "id": "warrior_C2",
+    "name": "🏰 Siper",
+    "desc": "+80 Can, +12 Zırh",
+    "arm": "warrior",
+    "type": "notable",
+    "stats": {
+      "max_hp": 80,
+      "armor": 12
+    },
+    "pos": [
+      1500,
+      600
+    ],
+    "connects": [
+      "warrior_C3",
+      "warrior_L2",
+      "warrior_R2"
+    ]
+  },
+  {
+    "id": "warrior_C3",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1500,
+      440
+    ],
+    "connects": [
+      "warrior_C4",
+      "warrior_L3",
+      "warrior_R3"
+    ]
+  },
+  {
+    "id": "warrior_C4",
+    "name": "🪓 Cellat Gücü",
+    "desc": "+%15 Hasar, +10 Fiziksel",
+    "arm": "warrior",
+    "type": "notable",
+    "stats": {
+      "dmgMult": 0.15,
+      "physDmgFlat": 10
+    },
+    "pos": [
+      1500,
+      280
+    ],
+    "connects": [
+      "warrior_C5",
+      "warrior_L4",
+      "warrior_R4"
+    ]
+  },
+  {
+    "id": "warrior_C5",
+    "name": "🩸 Berserker Kalbi",
+    "desc": "+%30 Hasar, Max Can %15 azalır",
+    "arm": "warrior",
+    "type": "keystone",
+    "stats": {
+      "dmgMult": 0.3,
+      "max_hp_pct": -15
+    },
+    "pos": [
+      1500,
+      120
+    ],
+    "connects": [
+      "warrior_L5",
+      "warrior_R5"
+    ]
+  },
+  {
+    "id": "warrior_R0",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1585,
+      930
+    ],
+    "connects": [
+      "warrior_R1"
+    ]
+  },
+  {
+    "id": "warrior_R1",
+    "name": "+20 Menzil",
+    "desc": "+20 Menzil",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "meleeRangeFlat": 20
+    },
+    "pos": [
+      1621,
+      774
+    ],
+    "connects": [
+      "warrior_R2"
+    ]
+  },
+  {
+    "id": "warrior_R2",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1657,
+      618
+    ],
+    "connects": [
+      "warrior_R3"
+    ]
+  },
+  {
+    "id": "warrior_R3",
+    "name": "+45 Can",
+    "desc": "+45 Can",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "max_hp": 45
+    },
+    "pos": [
+      1693,
+      462
+    ],
+    "connects": [
+      "warrior_R4"
+    ]
+  },
+  {
+    "id": "warrior_R4",
+    "name": "+8 Fiziksel",
+    "desc": "+8 Fiziksel",
+    "arm": "warrior",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 8
+    },
+    "pos": [
+      1729,
+      306
+    ],
+    "connects": [
+      "warrior_R5"
+    ]
+  },
+  {
+    "id": "warrior_R5",
+    "name": "🪓 Cellat Gücü",
+    "desc": "+%15 Hasar, +10 Fiziksel",
+    "arm": "warrior",
+    "type": "notable",
+    "stats": {
+      "dmgMult": 0.15,
+      "physDmgFlat": 10
+    },
+    "pos": [
+      1765,
+      150
+    ],
+    "connects": []
+  },
+  {
+    "id": "start_sniper",
+    "name": "Sniper Başlangıcı",
+    "desc": "",
+    "arm": "sniper",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1654,
+      1116
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_sniper_engineer",
+    "name": "Geçit",
+    "desc": "+%8 Hasar",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1708,
+      1180
+    ],
+    "connects": [
+      "start_engineer",
+      "start_sniper"
+    ]
+  },
+  {
+    "id": "sniper_L0",
+    "name": "+1 Delme",
+    "desc": "+1 Delme",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "pierce": 1
+    },
+    "pos": [
+      1673,
+      961
+    ],
+    "connects": [
+      "sniper_L1"
+    ]
+  },
+  {
+    "id": "sniper_L1",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1745,
+      819
+    ],
+    "connects": [
+      "sniper_L2"
+    ]
+  },
+  {
+    "id": "sniper_L2",
+    "name": "+%20 Krit Hasar",
+    "desc": "+%20 Krit Hasar",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "critDmg": 0.2
+    },
+    "pos": [
+      1818,
+      676
+    ],
+    "connects": [
+      "sniper_L3"
+    ]
+  },
+  {
+    "id": "sniper_L3",
+    "name": "+1 Mermi Hızı",
+    "desc": "+1 Mermi Hızı",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "bullet_speed": 1
+    },
+    "pos": [
+      1890,
+      534
+    ],
+    "connects": [
+      "sniper_L4"
+    ]
+  },
+  {
+    "id": "sniper_L4",
+    "name": "+%5 Kritik",
+    "desc": "+%5 Kritik",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.05
+    },
+    "pos": [
+      1963,
+      391
+    ],
+    "connects": [
+      "sniper_L5"
+    ]
+  },
+  {
+    "id": "sniper_L5",
+    "name": "🦅 Kartal Gözü",
+    "desc": "+%6 Kritik, +%50 Krit Hasar",
+    "arm": "sniper",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.06,
+      "critDmg": 0.5
+    },
+    "pos": [
+      2036,
+      249
+    ],
+    "connects": []
+  },
+  {
+    "id": "sniper_C0",
+    "name": "+%5 Kritik",
+    "desc": "+%5 Kritik",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.05
+    },
+    "pos": [
+      1744,
+      1009
+    ],
+    "connects": [
+      "sniper_C1",
+      "sniper_L0",
+      "sniper_R0",
+      "start_sniper"
+    ]
+  },
+  {
+    "id": "sniper_C1",
+    "name": "+1 Delme",
+    "desc": "+1 Delme",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "pierce": 1
+    },
+    "pos": [
+      1847,
+      886
+    ],
+    "connects": [
+      "sniper_C2",
+      "sniper_L1",
+      "sniper_R1"
+    ]
+  },
+  {
+    "id": "sniper_C2",
+    "name": "🦅 Kartal Gözü",
+    "desc": "+%6 Kritik, +%50 Krit Hasar",
+    "arm": "sniper",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.06,
+      "critDmg": 0.5
+    },
+    "pos": [
+      1950,
+      764
+    ],
+    "connects": [
+      "sniper_C3",
+      "sniper_L2",
+      "sniper_R2"
+    ]
+  },
+  {
+    "id": "sniper_C3",
+    "name": "+%20 Krit Hasar",
+    "desc": "+%20 Krit Hasar",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "critDmg": 0.2
+    },
+    "pos": [
+      2053,
+      641
+    ],
+    "connects": [
+      "sniper_C4",
+      "sniper_L3",
+      "sniper_R3"
+    ]
+  },
+  {
+    "id": "sniper_C4",
+    "name": "🏹 Delici Atış",
+    "desc": "+1 Delme, +%10 Hasar",
+    "arm": "sniper",
+    "type": "notable",
+    "stats": {
+      "pierce": 1,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      2156,
+      519
+    ],
+    "connects": [
+      "sniper_C5",
+      "sniper_L4",
+      "sniper_R4"
+    ]
+  },
+  {
+    "id": "sniper_C5",
+    "name": "☠️ Kafadan Vuruş",
+    "desc": "+%10 Kritik, +%20 Hasar, Max Can %10 azalır",
+    "arm": "sniper",
+    "type": "keystone",
+    "stats": {
+      "critChance": 0.1,
+      "dmgMult": 0.2,
+      "max_hp_pct": -10
+    },
+    "pos": [
+      2258,
+      396
+    ],
+    "connects": [
+      "sniper_L5",
+      "sniper_R5"
+    ]
+  },
+  {
+    "id": "sniper_R0",
+    "name": "+%20 Krit Hasar",
+    "desc": "+%20 Krit Hasar",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "critDmg": 0.2
+    },
+    "pos": [
+      1803,
+      1071
+    ],
+    "connects": [
+      "sniper_R1"
+    ]
+  },
+  {
+    "id": "sniper_R1",
+    "name": "+1 Mermi Hızı",
+    "desc": "+1 Mermi Hızı",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "bullet_speed": 1
+    },
+    "pos": [
+      1931,
+      975
+    ],
+    "connects": [
+      "sniper_R2"
+    ]
+  },
+  {
+    "id": "sniper_R2",
+    "name": "+%5 Kritik",
+    "desc": "+%5 Kritik",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.05
+    },
+    "pos": [
+      2059,
+      879
+    ],
+    "connects": [
+      "sniper_R3"
+    ]
+  },
+  {
+    "id": "sniper_R3",
+    "name": "+1 Delme",
+    "desc": "+1 Delme",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "pierce": 1
+    },
+    "pos": [
+      2187,
+      782
+    ],
+    "connects": [
+      "sniper_R4"
+    ]
+  },
+  {
+    "id": "sniper_R4",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "sniper",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      2315,
+      686
+    ],
+    "connects": [
+      "sniper_R5"
+    ]
+  },
+  {
+    "id": "sniper_R5",
+    "name": "🏹 Delici Atış",
+    "desc": "+1 Delme, +%10 Hasar",
+    "arm": "sniper",
+    "type": "notable",
+    "stats": {
+      "pierce": 1,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      2442,
+      590
+    ],
+    "connects": []
+  },
+  {
+    "id": "start_engineer",
+    "name": "Engineer Başlangıcı",
+    "desc": "",
+    "arm": "engineer",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1736,
+      1258
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_engineer_beastmaster",
+    "name": "Geçit",
+    "desc": "+8 Zırh",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1736,
+      1342
+    ],
+    "connects": [
+      "start_beastmaster",
+      "start_engineer"
+    ]
+  },
+  {
+    "id": "engineer_L0",
+    "name": "+%12 Taret Hızı",
+    "desc": "+%12 Taret Hızı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretRate": 0.12
+    },
+    "pos": [
+      1850,
+      1152
+    ],
+    "connects": [
+      "engineer_L1"
+    ]
+  },
+  {
+    "id": "engineer_L1",
+    "name": "+60 Taret Canı",
+    "desc": "+60 Taret Canı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretMaxHp": 60
+    },
+    "pos": [
+      1997,
+      1089
+    ],
+    "connects": [
+      "engineer_L2"
+    ]
+  },
+  {
+    "id": "engineer_L2",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      2144,
+      1026
+    ],
+    "connects": [
+      "engineer_L3"
+    ]
+  },
+  {
+    "id": "engineer_L3",
+    "name": "+%6 Hasar",
+    "desc": "+%6 Hasar",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.06
+    },
+    "pos": [
+      2292,
+      964
+    ],
+    "connects": [
+      "engineer_L4"
+    ]
+  },
+  {
+    "id": "engineer_L4",
+    "name": "+%15 Taret Hasarı",
+    "desc": "+%15 Taret Hasarı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretDmg": 0.15
+    },
+    "pos": [
+      2439,
+      901
+    ],
+    "connects": [
+      "engineer_L5"
+    ]
+  },
+  {
+    "id": "engineer_L5",
+    "name": "📡 Kapasite",
+    "desc": "+1 Taret Limiti, +%15 Taret Hasarı",
+    "arm": "engineer",
+    "type": "notable",
+    "stats": {
+      "turretLimit": 1,
+      "turretDmg": 0.15
+    },
+    "pos": [
+      2586,
+      839
+    ],
+    "connects": []
+  },
+  {
+    "id": "engineer_C0",
+    "name": "+%15 Taret Hasarı",
+    "desc": "+%15 Taret Hasarı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretDmg": 0.15
+    },
+    "pos": [
+      1874,
+      1234
+    ],
+    "connects": [
+      "engineer_C1",
+      "engineer_L0",
+      "engineer_R0",
+      "start_engineer"
+    ]
+  },
+  {
+    "id": "engineer_C1",
+    "name": "+%12 Taret Hızı",
+    "desc": "+%12 Taret Hızı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretRate": 0.12
+    },
+    "pos": [
+      2032,
+      1206
+    ],
+    "connects": [
+      "engineer_C2",
+      "engineer_L1",
+      "engineer_R1"
+    ]
+  },
+  {
+    "id": "engineer_C2",
+    "name": "📡 Kapasite",
+    "desc": "+1 Taret Limiti, +%15 Taret Hasarı",
+    "arm": "engineer",
+    "type": "notable",
+    "stats": {
+      "turretLimit": 1,
+      "turretDmg": 0.15
+    },
+    "pos": [
+      2189,
+      1178
+    ],
+    "connects": [
+      "engineer_C3",
+      "engineer_L2",
+      "engineer_R2"
+    ]
+  },
+  {
+    "id": "engineer_C3",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      2347,
+      1151
+    ],
+    "connects": [
+      "engineer_C4",
+      "engineer_L3",
+      "engineer_R3"
+    ]
+  },
+  {
+    "id": "engineer_C4",
+    "name": "🧱 Sığınak",
+    "desc": "+100 Taret Canı, +10 Zırh",
+    "arm": "engineer",
+    "type": "notable",
+    "stats": {
+      "turretMaxHp": 100,
+      "armor": 10
+    },
+    "pos": [
+      2505,
+      1123
+    ],
+    "connects": [
+      "engineer_C5",
+      "engineer_L4",
+      "engineer_R4"
+    ]
+  },
+  {
+    "id": "engineer_C5",
+    "name": "🔧 Aşırı Yükleme",
+    "desc": "+%50 Taret Hasarı, +%25 Taret Hızı, Max Can %15 azalır",
+    "arm": "engineer",
+    "type": "keystone",
+    "stats": {
+      "turretDmg": 0.5,
+      "turretRate": 0.25,
+      "max_hp_pct": -15
+    },
+    "pos": [
+      2662,
+      1095
+    ],
+    "connects": [
+      "engineer_L5",
+      "engineer_R5"
+    ]
+  },
+  {
+    "id": "engineer_R0",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1879,
+      1320
+    ],
+    "connects": [
+      "engineer_R1"
+    ]
+  },
+  {
+    "id": "engineer_R1",
+    "name": "+%6 Hasar",
+    "desc": "+%6 Hasar",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.06
+    },
+    "pos": [
+      2039,
+      1328
+    ],
+    "connects": [
+      "engineer_R2"
+    ]
+  },
+  {
+    "id": "engineer_R2",
+    "name": "+%15 Taret Hasarı",
+    "desc": "+%15 Taret Hasarı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretDmg": 0.15
+    },
+    "pos": [
+      2199,
+      1337
+    ],
+    "connects": [
+      "engineer_R3"
+    ]
+  },
+  {
+    "id": "engineer_R3",
+    "name": "+%12 Taret Hızı",
+    "desc": "+%12 Taret Hızı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretRate": 0.12
+    },
+    "pos": [
+      2359,
+      1345
+    ],
+    "connects": [
+      "engineer_R4"
+    ]
+  },
+  {
+    "id": "engineer_R4",
+    "name": "+60 Taret Canı",
+    "desc": "+60 Taret Canı",
+    "arm": "engineer",
+    "type": "minor",
+    "stats": {
+      "turretMaxHp": 60
+    },
+    "pos": [
+      2519,
+      1353
+    ],
+    "connects": [
+      "engineer_R5"
+    ]
+  },
+  {
+    "id": "engineer_R5",
+    "name": "🧱 Sığınak",
+    "desc": "+100 Taret Canı, +10 Zırh",
+    "arm": "engineer",
+    "type": "notable",
+    "stats": {
+      "turretMaxHp": 100,
+      "armor": 10
+    },
+    "pos": [
+      2678,
+      1362
+    ],
+    "connects": []
+  },
+  {
+    "id": "start_beastmaster",
+    "name": "Beastmaster Başlangıcı",
+    "desc": "",
+    "arm": "beastmaster",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1708,
+      1420
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_beastmaster_bomber",
+    "name": "Geçit",
+    "desc": "+0.3 Hız",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      1654,
+      1484
+    ],
+    "connects": [
+      "start_beastmaster",
+      "start_bomber"
+    ]
+  },
+  {
+    "id": "beastmaster_L0",
+    "name": "+%15 Minyon Hızı",
+    "desc": "+%15 Minyon Hızı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionRate": 0.15
+    },
+    "pos": [
+      1863,
+      1411
+    ],
+    "connects": [
+      "beastmaster_L1",
+      "bridge_engineer_beastmaster_0"
+    ]
+  },
+  {
+    "id": "beastmaster_L1",
+    "name": "+60 Minyon Canı",
+    "desc": "+60 Minyon Canı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionMaxHpFlat": 60
+    },
+    "pos": [
+      2016,
+      1458
+    ],
+    "connects": [
+      "beastmaster_L2",
+      "bridge_engineer_beastmaster_1"
+    ]
+  },
+  {
+    "id": "beastmaster_L2",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      2169,
+      1505
+    ],
+    "connects": [
+      "beastmaster_L3",
+      "bridge_engineer_beastmaster_2"
+    ]
+  },
+  {
+    "id": "beastmaster_L3",
+    "name": "+%6 Hasar",
+    "desc": "+%6 Hasar",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.06
+    },
+    "pos": [
+      2322,
+      1551
+    ],
+    "connects": [
+      "beastmaster_L4",
+      "bridge_engineer_beastmaster_3"
+    ]
+  },
+  {
+    "id": "beastmaster_L4",
+    "name": "+%15 Minyon Hasarı",
+    "desc": "+%15 Minyon Hasarı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionDamage": 0.15
+    },
+    "pos": [
+      2475,
+      1598
+    ],
+    "connects": [
+      "beastmaster_L5",
+      "bridge_engineer_beastmaster_4"
+    ]
+  },
+  {
+    "id": "beastmaster_L5",
+    "name": "🐺 Alfa Sürüsü",
+    "desc": "+%25 Minyon Hasarı, +1 Minyon",
+    "arm": "beastmaster",
+    "type": "notable",
+    "stats": {
+      "minionDamage": 0.25,
+      "minionCount": 1
+    },
+    "pos": [
+      2628,
+      1645
+    ],
+    "connects": [
+      "bridge_engineer_beastmaster_5"
+    ]
+  },
+  {
+    "id": "beastmaster_C0",
+    "name": "+%15 Minyon Hasarı",
+    "desc": "+%15 Minyon Hasarı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionDamage": 0.15
+    },
+    "pos": [
+      1829,
+      1490
+    ],
+    "connects": [
+      "beastmaster_C1",
+      "beastmaster_L0",
+      "beastmaster_R0",
+      "start_beastmaster"
+    ]
+  },
+  {
+    "id": "beastmaster_C1",
+    "name": "+%15 Minyon Hızı",
+    "desc": "+%15 Minyon Hızı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionRate": 0.15
+    },
+    "pos": [
+      1968,
+      1570
+    ],
+    "connects": [
+      "beastmaster_C2",
+      "beastmaster_L1",
+      "beastmaster_R1"
+    ]
+  },
+  {
+    "id": "beastmaster_C2",
+    "name": "🐺 Alfa Sürüsü",
+    "desc": "+%25 Minyon Hasarı, +1 Minyon",
+    "arm": "beastmaster",
+    "type": "notable",
+    "stats": {
+      "minionDamage": 0.25,
+      "minionCount": 1
+    },
+    "pos": [
+      2106,
+      1650
+    ],
+    "connects": [
+      "beastmaster_C3",
+      "beastmaster_L2",
+      "beastmaster_R2"
+    ]
+  },
+  {
+    "id": "beastmaster_C3",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      2245,
+      1730
+    ],
+    "connects": [
+      "beastmaster_C4",
+      "beastmaster_L3",
+      "beastmaster_R3"
+    ]
+  },
+  {
+    "id": "beastmaster_C4",
+    "name": "🦴 Kalın Post",
+    "desc": "+100 Minyon Canı, +1.0 Rejen",
+    "arm": "beastmaster",
+    "type": "notable",
+    "stats": {
+      "minionMaxHpFlat": 100,
+      "regen": 1.0
+    },
+    "pos": [
+      2383,
+      1810
+    ],
+    "connects": [
+      "beastmaster_C5",
+      "beastmaster_L4",
+      "beastmaster_R4"
+    ]
+  },
+  {
+    "id": "beastmaster_C5",
+    "name": "🔗 Vahşi Bağ",
+    "desc": "+%50 Minyon Hasarı, +%-20 Hasar",
+    "arm": "beastmaster",
+    "type": "keystone",
+    "stats": {
+      "minionDamage": 0.5,
+      "dmgMult": -0.2
+    },
+    "pos": [
+      2522,
+      1890
+    ],
+    "connects": [
+      "beastmaster_L5",
+      "beastmaster_R5"
+    ]
+  },
+  {
+    "id": "beastmaster_R0",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      1778,
+      1559
+    ],
+    "connects": [
+      "beastmaster_R1",
+      "bridge_beastmaster_bomber_0"
+    ]
+  },
+  {
+    "id": "beastmaster_R1",
+    "name": "+%6 Hasar",
+    "desc": "+%6 Hasar",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.06
+    },
+    "pos": [
+      1895,
+      1668
+    ],
+    "connects": [
+      "beastmaster_R2",
+      "bridge_beastmaster_bomber_1"
+    ]
+  },
+  {
+    "id": "beastmaster_R2",
+    "name": "+%15 Minyon Hasarı",
+    "desc": "+%15 Minyon Hasarı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionDamage": 0.15
+    },
+    "pos": [
+      2012,
+      1777
+    ],
+    "connects": [
+      "beastmaster_R3",
+      "bridge_beastmaster_bomber_2"
+    ]
+  },
+  {
+    "id": "beastmaster_R3",
+    "name": "+%15 Minyon Hızı",
+    "desc": "+%15 Minyon Hızı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionRate": 0.15
+    },
+    "pos": [
+      2129,
+      1887
+    ],
+    "connects": [
+      "beastmaster_R4",
+      "bridge_beastmaster_bomber_3"
+    ]
+  },
+  {
+    "id": "beastmaster_R4",
+    "name": "+60 Minyon Canı",
+    "desc": "+60 Minyon Canı",
+    "arm": "beastmaster",
+    "type": "minor",
+    "stats": {
+      "minionMaxHpFlat": 60
+    },
+    "pos": [
+      2246,
+      1996
+    ],
+    "connects": [
+      "beastmaster_R5",
+      "bridge_beastmaster_bomber_4"
+    ]
+  },
+  {
+    "id": "beastmaster_R5",
+    "name": "🦴 Kalın Post",
+    "desc": "+100 Minyon Canı, +1.0 Rejen",
+    "arm": "beastmaster",
+    "type": "notable",
+    "stats": {
+      "minionMaxHpFlat": 100,
+      "regen": 1.0
+    },
+    "pos": [
+      2363,
+      2105
+    ],
+    "connects": [
+      "bridge_beastmaster_bomber_5"
+    ]
+  },
+  {
+    "id": "start_bomber",
+    "name": "Bomber Başlangıcı",
+    "desc": "",
+    "arm": "bomber",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1582,
+      1526
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_bomber_alchemist",
+    "name": "Geçit",
+    "desc": "+%4 Kritik",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      1500,
+      1540
+    ],
+    "connects": [
+      "start_alchemist",
+      "start_bomber"
+    ]
+  },
+  {
+    "id": "bomber_L0",
+    "name": "+8 Fiziksel",
+    "desc": "+8 Fiziksel",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 8
+    },
+    "pos": [
+      1707,
+      1619
+    ],
+    "connects": [
+      "bomber_L1",
+      "bridge_beastmaster_bomber_0"
+    ]
+  },
+  {
+    "id": "bomber_L1",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1794,
+      1753
+    ],
+    "connects": [
+      "bomber_L2",
+      "bridge_beastmaster_bomber_1"
+    ]
+  },
+  {
+    "id": "bomber_L2",
+    "name": "+4 Ateş",
+    "desc": "+4 Ateş",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "fireDmgFlat": 4
+    },
+    "pos": [
+      1881,
+      1887
+    ],
+    "connects": [
+      "bomber_L3",
+      "bridge_beastmaster_bomber_2"
+    ]
+  },
+  {
+    "id": "bomber_L3",
+    "name": "+1 Delme",
+    "desc": "+1 Delme",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "pierce": 1
+    },
+    "pos": [
+      1968,
+      2021
+    ],
+    "connects": [
+      "bomber_L4",
+      "bridge_beastmaster_bomber_3"
+    ]
+  },
+  {
+    "id": "bomber_L4",
+    "name": "+%12 Alan",
+    "desc": "+%12 Alan",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.12
+    },
+    "pos": [
+      2056,
+      2155
+    ],
+    "connects": [
+      "bomber_L5",
+      "bridge_beastmaster_bomber_4"
+    ]
+  },
+  {
+    "id": "bomber_L5",
+    "name": "🧷 Küme Mayın",
+    "desc": "+%20 Alan, +%10 Hasar",
+    "arm": "bomber",
+    "type": "notable",
+    "stats": {
+      "aoe_bonus": 0.2,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      2143,
+      2290
+    ],
+    "connects": [
+      "bridge_beastmaster_bomber_5"
+    ]
+  },
+  {
+    "id": "bomber_C0",
+    "name": "+%12 Alan",
+    "desc": "+%12 Alan",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.12
+    },
+    "pos": [
+      1630,
+      1657
+    ],
+    "connects": [
+      "bomber_C1",
+      "bomber_L0",
+      "bomber_R0",
+      "start_bomber"
+    ]
+  },
+  {
+    "id": "bomber_C1",
+    "name": "+8 Fiziksel",
+    "desc": "+8 Fiziksel",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 8
+    },
+    "pos": [
+      1685,
+      1807
+    ],
+    "connects": [
+      "bomber_C2",
+      "bomber_L1",
+      "bomber_R1"
+    ]
+  },
+  {
+    "id": "bomber_C2",
+    "name": "🧷 Küme Mayın",
+    "desc": "+%20 Alan, +%10 Hasar",
+    "arm": "bomber",
+    "type": "notable",
+    "stats": {
+      "aoe_bonus": 0.2,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      1739,
+      1958
+    ],
+    "connects": [
+      "bomber_C3",
+      "bomber_L2",
+      "bomber_R2"
+    ]
+  },
+  {
+    "id": "bomber_C3",
+    "name": "+4 Ateş",
+    "desc": "+4 Ateş",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "fireDmgFlat": 4
+    },
+    "pos": [
+      1794,
+      2108
+    ],
+    "connects": [
+      "bomber_C4",
+      "bomber_L3",
+      "bomber_R3"
+    ]
+  },
+  {
+    "id": "bomber_C4",
+    "name": "🔥 Napalm",
+    "desc": "+10 Ateş, +%10 Alan",
+    "arm": "bomber",
+    "type": "notable",
+    "stats": {
+      "fireDmgFlat": 10,
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1849,
+      2258
+    ],
+    "connects": [
+      "bomber_C5",
+      "bomber_L4",
+      "bomber_R4"
+    ]
+  },
+  {
+    "id": "bomber_C5",
+    "name": "☢️ Zincirleme Patlama",
+    "desc": "+%30 Alan, +%25 Hasar, Max Can %15 azalır",
+    "arm": "bomber",
+    "type": "keystone",
+    "stats": {
+      "aoe_bonus": 0.3,
+      "dmgMult": 0.25,
+      "max_hp_pct": -15
+    },
+    "pos": [
+      1904,
+      2409
+    ],
+    "connects": [
+      "bomber_L5",
+      "bomber_R5"
+    ]
+  },
+  {
+    "id": "bomber_R0",
+    "name": "+4 Ateş",
+    "desc": "+4 Ateş",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "fireDmgFlat": 4
+    },
+    "pos": [
+      1546,
+      1677
+    ],
+    "connects": [
+      "bomber_R1",
+      "bridge_bomber_alchemist_0"
+    ]
+  },
+  {
+    "id": "bomber_R1",
+    "name": "+1 Delme",
+    "desc": "+1 Delme",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "pierce": 1
+    },
+    "pos": [
+      1566,
+      1836
+    ],
+    "connects": [
+      "bomber_R2",
+      "bridge_bomber_alchemist_1"
+    ]
+  },
+  {
+    "id": "bomber_R2",
+    "name": "+%12 Alan",
+    "desc": "+%12 Alan",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.12
+    },
+    "pos": [
+      1585,
+      1995
+    ],
+    "connects": [
+      "bomber_R3",
+      "bridge_bomber_alchemist_2"
+    ]
+  },
+  {
+    "id": "bomber_R3",
+    "name": "+8 Fiziksel",
+    "desc": "+8 Fiziksel",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 8
+    },
+    "pos": [
+      1605,
+      2154
+    ],
+    "connects": [
+      "bomber_R4",
+      "bridge_bomber_alchemist_3"
+    ]
+  },
+  {
+    "id": "bomber_R4",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "bomber",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1624,
+      2312
+    ],
+    "connects": [
+      "bomber_R5",
+      "bridge_bomber_alchemist_4"
+    ]
+  },
+  {
+    "id": "bomber_R5",
+    "name": "🔥 Napalm",
+    "desc": "+10 Ateş, +%10 Alan",
+    "arm": "bomber",
+    "type": "notable",
+    "stats": {
+      "fireDmgFlat": 10,
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1644,
+      2471
+    ],
+    "connects": [
+      "bridge_bomber_alchemist_5"
+    ]
+  },
+  {
+    "id": "start_alchemist",
+    "name": "Alchemist Başlangıcı",
+    "desc": "",
+    "arm": "alchemist",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1418,
+      1526
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_alchemist_sorcerer",
+    "name": "Geçit",
+    "desc": "+1.0 Rejen",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      1346,
+      1484
+    ],
+    "connects": [
+      "start_alchemist",
+      "start_sorcerer"
+    ]
+  },
+  {
+    "id": "alchemist_L0",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1454,
+      1677
+    ],
+    "connects": [
+      "alchemist_L1",
+      "bridge_bomber_alchemist_0"
+    ]
+  },
+  {
+    "id": "alchemist_L1",
+    "name": "+8 Zehir DPS",
+    "desc": "+8 Zehir DPS",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "poisonDps": 8
+    },
+    "pos": [
+      1434,
+      1836
+    ],
+    "connects": [
+      "alchemist_L2",
+      "bridge_bomber_alchemist_1"
+    ]
+  },
+  {
+    "id": "alchemist_L2",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1415,
+      1995
+    ],
+    "connects": [
+      "alchemist_L3",
+      "bridge_bomber_alchemist_2"
+    ]
+  },
+  {
+    "id": "alchemist_L3",
+    "name": "+%8 Element",
+    "desc": "+%8 Element",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "elementDmgMult": 0.08
+    },
+    "pos": [
+      1395,
+      2154
+    ],
+    "connects": [
+      "alchemist_L4",
+      "bridge_bomber_alchemist_3"
+    ]
+  },
+  {
+    "id": "alchemist_L4",
+    "name": "+%12 DoT",
+    "desc": "+%12 DoT",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "dotDmgMult": 0.12
+    },
+    "pos": [
+      1376,
+      2312
+    ],
+    "connects": [
+      "alchemist_L5",
+      "bridge_bomber_alchemist_4"
+    ]
+  },
+  {
+    "id": "alchemist_L5",
+    "name": "☣️ Toksin Ustası",
+    "desc": "+%25 DoT, +%15 Alan",
+    "arm": "alchemist",
+    "type": "notable",
+    "stats": {
+      "dotDmgMult": 0.25,
+      "aoe_bonus": 0.15
+    },
+    "pos": [
+      1356,
+      2471
+    ],
+    "connects": [
+      "bridge_bomber_alchemist_5"
+    ]
+  },
+  {
+    "id": "alchemist_C0",
+    "name": "+%12 DoT",
+    "desc": "+%12 DoT",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "dotDmgMult": 0.12
+    },
+    "pos": [
+      1370,
+      1657
+    ],
+    "connects": [
+      "alchemist_C1",
+      "alchemist_L0",
+      "alchemist_R0",
+      "start_alchemist"
+    ]
+  },
+  {
+    "id": "alchemist_C1",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1315,
+      1807
+    ],
+    "connects": [
+      "alchemist_C2",
+      "alchemist_L1",
+      "alchemist_R1"
+    ]
+  },
+  {
+    "id": "alchemist_C2",
+    "name": "☣️ Toksin Ustası",
+    "desc": "+%25 DoT, +%15 Alan",
+    "arm": "alchemist",
+    "type": "notable",
+    "stats": {
+      "dotDmgMult": 0.25,
+      "aoe_bonus": 0.15
+    },
+    "pos": [
+      1261,
+      1958
+    ],
+    "connects": [
+      "alchemist_C3",
+      "alchemist_L2",
+      "alchemist_R2"
+    ]
+  },
+  {
+    "id": "alchemist_C3",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1206,
+      2108
+    ],
+    "connects": [
+      "alchemist_C4",
+      "alchemist_L3",
+      "alchemist_R3"
+    ]
+  },
+  {
+    "id": "alchemist_C4",
+    "name": "🌫️ Yayılım",
+    "desc": "+%20 Alan, +%8 Hasar",
+    "arm": "alchemist",
+    "type": "notable",
+    "stats": {
+      "aoe_bonus": 0.2,
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1151,
+      2258
+    ],
+    "connects": [
+      "alchemist_C5",
+      "alchemist_L4",
+      "alchemist_R4"
+    ]
+  },
+  {
+    "id": "alchemist_C5",
+    "name": "💀 Veba Bulutu",
+    "desc": "+%50 DoT, +%-15 Hasar",
+    "arm": "alchemist",
+    "type": "keystone",
+    "stats": {
+      "dotDmgMult": 0.5,
+      "dmgMult": -0.15
+    },
+    "pos": [
+      1096,
+      2409
+    ],
+    "connects": [
+      "alchemist_L5",
+      "alchemist_R5"
+    ]
+  },
+  {
+    "id": "alchemist_R0",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1293,
+      1619
+    ],
+    "connects": [
+      "alchemist_R1",
+      "bridge_alchemist_sorcerer_0"
+    ]
+  },
+  {
+    "id": "alchemist_R1",
+    "name": "+%8 Element",
+    "desc": "+%8 Element",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "elementDmgMult": 0.08
+    },
+    "pos": [
+      1206,
+      1753
+    ],
+    "connects": [
+      "alchemist_R2",
+      "bridge_alchemist_sorcerer_1"
+    ]
+  },
+  {
+    "id": "alchemist_R2",
+    "name": "+%12 DoT",
+    "desc": "+%12 DoT",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "dotDmgMult": 0.12
+    },
+    "pos": [
+      1119,
+      1887
+    ],
+    "connects": [
+      "alchemist_R3",
+      "bridge_alchemist_sorcerer_2"
+    ]
+  },
+  {
+    "id": "alchemist_R3",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1032,
+      2021
+    ],
+    "connects": [
+      "alchemist_R4",
+      "bridge_alchemist_sorcerer_3"
+    ]
+  },
+  {
+    "id": "alchemist_R4",
+    "name": "+8 Zehir DPS",
+    "desc": "+8 Zehir DPS",
+    "arm": "alchemist",
+    "type": "minor",
+    "stats": {
+      "poisonDps": 8
+    },
+    "pos": [
+      944,
+      2155
+    ],
+    "connects": [
+      "alchemist_R5",
+      "bridge_alchemist_sorcerer_4"
+    ]
+  },
+  {
+    "id": "alchemist_R5",
+    "name": "🌫️ Yayılım",
+    "desc": "+%20 Alan, +%8 Hasar",
+    "arm": "alchemist",
+    "type": "notable",
+    "stats": {
+      "aoe_bonus": 0.2,
+      "dmgMult": 0.08
+    },
+    "pos": [
+      857,
+      2290
+    ],
+    "connects": [
+      "bridge_alchemist_sorcerer_5"
+    ]
+  },
+  {
+    "id": "start_sorcerer",
+    "name": "Sorcerer Başlangıcı",
+    "desc": "",
+    "arm": "sorcerer",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1292,
+      1420
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_sorcerer_bloodwalker",
+    "name": "Geçit",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      1264,
+      1342
+    ],
+    "connects": [
+      "start_bloodwalker",
+      "start_sorcerer"
+    ]
+  },
+  {
+    "id": "sorcerer_L0",
+    "name": "+3 Ateş",
+    "desc": "+3 Ateş",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "fireDmgFlat": 3
+    },
+    "pos": [
+      1222,
+      1559
+    ],
+    "connects": [
+      "sorcerer_L1"
+    ]
+  },
+  {
+    "id": "sorcerer_L1",
+    "name": "+3 Buz",
+    "desc": "+3 Buz",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "frostDmgFlat": 3
+    },
+    "pos": [
+      1105,
+      1668
+    ],
+    "connects": [
+      "sorcerer_L2"
+    ]
+  },
+  {
+    "id": "sorcerer_L2",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      988,
+      1777
+    ],
+    "connects": [
+      "sorcerer_L3"
+    ]
+  },
+  {
+    "id": "sorcerer_L3",
+    "name": "+40 Can",
+    "desc": "+40 Can",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      871,
+      1887
+    ],
+    "connects": [
+      "sorcerer_L4"
+    ]
+  },
+  {
+    "id": "sorcerer_L4",
+    "name": "+%10 Element",
+    "desc": "+%10 Element",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "elementDmgMult": 0.1
+    },
+    "pos": [
+      754,
+      1996
+    ],
+    "connects": [
+      "sorcerer_L5"
+    ]
+  },
+  {
+    "id": "sorcerer_L5",
+    "name": "🌀 Gizemli Odak",
+    "desc": "+%20 Element, +%10 Hasar",
+    "arm": "sorcerer",
+    "type": "notable",
+    "stats": {
+      "elementDmgMult": 0.2,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      637,
+      2105
+    ],
+    "connects": []
+  },
+  {
+    "id": "sorcerer_C0",
+    "name": "+%10 Element",
+    "desc": "+%10 Element",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "elementDmgMult": 0.1
+    },
+    "pos": [
+      1171,
+      1490
+    ],
+    "connects": [
+      "sorcerer_C1",
+      "sorcerer_L0",
+      "sorcerer_R0",
+      "start_sorcerer"
+    ]
+  },
+  {
+    "id": "sorcerer_C1",
+    "name": "+3 Ateş",
+    "desc": "+3 Ateş",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "fireDmgFlat": 3
+    },
+    "pos": [
+      1032,
+      1570
+    ],
+    "connects": [
+      "sorcerer_C2",
+      "sorcerer_L1",
+      "sorcerer_R1"
+    ]
+  },
+  {
+    "id": "sorcerer_C2",
+    "name": "🌀 Gizemli Odak",
+    "desc": "+%20 Element, +%10 Hasar",
+    "arm": "sorcerer",
+    "type": "notable",
+    "stats": {
+      "elementDmgMult": 0.2,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      894,
+      1650
+    ],
+    "connects": [
+      "sorcerer_C3",
+      "sorcerer_L2",
+      "sorcerer_R2"
+    ]
+  },
+  {
+    "id": "sorcerer_C3",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      755,
+      1730
+    ],
+    "connects": [
+      "sorcerer_C4",
+      "sorcerer_L3",
+      "sorcerer_R3"
+    ]
+  },
+  {
+    "id": "sorcerer_C4",
+    "name": "🧿 Büyü Kalkanı",
+    "desc": "+60 Can, +%10 Element",
+    "arm": "sorcerer",
+    "type": "notable",
+    "stats": {
+      "max_hp": 60,
+      "elementDmgMult": 0.1
+    },
+    "pos": [
+      617,
+      1810
+    ],
+    "connects": [
+      "sorcerer_C5",
+      "sorcerer_L4",
+      "sorcerer_R4"
+    ]
+  },
+  {
+    "id": "sorcerer_C5",
+    "name": "💥 Element Taşması",
+    "desc": "+%50 Element, Max Can %20 azalır",
+    "arm": "sorcerer",
+    "type": "keystone",
+    "stats": {
+      "elementDmgMult": 0.5,
+      "max_hp_pct": -20
+    },
+    "pos": [
+      478,
+      1890
+    ],
+    "connects": [
+      "sorcerer_L5",
+      "sorcerer_R5"
+    ]
+  },
+  {
+    "id": "sorcerer_R0",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1137,
+      1411
+    ],
+    "connects": [
+      "sorcerer_R1"
+    ]
+  },
+  {
+    "id": "sorcerer_R1",
+    "name": "+40 Can",
+    "desc": "+40 Can",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      984,
+      1458
+    ],
+    "connects": [
+      "sorcerer_R2"
+    ]
+  },
+  {
+    "id": "sorcerer_R2",
+    "name": "+%10 Element",
+    "desc": "+%10 Element",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "elementDmgMult": 0.1
+    },
+    "pos": [
+      831,
+      1505
+    ],
+    "connects": [
+      "sorcerer_R3"
+    ]
+  },
+  {
+    "id": "sorcerer_R3",
+    "name": "+3 Ateş",
+    "desc": "+3 Ateş",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "fireDmgFlat": 3
+    },
+    "pos": [
+      678,
+      1551
+    ],
+    "connects": [
+      "sorcerer_R4"
+    ]
+  },
+  {
+    "id": "sorcerer_R4",
+    "name": "+3 Buz",
+    "desc": "+3 Buz",
+    "arm": "sorcerer",
+    "type": "minor",
+    "stats": {
+      "frostDmgFlat": 3
+    },
+    "pos": [
+      525,
+      1598
+    ],
+    "connects": [
+      "sorcerer_R5"
+    ]
+  },
+  {
+    "id": "sorcerer_R5",
+    "name": "🧿 Büyü Kalkanı",
+    "desc": "+60 Can, +%10 Element",
+    "arm": "sorcerer",
+    "type": "notable",
+    "stats": {
+      "max_hp": 60,
+      "elementDmgMult": 0.1
+    },
+    "pos": [
+      372,
+      1645
+    ],
+    "connects": []
+  },
+  {
+    "id": "start_bloodwalker",
+    "name": "Bloodwalker Başlangıcı",
+    "desc": "",
+    "arm": "bloodwalker",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1264,
+      1258
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_bloodwalker_ninja",
+    "name": "Geçit",
+    "desc": "+%3 Can Çalma",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      1292,
+      1180
+    ],
+    "connects": [
+      "start_bloodwalker",
+      "start_ninja"
+    ]
+  },
+  {
+    "id": "bloodwalker_L0",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1121,
+      1320
+    ],
+    "connects": [
+      "bloodwalker_L1",
+      "bridge_sorcerer_bloodwalker_0"
+    ]
+  },
+  {
+    "id": "bloodwalker_L1",
+    "name": "+45 Can",
+    "desc": "+45 Can",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "max_hp": 45
+    },
+    "pos": [
+      961,
+      1328
+    ],
+    "connects": [
+      "bloodwalker_L2",
+      "bridge_sorcerer_bloodwalker_1"
+    ]
+  },
+  {
+    "id": "bloodwalker_L2",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      801,
+      1337
+    ],
+    "connects": [
+      "bloodwalker_L3",
+      "bridge_sorcerer_bloodwalker_2"
+    ]
+  },
+  {
+    "id": "bloodwalker_L3",
+    "name": "+8 Fiziksel",
+    "desc": "+8 Fiziksel",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 8
+    },
+    "pos": [
+      641,
+      1345
+    ],
+    "connects": [
+      "bloodwalker_L4",
+      "bridge_sorcerer_bloodwalker_3"
+    ]
+  },
+  {
+    "id": "bloodwalker_L4",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      481,
+      1353
+    ],
+    "connects": [
+      "bloodwalker_L5",
+      "bridge_sorcerer_bloodwalker_4"
+    ]
+  },
+  {
+    "id": "bloodwalker_L5",
+    "name": "🩸 Kızıl Zafer",
+    "desc": "+%5 Can Çalma, +%10 Hasar",
+    "arm": "bloodwalker",
+    "type": "notable",
+    "stats": {
+      "lifesteal": 0.05,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      322,
+      1362
+    ],
+    "connects": [
+      "bridge_sorcerer_bloodwalker_5"
+    ]
+  },
+  {
+    "id": "bloodwalker_C0",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      1126,
+      1234
+    ],
+    "connects": [
+      "bloodwalker_C1",
+      "bloodwalker_L0",
+      "bloodwalker_R0",
+      "start_bloodwalker"
+    ]
+  },
+  {
+    "id": "bloodwalker_C1",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      968,
+      1206
+    ],
+    "connects": [
+      "bloodwalker_C2",
+      "bloodwalker_L1",
+      "bloodwalker_R1"
+    ]
+  },
+  {
+    "id": "bloodwalker_C2",
+    "name": "🩸 Kızıl Zafer",
+    "desc": "+%5 Can Çalma, +%10 Hasar",
+    "arm": "bloodwalker",
+    "type": "notable",
+    "stats": {
+      "lifesteal": 0.05,
+      "dmgMult": 0.1
+    },
+    "pos": [
+      811,
+      1178
+    ],
+    "connects": [
+      "bloodwalker_C3",
+      "bloodwalker_L2",
+      "bloodwalker_R2"
+    ]
+  },
+  {
+    "id": "bloodwalker_C3",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      653,
+      1151
+    ],
+    "connects": [
+      "bloodwalker_C4",
+      "bloodwalker_L3",
+      "bloodwalker_R3"
+    ]
+  },
+  {
+    "id": "bloodwalker_C4",
+    "name": "🫀 Koyu Kan",
+    "desc": "+80 Can, +1.5 Rejen",
+    "arm": "bloodwalker",
+    "type": "notable",
+    "stats": {
+      "max_hp": 80,
+      "regen": 1.5
+    },
+    "pos": [
+      495,
+      1123
+    ],
+    "connects": [
+      "bloodwalker_C5",
+      "bloodwalker_L4",
+      "bloodwalker_R4"
+    ]
+  },
+  {
+    "id": "bloodwalker_C5",
+    "name": "🧛 Kan Susuzluğu",
+    "desc": "+%8 Can Çalma, +%20 Hasar, Max Can %15 azalır",
+    "arm": "bloodwalker",
+    "type": "keystone",
+    "stats": {
+      "lifesteal": 0.08,
+      "dmgMult": 0.2,
+      "max_hp_pct": -15
+    },
+    "pos": [
+      338,
+      1095
+    ],
+    "connects": [
+      "bloodwalker_L5",
+      "bloodwalker_R5"
+    ]
+  },
+  {
+    "id": "bloodwalker_R0",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      1150,
+      1152
+    ],
+    "connects": [
+      "bloodwalker_R1",
+      "bridge_bloodwalker_ninja_0"
+    ]
+  },
+  {
+    "id": "bloodwalker_R1",
+    "name": "+8 Fiziksel",
+    "desc": "+8 Fiziksel",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 8
+    },
+    "pos": [
+      1003,
+      1089
+    ],
+    "connects": [
+      "bloodwalker_R2",
+      "bridge_bloodwalker_ninja_1"
+    ]
+  },
+  {
+    "id": "bloodwalker_R2",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      856,
+      1026
+    ],
+    "connects": [
+      "bloodwalker_R3",
+      "bridge_bloodwalker_ninja_2"
+    ]
+  },
+  {
+    "id": "bloodwalker_R3",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      708,
+      964
+    ],
+    "connects": [
+      "bloodwalker_R4",
+      "bridge_bloodwalker_ninja_3"
+    ]
+  },
+  {
+    "id": "bloodwalker_R4",
+    "name": "+45 Can",
+    "desc": "+45 Can",
+    "arm": "bloodwalker",
+    "type": "minor",
+    "stats": {
+      "max_hp": 45
+    },
+    "pos": [
+      561,
+      901
+    ],
+    "connects": [
+      "bloodwalker_R5",
+      "bridge_bloodwalker_ninja_4"
+    ]
+  },
+  {
+    "id": "bloodwalker_R5",
+    "name": "🫀 Koyu Kan",
+    "desc": "+80 Can, +1.5 Rejen",
+    "arm": "bloodwalker",
+    "type": "notable",
+    "stats": {
+      "max_hp": 80,
+      "regen": 1.5
+    },
+    "pos": [
+      414,
+      839
+    ],
+    "connects": [
+      "bridge_bloodwalker_ninja_5"
+    ]
+  },
+  {
+    "id": "start_ninja",
+    "name": "Ninja Başlangıcı",
+    "desc": "",
+    "arm": "ninja",
+    "type": "start",
+    "stats": {},
+    "pos": [
+      1346,
+      1116
+    ],
+    "start": true,
+    "connects": []
+  },
+  {
+    "id": "junc_ninja_warrior",
+    "name": "Geçit",
+    "desc": "+%10 Alan",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1418,
+      1074
+    ],
+    "connects": [
+      "start_ninja",
+      "start_warrior"
+    ]
+  },
+  {
+    "id": "ninja_L0",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      1197,
+      1071
+    ],
+    "connects": [
+      "ninja_L1"
+    ]
+  },
+  {
+    "id": "ninja_L1",
+    "name": "+0.3 Hız",
+    "desc": "+0.3 Hız",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      1069,
+      975
+    ],
+    "connects": [
+      "ninja_L2"
+    ]
+  },
+  {
+    "id": "ninja_L2",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      941,
+      879
+    ],
+    "connects": [
+      "ninja_L3"
+    ]
+  },
+  {
+    "id": "ninja_L3",
+    "name": "+6 Fiziksel",
+    "desc": "+6 Fiziksel",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 6
+    },
+    "pos": [
+      813,
+      782
+    ],
+    "connects": [
+      "ninja_L4"
+    ]
+  },
+  {
+    "id": "ninja_L4",
+    "name": "+%4 Kaçınma",
+    "desc": "+%4 Kaçınma",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "dodgeChance": 0.04
+    },
+    "pos": [
+      685,
+      686
+    ],
+    "connects": [
+      "ninja_L5"
+    ]
+  },
+  {
+    "id": "ninja_L5",
+    "name": "🌀 Bıçak Fırtınası",
+    "desc": "+%10 Saldırı Hızı, +0.2 Hız",
+    "arm": "ninja",
+    "type": "notable",
+    "stats": {
+      "attack_speed_bonus": 0.1,
+      "speed": 0.2
+    },
+    "pos": [
+      558,
+      590
+    ],
+    "connects": []
+  },
+  {
+    "id": "ninja_C0",
+    "name": "+%4 Kaçınma",
+    "desc": "+%4 Kaçınma",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "dodgeChance": 0.04
+    },
+    "pos": [
+      1256,
+      1009
+    ],
+    "connects": [
+      "ninja_C1",
+      "ninja_L0",
+      "ninja_R0",
+      "start_ninja"
+    ]
+  },
+  {
+    "id": "ninja_C1",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      1153,
+      886
+    ],
+    "connects": [
+      "ninja_C2",
+      "ninja_L1",
+      "ninja_R1"
+    ]
+  },
+  {
+    "id": "ninja_C2",
+    "name": "🌀 Bıçak Fırtınası",
+    "desc": "+%10 Saldırı Hızı, +0.2 Hız",
+    "arm": "ninja",
+    "type": "notable",
+    "stats": {
+      "attack_speed_bonus": 0.1,
+      "speed": 0.2
+    },
+    "pos": [
+      1050,
+      764
+    ],
+    "connects": [
+      "ninja_C3",
+      "ninja_L2",
+      "ninja_R2"
+    ]
+  },
+  {
+    "id": "ninja_C3",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      947,
+      641
+    ],
+    "connects": [
+      "ninja_C4",
+      "ninja_L3",
+      "ninja_R3"
+    ]
+  },
+  {
+    "id": "ninja_C4",
+    "name": "🌑 Gölge Vuruşu",
+    "desc": "+%6 Kritik, +%5 Kaçınma",
+    "arm": "ninja",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.06,
+      "dodgeChance": 0.05
+    },
+    "pos": [
+      844,
+      519
+    ],
+    "connects": [
+      "ninja_C5",
+      "ninja_L4",
+      "ninja_R4"
+    ]
+  },
+  {
+    "id": "ninja_C5",
+    "name": "👻 Hayalet Dans",
+    "desc": "+%15 Kaçınma, +%15 Saldırı Hızı, Max Can %15 azalır",
+    "arm": "ninja",
+    "type": "keystone",
+    "stats": {
+      "dodgeChance": 0.15,
+      "attack_speed_bonus": 0.15,
+      "max_hp_pct": -15
+    },
+    "pos": [
+      742,
+      396
+    ],
+    "connects": [
+      "ninja_L5",
+      "ninja_R5"
+    ]
+  },
+  {
+    "id": "ninja_R0",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      1327,
+      961
+    ],
+    "connects": [
+      "ninja_R1"
+    ]
+  },
+  {
+    "id": "ninja_R1",
+    "name": "+6 Fiziksel",
+    "desc": "+6 Fiziksel",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "physDmgFlat": 6
+    },
+    "pos": [
+      1255,
+      819
+    ],
+    "connects": [
+      "ninja_R2"
+    ]
+  },
+  {
+    "id": "ninja_R2",
+    "name": "+%4 Kaçınma",
+    "desc": "+%4 Kaçınma",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "dodgeChance": 0.04
+    },
+    "pos": [
+      1182,
+      676
+    ],
+    "connects": [
+      "ninja_R3"
+    ]
+  },
+  {
+    "id": "ninja_R3",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      1110,
+      534
+    ],
+    "connects": [
+      "ninja_R4"
+    ]
+  },
+  {
+    "id": "ninja_R4",
+    "name": "+0.3 Hız",
+    "desc": "+0.3 Hız",
+    "arm": "ninja",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      1037,
+      391
+    ],
+    "connects": [
+      "ninja_R5"
+    ]
+  },
+  {
+    "id": "ninja_R5",
+    "name": "🌑 Gölge Vuruşu",
+    "desc": "+%6 Kritik, +%5 Kaçınma",
+    "arm": "ninja",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.06,
+      "dodgeChance": 0.05
+    },
+    "pos": [
+      964,
+      249
+    ],
+    "connects": []
+  },
+  {
+    "id": "bridge_warrior_sniper_0",
+    "name": "+40 Can",
+    "desc": "+40 Can",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      1630,
+      943
+    ],
+    "connects": [
+      "bridge_warrior_sniper_1",
+      "junc_warrior_sniper",
+      "sniper_L0",
+      "warrior_R0"
+    ]
+  },
+  {
+    "id": "bridge_warrior_sniper_1",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1685,
+      793
+    ],
+    "connects": [
+      "bridge_warrior_sniper_2",
+      "sniper_L1",
+      "warrior_R1"
+    ]
+  },
+  {
+    "id": "bridge_warrior_sniper_2",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1739,
+      642
+    ],
+    "connects": [
+      "bridge_warrior_sniper_3",
+      "sniper_L2",
+      "warrior_R2"
+    ]
+  },
+  {
+    "id": "bridge_warrior_sniper_3",
+    "name": "+0.3 Hız",
+    "desc": "+0.3 Hız",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      1794,
+      492
+    ],
+    "connects": [
+      "bridge_warrior_sniper_4",
+      "sniper_L3",
+      "warrior_R3"
+    ]
+  },
+  {
+    "id": "bridge_warrior_sniper_4",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      1849,
+      342
+    ],
+    "connects": [
+      "bridge_warrior_sniper_5",
+      "sniper_L4",
+      "warrior_R4"
+    ]
+  },
+  {
+    "id": "bridge_warrior_sniper_5",
+    "name": "💪 Kudret",
+    "desc": "+%15 Hasar",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "dmgMult": 0.15
+    },
+    "pos": [
+      1904,
+      191
+    ],
+    "connects": [
+      "sniper_L5",
+      "warrior_R5"
+    ]
+  },
+  {
+    "id": "bridge_sniper_engineer_0",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1829,
+      1110
+    ],
+    "connects": [
+      "bridge_sniper_engineer_1",
+      "engineer_L0",
+      "junc_sniper_engineer",
+      "sniper_R0"
+    ]
+  },
+  {
+    "id": "bridge_sniper_engineer_1",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1968,
+      1030
+    ],
+    "connects": [
+      "bridge_sniper_engineer_2",
+      "engineer_L1",
+      "sniper_R1"
+    ]
+  },
+  {
+    "id": "bridge_sniper_engineer_2",
+    "name": "+0.3 Hız",
+    "desc": "+0.3 Hız",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      2106,
+      950
+    ],
+    "connects": [
+      "bridge_sniper_engineer_3",
+      "engineer_L2",
+      "sniper_R2"
+    ]
+  },
+  {
+    "id": "bridge_sniper_engineer_3",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      2245,
+      870
+    ],
+    "connects": [
+      "bridge_sniper_engineer_4",
+      "engineer_L3",
+      "sniper_R3"
+    ]
+  },
+  {
+    "id": "bridge_sniper_engineer_4",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      2383,
+      790
+    ],
+    "connects": [
+      "bridge_sniper_engineer_5",
+      "engineer_L4",
+      "sniper_R4"
+    ]
+  },
+  {
+    "id": "bridge_sniper_engineer_5",
+    "name": "🛡️ Sur",
+    "desc": "+80 Can, +10 Zırh",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "max_hp": 80,
+      "armor": 10
+    },
+    "pos": [
+      2522,
+      710
+    ],
+    "connects": [
+      "engineer_L5",
+      "sniper_R5"
+    ]
+  },
+  {
+    "id": "bridge_engineer_beastmaster_0",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1874,
+      1366
+    ],
+    "connects": [
+      "bridge_engineer_beastmaster_1",
+      "engineer_R0",
+      "junc_engineer_beastmaster"
+    ]
+  },
+  {
+    "id": "bridge_engineer_beastmaster_1",
+    "name": "+0.3 Hız",
+    "desc": "+0.3 Hız",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      2032,
+      1394
+    ],
+    "connects": [
+      "bridge_engineer_beastmaster_2",
+      "engineer_R1"
+    ]
+  },
+  {
+    "id": "bridge_engineer_beastmaster_2",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      2189,
+      1422
+    ],
+    "connects": [
+      "bridge_engineer_beastmaster_3",
+      "engineer_R2"
+    ]
+  },
+  {
+    "id": "bridge_engineer_beastmaster_3",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      2347,
+      1449
+    ],
+    "connects": [
+      "bridge_engineer_beastmaster_4",
+      "engineer_R3"
+    ]
+  },
+  {
+    "id": "bridge_engineer_beastmaster_4",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      2505,
+      1477
+    ],
+    "connects": [
+      "bridge_engineer_beastmaster_5",
+      "engineer_R4"
+    ]
+  },
+  {
+    "id": "bridge_engineer_beastmaster_5",
+    "name": "💨 Çeviklik",
+    "desc": "+0.5 Hız, +%8 Saldırı Hızı",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "speed": 0.5,
+      "attack_speed_bonus": 0.08
+    },
+    "pos": [
+      2662,
+      1505
+    ],
+    "connects": [
+      "engineer_R5"
+    ]
+  },
+  {
+    "id": "bridge_beastmaster_bomber_0",
+    "name": "+0.3 Hız",
+    "desc": "+0.3 Hız",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      1744,
+      1591
+    ],
+    "connects": [
+      "bridge_beastmaster_bomber_1",
+      "junc_beastmaster_bomber"
+    ]
+  },
+  {
+    "id": "bridge_beastmaster_bomber_1",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      1847,
+      1714
+    ],
+    "connects": [
+      "bridge_beastmaster_bomber_2"
+    ]
+  },
+  {
+    "id": "bridge_beastmaster_bomber_2",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      1950,
+      1836
+    ],
+    "connects": [
+      "bridge_beastmaster_bomber_3"
+    ]
+  },
+  {
+    "id": "bridge_beastmaster_bomber_3",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      2053,
+      1959
+    ],
+    "connects": [
+      "bridge_beastmaster_bomber_4"
+    ]
+  },
+  {
+    "id": "bridge_beastmaster_bomber_4",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      2156,
+      2081
+    ],
+    "connects": [
+      "bridge_beastmaster_bomber_5"
+    ]
+  },
+  {
+    "id": "bridge_beastmaster_bomber_5",
+    "name": "🎯 Öldürücü",
+    "desc": "+%6 Kritik, +%40 Krit Hasar",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.06,
+      "critDmg": 0.4
+    },
+    "pos": [
+      2258,
+      2204
+    ],
+    "connects": []
+  },
+  {
+    "id": "bridge_bomber_alchemist_0",
+    "name": "+%4 Kritik",
+    "desc": "+%4 Kritik",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "critChance": 0.04
+    },
+    "pos": [
+      1500,
+      1680
+    ],
+    "connects": [
+      "bridge_bomber_alchemist_1",
+      "junc_bomber_alchemist"
+    ]
+  },
+  {
+    "id": "bridge_bomber_alchemist_1",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      1500,
+      1840
+    ],
+    "connects": [
+      "bridge_bomber_alchemist_2"
+    ]
+  },
+  {
+    "id": "bridge_bomber_alchemist_2",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      1500,
+      2000
+    ],
+    "connects": [
+      "bridge_bomber_alchemist_3"
+    ]
+  },
+  {
+    "id": "bridge_bomber_alchemist_3",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      1500,
+      2160
+    ],
+    "connects": [
+      "bridge_bomber_alchemist_4"
+    ]
+  },
+  {
+    "id": "bridge_bomber_alchemist_4",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1500,
+      2320
+    ],
+    "connects": [
+      "bridge_bomber_alchemist_5"
+    ]
+  },
+  {
+    "id": "bridge_bomber_alchemist_5",
+    "name": "💪 Kudret",
+    "desc": "+%15 Hasar",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "dmgMult": 0.15
+    },
+    "pos": [
+      1500,
+      2480
+    ],
+    "connects": []
+  },
+  {
+    "id": "bridge_alchemist_sorcerer_0",
+    "name": "+1.0 Rejen",
+    "desc": "+1.0 Rejen",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "regen": 1.0
+    },
+    "pos": [
+      1256,
+      1591
+    ],
+    "connects": [
+      "bridge_alchemist_sorcerer_1",
+      "junc_alchemist_sorcerer",
+      "sorcerer_L0"
+    ]
+  },
+  {
+    "id": "bridge_alchemist_sorcerer_1",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      1153,
+      1714
+    ],
+    "connects": [
+      "bridge_alchemist_sorcerer_2",
+      "sorcerer_L1"
+    ]
+  },
+  {
+    "id": "bridge_alchemist_sorcerer_2",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      1050,
+      1836
+    ],
+    "connects": [
+      "bridge_alchemist_sorcerer_3",
+      "sorcerer_L2"
+    ]
+  },
+  {
+    "id": "bridge_alchemist_sorcerer_3",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      947,
+      1959
+    ],
+    "connects": [
+      "bridge_alchemist_sorcerer_4",
+      "sorcerer_L3"
+    ]
+  },
+  {
+    "id": "bridge_alchemist_sorcerer_4",
+    "name": "+40 Can",
+    "desc": "+40 Can",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      844,
+      2081
+    ],
+    "connects": [
+      "bridge_alchemist_sorcerer_5",
+      "sorcerer_L4"
+    ]
+  },
+  {
+    "id": "bridge_alchemist_sorcerer_5",
+    "name": "🛡️ Sur",
+    "desc": "+80 Can, +10 Zırh",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "max_hp": 80,
+      "armor": 10
+    },
+    "pos": [
+      742,
+      2204
+    ],
+    "connects": [
+      "sorcerer_L5"
+    ]
+  },
+  {
+    "id": "bridge_sorcerer_bloodwalker_0",
+    "name": "+%6 Saldırı Hızı",
+    "desc": "+%6 Saldırı Hızı",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "attack_speed_bonus": 0.06
+    },
+    "pos": [
+      1126,
+      1366
+    ],
+    "connects": [
+      "bridge_sorcerer_bloodwalker_1",
+      "junc_sorcerer_bloodwalker",
+      "sorcerer_R0"
+    ]
+  },
+  {
+    "id": "bridge_sorcerer_bloodwalker_1",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      968,
+      1394
+    ],
+    "connects": [
+      "bridge_sorcerer_bloodwalker_2",
+      "sorcerer_R1"
+    ]
+  },
+  {
+    "id": "bridge_sorcerer_bloodwalker_2",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      811,
+      1422
+    ],
+    "connects": [
+      "bridge_sorcerer_bloodwalker_3",
+      "sorcerer_R2"
+    ]
+  },
+  {
+    "id": "bridge_sorcerer_bloodwalker_3",
+    "name": "+40 Can",
+    "desc": "+40 Can",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      653,
+      1449
+    ],
+    "connects": [
+      "bridge_sorcerer_bloodwalker_4",
+      "sorcerer_R3"
+    ]
+  },
+  {
+    "id": "bridge_sorcerer_bloodwalker_4",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      495,
+      1477
+    ],
+    "connects": [
+      "bridge_sorcerer_bloodwalker_5",
+      "sorcerer_R4"
+    ]
+  },
+  {
+    "id": "bridge_sorcerer_bloodwalker_5",
+    "name": "💨 Çeviklik",
+    "desc": "+0.5 Hız, +%8 Saldırı Hızı",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "speed": 0.5,
+      "attack_speed_bonus": 0.08
+    },
+    "pos": [
+      338,
+      1505
+    ],
+    "connects": [
+      "sorcerer_R5"
+    ]
+  },
+  {
+    "id": "bridge_bloodwalker_ninja_0",
+    "name": "+%3 Can Çalma",
+    "desc": "+%3 Can Çalma",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "lifesteal": 0.03
+    },
+    "pos": [
+      1171,
+      1110
+    ],
+    "connects": [
+      "bridge_bloodwalker_ninja_1",
+      "junc_bloodwalker_ninja",
+      "ninja_L0"
+    ]
+  },
+  {
+    "id": "bridge_bloodwalker_ninja_1",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1032,
+      1030
+    ],
+    "connects": [
+      "bridge_bloodwalker_ninja_2",
+      "ninja_L1"
+    ]
+  },
+  {
+    "id": "bridge_bloodwalker_ninja_2",
+    "name": "+40 Can",
+    "desc": "+40 Can",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      894,
+      950
+    ],
+    "connects": [
+      "bridge_bloodwalker_ninja_3",
+      "ninja_L2"
+    ]
+  },
+  {
+    "id": "bridge_bloodwalker_ninja_3",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      755,
+      870
+    ],
+    "connects": [
+      "bridge_bloodwalker_ninja_4",
+      "ninja_L3"
+    ]
+  },
+  {
+    "id": "bridge_bloodwalker_ninja_4",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      617,
+      790
+    ],
+    "connects": [
+      "bridge_bloodwalker_ninja_5",
+      "ninja_L4"
+    ]
+  },
+  {
+    "id": "bridge_bloodwalker_ninja_5",
+    "name": "🎯 Öldürücü",
+    "desc": "+%6 Kritik, +%40 Krit Hasar",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "critChance": 0.06,
+      "critDmg": 0.4
+    },
+    "pos": [
+      478,
+      710
+    ],
+    "connects": [
+      "ninja_L5"
+    ]
+  },
+  {
+    "id": "bridge_ninja_warrior_0",
+    "name": "+%10 Alan",
+    "desc": "+%10 Alan",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "aoe_bonus": 0.1
+    },
+    "pos": [
+      1370,
+      943
+    ],
+    "connects": [
+      "bridge_ninja_warrior_1",
+      "junc_ninja_warrior",
+      "ninja_R0",
+      "warrior_L0"
+    ]
+  },
+  {
+    "id": "bridge_ninja_warrior_1",
+    "name": "+40 Can",
+    "desc": "+40 Can",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "max_hp": 40
+    },
+    "pos": [
+      1315,
+      793
+    ],
+    "connects": [
+      "bridge_ninja_warrior_2",
+      "ninja_R1",
+      "warrior_L1"
+    ]
+  },
+  {
+    "id": "bridge_ninja_warrior_2",
+    "name": "+%8 Hasar",
+    "desc": "+%8 Hasar",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "dmgMult": 0.08
+    },
+    "pos": [
+      1261,
+      642
+    ],
+    "connects": [
+      "bridge_ninja_warrior_3",
+      "ninja_R2",
+      "warrior_L2"
+    ]
+  },
+  {
+    "id": "bridge_ninja_warrior_3",
+    "name": "+8 Zırh",
+    "desc": "+8 Zırh",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "armor": 8
+    },
+    "pos": [
+      1206,
+      492
+    ],
+    "connects": [
+      "bridge_ninja_warrior_4",
+      "ninja_R3",
+      "warrior_L3"
+    ]
+  },
+  {
+    "id": "bridge_ninja_warrior_4",
+    "name": "+0.3 Hız",
+    "desc": "+0.3 Hız",
+    "arm": "core",
+    "type": "minor",
+    "stats": {
+      "speed": 0.3
+    },
+    "pos": [
+      1151,
+      342
+    ],
+    "connects": [
+      "bridge_ninja_warrior_5",
+      "ninja_R4",
+      "warrior_L4"
+    ]
+  },
+  {
+    "id": "bridge_ninja_warrior_5",
+    "name": "💪 Kudret",
+    "desc": "+%15 Hasar",
+    "arm": "core",
+    "type": "notable",
+    "stats": {
+      "dmgMult": 0.15
+    },
+    "pos": [
+      1096,
+      191
+    ],
+    "connects": [
+      "ninja_R5",
+      "warrior_L5"
+    ]
+  }
 ]
