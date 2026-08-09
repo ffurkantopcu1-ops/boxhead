@@ -1,11 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.18.3",
+      "date": "2026-08-10",
+      "categories": {
+        "📦 Diğer": [
+          "perf+fix: DPS penceresi artımlı toplam (~%55 update hızlanması) + özel dalga çökme düzeltmesi"
+        ]
+      }
+    },
+    {
       "version": "1.18.2",
       "date": "2026-08-10",
       "categories": {
         "⚖️ Denge Değişiklikleri": [
           "kamikaze hız tavanı 8.0->7.2 (en hızlı sınıfı geçmesin)"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.2"
         ]
       }
     },
