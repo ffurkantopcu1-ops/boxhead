@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.18.0",
+      "date": "2026-08-10",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "ascendancy (alt-sınıf) sistemi — seviye 20 evrimiyle açılan mini ağaçlar"
+        ]
+      }
+    },
+    {
       "version": "1.17.0",
       "date": "2026-08-09",
       "categories": {
@@ -11,6 +20,9 @@
         "🐞 Hata Düzeltmeleri": [
           "yanlış silahla sınıf değişimi (savaş ailesi kuralı) + bombacı erken hasar dengesi",
           "düşman mermileri ekran ölçeklemesinde kaybolup titriyordu (blink)"
+        ],
+        "📦 Diğer": [
+          "release: v1.17.0"
         ]
       }
     },
