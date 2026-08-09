@@ -37,7 +37,7 @@ class InventoryManager:
         "dmgMult":        (2.0,  0.3, None),
         "critChance":     (0.75, 2.0, 1.0),
         "lifesteal":      (0.30, 3.0, 0.50),
-        "dodgeChance":    (0.40, 2.0, 0.60),
+        "dodgeChance":    (0.40, 2.0, 0.50),
         "critDmg":        (2.0,  0.5, 4.0),
         "dotDmgMult":     (1.0,  0.5, 2.0),
         "elementDmgMult": (1.5,  0.5, 3.0),
@@ -146,7 +146,10 @@ class InventoryManager:
         "sniper":      {"dmgMult": 0.5,  "critChance": 0.2,   "speed": 4.8, "bounce": 1, "pierce": 1, "attack_cooldown": 500},
         "engineer":    {"turretLimit": 1, "armor": 10,         "speed": 5.0},
         "beastmaster": {"minionDamage": 0.3, "max_hp_mult": 0.1, "speed": 5.5},
-        "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 7.2, "regen": 0.5},
+        # dodgeChance 0.25->0.18: tam yatırımlı ninja hem en yüksek hasarı hem
+        # de en yüksek EHP'yi (dodge çarpanı) alıp "her şeyde en iyi" oluyordu.
+        # Dodge kısılınca yüksek hasarlı ninja artık kırılgan (cam top) olur.
+        "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.18, "speed": 7.2, "regen": 0.5},
         "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 5.0, "attack_cooldown": 900},
         # Bombacı: TUZAKÇI. Simyacı'nın uç versiyonu DEĞİL — bombası
         # patlamaz, yere tetiklemeli mayın bırakır (bkz. bomber_logic).
