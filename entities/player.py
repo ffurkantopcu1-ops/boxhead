@@ -23,6 +23,7 @@ from entities.bloodwalker_logic import Bloodwalker
 from logic.inventory_manager import InventoryManager
 from logic.save_manager import SaveManager
 from logic.crystal_shop import CrystalShop
+from logic.skill_tree import SkillTree
 import audio
 
 class Player:
@@ -196,6 +197,11 @@ class Player:
         # olarak değişir; silah çıkarıldığında/sınıfsız bir silah takıldığında
         # buraya dönülür (inventory_manager.recalculate_stats).
         self.base_class_id = class_id
+        # --- YETENEK AĞACI (koşu-kapsamlı, yollu) ---
+        # Sınıfın başlangıç düğümü bedava tahsis edilir; recalculate_stats bunu
+        # kart havuzuyla aynı şekilde toplar. Eski düz "skills" ızgarası artık
+        # yükseltilmez (bkz. SKILL_TREE.md); p.skills lvl 0'da kalır.
+        self.allocated_nodes = set(SkillTree.start_nodes_for(class_id))
         self.class_name = self.class_id
         self.evolution = ""
         self.evolution_passive = ""

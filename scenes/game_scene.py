@@ -4,6 +4,7 @@ from entities.player import Player
 from ui_elements import (TabButton, EquippedRow, BackpackItemCard, SkillButton,
                          MarketCard, render_fit, shrink_to_width,
                          strip_unsupported, get_skull_crest)
+from logic.skill_tree import SkillTree
 import pygame
 import math
 import time
@@ -592,7 +593,8 @@ class GameScene(BaseScene):
             if hasattr(self, 'card_reroll_rect') and self.card_reroll_rect.collidepoint(mouse_pos):
                 if getattr(self.logic, 'card_rerolls', 0) > 0:
                     self.logic.card_rerolls -= 1
-                    cards = self.logic.card_system.offer_cards()
+                    _pc = getattr(p, "base_class_id", None)
+                    cards = self.logic.card_system.offer_cards(player_class=_pc)
                     if cards:
                         self.logic.pending_cards = cards
                         
@@ -876,22 +878,20 @@ class GameScene(BaseScene):
                         return
 
         elif self.active_tab == "skills":
-            # Tablar (çizimde saklanan rect'ler kullanılır)
-            for i, tab_rect in enumerate(getattr(self, 'skill_sub_tab_rects', [])):
-                if tab_rect.collidepoint(pos):
-                    self.active_skill_sub_tab = self.skill_sub_tabs[i]
-                    
+            # YETENEK AĞACI: sıfırla ya da tıklanan düğümü tahsis et
             if self.reset_btn_rect.collidepoint(pos):
-                if p.reset_skills():
-                    self.logic.add_event("damage_text", p.x, p.y-60, value="Yetenekler Sıfırlandı!", color=(46, 204, 113))
+                if self.reset_skill_tree(p):
+                    self.logic.add_event("damage_text", p.x, p.y-60, value="Yetenek Ağacı Sıfırlandı!", color=(46, 204, 113))
                 else:
-                    self.logic.add_event("damage_text", p.x, p.y-60, value="Yetersiz Altın! (10K G Gerekli)", color=(231, 76, 60))
-                
-            for btn in self.skill_btns:
-                sk_data = p.skills[btn.skill_id]
-                if sk_data['group'] == self.active_skill_sub_tab:
-                    if btn.rect.collidepoint(pos):
-                        self.buy_skill(p, btn.skill_id)
+                    self.logic.add_event("damage_text", p.x, p.y-60, value="Yetersiz Altın!", color=(231, 76, 60))
+                return
+
+            for nid, rect in getattr(self, 'tree_node_hit', []):
+                if rect.collidepoint(pos):
+                    ok, msg = SkillTree.allocate(p, nid)
+                    color = (241, 196, 15) if ok else (231, 76, 60)
+                    self.logic.add_event("damage_text", p.x, p.y-60, value=msg, color=color)
+                    return
 
         elif self.active_tab == "hero":
             diff_names = ["Normal", "Hard", "Very Hard", "Impossible"]
@@ -2410,21 +2410,28 @@ class GameScene(BaseScene):
             txt = render_fit(name, 19, col, rect.width - 34, bold=is_active)
             self.screen.blit(txt, txt.get_rect(center=rect.center))
 
+    # ======================= YETENEK AĞACI (NODE TREE) =======================
+    # Eski düz 56-yetenek ızgarasının yerini alan yollu (pathing) düğüm ağacı.
+    # Tasarım: SKILL_TREE.md. Veri: data/skill_tree.json, motor: logic/skill_tree.
+
+    _TREE_TYPE_COLORS = {
+        "start": "moss", "minor": "steel", "notable": "gold", "keystone": "blood",
+    }
+
     def draw_skills_tab(self, p):
         import ui_theme
         panel = self._inventory_panel_rect()
         inner_top = panel.y + 52
         mouse_pos = pygame.mouse.get_pos()
 
-        # SP sayacı ve SIFIRLA butonu panelin İÇİNDE, sekme çubuğunun altında
-        # (eskiden y=90'daydı, üstteki sekme plakalarının üstüne biniyordu).
-        sp_txt = render_fit(f"MEVCUT PUAN (SP): {p.skill_points}", 24,
-                            ui_theme.readable(ui_theme.COLORS["gold"]), 420, bold=True)
-        self.screen.blit(sp_txt, (panel.centerx - sp_txt.get_width() // 2, inner_top + 6))
+        # Başlık: SP sayacı (solda) + SIFIRLA butonu (sağda)
+        sp_txt = render_fit(f"YETENEK PUANI (SP): {p.skill_points}", 24,
+                            ui_theme.readable(ui_theme.COLORS["gold"]), 520, bold=True)
+        self.screen.blit(sp_txt, (panel.x + 44, inner_top + 8))
 
         wave_level = self.logic.wave.get("level", 1)
         cost = 2000 + max(0, (wave_level - 1) * 400)
-        self.reset_btn_rect.update(panel.right - 250, inner_top + 2, 190, 36)
+        self.reset_btn_rect.update(panel.right - 250, inner_top + 4, 190, 36)
         reset_hover = self.reset_btn_rect.collidepoint(mouse_pos)
         ui_theme.draw_plate(self.screen, self.reset_btn_rect,
                             "hover" if reset_hover else "normal",
@@ -2434,45 +2441,139 @@ class GameScene(BaseScene):
                              self.reset_btn_rect.width - 30)
         self.screen.blit(reset_t, reset_t.get_rect(center=self.reset_btn_rect.center))
 
-        # ÜST KATEGORİ BUTONLARI (Alt Sekme) - hitbox tek kaynak: rect'ler saklanır
-        tabs_y = inner_top + 50
-        tab_w = min(185, (panel.width - 100) // len(self.skill_sub_tabs) - 10)
-        tabs_total = len(self.skill_sub_tabs) * (tab_w + 10) - 10
-        tabs_x0 = panel.centerx - tabs_total // 2
-        self.skill_sub_tab_rects = []
-        for i, tab_name in enumerate(self.skill_sub_tabs):
-            tab_rect = pygame.Rect(tabs_x0 + i * (tab_w + 10), tabs_y, tab_w, 40)
-            self.skill_sub_tab_rects.append(tab_rect)
-            is_active = self.active_skill_sub_tab == tab_name
-            hovered = tab_rect.collidepoint(mouse_pos)
-            ui_theme.draw_plate(self.screen, tab_rect,
-                                "hover" if (is_active or hovered) else "normal",
-                                ui_theme.COLORS["gold" if is_active else "steel"])
-            col = ui_theme.TEXT_COL if (is_active or hovered) else (170, 164, 152)
-            txt = render_fit(tab_name, 17, col, tab_rect.width - 34, bold=is_active)
-            self.screen.blit(txt, txt.get_rect(center=tab_rect.center))
+        # Ağaç çizim alanı (başlığın altı). Çizim buraya kırpılır.
+        area = pygame.Rect(panel.x + 28, inner_top + 50,
+                           panel.width - 56, panel.height - 108)
+        tf = self._skill_tree_transform(area)
+        allocated = SkillTree._ensure_set(p)
+        allocatable = set(SkillTree.allocatable_nodes(allocated))
 
-        # YETENEK BUTONLARINI FİLTRELE VE ÇİZ
-        grid_y = tabs_y + 60
-        shown_count = 0
-        for btn in self.skill_btns:
-            sk_data = p.skills[btn.skill_id]
-            if sk_data['group'] == self.active_skill_sub_tab:
-                # Pozisyonu dinamik ata (Grup içinde 2 sütun)
-                col = shown_count % 2
-                row = shown_count // 2
-                btn.rect.x = panel.centerx - 360 + (col * 370)
-                btn.rect.y = grid_y + (row * 85)
+        prev_clip = self.screen.get_clip()
+        self.screen.set_clip(area)
 
-                btn.text = f"{sk_data['name']} ({sk_data['lvl']}/{sk_data['max']})"
-                btn.update()  # hover durumu hiç güncellenmiyordu
-                btn.draw(
-                    self.screen,
-                    self.font_desc,
-                    p.skill_points > 0 and sk_data['lvl'] < sk_data['max'],
-                    SKILL_HELP.get(sk_data['stat'], 'Bu özellik karakter istatistiklerini kalıcı olarak güçlendirir.'),
-                )
-                shown_count += 1
+        # 1) KENARLAR — her kenar bir kez; sahip olunan iki uç parlar
+        drawn = set()
+        for nid, neighbors in SkillTree.ADJ.items():
+            for m in neighbors:
+                key = (nid, m) if nid < m else (m, nid)
+                if key in drawn:
+                    continue
+                drawn.add(key)
+                p1 = tf(SkillTree.BY_ID[nid]["pos"])
+                p2 = tf(SkillTree.BY_ID[m]["pos"])
+                both = nid in allocated and m in allocated
+                col = ui_theme.readable(ui_theme.COLORS["gold"]) if both else (68, 60, 56)
+                pygame.draw.line(self.screen, col, p1, p2, 4 if both else 2)
+
+        # 2) DÜĞÜMLER — kilitli önce, açık/alınmış en son (tema kuralı: seçili üstte)
+        self.tree_node_hit = []
+        hover_node = None
+        order = sorted(
+            SkillTree.NODES,
+            key=lambda n: (n["id"] in allocated, n["id"] in allocatable))
+        for node in order:
+            nid = node["id"]
+            cx, cy = tf(node["pos"])
+            r = self._tree_node_radius(node["type"])
+            rect = pygame.Rect(cx - r, cy - r, 2 * r, 2 * r)
+            self.tree_node_hit.append((nid, rect))
+            if nid in allocated:
+                state = "allocated"
+            elif nid in allocatable:
+                state = "open"
+            else:
+                state = "locked"
+            self._draw_tree_node(node, (cx, cy), r, state)
+            if rect.collidepoint(mouse_pos):
+                hover_node = node
+
+        self.screen.set_clip(prev_clip)
+
+        if hover_node:
+            self._draw_tree_tooltip(hover_node, mouse_pos, allocated, allocatable)
+
+    def _skill_tree_transform(self, area):
+        """Ağaç tuvalini (düğüm pos'ları) çizim alanına ölçekleyip ortalayan
+        dönüşümü döndürür. Tüm ağaç tek ekrana sığar; pan/zoom yok."""
+        if not hasattr(self, "_tree_bbox"):
+            xs = [n["pos"][0] for n in SkillTree.NODES]
+            ys = [n["pos"][1] for n in SkillTree.NODES]
+            self._tree_bbox = (min(xs), min(ys), max(xs), max(ys))
+        minx, miny, maxx, maxy = self._tree_bbox
+        bw = max(1, maxx - minx)
+        bh = max(1, maxy - miny)
+        pad = 48
+        scale = min((area.width - 2 * pad) / bw, (area.height - 2 * pad) / bh)
+        ox = area.x + (area.width - bw * scale) / 2 - minx * scale
+        oy = area.y + (area.height - bh * scale) / 2 - miny * scale
+
+        def tf(pos):
+            return (int(pos[0] * scale + ox), int(pos[1] * scale + oy))
+        return tf
+
+    @staticmethod
+    def _tree_node_radius(ntype):
+        return {"keystone": 19, "notable": 16, "start": 15}.get(ntype, 12)
+
+    def _draw_tree_node(self, node, center, r, state):
+        import ui_theme
+        cx, cy = center
+        base = ui_theme.COLORS[self._TREE_TYPE_COLORS.get(node["type"], "steel")]
+        gold = ui_theme.readable(ui_theme.COLORS["gold"])
+        if state == "allocated":
+            fill = ui_theme.readable(base, 110)
+            ring, ring_w = gold, 3
+        elif state == "open":
+            fill = tuple(c // 3 + 10 for c in base)
+            ring, ring_w = gold, 3
+        else:  # locked
+            fill = (34, 30, 32)
+            ring, ring_w = (72, 64, 60), 2
+
+        pygame.draw.circle(self.screen, (16, 14, 16), (cx, cy), r + 3)   # yuva
+        pygame.draw.circle(self.screen, fill, (cx, cy), r)
+        pygame.draw.circle(self.screen, ring, (cx, cy), r, ring_w)
+        # Notable/keystone: parlak iç mücevher noktası
+        if node["type"] in ("notable", "keystone") and state != "locked":
+            hi = tuple(min(255, c + 60) for c in fill)
+            pygame.draw.circle(self.screen, hi, (cx - r // 3, cy - r // 3), max(2, r // 4))
+
+    def _draw_tree_tooltip(self, node, mouse_pos, allocated, allocatable):
+        import ui_theme
+        nid = node["id"]
+        if nid in allocated:
+            status = "✓ Alındı"
+            scol = ui_theme.readable(ui_theme.COLORS["moss"])
+        elif nid in allocatable:
+            status = "Başlangıç" if SkillTree.is_start(nid) else "Tıkla → 1 SP"
+            scol = ui_theme.readable(ui_theme.COLORS["gold"])
+        else:
+            status = "🔒 Kilitli — önce bağlı bir düğüm al"
+            scol = (170, 120, 120)
+
+        name_s = render_fit(node["name"], 20, ui_theme.readable(ui_theme.COLORS["gold"]), 340, bold=True)
+        desc_s = render_fit(node.get("desc", ""), 16, ui_theme.TEXT_COL, 340)
+        stat_s = render_fit(status, 16, scol, 340)
+        w = max(name_s.get_width(), desc_s.get_width(), stat_s.get_width()) + 32
+        h = 84
+        tx = min(mouse_pos[0] + 18, self.width - w - 10)
+        ty = min(mouse_pos[1] + 18, self.height - h - 10)
+        rect = pygame.Rect(tx, ty, w, h)
+        ui_theme.draw_panel(self.screen, rect, fill=ui_theme.PANEL_BG, alpha=245)
+        self.screen.blit(name_s, (rect.x + 16, rect.y + 10))
+        self.screen.blit(desc_s, (rect.x + 16, rect.y + 36))
+        self.screen.blit(stat_s, (rect.x + 16, rect.y + 60))
+
+    def reset_skill_tree(self, p):
+        """Altın karşılığı tüm ağacı sıfırlar (SP iade edilir). Eski
+        reset_skills ile aynı altın maliyeti."""
+        wave_level = self.logic.wave.get("level", 1)
+        cost = 2000 + max(0, (wave_level - 1) * 400)
+        if p.gold < cost:
+            return False
+        p.gold -= cost
+        SkillTree.refund_all(p)
+        return True
 
     def buy_skill(self, p, skill_idx):
         if p.skill_points <= 0: return

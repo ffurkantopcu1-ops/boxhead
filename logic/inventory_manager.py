@@ -301,7 +301,17 @@ class InventoryManager:
                 totals[stat] += val
             else:
                 totals[stat] = val
-        
+
+        # 🌳 YETENEK AĞACI (allocated_nodes) — düğüm statları kart havuzuyla
+        # aynı biçimde toplanır. Bedeller (max_hp_pct vb.) aşağıdaki final
+        # matematikte kart bedelleriyle birlikte işlenir.
+        from logic.skill_tree import SkillTree
+        for stat, val in SkillTree.resolve_stats(getattr(self.player, 'allocated_nodes', ())).items():
+            if stat in totals:
+                totals[stat] += val
+            else:
+                totals[stat] = val
+
         # Final multipliers
         new_stats = totals.copy()
         

@@ -196,6 +196,8 @@ class SaveManager:
                 "evolution": getattr(p, 'evolution', ""),
                 "evolution_passive": getattr(p, 'evolution_passive', ""),
                 "skills": p.skills,
+                # Yetenek ağacı: koşu-kapsamlı tahsis (meta.json'a DEĞİL buraya).
+                "allocated_nodes": sorted(getattr(p, 'allocated_nodes', [])),
                 "skills_permanent": getattr(p, 'skills_permanent', {}),
                 "x": p.x,
                 "y": p.y,
@@ -263,6 +265,25 @@ class SaveManager:
         else:
             print("Kayittaki yetenek listesi gecersiz, varsayilan liste korundu.")
         p.skills_permanent = pd.get("skills_permanent", {})
+
+        # --- YETENEK AĞACI (koşu-kapsamlı) ---
+        # Eski kayıtlarda "allocated_nodes" yok: başlangıç düğümünü tohumla ve
+        # eski düz "skills" seviyelerini SP olarak iade et ki oyuncu yatırdığı
+        # puanları yeni ağaçta yeniden harcayabilsin (kayıp olmasın). Seviyeler
+        # sıfırlanır; yoksa recalculate_stats hem ağacı hem eski skili sayar.
+        from logic.skill_tree import SkillTree
+        if "allocated_nodes" in pd:
+            p.allocated_nodes = set(pd.get("allocated_nodes", []))
+            p.allocated_nodes |= set(SkillTree.start_nodes_for(p.base_class_id))
+        else:
+            refund = 0
+            if isinstance(p.skills, list):
+                for sk in p.skills:
+                    refund += int(sk.get("lvl", 0) or 0)
+                    sk["lvl"] = 0
+            p.skill_points = p.skill_points + refund
+            p.allocated_nodes = set(SkillTree.start_nodes_for(p.base_class_id))
+
         p.x = pd.get("x", p.x)
         p.y = pd.get("y", p.y)
         p.auto_sell = pd.get("auto_sell", False)

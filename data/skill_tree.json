@@ -1,0 +1,680 @@
+[
+    {
+        "id": "core_heart",
+        "name": "🖤 Çekirdek Yürek",
+        "desc": "+%10 Hasar, +60 Max Can",
+        "arm": "core",
+        "type": "notable",
+        "stats": { "dmgMult": 0.10, "max_hp": 60 },
+        "connects": ["core_might", "core_ward"],
+        "pos": [700, 500]
+    },
+    {
+        "id": "core_might",
+        "name": "💪 Çekirdek Kudreti",
+        "desc": "+%15 Hasar, +8 Fiziksel Hasar",
+        "arm": "core",
+        "type": "notable",
+        "stats": { "dmgMult": 0.15, "physDmgFlat": 8 },
+        "connects": [],
+        "pos": [630, 500]
+    },
+    {
+        "id": "core_ward",
+        "name": "🛡️ Çekirdek Kalkanı",
+        "desc": "+80 Max Can, +10 Zırh",
+        "arm": "core",
+        "type": "notable",
+        "stats": { "max_hp": 80, "armor": 10 },
+        "connects": [],
+        "pos": [770, 500]
+    },
+    {
+        "id": "core_gate_armor",
+        "name": "Zırh Geçidi (+8 Zırh)",
+        "desc": "+8 Zırh",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "armor": 8 },
+        "connects": ["core_gate_crit", "core_gate_regen", "core_heart"],
+        "pos": [700, 650]
+    },
+    {
+        "id": "core_gate_crit",
+        "name": "Kritik Geçidi (+%4 Krit)",
+        "desc": "+%4 Kritik Şansı",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "critChance": 0.04 },
+        "connects": ["core_gate_dmg", "core_heart"],
+        "pos": [806, 606]
+    },
+    {
+        "id": "core_gate_dmg",
+        "name": "Hasar Geçidi (+%10 Hasar)",
+        "desc": "+%10 Hasar",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "dmgMult": 0.10 },
+        "connects": ["core_gate_hp", "core_heart"],
+        "pos": [850, 500]
+    },
+    {
+        "id": "core_gate_hp",
+        "name": "Can Geçidi (+40 Can)",
+        "desc": "+40 Max Can",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "max_hp": 40 },
+        "connects": ["core_gate_ls", "core_heart"],
+        "pos": [806, 394]
+    },
+    {
+        "id": "core_gate_ls",
+        "name": "Can Emme Geçidi (+%3)",
+        "desc": "+%3 Can Çalma",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "lifesteal": 0.03 },
+        "connects": ["core_gate_spd", "core_heart"],
+        "pos": [700, 350]
+    },
+    {
+        "id": "core_gate_spd",
+        "name": "Hız Geçidi (+0.3 Hız)",
+        "desc": "+0.3 Hareket Hızı",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "speed": 0.3 },
+        "connects": ["core_gate_as", "core_heart"],
+        "pos": [594, 394]
+    },
+    {
+        "id": "core_gate_as",
+        "name": "Saldırı Hızı Geçidi (+%8)",
+        "desc": "+%8 Saldırı Hızı",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "attack_speed_bonus": 0.08 },
+        "connects": ["core_gate_regen", "core_heart"],
+        "pos": [550, 500]
+    },
+    {
+        "id": "core_gate_regen",
+        "name": "Yenilenme Geçidi (+1.0 Rej)",
+        "desc": "+1.0 Can Yenilenmesi",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "regen": 1.0 },
+        "connects": ["core_heart"],
+        "pos": [594, 606]
+    },
+    {
+        "id": "core_gate_aoe",
+        "name": "Alan Geçidi (+%10 Alan)",
+        "desc": "+%10 Alan Etkisi",
+        "arm": "core",
+        "type": "minor",
+        "stats": { "aoe_bonus": 0.10 },
+        "connects": ["core_heart", "core_gate_armor", "core_gate_regen"],
+        "pos": [648, 640]
+    },
+
+    {
+        "id": "start_warrior",
+        "name": "⚔️ Savaşçı Başlangıcı",
+        "desc": "Savaşçı yolunun kökü.",
+        "arm": "warrior",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_armor", "w_hide"],
+        "pos": [700, 740]
+    },
+    {
+        "id": "w_hide",
+        "name": "🛡️ Sertleşmiş Deri",
+        "desc": "+10 Zırh",
+        "arm": "warrior",
+        "type": "minor",
+        "stats": { "armor": 10 },
+        "connects": ["w_vigor"],
+        "pos": [700, 800]
+    },
+    {
+        "id": "w_vigor",
+        "name": "💖 Dayanıklılık",
+        "desc": "+50 Max Can",
+        "arm": "warrior",
+        "type": "minor",
+        "stats": { "max_hp": 50 },
+        "connects": ["w_bulwark", "w_reach"],
+        "pos": [700, 860]
+    },
+    {
+        "id": "w_reach",
+        "name": "📏 Geniş Salınım",
+        "desc": "+25 Yakın Menzil, +6 Fiziksel Hasar",
+        "arm": "warrior",
+        "type": "minor",
+        "stats": { "meleeRangeFlat": 25, "physDmgFlat": 6 },
+        "connects": [],
+        "pos": [620, 860]
+    },
+    {
+        "id": "w_bulwark",
+        "name": "🏰 Siper",
+        "desc": "+80 Max Can, +12 Zırh",
+        "arm": "warrior",
+        "type": "notable",
+        "stats": { "max_hp": 80, "armor": 12 },
+        "connects": ["w_berserk"],
+        "pos": [700, 920]
+    },
+    {
+        "id": "w_berserk",
+        "name": "🩸 Berserker Kalbi",
+        "desc": "+%30 Hasar. Bedel: Max Can %15 azalır.",
+        "arm": "warrior",
+        "type": "keystone",
+        "stats": { "dmgMult": 0.30, "max_hp_pct": -15 },
+        "connects": [],
+        "pos": [700, 985]
+    },
+
+    {
+        "id": "start_sniper",
+        "name": "🎯 Nişancı Başlangıcı",
+        "desc": "Nişancı yolunun kökü.",
+        "arm": "sniper",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_crit", "s_focus"],
+        "pos": [898, 698]
+    },
+    {
+        "id": "s_focus",
+        "name": "🔎 Odak",
+        "desc": "+%5 Kritik Şansı",
+        "arm": "sniper",
+        "type": "minor",
+        "stats": { "critChance": 0.05 },
+        "connects": ["s_pierce"],
+        "pos": [958, 758]
+    },
+    {
+        "id": "s_pierce",
+        "name": "🏹 Delici Atış",
+        "desc": "+1 Delme",
+        "arm": "sniper",
+        "type": "minor",
+        "stats": { "pierce": 1 },
+        "connects": ["s_eagle", "s_power"],
+        "pos": [1018, 818]
+    },
+    {
+        "id": "s_power",
+        "name": "💥 Ağır Kalibre",
+        "desc": "+%10 Hasar",
+        "arm": "sniper",
+        "type": "minor",
+        "stats": { "dmgMult": 0.10 },
+        "connects": [],
+        "pos": [1078, 758]
+    },
+    {
+        "id": "s_eagle",
+        "name": "🦅 Kartal Gözü",
+        "desc": "+%6 Kritik Şansı, +%50 Kritik Hasar",
+        "arm": "sniper",
+        "type": "notable",
+        "stats": { "critChance": 0.06, "critDmg": 0.5 },
+        "connects": ["s_headshot"],
+        "pos": [1078, 878]
+    },
+    {
+        "id": "s_headshot",
+        "name": "☠️ Kafadan Vuruş",
+        "desc": "+%10 Kritik Şansı, +%20 Hasar. Bedel: Max Can %10 azalır.",
+        "arm": "sniper",
+        "type": "keystone",
+        "stats": { "critChance": 0.10, "dmgMult": 0.20, "max_hp_pct": -10 },
+        "connects": [],
+        "pos": [1138, 878]
+    },
+
+    {
+        "id": "start_engineer",
+        "name": "🤖 Mühendis Başlangıcı",
+        "desc": "Mühendis yolunun kökü.",
+        "arm": "engineer",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_dmg", "e_plating"],
+        "pos": [980, 500]
+    },
+    {
+        "id": "e_plating",
+        "name": "🔩 Zırhlı Taret",
+        "desc": "+%20 Taret Hasarı",
+        "arm": "engineer",
+        "type": "minor",
+        "stats": { "turretDmg": 0.2 },
+        "connects": ["e_autoload"],
+        "pos": [1050, 500]
+    },
+    {
+        "id": "e_autoload",
+        "name": "⚙️ Otomatik Besleme",
+        "desc": "+%15 Taret Atış Hızı",
+        "arm": "engineer",
+        "type": "minor",
+        "stats": { "turretRate": 0.15 },
+        "connects": ["e_capacity", "e_bunker"],
+        "pos": [1120, 500]
+    },
+    {
+        "id": "e_bunker",
+        "name": "🧱 Sığınak",
+        "desc": "+80 Taret Canı, +8 Zırh",
+        "arm": "engineer",
+        "type": "minor",
+        "stats": { "turretMaxHp": 80, "armor": 8 },
+        "connects": [],
+        "pos": [1120, 430]
+    },
+    {
+        "id": "e_capacity",
+        "name": "📡 Kapasite",
+        "desc": "+1 Taret Limiti, +%20 Taret Hasarı",
+        "arm": "engineer",
+        "type": "notable",
+        "stats": { "turretLimit": 1, "turretDmg": 0.2 },
+        "connects": ["e_overdrive"],
+        "pos": [1190, 500]
+    },
+    {
+        "id": "e_overdrive",
+        "name": "🔧 Aşırı Yükleme",
+        "desc": "+%50 Taret Hasarı, +%25 Taret Hızı. Bedel: Max Can %15 azalır.",
+        "arm": "engineer",
+        "type": "keystone",
+        "stats": { "turretDmg": 0.5, "turretRate": 0.25, "max_hp_pct": -15 },
+        "connects": [],
+        "pos": [1258, 500]
+    },
+
+    {
+        "id": "start_sorcerer",
+        "name": "🔮 Büyücü Başlangıcı",
+        "desc": "Büyücü yolunun kökü.",
+        "arm": "sorcerer",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_hp", "so_spark"],
+        "pos": [898, 302]
+    },
+    {
+        "id": "so_spark",
+        "name": "🔥 Kıvılcım",
+        "desc": "+2 Ateş Hasarı, +%10 Elemental Hasar",
+        "arm": "sorcerer",
+        "type": "minor",
+        "stats": { "fireDmgFlat": 2, "elementDmgMult": 0.10 },
+        "connects": ["so_frost"],
+        "pos": [958, 242]
+    },
+    {
+        "id": "so_frost",
+        "name": "❄️ Ayaz",
+        "desc": "+2 Buz Hasarı, +%10 Elemental Hasar",
+        "arm": "sorcerer",
+        "type": "minor",
+        "stats": { "frostDmgFlat": 2, "elementDmgMult": 0.10 },
+        "connects": ["so_arcane", "so_ward"],
+        "pos": [1018, 182]
+    },
+    {
+        "id": "so_ward",
+        "name": "🧿 Büyü Kalkanı",
+        "desc": "+60 Max Can",
+        "arm": "sorcerer",
+        "type": "minor",
+        "stats": { "max_hp": 60 },
+        "connects": [],
+        "pos": [1078, 242]
+    },
+    {
+        "id": "so_arcane",
+        "name": "🌀 Gizemli Odak",
+        "desc": "+%20 Elemental Hasar, +%10 Hasar",
+        "arm": "sorcerer",
+        "type": "notable",
+        "stats": { "elementDmgMult": 0.20, "dmgMult": 0.10 },
+        "connects": ["so_overload"],
+        "pos": [1078, 122]
+    },
+    {
+        "id": "so_overload",
+        "name": "💥 Element Taşması",
+        "desc": "+%50 Elemental Hasar. Bedel: Max Can %20 azalır.",
+        "arm": "sorcerer",
+        "type": "keystone",
+        "stats": { "elementDmgMult": 0.5, "max_hp_pct": -20 },
+        "connects": [],
+        "pos": [1138, 122]
+    },
+
+    {
+        "id": "start_bloodwalker",
+        "name": "🩸 Kan Yürüyen Başlangıcı",
+        "desc": "Kan Yürüyen yolunun kökü.",
+        "arm": "bloodwalker",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_ls", "b_leech"],
+        "pos": [700, 220]
+    },
+    {
+        "id": "b_leech",
+        "name": "🦇 Sülük",
+        "desc": "+%3 Can Çalma",
+        "arm": "bloodwalker",
+        "type": "minor",
+        "stats": { "lifesteal": 0.03 },
+        "connects": ["b_gore"],
+        "pos": [700, 160]
+    },
+    {
+        "id": "b_gore",
+        "name": "🔪 Kan Dökücü",
+        "desc": "+%10 Hasar",
+        "arm": "bloodwalker",
+        "type": "minor",
+        "stats": { "dmgMult": 0.10 },
+        "connects": ["b_sanguine", "b_thick"],
+        "pos": [700, 100]
+    },
+    {
+        "id": "b_thick",
+        "name": "🫀 Koyu Kan",
+        "desc": "+60 Max Can, +1.0 Rejenerasyon",
+        "arm": "bloodwalker",
+        "type": "minor",
+        "stats": { "max_hp": 60, "regen": 1.0 },
+        "connects": [],
+        "pos": [620, 100]
+    },
+    {
+        "id": "b_sanguine",
+        "name": "🩸 Kızıl Zafer",
+        "desc": "+%5 Can Çalma, +%10 Hasar",
+        "arm": "bloodwalker",
+        "type": "notable",
+        "stats": { "lifesteal": 0.05, "dmgMult": 0.10 },
+        "connects": ["b_thirst"],
+        "pos": [700, 40]
+    },
+    {
+        "id": "b_thirst",
+        "name": "🧛 Kan Susuzluğu",
+        "desc": "+%8 Can Çalma, +%20 Hasar. Bedel: Max Can %15 azalır.",
+        "arm": "bloodwalker",
+        "type": "keystone",
+        "stats": { "lifesteal": 0.08, "dmgMult": 0.20, "max_hp_pct": -15 },
+        "connects": [],
+        "pos": [770, 40]
+    },
+
+    {
+        "id": "start_ninja",
+        "name": "🥷 Ninja Başlangıcı",
+        "desc": "Ninja yolunun kökü.",
+        "arm": "ninja",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_spd", "n_step"],
+        "pos": [502, 302]
+    },
+    {
+        "id": "n_step",
+        "name": "👟 Hafif Adım",
+        "desc": "+0.3 Hareket Hızı",
+        "arm": "ninja",
+        "type": "minor",
+        "stats": { "speed": 0.3 },
+        "connects": ["n_evade"],
+        "pos": [442, 242]
+    },
+    {
+        "id": "n_evade",
+        "name": "💨 Sıyrılma",
+        "desc": "+%5 Kaçınma",
+        "arm": "ninja",
+        "type": "minor",
+        "stats": { "dodgeChance": 0.05 },
+        "connects": ["n_flurry", "n_shadow"],
+        "pos": [382, 182]
+    },
+    {
+        "id": "n_shadow",
+        "name": "🌑 Gölge Vuruşu",
+        "desc": "+%5 Kritik Şansı",
+        "arm": "ninja",
+        "type": "minor",
+        "stats": { "critChance": 0.05 },
+        "connects": [],
+        "pos": [442, 122]
+    },
+    {
+        "id": "n_flurry",
+        "name": "🌀 Bıçak Fırtınası",
+        "desc": "+%10 Saldırı Hızı, +0.2 Hız",
+        "arm": "ninja",
+        "type": "notable",
+        "stats": { "attack_speed_bonus": 0.10, "speed": 0.2 },
+        "connects": ["n_phantom"],
+        "pos": [322, 122]
+    },
+    {
+        "id": "n_phantom",
+        "name": "👻 Hayalet Dans",
+        "desc": "+%15 Kaçınma, +%15 Saldırı Hızı. Bedel: Max Can %15 azalır.",
+        "arm": "ninja",
+        "type": "keystone",
+        "stats": { "dodgeChance": 0.15, "attack_speed_bonus": 0.15, "max_hp_pct": -15 },
+        "connects": [],
+        "pos": [262, 122]
+    },
+
+    {
+        "id": "start_alchemist",
+        "name": "⚗️ Simyacı Başlangıcı",
+        "desc": "Simyacı yolunun kökü.",
+        "arm": "alchemist",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_as", "a_brew"],
+        "pos": [420, 500]
+    },
+    {
+        "id": "a_brew",
+        "name": "🧪 Kaynayan Karışım",
+        "desc": "+%15 DoT Hasarı",
+        "arm": "alchemist",
+        "type": "minor",
+        "stats": { "dotDmgMult": 0.15 },
+        "connects": ["a_spread"],
+        "pos": [350, 500]
+    },
+    {
+        "id": "a_spread",
+        "name": "🌫️ Yayılım",
+        "desc": "+%15 Alan Etkisi",
+        "arm": "alchemist",
+        "type": "minor",
+        "stats": { "aoe_bonus": 0.15 },
+        "connects": ["a_toxin", "a_vial"],
+        "pos": [280, 500]
+    },
+    {
+        "id": "a_vial",
+        "name": "🍶 Fazla Doz",
+        "desc": "+%15 DoT Hasarı",
+        "arm": "alchemist",
+        "type": "minor",
+        "stats": { "dotDmgMult": 0.15 },
+        "connects": [],
+        "pos": [280, 430]
+    },
+    {
+        "id": "a_toxin",
+        "name": "☣️ Toksin Ustası",
+        "desc": "+%25 DoT Hasarı, +%15 Alan Etkisi",
+        "arm": "alchemist",
+        "type": "notable",
+        "stats": { "dotDmgMult": 0.25, "aoe_bonus": 0.15 },
+        "connects": ["a_plague"],
+        "pos": [210, 500]
+    },
+    {
+        "id": "a_plague",
+        "name": "💀 Veba Bulutu",
+        "desc": "+%50 DoT Hasarı. Bedel: Doğrudan hasar %20 azalır.",
+        "arm": "alchemist",
+        "type": "keystone",
+        "stats": { "dotDmgMult": 0.5, "dmgMult": -0.20 },
+        "connects": [],
+        "pos": [140, 500]
+    },
+
+    {
+        "id": "start_beastmaster",
+        "name": "🐺 Canavar Efendisi Başlangıcı",
+        "desc": "Canavar Efendisi yolunun kökü.",
+        "arm": "beastmaster",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_regen", "bm_pack"],
+        "pos": [502, 698]
+    },
+    {
+        "id": "bm_pack",
+        "name": "🐾 Sürü Öfkesi",
+        "desc": "+%25 Minyon Hasarı",
+        "arm": "beastmaster",
+        "type": "minor",
+        "stats": { "minionDamage": 0.25 },
+        "connects": ["bm_howl"],
+        "pos": [442, 758]
+    },
+    {
+        "id": "bm_howl",
+        "name": "🌙 Uluma",
+        "desc": "+%20 Minyon Saldırı Hızı",
+        "arm": "beastmaster",
+        "type": "minor",
+        "stats": { "minionRate": 0.2 },
+        "connects": ["bm_alpha", "bm_ward"],
+        "pos": [382, 818]
+    },
+    {
+        "id": "bm_ward",
+        "name": "🦴 Kalın Post",
+        "desc": "+80 Minyon Canı",
+        "arm": "beastmaster",
+        "type": "minor",
+        "stats": { "minionMaxHpFlat": 80 },
+        "connects": [],
+        "pos": [442, 878]
+    },
+    {
+        "id": "bm_alpha",
+        "name": "🐺 Alfa Sürüsü",
+        "desc": "+%30 Minyon Hasarı, +1 Minyon",
+        "arm": "beastmaster",
+        "type": "notable",
+        "stats": { "minionDamage": 0.30, "minionCount": 1 },
+        "connects": ["bm_bond"],
+        "pos": [322, 878]
+    },
+    {
+        "id": "bm_bond",
+        "name": "🔗 Vahşi Bağ",
+        "desc": "+%50 Minyon Hasarı. Bedel: Kendi hasarın %25 azalır.",
+        "arm": "beastmaster",
+        "type": "keystone",
+        "stats": { "minionDamage": 0.5, "dmgMult": -0.25 },
+        "connects": [],
+        "pos": [262, 878]
+    },
+
+    {
+        "id": "start_bomber",
+        "name": "💣 Bombacı Başlangıcı",
+        "desc": "Bombacı yolunun kökü.",
+        "arm": "bomber",
+        "type": "start",
+        "start": true,
+        "stats": {},
+        "connects": ["core_gate_aoe", "bo_fuse"],
+        "pos": [613, 712]
+    },
+    {
+        "id": "bo_fuse",
+        "name": "🧨 Uzun Fitil",
+        "desc": "+%15 Alan Etkisi",
+        "arm": "bomber",
+        "type": "minor",
+        "stats": { "aoe_bonus": 0.15 },
+        "connects": ["bo_shrapnel"],
+        "pos": [585, 772]
+    },
+    {
+        "id": "bo_shrapnel",
+        "name": "🔩 Şarapnel",
+        "desc": "+8 Fiziksel Hasar",
+        "arm": "bomber",
+        "type": "minor",
+        "stats": { "physDmgFlat": 8 },
+        "connects": ["bo_cluster", "bo_charge"],
+        "pos": [557, 832]
+    },
+    {
+        "id": "bo_charge",
+        "name": "💥 Ağır Dolgu",
+        "desc": "+%10 Hasar",
+        "arm": "bomber",
+        "type": "minor",
+        "stats": { "dmgMult": 0.10 },
+        "connects": [],
+        "pos": [632, 838]
+    },
+    {
+        "id": "bo_cluster",
+        "name": "🧷 Küme Mayın",
+        "desc": "+%20 Alan Etkisi, +%10 Hasar",
+        "arm": "bomber",
+        "type": "notable",
+        "stats": { "aoe_bonus": 0.20, "dmgMult": 0.10 },
+        "connects": ["bo_detonator"],
+        "pos": [529, 892]
+    },
+    {
+        "id": "bo_detonator",
+        "name": "☢️ Zincirleme Patlama",
+        "desc": "+%30 Alan Etkisi, +%30 Hasar. Bedel: Max Can %15 azalır.",
+        "arm": "bomber",
+        "type": "keystone",
+        "stats": { "aoe_bonus": 0.30, "dmgMult": 0.30, "max_hp_pct": -15 },
+        "connects": [],
+        "pos": [501, 952]
+    }
+]
