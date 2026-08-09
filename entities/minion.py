@@ -31,6 +31,23 @@ class Minion:
             base_range = 350
             self.color = (149, 165, 166)
             base_cd = 500
+        elif m_type == "drone":
+            # 'orbitDrones' affix'inin doğurduğu yörünge dronu. Pet slotuna
+            # bağlı değildir, bu yüzden check_minions'ın wolf/dragon
+            # temizliğine takılmaz.
+            self.base_dmg = 20
+            self.speed = 6.0
+            base_range = 450
+            self.color = (120, 200, 255)
+            base_cd = 700
+        elif m_type == "undead":
+            # Ölümsüz Ordu kartıyla dirilen düşman: pet slotuna bağlı olmadığı
+            # için check_minions'ın wolf/dragon temizliğine takılmaz (H12)
+            self.base_dmg = 18
+            self.speed = 4.5
+            base_range = 350
+            self.color = (150, 50, 200)
+            base_cd = 600
         else: # dragon
             self.base_dmg = 25
             self.speed = 3.0
@@ -44,13 +61,23 @@ class Minion:
         self.dead = False
         self.is_recharging = False
         self.recharge_timer = 0
-        self.max_hp = 100 * (owner.stats.get("minionMaxHp", 1.0) if owner else 1.0)
+        # minionMaxHp ÇARPAN, minionMaxHpFlat DÜZ can (F3): eskiden ikisi de tek
+        # anahtarda toplanıp 100 ile çarpılıyordu (851 -> 85.100 can).
+        hp_mult = owner.stats.get("minionMaxHp", 1.0) if owner else 1.0
+        hp_flat = owner.stats.get("minionMaxHpFlat", 0) if owner else 0
+        self.max_hp = max(1.0, 100 * hp_mult + hp_flat)
         self.hp = self.max_hp
         self.armor = owner.stats.get("minionArmor", 0) if owner else 0
         
+        # minionRate __init__'te bir kez okunuyordu; sonradan alınan
+        # aura/sinerji/skill mevcut minyonlara işlemiyordu (bayat stat).
+        # Taban süre saklanır, çarpan KULLANIM ANINDA (update) uygulanır -
+        # wind_minions çarpanıyla aynı idempotent desen.
+        self.base_cd = base_cd
         rate_mult = owner.stats.get("minionRate", 1.0) if owner else 1.0
+        # Geriye dönük uyum: eski kodu okuyan yerler için alan korunur.
         self.attack_cooldown = base_cd / max(0.1, rate_mult)
-        
+
         self.aura_timer = 0
         self.last_attack_time = 0
         self.target = None
@@ -63,7 +90,18 @@ class Minion:
 
     def update(self, dt, game):
         if not self.owner: return
-        
+
+        # Pet İmparatoru evrimi (wind_minions): minyonlar %40 daha hızlı hareket
+        # eder ve %30 daha sık saldırır.
+        # DİKKAT: self.speed / self.attack_cooldown'a KALICI çarpan uygulanmaz.
+        # Bu değerler __init__'te bir kez kuruluyor; her karede çarpmak onları
+        # üstel olarak bozar, "bir kez uygula" bayrağı ise evrim öncesi doğan
+        # minyonlarda ya da stat yeniden hesaplamasında tutarsız kalır.
+        # Bunun yerine çarpan KULLANIM ANINDA uygulanır (idempotent).
+        wind = getattr(self.owner, 'evolution_passive', '') == 'wind_minions'
+        move_speed = self.speed * (1.4 if wind else 1.0)
+
+
         if self.lifetime is not None:
             self.lifetime -= dt
             if self.lifetime <= 0:
@@ -99,12 +137,14 @@ class Minion:
         if dist_to_owner > 10:
             angle = math.atan2(target_y - self.y, target_x - self.x)
             # Eğer çok uzaktaysa 'turbo' hızla yetiş
-            catchup_speed = self.speed * (2.0 if is_too_far else 1.2)
+            catchup_speed = move_speed * (2.0 if is_too_far else 1.2)
             self.x += math.cos(angle) * catchup_speed * dt * 60
             self.y += math.sin(angle) * catchup_speed * dt * 60
             
         # CAN YERİLEME (Oyuncu regenine bağlı)
-        p_regen = self.owner.stats.get("regen", 0)
+        # regen -999 (Berserker Öfkesi / Lanetli Kan) minyonları sürekli
+        # is_recharging'e kilitliyordu; negatif regen minyona yansımaz (H13)
+        p_regen = max(0, self.owner.stats.get("regen", 0))
         self.hp = min(self.max_hp, self.hp + dt * (2 + p_regen * 0.5))
             
         # 2. TOXIC AURA (Alan Hasarı)
@@ -117,7 +157,13 @@ class Minion:
                     dx = e.x - self.x
                     dy = e.y - self.y
                     if not e.dead and dx * dx + dy * dy < 150 * 150:
-                        e.take_damage(aura_dmg, game)
+                        # minion_kills görevi: bayrak yalnızca bu çağrı boyunca
+                        # açık (bkz. entities/projectile.py -> on_hit)
+                        e.last_hit_by_minion = True
+                        try:
+                            e.take_damage(aura_dmg, game, from_player=True)
+                        finally:
+                            e.last_hit_by_minion = False
                         game.add_event("damage_text", e.x, e.y - 10, value=aura_dmg, color=(46, 204, 113), scale=0.6)
             
         # 3. HEDEF BUL (En yakın düşman)
@@ -127,8 +173,14 @@ class Minion:
         current_time = pygame.time.get_ticks()
         
         # Attack Speed hesaplaması
+        # minionRate her karede taze okunur (bkz. __init__ notu); böylece
+        # dalga ortasında alınan aura/skill mevcut sürüye de işler.
+        rate_mult = max(0.1, self.owner.stats.get("minionRate", 1.0))
+        self.attack_cooldown = self.base_cd / rate_mult
         eff_cooldown = self.attack_cooldown / (1.0 + self.owner.stats.get("minionAttackSpeed", 0))
-        
+        if wind:
+            eff_cooldown *= 0.7
+
 
         if self.target and current_time - self.last_attack_time >= eff_cooldown:
             # RANGE KONTROLÜ: Minyonun hedefe olan mesafesi
@@ -205,7 +257,9 @@ class Minion:
         # BEASTMASTER BONUS (SPIRIT TAMER)
         # Eğer Ruh Terbiyecisi değilse, minyonlar çok daha güçsüz olur (Nerf Artırıldı)
         eff_mult = 1.0
-        if self.owner and getattr(self.owner, 'class_id', '') != 'beastmaster':
+        # Drone eşya affix'inden gelir (pet değil); Beastmaster dışı sınıf
+        # cezasına tabi tutulursa affix pratikte yine ölü kalır.
+        if self.type != "drone" and self.owner and getattr(self.owner, 'class_id', '') != 'beastmaster':
             eff_mult = 0.15
             
         # IMPOSSIBLE ZORLUK CEZASI (%50 Hasar Kaybı)
@@ -228,8 +282,11 @@ class Minion:
         pierce = int(self.owner.stats.get("minionPierce", 0)) + int(local_stats.get("pierce", 0))
         
         # Kritik Şans
-        is_crit = random.random() < self.owner.stats.get("critChance", 0.05)
-        final_dmg = final_dmg_base * (1.5 + self.owner.stats.get("critDmg", 0)) if is_crit else final_dmg_base
+        # minionCrit (Vahşi Bağı kartı + pet itemleri) hiçbir yerde okunmuyordu (P3)
+        crit_chance = self.owner.stats.get("critChance", 0.05) + self.owner.stats.get("minionCrit", 0)
+        is_crit = random.random() < crit_chance
+        # Krit tabanı oyuncuyla aynı (2.0) olacak şekilde hizalandı
+        final_dmg = final_dmg_base * (2.0 + self.owner.stats.get("critDmg", 0)) if is_crit else final_dmg_base
 
         from entities.projectile import Projectile
         angle_to_target = math.atan2(self.target.y - self.y, self.target.x - self.x)

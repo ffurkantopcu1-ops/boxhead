@@ -20,9 +20,13 @@ SKILL_HELP = {
     'maxEnergyShield': 'Canından önce tükenen ek enerji kalkanı sağlar.',
     'esRegen': 'Hasar almadığında enerji kalkanını daha hızlı doldurur.',
     'esDelayReduction': 'Enerji kalkanının yeniden dolmaya başlama süresini kısaltır.',
+    'max_hp_pct': 'Maksimum canı yüzde olarak değiştirir; eksi değerler kart bedelidir.',
     'dmgMult': 'Tüm doğrudan ve element saldırılarının hasarını artırır.',
     'meleeRange': 'Yakın dövüş saldırılarının erişim mesafesini artırır.',
+    'meleeRangeFlat': 'Yakın dövüş erişimine piksel cinsinden sabit mesafe ekler.',
+    'meleeRangeMult': 'Yakın dövüş erişim mesafesini çarpan olarak büyütür.',
     'physDmgFlat': 'Her fiziksel vuruşa sabit hasar ekler.',
+    'physDmgMult': 'Yalnızca fiziksel hasarı çarpan olarak artırır.',
     'fireDmgFlat': 'Vuruşlara sabit ateş hasarı ve yanma ekler.',
     'fireDmgMult': 'Mevcut ateş hasarının tamamını çarpan olarak artırır.',
     'frostDmgFlat': 'Vuruşlara sabit buz hasarı ekler.',
@@ -37,7 +41,18 @@ SKILL_HELP = {
     'killSpeedBoost': 'Öldürme serisi sırasında hareket hızını artırır.',
     'elementDmgMult': 'Ateş, buz ve zehir dahil tüm element hasarını artırır.',
     'dotDmgMult': 'Zehir ve yanma gibi zamanla verilen hasarı artırır.',
+    'spreadAngle': 'Çok mermili atışların yayılma açısını genişletir.',
+    'shockwave': 'Yakın dövüş vuruşlarında çevreye hasar veren şok dalgası yayar.',
+    'rangedSpeed': 'Menzilli silahların atış hızını artırır.',
+    'brutal': 'Düşmanlara verdiğin nihai hasarı topluca artırır.',
+    'frost_slow': 'Vuruşların hedefi yavaşlatmasını sağlar.',
+    'statusDuration': 'Düşmana uyguladığın etkilerin süresini uzatır.',
+    'aura_effectiveness': 'Kuşandığın auraların tüm etkilerini güçlendirir.',
     'speed': 'Temel hareket hızını artırır.',
+    'dashCooldownReduc': 'Atılma (dash) yeteneğinin bekleme süresini kısaltır.',
+    'orbitDrones': 'Etrafında dönerek düşmanlara saldıran dron kazandırır.',
+    'thiefChance': 'Vuruşlarında düşmandan altın çalma şansı verir.',
+    'blackHoleChance': 'Vuruşlarında düşmanları içine çeken kara delik açma şansı verir.',
     'magicFind': 'Daha yüksek nadirlikte eşya bulma şansını artırır.',
     'shopRarity': 'Kervanda daha yüksek seviye eşya çıkma ihtimalini artırır.',
     'xpGain': 'Tüm kaynaklardan kazanılan deneyimi artırır.',
@@ -50,7 +65,8 @@ SKILL_HELP = {
     'minionCount': 'Aynı anda savaşabilecek minyon sayısını artırır.',
     'minionDamage': 'Tüm minyon saldırılarının hasarını artırır.',
     'minionRate': 'Minyonların daha sık saldırmasını sağlar.',
-    'minionMaxHp': 'Minyonların maksimum canını artırır.',
+    'minionMaxHp': 'Minyonların maksimum canını çarpan olarak artırır.',
+    'minionMaxHpFlat': 'Her minyona sabit miktarda maksimum can ekler.',
     'minionRange': 'Minyonların hedef alma mesafesini artırır.',
     'minionPhysDmgFlat': 'Her minyon vuruşuna sabit fiziksel hasar ekler.',
     'minionPhysDmgMult': 'Minyonların fiziksel hasarını çarpan olarak artırır.',
@@ -104,9 +120,11 @@ class GameScene(BaseScene):
             self.logic.setup_boss_test()
             self.is_boss_test = False # Reset
         
-        # Midnight Slate: Göz yormayan, mermilerin net göründüğü modern koyu tema
-        self.tile_size = 128
-        # Warm Stone Theme: Daha koyu, gözü yormayan sıcak gri tonu
+        # Warm Stone: sıcak gri zemin teması (geçerli olan tema — eski
+        # "Midnight Slate" atamaları buranın hemen üstünde tekrarlanıyor ve
+        # aynı satırlar tarafından eziliyordu).
+        # NOT: floor_color_1 yalnızca YEDEKtir; draw_floor_to_surf zemin
+        # rengini GameLogic.BIOMES[biome]["color"] üzerinden alır.
         self.tile_size = 128
         self.floor_color_1 = (140, 135, 125)
         self.floor_color_2 = (140, 135, 125)
@@ -134,13 +152,23 @@ class GameScene(BaseScene):
         self.craft_error_msg = ""
         self.craft_error_timer = 0.0
 
+        # Önceki oyundan kalan rect'ler yeni sahnede yanlış tıklamaya yol
+        # açıyordu (bayat hitbox). Her girişte temizlenir.
+        self.card_rects = []
+        self.evo_rects = []
+        self.evo_btn_rects = []
+        self.craft_orb_use_rects = []
+        self.game_over_restart_rect = pygame.Rect(0, 0, 0, 0)
+
         # Blood Moon Filter
         self.blood_moon_surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.blood_moon_surf.fill((200, 0, 0, 45)) 
 
         # --- PERF: Preallocate Surfaces & Fonts ---
         self._overlay_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        self._sweep_surface = pygame.Surface((3840, 2160), pygame.SRCALPHA)
+        # Süpürme efekti yüzeyi: efektin sınırlayıcı kutusu kadar büyür.
+        # Eskiden 3840x2160 sabitti ve her efektte ~8.3M piksel fill ediliyordu.
+        self._sweep_surface = pygame.Surface((256, 256), pygame.SRCALPHA)
         self.font_combo = pygame.font.SysFont("Arial", 28, bold=True)
         # font_boss_name / font_boss_hp kaldırıldı: boss barı artık render_fit
         # kullanıyor (tek metin yardımcısı, otomatik sığdırma).
@@ -257,14 +285,18 @@ class GameScene(BaseScene):
         self.type_filters = ["TÜMÜ", "weapon", "armor", "accessory", "special"]
         
         # Filtre Buton Alanları (SAĞ ÜST)
+        # 1. satır: 6 nadirlik, 2. satır: 5 tip (+ ORB toggle). Eskiden 10 rect
+        # 2x5 diziliyordu: SET nadirliği tip filtresinin rect'ine biniyor ve
+        # hiç seçilemiyordu.
         self.filter_rects = []
         filter_start_x = self.width // 2 + 20
         filter_gap = 4
         filter_available = self.width - filter_start_x - 20
         filter_width = min(110, (filter_available - filter_gap * 5) // 6)
-        for i in range(10): # 2 satır x 5 sütun
-            row = i // 5
-            col = i % 5
+        rarity_count = len(self.rarity_filters)
+        for i in range(rarity_count + len(self.type_filters)):
+            row = 0 if i < rarity_count else 1
+            col = i if i < rarity_count else i - rarity_count
             self.filter_rects.append(pygame.Rect(
                 filter_start_x + col * (filter_width + filter_gap),
                 110 + row * 40,
@@ -312,7 +344,13 @@ class GameScene(BaseScene):
             if hasattr(self, 'stats_tracker'):
                 self.stats_tracker['survival_time'] += dt
                 self.stats_tracker['waves_survived'] = max(0, self.logic.wave.get('level', 1) - 1)
-        
+
+        # Durum bu karede değiştiyse (ör. tam öldüğün kare) ekran henüz
+        # çizilmemiştir; o karedeki tık bayat/görünmeyen butonlara düşüp
+        # ölüm ekranını atlıyor ya da yanlış evrimi seçtiriyordu.
+        state_entered_now = (self.logic.state != getattr(self, '_prev_state', None))
+        self._prev_state = self.logic.state
+
         # ZOOM CALCULATION (Lerp)
         self.zoom_level += (self.target_zoom - self.zoom_level) * 0.1
         if abs(self.zoom_level - self.target_zoom) < 0.002:
@@ -336,14 +374,17 @@ class GameScene(BaseScene):
         # --- 1. OLAY KONTROLÜ (EVENTS) ---
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = False
-        
+        mouse_rclicked = False
+
         for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
-            
+
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_clicked = True
-            
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                mouse_rclicked = True
+
             if (
                 event.type == pygame.MOUSEWHEEL
                 and not self.show_inventory
@@ -364,6 +405,12 @@ class GameScene(BaseScene):
             if event.type == pygame.KEYDOWN:
                 # ESC: Menüyü aç/kapat
                 if event.key == pygame.K_ESCAPE:
+                    if self.show_craft_window:
+                        # Craft penceresi ESC ile kapanmıyordu (P4)
+                        self.show_craft_window = False
+                        self.crafting_target = None
+                        self.craft_error_msg = ""
+                        continue
                     if self.show_settings:
                         if self.setting_tab != "main": self.setting_tab = "main"
                         else: self.show_settings = False
@@ -400,37 +447,40 @@ class GameScene(BaseScene):
                                 self.show_settings = False
                             elif event.key == pygame.K_DELETE:
                                 slot = self.save_slots[self.selected_setting_idx]
-                                if hasattr(self.logic.save_manager, 'delete_save'):
-                                    self.logic.save_manager.delete_save(slot['filename'])
-                                else:
-                                    import os
-                                    try: os.remove(f"saves/{slot['filename']}.json")
-                                    except: pass
-                                self.save_slots = self.logic.save_manager.get_save_slots()
+                                self.logic.save_manager.delete_save(slot['filename'])
+                                # Liste açılışta [:5] ile kırpılıyor; yenilerken
+                                # kırpmayı atlayınca klavye ekranda görünmeyen
+                                # satıra gidebiliyordu.
+                                self.save_slots = self.logic.save_manager.get_save_slots()[:5]
                                 if self.selected_setting_idx >= len(self.save_slots): self.selected_setting_idx = max(0, len(self.save_slots)-1)
                             elif event.key == pygame.K_x:
                                 for s in self.save_slots:
-                                    if hasattr(self.logic.save_manager, 'delete_save'):
-                                        self.logic.save_manager.delete_save(s['filename'])
-                                    else:
-                                        import os
-                                        try: os.remove(f"saves/{s['filename']}.json")
-                                        except: pass
-                                self.save_slots = []
+                                    self.logic.save_manager.delete_save(s['filename'])
+                                self.save_slots = self.logic.save_manager.get_save_slots()[:5]
                                 self.selected_setting_idx = 0
                     continue
 
                 # --- OYUN İÇİ DİĞER KONTROLLER (Sadece menü kapalıyken) ---
                 if not self.show_settings:
                     if event.key in (pygame.K_TAB, pygame.K_i) and self.logic.state == "PLAYING":
-                        self.show_inventory = not self.show_inventory
+                        # Craft penceresi açıkken TAB de onu kapatmalı (P4)
+                        if self.show_craft_window:
+                            self.show_craft_window = False
+                            self.crafting_target = None
+                            self.craft_error_msg = ""
+                        else:
+                            self.show_inventory = not self.show_inventory
                     if event.key == pygame.K_c and self.logic.state == "PLAYING" and not self.show_inventory:
                         self.show_stats_panel = not self.show_stats_panel
                     if event.key == pygame.K_f:
                         self._toggle_auto_sell(p)
                     if event.key == pygame.K_z:
                         p.auto_attack = not p.auto_attack
-                    if event.key == pygame.K_q:
+                    # Envanter/craft açıkken oyun duruyor (logic.update atlanıyor);
+                    # yetenek tuşları burada da kilitli olmalı, yoksa yetenek
+                    # harcanıp cooldown'a giriyordu.
+                    modal_open = self.show_inventory or self.show_craft_window
+                    if event.key == pygame.K_q and not modal_open:
                         # Efekt yalnız yetenek gerçekten kullanıldıysa (cooldown
                         # bitmişse) oynatılır: use_artifact sessizce dönebiliyor
                         art_ready = (p.inv_manager.equipped.get("artifact")
@@ -439,9 +489,9 @@ class GameScene(BaseScene):
                         p.use_artifact(self.logic)
                         if art_ready:
                             self._cast_fx(p, "artifact")
-                    if event.key == pygame.K_r:
+                    if event.key == pygame.K_r and not modal_open:
                         self._use_blood_absorb(p)
-                    if event.key == pygame.K_SPACE and not self.show_inventory:
+                    if event.key == pygame.K_SPACE and not modal_open:
                         if p.dash():
                             self._cast_fx(p, "dash")
 
@@ -491,28 +541,43 @@ class GameScene(BaseScene):
             return
 
         # --- 3. ENVANTER FARE KONTROLÜ (Yüksekliklerden bağımsız) ---
-        if self.show_inventory and mouse_clicked:
-            self._handle_inventory_mouse(p, mouse_pos)
+        if self.show_inventory and (mouse_clicked or mouse_rclicked):
+            if mouse_rclicked:
+                self._handle_inventory_mouse(p, mouse_pos, right_click=True)
+            if mouse_clicked:
+                self._handle_inventory_mouse(p, mouse_pos)
             return
             
+        # Ekran bir kez çizilmeden bu ekranların tıklaması işlenmez
+        if state_entered_now:
+            return
+
         # --- 4. GAME OVER FARE KONTROLÜ ---
         if self.logic.state == "GAMEOVER" and mouse_clicked:
             self._handle_game_over_mouse(mouse_pos)
-            
+
         # --- 5. KART VE EVRİM SEÇİM FARE KONTROLÜ ---
         if self.logic.state == "CARD_SELECT" and mouse_clicked:
             if hasattr(self, 'card_rects'):
-                for i, rect in enumerate(self.card_rects):
+                # Bayat rect'ler pending_cards'tan uzun olabiliyordu -> IndexError
+                for i, rect in enumerate(self.card_rects[:len(self.logic.pending_cards)]):
                     if rect.collidepoint(mouse_pos):
                         card = self.logic.pending_cards[i]
                         self.logic.card_system.apply_card(card["id"], p)
+                        # Görev takibi burada; card_system.apply_card save
+                        # yüklemesinde de çağrılıyor (logic/save_manager.py),
+                        # oraya konulsa her yüklemede sahte ilerleme olurdu.
+                        self.logic.track_quest("pick_cards", 1)
                         self.logic.state = "PLAYING"
                         self.logic.pending_cards = []
                         break
                         
             if hasattr(self, 'card_skip_rect') and self.card_skip_rect.collidepoint(mouse_pos):
-                p.level += 1
-                p.skill_points += 1
+                # F9: ham "level += 1" xp_to_next_level'i güncellemiyordu (XP
+                # eğrisi desenkron), canı tazelemiyor ve Mutasyon kartını
+                # tetiklemiyordu. grant_free_level skill_point'i de kendisi
+                # verir; buradaki elle artırım kaldırıldı (çift sayım olurdu).
+                p.grant_free_level()
                 self.logic.state = "PLAYING"
                 self.logic.pending_cards = []
             
@@ -532,6 +597,17 @@ class GameScene(BaseScene):
                     p.apply_evolution(evo_id)
                     self.logic.state = "PLAYING"
                     break
+
+    def _get_sweep_surface(self, w, h):
+        """Süpürme efekti için yeniden kullanılan yüzey (yalnız gereken kadar
+        temizlenir; tam ekran fill() maliyeti kalktı)."""
+        surf = self._sweep_surface
+        if surf.get_width() < w or surf.get_height() < h:
+            surf = pygame.Surface((max(w, surf.get_width()),
+                                   max(h, surf.get_height())), pygame.SRCALPHA)
+            self._sweep_surface = surf
+        surf.fill((0, 0, 0, 0), pygame.Rect(0, 0, w, h))
+        return surf
 
     def _handle_game_over_mouse(self, pos):
         # "Yeniden Başla" butonu (çizimde saklanan rect kullanılır)
@@ -576,7 +652,19 @@ class GameScene(BaseScene):
                 self.logic.add_event("damage_text", p.x, p.y - 60, value="KAN EMME!", color=(255, 50, 50), timer=1.0)
                 self._cast_fx(p, "blood_absorb")
 
-    def _handle_inventory_mouse(self, p, pos):
+    def _handle_inventory_mouse(self, p, pos, right_click=False):
+        # 0. SAĞ TIK: yalnızca kuşanılan eşyayı çıkarır (etiket "SAĞ TIKLA ÇIKAR"
+        # diyordu ama çıkarma sol tıka bağlıydı; tooltip okurken eşya düşüyordu)
+        if right_click:
+            if self.show_craft_window or self.active_tab != "inventory":
+                return
+            self._apply_inventory_layout()
+            for row in self.equip_rows:
+                if row.rect.collidepoint(pos) and row.item:
+                    p.inv_manager.unequip(row.slot_type)
+                    return
+            return
+
         # 1. CRAFTİNG PENCERESİ AÇIKSA (Öncelikli)
         if self.show_craft_window:
             # Rect'ler çizimle AYNI kaynaktan (_craft_layout)
@@ -598,6 +686,7 @@ class GameScene(BaseScene):
                     if p.gold >= orb['price']:
                         if p.add_item(orb.copy()):
                             p.gold -= orb['price']
+                            self.logic.track_quest("spend_gold", orb['price'])
                             self.logic.add_event("damage_text", p.x, p.y-40, value="Satın Alındı!", color=(46, 204, 113))
                     return
 
@@ -633,11 +722,12 @@ class GameScene(BaseScene):
             # GERİ AL (Hedef Eşyayı Envantere Çek)
             take_back_btn = L["take_back"]
             if take_back_btn.collidepoint(pos):
-                if p.add_item(self.crafting_target):
-                    self.crafting_target = None
-                    self.show_craft_window = False
-                    self.craft_error_msg = ""
-                    return
+                # Craft penceresi acilirken esya envanterden CIKARILMIYOR;
+                # burada tekrar add_item cagirmak esyayi cogaltiyordu (H6)
+                self.crafting_target = None
+                self.show_craft_window = False
+                self.craft_error_msg = ""
+                return
             return # Craft penceresi dışındakileri blockla
 
         # 2. ANA TABLAR
@@ -657,12 +747,13 @@ class GameScene(BaseScene):
             self._apply_inventory_layout()
 
             # --- FİLTRE TIKLAMALARI ---
+            rarity_count = len(self.rarity_filters)
             for i, rect in enumerate(self.filter_rects):
                 if rect.collidepoint(pos):
-                    if i < 5: # Rarity
+                    if i < rarity_count: # Rarity
                         self.inv_filter_rarity = self.rarity_filters[i]
                     else: # Type
-                        self.inv_filter_type = self.type_filters[i-5]
+                        self.inv_filter_type = self.type_filters[i - rarity_count]
                     self.inventory_page = 0
                     return
             
@@ -697,11 +788,8 @@ class GameScene(BaseScene):
                 self.inventory_page += 1
                 return
 
-            # Kuşanılanlar
-            for row in self.equip_rows:
-                if row.rect.collidepoint(pos) and row.item:
-                    p.inv_manager.unequip(row.slot_type)
-                    return
+            # Kuşanılanlar: çıkarma SAĞ tıkla (yukarıdaki right_click bloğu).
+            # Sol tık yalnızca tooltip okumak içindir, eşyayı düşürmez.
 
             # Çanta Butonları (Sayfa Ofsetli - Filtreleme Destekli)
             offset = self.inventory_page * 12
@@ -726,9 +814,11 @@ class GameScene(BaseScene):
                                 p.inventory.pop(orig_idx)
                                 self.logic.add_event("damage_text", p.x, p.y-60, value="ÖZ TÜKETİLDİ!", color=(155, 89, 182))
                         else:
-                            # NORMAL EKİPMAN
-                            p.inventory.pop(orig_idx)
-                            p.inv_manager.equip(target_item)
+                            # NORMAL EKİPMAN — önce equip dene; orb gibi slotu
+                            # olmayan eşyalarda equip False döner ve eşya
+                            # envanterden silinmemelidir (H5)
+                            if p.inv_manager.equip(target_item):
+                                p.inventory.pop(orig_idx)
                         return
                     # SAT
                     elif card.sell_rect.collidepoint(pos):
@@ -791,6 +881,7 @@ class GameScene(BaseScene):
                 cost = 500 + max(0, (wave_level - 1) * 400)
                 if p.gold >= cost:
                     p.gold -= cost
+                    self.logic.track_quest("spend_gold", cost)
                     self.logic.refresh_market()
                     self.market_page = 0
             
@@ -890,11 +981,15 @@ class GameScene(BaseScene):
                     a = sa + (a_v / steps) * i
                     pts.append((dx + math.cos(a) * r_v, dy + math.sin(a) * r_v))
                 if len(pts) > 2:
-                    if internal_w > self._sweep_surface.get_width() or internal_h > self._sweep_surface.get_height():
-                        self._sweep_surface = pygame.Surface((int(internal_w*1.2), int(internal_h*1.2)), pygame.SRCALPHA)
-                    self._sweep_surface.fill((0,0,0,0))
-                    pygame.draw.polygon(self._sweep_surface, (255, 255, 255, 120), pts)
-                    world_surf.blit(self._sweep_surface, (0, 0), area=pygame.Rect(0, 0, internal_w, internal_h))
+                    # Yalnızca süpürmenin sınırlayıcı kutusu kadar yüzey kullan
+                    min_x = int(min(px for px, _ in pts)) - 1
+                    min_y = int(min(py for _, py in pts)) - 1
+                    box_w = max(1, int(max(px for px, _ in pts)) - min_x + 2)
+                    box_h = max(1, int(max(py for _, py in pts)) - min_y + 2)
+                    surf = self._get_sweep_surface(box_w, box_h)
+                    local_pts = [(px - min_x, py - min_y) for px, py in pts]
+                    pygame.draw.polygon(surf, (255, 255, 255, 120), local_pts)
+                    world_surf.blit(surf, (min_x, min_y), area=pygame.Rect(0, 0, box_w, box_h))
                     pygame.draw.lines(world_surf, (255, 255, 255), False, pts[1:], 3)
             elif ev['type'] == 'shockwave' or ev['type'] == 'explosion':
                 rad = ev.get('radius', 100)
@@ -1490,6 +1585,13 @@ class GameScene(BaseScene):
 
         section("SAVUNMA")
         row("Can", f"{int(p.hp)} / {int(p.max_hp)}", card_bonus.get("max_hp", 0))
+        # Kart can bedelleri artık yüzdesel (max_hp_pct). "Can" satırındaki düz
+        # katkıyla karışmaması için ayrı satırda çarpan olarak gösterilir;
+        # aksi halde HUD "-20 Can" derken gerçek etki -%20 oluyordu.
+        hp_pct_bonus = card_bonus.get("max_hp_pct", 0)
+        if hp_pct_bonus:
+            row("Kart can çarpanı", f"x{max(0.05, 1.0 + hp_pct_bonus / 100.0):.2f}",
+                hp_pct_bonus / 100.0, True)
         row("Zırh", f"{stats.get('armor', 0):.0f}", card_bonus.get("armor", 0))
         row("Kaçınma", f"%{stats.get('dodgeChance', 0) * 100:.0f}", card_bonus.get("dodgeChance", 0), True)
         row("Alınan hasar", f"x{getattr(p, 'damage_taken_mult', 1.0):.2f}")
@@ -1515,6 +1617,7 @@ class GameScene(BaseScene):
         
         # 1. TAB BAR & HUD
         for btn in self.tab_buttons:
+            btn.update()  # hover durumu hiç güncellenmiyordu
             btn.draw(self.screen, self.font_sub, self.active_tab)
             
         import ui_theme
@@ -1820,6 +1923,7 @@ class GameScene(BaseScene):
 
         # Sekme Butonları
         for btn in self.market_tab_btns:
+            btn.update()  # hover durumu hiç güncellenmiyordu
             btn.draw(self.screen, self.font_sub, self.market_tab)
 
         # Yenile Butonu (Sadece Eşyalar sekmesinde) — sekme plakalarının
@@ -2019,9 +2123,11 @@ class GameScene(BaseScene):
         gap = 4
         available = self.width - start_x - 20
         fw = min(110, (available - gap * 5) // 6)
-        for i in range(10):
-            r = self.filter_rects[i]
-            r.update(start_x + (i % 5) * (fw + gap), filt_y + (i // 5) * (filt_h + 6),
+        rarity_count = len(self.rarity_filters)
+        for i, r in enumerate(self.filter_rects):
+            row = 0 if i < rarity_count else 1
+            col = i if i < rarity_count else i - rarity_count
+            r.update(start_x + col * (fw + gap), filt_y + row * (filt_h + 6),
                      fw, filt_h)
         self.orb_toggle_rect.update(start_x + 5 * (fw + gap), filt_y + filt_h + 6,
                                     fw, filt_h)
@@ -2078,7 +2184,7 @@ class GameScene(BaseScene):
                        self.inv_filter_rarity == rarity, "gold")
 
         for i, t_filter in enumerate(self.type_filters):
-            filter_btn(self.filter_rects[i + 5], t_filter.upper(),
+            filter_btn(self.filter_rects[i + len(self.rarity_filters)], t_filter.upper(),
                        self.inv_filter_type == t_filter, "night")
 
         # ORB TOGGLE
@@ -2269,6 +2375,7 @@ class GameScene(BaseScene):
                 btn.rect.y = grid_y + (row * 85)
 
                 btn.text = f"{sk_data['name']} ({sk_data['lvl']}/{sk_data['max']})"
+                btn.update()  # hover durumu hiç güncellenmiyordu
                 btn.draw(
                     self.screen,
                     self.font_desc,

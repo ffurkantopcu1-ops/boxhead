@@ -15,38 +15,52 @@ class ClassSelectScene(BaseScene):
             {"id": "ninja", "name": "Gölge Ninja", "color": (44, 62, 80), "desc": ["Suikastçı hızı."], "stats": {"Hız": 6.0, "S.Hızı": "+30%", "Dodge": "25%"}},
             {"id": "alchemist", "name": "Simyacı", "color": (241, 196, 15), "desc": ["Zehir ve patlayıcılar."], "stats": {"Hız": 4.2, "Alan": "+40%", "DoT": "+30%"}},
             {"id": "sorcerer", "name": "Kadim Büyücü", "color": (148, 88, 230), "desc": ["3 Elementli Döngü."], "stats": {"HP": "-30%", "Elem": "+60%", "Hız": 4.0}},
-            {"id": "bloodwalker", "name": "Vampir", "color": (192, 40, 40), "desc": ["Can çalan savaşçı."], "stats": {"Hız": 4.6, "Emme": "+20%", "Hasar": "+40%"}}
+            {"id": "bloodwalker", "name": "Vampir", "color": (192, 40, 40), "desc": ["Can çalan savaşçı."], "stats": {"Hız": 4.6, "Emme": "+20%", "Hasar": "+40%"}},
+            {"id": "bomber", "name": "Bombacı", "color": (211, 84, 0), "desc": ["Patlayıcı alan uzmanı."], "stats": {"Hız": 4.4, "Alan": "+60%", "Hasar": "+20%"}}
         ]
 
+        detailed_desc = {
+            "warrior": ["Dayanıklı yakın dövüşçü.", "Kılıcı öndeki düşmanları biçer.", "+%20 hasar ve +%20 can."],
+            "beastmaster": ["Minyonlarını hedefe yönlendirir.", "Küçük Kurt ile başlar.", "Minyon hasarı +%30."],
+            "sniper": ["Güvenli mesafeden tek hedef avlar.", "Basit Arbalet ile başlar.", "+1 sekme, +1 delme, +%20 kritik."],
+            "engineer": ["Alanı otomatik taretlerle tutar.", "Taret Kiti ile başlar.", "+10 zırh; 5 sn'de bir taret."],
+            "ninja": ["Hızlı ve kaçınmaya dayalı suikastçı.", "Paslı Katana ile başlar.", "Atılma sonrası ilk vuruş 2 kat."],
+            "alchemist": ["Zehir ve alan hasarı uzmanı.", "Zehir Şişesi ile başlar.", "+%40 patlama alanı, +%30 DoT."],
+            "sorcerer": ["Ateş, buz ve zehir arasında döner.", "Sihir Asası ile başlar.", "Her 4. saldırı kritik ve 2 kat alanlı."],
+            "bloodwalker": ["Can çalarak riskli oynar.", "Kan Kılıcı ile başlar.", "%30 can altında hasar ve hız +%40."],
+            "bomber": ["Devasa patlamalarla kalabalık siler.", "El Bombası Çantası ile başlar.", "En geniş alan; en yavaş atış."],
+        }
+
         # Kartları Oluştur
+        # Izgara sınıf sayısına göre kurulur: sütun sayısı satırı ikide tutacak
+        # şekilde seçilir (9 sınıf -> 5+4), kart yüksekliği de GERÇEK satır
+        # sayısından hesaplanır. Sabit "2 satır" varsayımı 9. sınıfla birlikte
+        # alt satırı ekran dışına taşırıyordu.
+        count = len(self.class_list)
         side_margin = max(32, self.width // 24)
         spacing_x, spacing_y = 18, 18
-        num_cols = 4
+        num_cols = max(4, min(6, -(-count // 2)))
+        num_rows = -(-count // num_cols)
+        self.num_cols = num_cols
         card_w = min(260, (self.width - side_margin * 2 - spacing_x * (num_cols - 1)) // num_cols)
         footer_h = 75
         grid_top = 135
-        card_h = min(400, (self.height - grid_top - footer_h - spacing_y) // 2)
-        card_h = max(260, card_h)
-        
+        avail_h = self.height - grid_top - footer_h - spacing_y * (num_rows - 1)
+        # Alt sınır yok: satır sayısı arttığında kartlar kısalır ama asla
+        # footer'ın altına taşmaz (bkz. tests/test_ui.py).
+        card_h = max(120, min(400, avail_h // num_rows))
+
         self.cards = []
         for i, data in enumerate(self.class_list):
             row = i // num_cols
             col = i % num_cols
-            total_w = (card_w * num_cols) + (spacing_x * (num_cols - 1))
+            # Her satır KENDİ kart sayısına göre ortalanır; eksik kartlı son
+            # satır sola yapışık kalmaz.
+            row_count = min(num_cols, count - row * num_cols)
+            total_w = (card_w * row_count) + (spacing_x * (row_count - 1))
             start_x = (self.width - total_w) // 2 + card_w // 2
             x = start_x + col * (card_w + spacing_x)
             y = grid_top + row * (card_h + spacing_y)
-            # Re-filling detailed descriptions for the cards
-            detailed_desc = {
-                "warrior": ["Dayanıklı yakın dövüşçü.", "Kılıcı öndeki düşmanları biçer.", "+%20 hasar ve +%20 can."],
-                "beastmaster": ["Minyonlarını hedefe yönlendirir.", "Küçük Kurt ile başlar.", "Minyon hasarı +%30."],
-                "sniper": ["Güvenli mesafeden tek hedef avlar.", "Basit Arbalet ile başlar.", "+1 sekme, +1 delme, +%20 kritik."],
-                "engineer": ["Alanı otomatik taretlerle tutar.", "Taret Kiti ile başlar.", "+10 zırh; 5 sn'de bir taret."],
-                "ninja": ["Hızlı ve kaçınmaya dayalı suikastçı.", "Paslı Katana ile başlar.", "Atılma sonrası ilk vuruş 2 kat."],
-                "alchemist": ["Zehir ve alan hasarı uzmanı.", "Zehir Şişesi ile başlar.", "+%40 patlama alanı, +%30 DoT."],
-                "sorcerer": ["Ateş, buz ve zehir arasında döner.", "Sihir Asası ile başlar.", "Her 4. saldırı kritik ve 2 kat alanlı."],
-                "bloodwalker": ["Can çalarak riskli oynar.", "Kan Kılıcı ile başlar.", "%30 can altında hasar ve hız +%40."]
-            }
             data["desc"] = detailed_desc.get(data["id"], data["desc"])
             self.cards.append(ClassCard(x, y, card_w, card_h, data, self.font_main, self.font_sub))
 
@@ -76,9 +90,9 @@ class ClassSelectScene(BaseScene):
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):
                     self.preview_idx = (self.preview_idx + 1) % len(self.cards)
                 elif event.key in (pygame.K_UP, pygame.K_w):
-                    self.preview_idx = (self.preview_idx - 4) % len(self.cards)
+                    self.preview_idx = (self.preview_idx - self.num_cols) % len(self.cards)
                 elif event.key in (pygame.K_DOWN, pygame.K_s):
-                    self.preview_idx = (self.preview_idx + 4) % len(self.cards)
+                    self.preview_idx = (self.preview_idx + self.num_cols) % len(self.cards)
                 elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
                     self.manager.start_new_game(self.class_list[self.preview_idx]['id'])
                 elif event.key == pygame.K_b:

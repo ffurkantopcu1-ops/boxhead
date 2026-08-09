@@ -69,8 +69,13 @@ class Turret:
             
             # --- LOCAL STATS VE GLOBAL STATS BİRLEŞİMİ ---
             owner_stats = getattr(self.owner, "stats", {}) if self.owner else {}
-            count = int(self.local_stats.get("projectileCount", 1)) + int(owner_stats.get("projectileCount", 0))
-            bounce = int(self.local_stats.get("bounce", 0)) + int(owner_stats.get("bounce", 0))
+            # Taret kitinin kendi statı hem local'de hem de global toplamda yer
+            # alıyor (+ global'in tabanı 1). Çift sayımı önlemek için global'den
+            # taban ve kitin kendi katkısı düşülür; kalan diğer kaynaklardır (H9)
+            local_count = int(self.local_stats.get("projectileCount", 0))
+            count = max(1, local_count) + max(0, int(owner_stats.get("projectileCount", 1)) - 1 - local_count)
+            local_bounce = int(self.local_stats.get("bounce", 0))
+            bounce = local_bounce + max(0, int(owner_stats.get("bounce", 0)) - local_bounce)
             pierce = int(self.local_stats.get("pierce", 0))
             # Denge: Taret hasarı sahibin silah gücüyle (physDmg) ölçeklenir; geç oyunda geride kalmaz
             owner_phys = owner_stats.get("physDmg", 0) + owner_stats.get("physDmgFlat", 0)

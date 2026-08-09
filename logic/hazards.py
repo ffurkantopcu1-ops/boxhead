@@ -14,13 +14,24 @@ class Hazard:
         
         self.active = True
         self.tick_timer = 0
-        
+        self._lightning_fired = False
+
     def update(self, dt, players, enemies, game):
         self.timer += dt
         if self.timer >= self.duration:
             self.active = False
             return
-            
+
+        # Yıldırım sayacı kare başına bir kez ilerler (eskiden menzildeki her
+        # hedef için ayrı ilerleyip vuruş sıklığını hedef sayısına bağlıyordu)
+        self._lightning_fired = False
+        if self.type == "lightning":
+            self.tick_timer += dt
+            if self.tick_timer >= 1.0:
+                self.tick_timer = 0
+                self._lightning_fired = True
+
+
         # Etki Alanı Kontrolü
         for target in players:
             dx = target.x - self.x
@@ -40,8 +51,11 @@ class Hazard:
                 self.apply_effect(target, dt, game, is_enemy=True)
 
     def apply_effect(self, target, dt, game, is_enemy=False):
+        # NOT: speed_mod'a dogrudan yazmak etkisizdi (StatusEffectManager her
+        # karede sifirliyor); yavaslatmalar status sistemi uzerinden gider (H3)
         if self.type == "mud":
-            target.speed_mod = 0.5 # %50 Yavaşlat
+            from logic.status_effects import apply_slow
+            apply_slow(target.effect_manager, duration=0.4, mult=0.5, name="Mud")  # %50 Yavaşlat
         elif self.type == "fire":
             # Saniyede 5 Hasar
             if hasattr(target, 'take_damage'):
@@ -50,17 +64,17 @@ class Hazard:
                 else:
                     target.take_damage(5 * dt)
         elif self.type == "ice":
-            target.speed_mod = 0.1 # Neredeyse durdur
+            from logic.status_effects import apply_slow
+            apply_slow(target.effect_manager, duration=0.4, mult=0.1, name="IceHazard")  # Neredeyse durdur
         elif self.type == "lightning":
-            # Yıldırım anlık çarpar, tick ile yönetilir
-            self.tick_timer += dt
-            if self.tick_timer >= 1.0:
+            # Tick sayacı update() içinde bir kez ilerletilir; burada yalnızca
+            # o karede tetiklendiyse hasar uygulanır (P4: hedef başına sayaç bug'ı)
+            if self._lightning_fired:
                 if hasattr(target, 'take_damage'):
                     if is_enemy:
-                        target.take_damage(20, game)
+                        target.take_damage(20, game, from_player=True)
                     else:
                         target.take_damage(20)
-                self.tick_timer = 0
 
     def draw(self, screen, cam_x, cam_y):
         dx = self.x - cam_x

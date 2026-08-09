@@ -37,9 +37,11 @@ class Ninja:
         # Hızlı kılıç savurma (Görsel ve Alan Buffed GDD 62)
         visual_type = "slash"
         visual_timer = 0.1 if not is_punch else 0.08
-        range_bonus = player.stats.get("meleeRange", 0)
-        range_visual = 160 + range_bonus
-        range_hitbox = 180 + range_bonus
+        # Menzil: piksel bonusu eklenir, sonra yüzde çarpanı uygulanır (F4)
+        range_bonus = player.stats.get("meleeRangeFlat", 0)
+        range_mult = player.stats.get("meleeRangeMult", 1.0)
+        range_visual = (160 + range_bonus) * range_mult
+        range_hitbox = (180 + range_bonus) * range_mult
         
         # --- Backstab (Dash Sonrası İlk Vuruş x2 Hasar) ---
         if getattr(player, "next_attack_is_backstab", False):
@@ -59,9 +61,10 @@ class Ninja:
                     diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)
                     if diff < 0.7:
                         # --- Elementel Uygulama (Ninja Yetenek Ağacı Desteği) ---
-                        elem_mult = 1.0 + player.stats.get("elementDmgMult", 0.0)
-                        fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0) * elem_mult
-                        frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0) * elem_mult
+                        # Ateş/Buz yüzde statları melee'de yok sayılıyordu (F6)
+                        fire_mult, frost_mult, elem_mult = player.get_elemental_mults()
+                        fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0) * fire_mult
+                        frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0) * frost_mult
                         p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0) * elem_mult
 
                         if fire_dmg > 0:
@@ -72,7 +75,7 @@ class Ninja:
                         if p_dps > 0:
                             e.apply_dot('poison', p_dps, 3.0)
 
-                        e.take_damage(dmg, game)
+                        e.take_damage(dmg, game, from_player=True)
                         hit_any = True
         
         if hit_any:

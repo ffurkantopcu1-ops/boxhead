@@ -25,7 +25,7 @@ class Beastmaster:
         dmg = 30 * player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult() if not is_punch else 5
         angle = player.facing_angle
         arc = 1.0
-        range_val = 120 + player.stats.get("meleeRange", 0)
+        range_val = (120 + player.stats.get("meleeRangeFlat", 0)) * player.stats.get("meleeRangeMult", 1.0)
         
         # Görsel Efekt (Lila Kamçı / Beyaz Yumruk)
         color = (155, 89, 182) if not is_punch else (255, 255, 255)
@@ -53,7 +53,7 @@ class Beastmaster:
         # 2. Kamçı Hasarı + Minyonları Hedefe "Odakla" (Priority Target)
         if target_enemy:
             # Denge: Kamçı artık işaretlediği hedefe hasar da vurur (eskiden 0 hasar)
-            target_enemy.take_damage(dmg, game)
+            target_enemy.take_damage(dmg, game, from_player=True)
             for m in game.minions:
                 if m.owner == player:
                     m.priority_target = target_enemy

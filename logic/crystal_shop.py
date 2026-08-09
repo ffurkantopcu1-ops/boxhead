@@ -84,7 +84,9 @@ class CrystalShop:
                 player.skills_permanent = sp
             elif key == "start_magic_find":
                 sp = getattr(player, 'skills_permanent', {})
-                sp['magicFind'] = sp.get('magicFind', 1.0) + total
+                # skills_permanent bir katkı havuzu; taban 1.0 base_stats'ta zaten
+                # var, burada 1.0 varsaymak çift sayım yaratıyordu (H10)
+                sp['magicFind'] = sp.get('magicFind', 0.0) + total
                 player.skills_permanent = sp
             elif key == "start_turret_range":
                 sp = getattr(player, 'skills_permanent', {})
@@ -94,14 +96,32 @@ class CrystalShop:
                 sp = getattr(player, 'skills_permanent', {})
                 sp['turretRate'] = sp.get('turretRate', 0) + total
                 player.skills_permanent = sp
+            elif key == "shop_discount":
+                # Tüketim noktası: GameLogic.buy_item (P3)
+                player.shop_discount = min(0.9, getattr(player, 'shop_discount', 0.0) + total)
+            elif key == "shop_slots":
+                # Tüketim noktası: GameLogic.refresh_market -> count = 3 + shopRarity.
+                # Yükseltme hiçbir yerden okunmuyordu (G2); shopRarity üzerinden
+                # bağlandı: her seviye markete +1 eşya ekler (yan etki olarak
+                # eşya kalitesini de bir kademe yükseltir).
+                sp = getattr(player, 'skills_permanent', {})
+                sp['shopRarity'] = sp.get('shopRarity', 0) + int(total)
+                player.skills_permanent = sp
             elif key == "start_with_card":
+                # Tüketim noktası: CardSystem.grant_start_card (DEVİR: GameLogic.__init__)
                 player._meta_start_card = True
             elif key == "early_evolution":
                 player._early_evolution = True
-            # shop_discount, card_count, card_reroll, biome_choice etc. are read from meta directly
+            # NOT: card_count ve legendary_card_chance oyuncuya değil kart
+            # sistemine yazılır; CardSystem.__init__ bunları get_effective ile
+            # doğrudan meta'dan okur (logic/card_system.py).
 
     def get_effective(self, meta, key):
-        """meta'dan belirli bir etkinin toplam değerini hesapla."""
+        """meta'dan belirli bir etkinin toplam değerini hesapla.
+
+        Oyuncu nesnesine yazılamayan (kart sistemi, market vb.) yükseltmeler
+        bu yardımcı üzerinden okunur.
+        """
         upgrades = meta.get("upgrades", {})
         for upg in self.UPGRADES:
             if upg["effect_key"] == key:

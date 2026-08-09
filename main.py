@@ -2,6 +2,16 @@ import pygame
 import sys
 import os
 
+# Konsol çıktısını UTF-8'e sabitle. Türkçe Windows'ta varsayılan kod sayfası
+# cp1252/cp857 olduğu için "EVRİM", "kazanıldı" gibi metinler içeren print()
+# çağrıları UnicodeEncodeError atıp oyunu kaynak koddan çalıştırırken çökertiyordu.
+# (Paketlenmiş exe'de console=False olduğu için stdout None'dır ve etkilenmez.)
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError, OSError):
+        pass  # stdout None (windowed exe) veya reconfigure desteklenmiyor
+
 # PyInstaller EXE içinden veya Launcher'dan çalışırken path desteği
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.getcwd())
@@ -45,12 +55,14 @@ def main():
         pygame.mouse.get_pos = lambda: (int(old_get_pos()[0] * scale_x), int(old_get_pos()[1] * scale_y))
         
         scene_manager.update(dt, events)
-        
+        # draw() içindeki hover mantığı da (InventorySlot.update, Button.draw)
+        # pygame.mouse.get_pos okuyor; yama çizimi de kapsamalı, yoksa tam
+        # ekranda hover imlecin olduğu yerde değil ölçeksiz konumda çıkıyordu.
+        scene_manager.draw()
+
         # Orijinal fonksiyona geri dön
         pygame.mouse.get_pos = old_get_pos
-        
-        scene_manager.draw()
-        
+
         pygame.display.flip()
 
     pygame.quit()

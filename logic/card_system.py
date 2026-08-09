@@ -7,9 +7,48 @@ from logic.data_loader import load_data
 _CARDS = load_data('cards')
 
 class CardSystem:
+    # "Efsanevi" sayılan kart kategorileri: lanetli ve minyon kartları en
+    # yüksek varyanslı/güçlü kartlar; legendary_card_chance bunları öne çeker.
+    LEGENDARY_CATEGORIES = ("curse",)
+
     def __init__(self):
         self.active_cards = []
         self.synergy_system = SynergySystem()
+        # --- KRİSTAL DÜKKÂNI YÜKSELTMELERİ (G2) ---
+        # card_count / legendary_card_chance hiçbir yerden okunmuyordu; kart
+        # sistemi meta'yı kendisi okur (GameLogic offer_cards'ı argümansız çağırır).
+        self.bonus_card_count = 0
+        self.legendary_chance = 0.0
+        self.pending_start_card = False
+        self._load_meta_bonuses()
+
+    def _load_meta_bonuses(self):
+        """meta.json'daki kart yükseltmelerini oku (oyun başında bir kez)."""
+        try:
+            from logic.save_manager import SaveManager
+            from logic.crystal_shop import CrystalShop
+            meta = SaveManager.load_meta()
+            shop = CrystalShop()
+            self.bonus_card_count = max(0, int(shop.get_effective(meta, "card_count")))
+            self.legendary_chance = min(0.9, max(0.0, float(shop.get_effective(meta, "legendary_card_chance"))))
+            self.pending_start_card = shop.get_effective(meta, "start_with_card") > 0
+        except Exception as e:
+            print("Kart meta bonusu okunamadi:", e)
+
+    def grant_start_card(self, player):
+        """Başlangıç Kartı yükseltmesi: koşunun başında 1 rastgele kart verir.
+
+        Çağrı noktası GameLogic.__init__ (oyuncu ve inv_manager hazır olduktan
+        sonra) olmalıdır; Player.__init__ sırasında inv_manager henüz yok.
+        """
+        if not self.pending_start_card:
+            return None
+        self.pending_start_card = False
+        offered = self.offer_cards(1)
+        if not offered:
+            return None
+        self.apply_card(offered[0]["id"], player)
+        return offered[0]
 
     # ------------------------------------------------------------------
     # CARDS LIST
@@ -34,6 +73,11 @@ class CardSystem:
                     method(player)
                     if card_id not in self.active_cards:
                         self.active_cards.append(card_id)
+                    # _apply_* metodlari yalnizca skills_permanent'a yaziyor;
+                    # recalc cagrilmadan kartlarin cogu etkisiz kaliyordu (C1)
+                    if hasattr(player, 'inv_manager'):
+                        player.inv_manager.recalculate_stats()
+                        player.hp = min(player.hp, player.max_hp)
                     # Check for synergies
                     if hasattr(self, 'synergy_system'):
                         new_synergy = self.synergy_system.check_synergies(self.active_cards, player)
@@ -42,10 +86,39 @@ class CardSystem:
                     return True
         return False
 
-    def offer_cards(self, count: int = 3) -> list:
-        """Henüz aktif olmayan kartlardan rastgele `count` adet sunar."""
+    def offer_cards(self, count: int = None) -> list:
+        """Henüz aktif olmayan kartlardan rastgele `count` adet sunar.
+
+        count verilmezse taban 3 + "Kart Görünürlüğü" kristal yükseltmesi
+        kullanılır. "Efsane Kart Şansı" yükseltmesi her slot için lanetli
+        kartların çıkma olasılığını artırır (G2).
+        """
+        if count is None:
+            count = 3 + self.bonus_card_count
         available = [c for c in self.CARDS if c["id"] not in self.active_cards]
-        return random.sample(available, min(count, len(available)))
+        count = min(count, len(available))
+        if count <= 0:
+            return []
+
+        chosen = []
+        if self.legendary_chance > 0:
+            legendary_pool = [c for c in available
+                              if c.get("category") in self.LEGENDARY_CATEGORIES]
+            for _ in range(count):
+                if not legendary_pool:
+                    break
+                if random.random() >= self.legendary_chance:
+                    continue
+                pick = random.choice(legendary_pool)
+                chosen.append(pick)
+                available.remove(pick)
+                legendary_pool.remove(pick)
+
+        remaining = count - len(chosen)
+        if remaining > 0:
+            chosen.extend(random.sample(available, min(remaining, len(available))))
+        random.shuffle(chosen)
+        return chosen
 
     def get_active_card_names(self) -> list:
         return [c["name"] for c in self.CARDS if c["id"] in self.active_cards]
@@ -77,12 +150,16 @@ class CardSystem:
         player.skills_permanent = sp
         player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
         player.passive_shield_cd = 60
-        player.speed_mod = getattr(player, "speed_mod", 1.0) - 0.10
+        # speed_mod her karede StatusEffectManager tarafindan siliniyor;
+        # kalici hiz cezalari skills_permanent uzerinden uygulanir (H3)
+        sp["speed"] = sp.get("speed", 0) - 0.3
 
     def _apply_zombie_skin(self, player):
         """🧟 Zombi Derisi — Bir kez ölümden dönüş, Max HP -%20."""
         sp = getattr(player, "skills_permanent", {})
-        sp["max_hp"] = sp.get("max_hp", 0) - 20
+        # F8: bedel YÜZDESEL (max_hp_pct havuzu). Düz -20 geç oyunda (1000+ can)
+        # hissedilmiyordu; artık açıklamadaki "%20 azalır" ile birebir örtüşür.
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 20
         player.skills_permanent = sp
         player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
         player.revive_count = getattr(player, "revive_count", 0) + 1
@@ -90,7 +167,7 @@ class CardSystem:
     def _apply_blood_pact(self, player):
         """🩸 Kan Paktı — Her hasar alışta +5 XP. Max HP -%15."""
         sp = getattr(player, "skills_permanent", {})
-        sp["max_hp"] = sp.get("max_hp", 0) - 15
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
         player.skills_permanent = sp
         player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
         player.xp_on_hit_bonus = getattr(player, "xp_on_hit_bonus", 0) + 5
@@ -99,8 +176,8 @@ class CardSystem:
         """🪨 Taş Deri — Zırh +80, hız -%30."""
         sp = getattr(player, "skills_permanent", {})
         sp["armor"] = sp.get("armor", 0) + 80
+        sp["speed"] = sp.get("speed", 0) - 0.9  # H3: kalici hiz cezasi
         player.skills_permanent = sp
-        player.speed_mod = getattr(player, "speed_mod", 1.0) - 0.3
 
     def _apply_berserker_rage(self, player):
         """😡 Berserker Öfkesi — %40 HP altındayken hasar +%80 (pasif)."""
@@ -111,7 +188,7 @@ class CardSystem:
         """🔆 Anka Kanı — Ölünce 200 AoE hasar (1 kez)."""
         player.death_explosion = True
         sp = getattr(player, "skills_permanent", {})
-        sp["max_hp"] = sp.get("max_hp", 0) - 10
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 10
         player.skills_permanent = sp
         player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
 
@@ -127,7 +204,7 @@ class CardSystem:
     def _apply_blood_fire(self, player):
         """🔥 Kan Ateşi — Lifesteal +5, Max HP -%30."""
         sp = getattr(player, "skills_permanent", {})
-        sp["max_hp"] = sp.get("max_hp", 0) - 30
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 30
         player.skills_permanent = sp
         player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
         player.lifesteal_bonus = getattr(player, "lifesteal_bonus", 0) + 5
@@ -186,6 +263,8 @@ class CardSystem:
         player.execute_threshold = 0.30
         sp = getattr(player, "skills_permanent", {})
         sp["fireRate"] = sp.get("fireRate", 0) - 0.3
+        # Tuketim noktasi enemy.take_damage'daki lowHpExec stati (P3)
+        sp["lowHpExec"] = sp.get("lowHpExec", 0) + 0.30
         player.skills_permanent = sp
 
     # ------------------------------------------------------------------
@@ -196,15 +275,15 @@ class CardSystem:
         """🧊 Buz Gömleği — Zırh +50, hız -%20."""
         sp = getattr(player, "skills_permanent", {})
         sp["armor"] = sp.get("armor", 0) + 50
+        sp["speed"] = sp.get("speed", 0) - 0.6  # H3: kalici hiz cezasi
         player.skills_permanent = sp
-        player.speed_mod = getattr(player, "speed_mod", 1.0) - 0.2
 
     def _apply_vampire_touch(self, player):
         """🦷 Vampir Dokunuşu — Lifesteal +%15, HP rejen +2."""
         sp = getattr(player, "skills_permanent", {})
         sp["lifesteal"] = sp.get("lifesteal", 0) + 0.15
         sp["regen"] = sp.get("regen", 0) + 2
-        sp["max_hp"] = sp.get("max_hp", 0) - 20
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 20
         player.skills_permanent = sp
         player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
 
@@ -264,7 +343,8 @@ class CardSystem:
         """🐺 Alfa Bağı — Pet hasarı x2, yalnızca 1 aktif pet."""
         sp = getattr(player, "skills_permanent", {})
         sp["minionDamage"] = sp.get("minionDamage", 0) + 1.0
-        sp["minionCount"] = sp.get("minionCount", 0) - 10
+        # "1 aktif pet" bedeli minionCount -10 ile degil alpha_mode bayragiyla
+        # uygulanir; negatif sayi check_minions'ta pop() cokmesi yaratiyordu (C5)
         player.skills_permanent = sp
         player.alpha_mode = True
 
@@ -284,8 +364,8 @@ class CardSystem:
         sp = getattr(player, "skills_permanent", {})
         sp["fireDamage"] = sp.get("fireDamage", 0) + 20
         sp["fireDmgFlat"] = sp.get("fireDmgFlat", 0) + 10
+        sp["speed"] = sp.get("speed", 0) - 0.45  # H3: kalici hiz cezasi
         player.skills_permanent = sp
-        player.speed_mod = getattr(player, "speed_mod", 1.0) - 0.15
 
     def _apply_frozen_time(self, player):
         """❄️ Donmuş Zaman — Her 15sn tüm düşmanları 3sn dondurur."""
@@ -296,7 +376,7 @@ class CardSystem:
         """⚡ Fırtına Çağırıcı — Her 8 vuruşta yıldırım."""
         player.lightning_proc_hits = 8
         sp = getattr(player, "skills_permanent", {})
-        sp["max_hp"] = sp.get("max_hp", 0) - 15
+        sp["max_hp_pct"] = sp.get("max_hp_pct", 0) - 15
         player.skills_permanent = sp
         player.hp = min(getattr(player, "hp", 100), getattr(player, "max_hp", 100))
 
@@ -370,6 +450,9 @@ class CardSystem:
         
     def _apply_midas_touch(self, player):
         setattr(player, "has_midas_touch", True)
+        sp = getattr(player, "skills_permanent", {})
+        sp["dmgMult"] = sp.get("dmgMult", 0) - 0.2  # cards.json bedeli (H11)
+        player.skills_permanent = sp
 
     def _apply_mutation(self, player):
         setattr(player, "has_mutation", True)
@@ -386,9 +469,15 @@ class CardSystem:
 
     def _apply_chaos_field(self, player):
         setattr(player, "has_chaos_field", True)
+        sp = getattr(player, "skills_permanent", {})
+        sp["armor"] = sp.get("armor", 0) - 20  # cards.json bedeli (H11)
+        player.skills_permanent = sp
 
     def _apply_doppelganger(self, player):
         setattr(player, "has_doppelganger", True)
+        sp = getattr(player, "skills_permanent", {})
+        sp["dmgMult"] = sp.get("dmgMult", 0) - 0.5  # cards.json bedeli (H11)
+        player.skills_permanent = sp
         
     def _apply_furnace(self, player):
         setattr(player, "has_furnace", True)

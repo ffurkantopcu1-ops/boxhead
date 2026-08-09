@@ -5,11 +5,17 @@ class InventoryManager:
     # (veri dosyaları değişmez -> save uyumluluğu korunur)
     STAT_ALIASES = {"maxHp": "max_hp", "attack_speed_mult": "attack_speed_bonus"}
 
+    # Yetenek ağacı (skills) girdilerinde kullanılan eski stat adlarının yeni
+    # karşılıkları. Eşya/aura tarafını bozmamak için SADECE skill döngüsünde
+    # uygulanır: eski kayıtlardaki "Fedai" skili düz değer verdiği halde
+    # çarpan statını besliyordu (F3).
+    SKILL_STAT_MIGRATION = {"minionMaxHp": "minionMaxHpFlat"}
+
     # Oynanabilir sınıflar. Bir silahın weaponClass'ı yalnızca bu kümedeyse
     # sınıfı değiştirir; "general"/"none" gibi değerler sınıfsızdır.
     CLASS_IDS = frozenset({
         "warrior", "sniper", "engineer", "beastmaster",
-        "ninja", "alchemist", "sorcerer", "bloodwalker",
+        "ninja", "alchemist", "sorcerer", "bloodwalker", "bomber",
     })
 
     # Azalan getiri + mutlak tavan tablosu: stat -> (knee, k, hard_cap)
@@ -25,6 +31,9 @@ class InventoryManager:
         "minionDamage":   (2.0,  0.5, 4.0),
         "fireDmgMult":    (1.0,  0.5, 2.0),
         "frostDmgMult":   (1.0,  0.5, 2.0),
+        # Pet çarpanları toplanabiliyor; eski kayıtlardaki hatalı "Küçük Kurt"
+        # (minionMaxHp: 50) gibi değerleri de sınırlar (F3)
+        "minionMaxHp":    (13.0, 0.5, 20.0),
     }
 
     def __init__(self, player):
@@ -62,11 +71,21 @@ class InventoryManager:
         for slot in self.equipped:
             self.unequip(slot)
 
+    def _track_sold(self, count):
+        """Satış görevini besler. game referansı Player.update() içinde
+        atanır (player.game); henüz oyun döngüsü başlamadıysa sessizce geçer."""
+        if count <= 0:
+            return
+        game = getattr(self.player, 'game', None)
+        if game is not None and hasattr(game, 'track_quest'):
+            game.track_quest("sell_items", count)
+
     def sell_item(self, item_index):
         if 0 <= item_index < len(self.player.inventory):
             item = self.player.inventory.pop(item_index)
             sell_price = item.get("price", 100) // 2
             self.player.gold += sell_price
+            self._track_sold(1)
             return True
         return False
 
@@ -100,6 +119,7 @@ class InventoryManager:
             sold_count += 1
             
         self.player.inventory = new_inv
+        self._track_sold(sold_count)
         return sold_count, total_gold
 
     def recalculate_stats(self):
@@ -111,6 +131,10 @@ class InventoryManager:
             "beastmaster": {"minionDamage": 0.3, "max_hp_mult": 0.1, "speed": 5.5},
             "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 7.2, "regen": 0.5},
             "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 5.0, "attack_cooldown": 900},
+            # Bombacı: Simyacı'nın "yavaş ama geniş" uç versiyonu. aoe 0.6
+            # Bomber.AOE_MULT (x1.5) ile çarpıldığı için Simyacı'nın belirgin
+            # üstünde; bedeli oyunun en uzun vuruş aralığı (1500ms).
+            "bomber":      {"aoe": 0.6,      "dmgMult": 0.2,      "speed": 4.4, "attack_cooldown": 1500},
             # --- YENİ SINIFLAR ---
             "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.8, "attack_cooldown": 400},
             "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 5.5, "regen": 0.5},
@@ -121,8 +145,16 @@ class InventoryManager:
             "speed": 4.8, "max_hp": 100, "dmgMult": 1.0, "armor": 0, "regen": 0.5,
             "magicFind": 1.0, "attack_cooldown": 350, "dodgeChance": 0.05,
             "lifesteal": 0, "combatRegen": 0, "critChance": 0.05, "pierce": 0,
-            "bounce": 0, "aoe": 1.0, "projectileCount": 1, "meleeRange": 0,
-            "xpGain": 1.0, "goldGain": 1.0, "magnetRadius": 50,
+            "bounce": 0, "aoe": 1.0, "projectileCount": 1,
+            # meleeRange PİKSEL cinsindendir (silah tabanı + skill), meleeRangeMult
+            # ise yüzde çarpanı. İkisi tek anahtarda karışıyordu (F4).
+            "meleeRange": 0, "meleeRangeFlat": 0, "meleeRangeMult": 0.0,
+            # Kartların "Max can %X azalır" bedelleri için yüzdesel havuz (F8)
+            "max_hp_pct": 0,
+            # xpGain/goldGain tüketim noktaları (1.0 + stat) şeklinde okuyor;
+            # taban 1.0 bonussuz oyuncuya 2x veriyordu (H7). magicFind gerçek
+            # çarpan olarak kullanıldığı için 1.0 kalır.
+            "xpGain": 0.0, "goldGain": 0.0, "magnetRadius": 50,
             "turretMaxHp": 150, "turretDmg": 1.0, "turretRate": 1.0, "turretLimit": 1,
             "cooldownReduction": 0, "attack_speed_bonus": 0, "aoe_bonus": 0,
             "minionProjectileCount": 1,
@@ -133,7 +165,10 @@ class InventoryManager:
             "elementDmgMult": 0,
             # minionCount/minionDamage tabanı 0: tüketim noktaları (player.py 1+,
             # minion.py 1.0+) tabanı zaten ekliyor; 1/1.0 çift sayım yaratıyordu (F5)
-            "minionCount": 0, "minionDamage": 0.0, "minionRate": 1.0, "minionMaxHp": 1.0, "minionArmor": 0,
+            # minionMaxHp ÇARPAN (taban 1.0), minionMaxHpFlat DÜZ can (taban 0);
+            # ikisi tek anahtarda toplanınca 85.000 canlı minyon çıkıyordu (F3)
+            "minionCount": 0, "minionDamage": 0.0, "minionRate": 1.0,
+            "minionMaxHp": 1.0, "minionMaxHpFlat": 0, "minionArmor": 0,
             "minionRange": 1.0, 
             "minionPhysDmgFlat": 0, "minionPhysDmgMult": 0,
             "minionFireDmgFlat": 0, "minionFireDmgMult": 0,
@@ -197,7 +232,7 @@ class InventoryManager:
         # 🔵 STEP 3: APPLY CLASS AND SKILL MULTIPLIERS
         for sk in getattr(self.player, 'skills', []):
             if sk.get('lvl', 0) > 0:
-                stat = sk.get('stat')
+                stat = self.SKILL_STAT_MIGRATION.get(sk.get('stat'), sk.get('stat'))
                 val = sk.get('val', 0) * sk['lvl']
                 if stat in totals:
                     totals[stat] += val
@@ -245,9 +280,11 @@ class InventoryManager:
         # 🟣 AURA BONUSES (Late Game Scaling)
         from logic.aura_system import AuraManager
         aura_mgr = AuraManager()
-        aura_mult = 1.0
-        # Aura Sovereign Seti Check (2 parça: %25 aura etkisi, 4 parça: +1 aura limit)
-        if active_sets.get("SET_AURA", 0) >= 2: aura_mult = 1.25
+        # Aura Sovereign Seti (2 parça: %25 aura etkisi, 4 parça: +1 aura limit)
+        # aura_effectiveness set anahtarı new_stats'a toplanıyordu ama burada
+        # sabit 1.25 kullanıldığı için ölüydü. Artık gerçek stat okunur;
+        # 2pc yoksa 0 -> 1.0 (davranış geriye dönük aynı).
+        aura_mult = 1.0 + new_stats.get("aura_effectiveness", 0)
         
         for aura_id in self.player.active_auras:
             aura = aura_mgr.get_aura(aura_id)
@@ -304,10 +341,16 @@ class InventoryManager:
         aoe_bonus += (new_stats.get("aoe", 1.0) - 1.0)
         new_stats["aoe"] = 1.0 + aoe_bonus # Bu çarpan Projectile'da 100 ile çarpılacak
 
-        # Melee Range Hesabı
-        melee_bonus = (new_stats.get("meleeRange", 1.0) - 1.0)
-        melee_bonus += (new_stats.get("meleeRangeFlat", 0) / 100.0)
-        new_stats["meleeRange"] = 1.0 + melee_bonus
+        # Melee Range Hesabı (F4)
+        # meleeRange/meleeRangeFlat = PİKSEL, meleeRangeMult = ÇARPAN.
+        # Eski kod ikisini "1.0 + bonus" diye normalize edip piksel değerini
+        # yüzde gibi ele alıyordu; sonuç 50 piksellik kılıcın 0.5 piksele
+        # dönmesiydi. Artık iki birim ayrı tutulur, tüketim noktaları
+        # (100 + meleeRangeFlat) * meleeRangeMult şeklinde okur.
+        melee_flat = new_stats.get("meleeRange", 0) + new_stats.get("meleeRangeFlat", 0)
+        new_stats["meleeRangeFlat"] = melee_flat
+        new_stats["meleeRange"] = melee_flat  # geriye dönük tüketiciler (piksel)
+        new_stats["meleeRangeMult"] = max(0.1, 1.0 + new_stats.get("meleeRangeMult", 0.0))
 
         if getattr(self.player, '_bloodwalker_rage_active', False):
             new_stats["dmgMult"] = new_stats.get("dmgMult", 1.0) * 1.25
@@ -331,9 +374,40 @@ class InventoryManager:
         if card_sys and 'death_pact' in getattr(card_sys, 'active_cards', []):
             new_stats["max_hp"] = max(1, new_stats["max_hp"] * 0.10)
 
+        # 💔 Yüzdesel max_hp bedelleri/bonusları (F8)
+        # Kart açıklamaları "Max can %20 azalır" diyor ama bedeller düz değer
+        # olarak işleniyordu; 1000 can barındaki oyuncuya -20 hiçbir şey ifade
+        # etmiyordu. Bu havuz YÜZDE puanı taşır (-20 => %20 azalma).
+        # Havuz boşsa (eski kayıtlar/kartlar) hesap aynen eskisi gibi kalır.
+        hp_pct = new_stats.get("max_hp_pct", 0)
+        if hp_pct:
+            new_stats["max_hp"] *= max(0.05, 1.0 + hp_pct / 100.0)
+
+        # Fiziksel hasar negatife düşmemeli: Başbüyücü aurası (physDmg -999) ve
+        # Zehirli Kalp kartı toplamı eksiye çekince düşmanlar iyileşiyordu (H8)
+        for _phys_stat in ("physDmg", "physDmgFlat"):
+            if _phys_stat in new_stats:
+                new_stats[_phys_stat] = max(0, new_stats[_phys_stat])
+
+        # Negatif zırh sıfıra bölme ve "hasar iyileştiriyor" durumu yaratıyordu (C3):
+        # -75 tabanı alınan hasarı en fazla 4x'e çıkarır.
+        new_stats["armor"] = max(-75, new_stats.get("armor", 0))
+
+        # Max HP düşüren kartların toplamı taban 100'ü negatife çekip anında
+        # ölüm yaratıyordu (C4)
+        new_stats["max_hp"] = max(1, new_stats.get("max_hp", 100))
+
         # Ölüm Kumarı (Death Gamble): max_hp 1'e sabitlenir
         if new_stats.get("maxHpLock", 0) > 0:
             new_stats["max_hp"] = 1
+
+        # ⏳ GEÇİCİ BUFF'LAR (Kan Ritüeli vb.) — F7
+        # Doğrudan player.stats'a yazılan süreli buff'lar araya giren herhangi
+        # bir recalculate_stats (eşya takma, seviye atlama, Kan Öfkesi eşiği,
+        # kart seçimi) tarafından siliniyordu. Artık kalıcı statlar
+        # hesaplandıktan SONRA, en üste uygulanır.
+        for _tb_stat, _tb_mult in getattr(self.player, 'temp_buffs', {}).items():
+            new_stats[_tb_stat] = new_stats.get(_tb_stat, 1.0) * _tb_mult
 
         # Sonuçları Player Statlarına Yaz
         self.player.stats.clear()

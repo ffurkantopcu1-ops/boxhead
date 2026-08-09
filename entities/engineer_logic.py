@@ -39,7 +39,7 @@ class Engineer:
         for e in game.iter_enemies_near(player.x, player.y, 110):
             dx, dy = e.x - player.x, e.y - player.y
             if not e.dead and dx * dx + dy * dy < 110 * 110:
-                e.take_damage(dmg, game)
+                e.take_damage(dmg, game, from_player=True)
         
     def update(self, dt, player, game):
         pass

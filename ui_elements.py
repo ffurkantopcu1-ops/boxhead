@@ -106,7 +106,7 @@ class ImageLoader:
         cache_key = f"{icon_id}_{size[0]}x{size[1]}"
         if cache_key in ImageLoader._cache:
             return ImageLoader._cache[cache_key]
-        
+
         # Farklı uzantıları dene
         for ext in ['.png', '.jpg', '.jpeg']:
             path = f"assets/items/{icon_id}{ext}"
@@ -118,6 +118,9 @@ class ImageLoader:
                     return img
                 except:
                     continue
+        # Başarısızlık da cache'lenir: ikonu olmayan eşyalar için her karede
+        # 3 kez os.path.exists disk I/O'su yapılıyordu.
+        ImageLoader._cache[cache_key] = None
         return None
 
 class Button:

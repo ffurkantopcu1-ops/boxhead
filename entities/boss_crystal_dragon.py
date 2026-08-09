@@ -7,6 +7,7 @@ from entities.projectile import Projectile
 class CrystalDragon(Enemy):
     def __init__(self, id, x, y, game, wave_level=20):
         super().__init__(id, x, y, game, type="crystal_dragon", wave_level=wave_level)
+        self.game, self.wave_level = game, wave_level
         self.max_hp = 150000 * (1.25 ** (wave_level // 10))
         self.hp = self.max_hp
         self.speed = 2.5
@@ -19,7 +20,22 @@ class CrystalDragon(Enemy):
         self.phase = 1
         self.attack_timer = 2.0
         self.base_speed = self.speed
-        
+        # Boss statlari super().__init__ icindeki apply_difficulty'den SONRA
+        # yazildigi icin zorluk carpani hic uygulanmiyordu (H4)
+        self.apply_difficulty(game.wave.get("current_diff", "Normal"))
+
+    def apply_difficulty(self, diff_name):
+        # Enemy.apply_difficulty base_* tabaniyla boss HP'sini eziyordu (H4).
+        # __init__ sirasindaki ilk cagri sessizce atlanir.
+        if not hasattr(self, 'attack_timer'):
+            return
+        from entities.boss import get_boss_diff_mults
+        hp_mult, dmg_mult = get_boss_diff_mults(self.game)
+        ratio = self.hp / self.max_hp if self.max_hp > 0 else 1.0
+        self.max_hp = 150000 * (1.25 ** (self.wave_level // 10)) * hp_mult
+        self.hp = self.max_hp * ratio
+        self.dmg = 150 * dmg_mult
+
     def update(self, dt, game):
         # Update status effects etc
         super().update(dt, game)
@@ -48,10 +64,10 @@ class CrystalDragon(Enemy):
             angle = i * angle_step + random.uniform(-0.1, 0.1)
             vx = math.cos(angle) * 7
             vy = math.sin(angle) * 7
+            game.entity_id_counter += 1
             proj = Projectile(game.entity_id_counter, self.x, self.y, vx, vy, self.dmg * 0.5, p_type='fire', aoe=0, lifetime=200, is_hostile=True)
             proj.color = (100, 200, 255) # Mavi ateş
             game.projectiles.append(proj)
-            game.entity_id_counter += 1
             
     def create_crystal_maze(self, game):
         # Oyuncunun etrafına veya bossun etrafına trap tipli minyonlar bırakır (Geçilemez)
@@ -68,6 +84,7 @@ class CrystalDragon(Enemy):
             cy = p.y + math.sin(angle) * radius
             
             # Kristal duvarlar (is_trap = True, hasar almaz)
+            game.entity_id_counter += 1
             crystal = Enemy(game.entity_id_counter, cx, cy, game, type="crystal_wall", wave_level=game.wave.get("level", 20))
             crystal.max_hp = 999999
             crystal.hp = crystal.max_hp
@@ -79,7 +96,6 @@ class CrystalDragon(Enemy):
             crystal.is_invulnerable = True
             
             game.enemies.append(crystal)
-            game.entity_id_counter += 1
         
     def draw(self, screen, camera_x, camera_y):
         draw_x = self.x - camera_x

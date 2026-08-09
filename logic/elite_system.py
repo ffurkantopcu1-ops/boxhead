@@ -51,6 +51,10 @@ class EliteSystem:
             enemy.elite_reward_mult = getattr(enemy, 'elite_reward_mult', 1.0) * mod['reward_mult']
             
             # Special properties
+            # thorns / elite_lifesteal / frost_aura bayrakları burada kurulur;
+            # tüketim noktaları entities/enemy.py içindedir
+            # (take_damage -> thorns, attack_player -> elite_lifesteal,
+            #  update -> frost_aura).
             if 'thorns' in mod:
                 enemy.thorns = mod['thorns']
             if 'lifesteal' in mod:
@@ -70,7 +74,14 @@ class EliteSystem:
         
         # Visual: Make elite enemies slightly bigger
         enemy.radius = int(enemy.radius * 1.2)
-        
+
+        # Zorluk degisimi (update_difficulty -> apply_difficulty) base_* uzerinden
+        # yeniden hesapladigi icin elit bonuslari siliniyordu (H4)
+        enemy.base_max_hp = enemy.max_hp
+        enemy.base_dmg = enemy.dmg
+        enemy.base_speed = enemy.speed
+        enemy.base_armor = getattr(enemy, 'armor', 0)
+
         return applied
     
     @staticmethod

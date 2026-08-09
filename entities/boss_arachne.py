@@ -7,6 +7,7 @@ from entities.projectile import Projectile
 class Arachne(Enemy):
     def __init__(self, id, x, y, game, wave_level=30):
         super().__init__(id, x, y, game, type="arachne", wave_level=wave_level)
+        self.game, self.wave_level = game, wave_level
         self.max_hp = 100000 * (1.25 ** (wave_level // 10))
         self.hp = self.max_hp
         self.speed = 3.0
@@ -19,7 +20,23 @@ class Arachne(Enemy):
         self.egg_timer = 5.0
         self.web_timer = 4.0
         self.base_speed = self.speed
-        
+        # Boss statlari super().__init__ icindeki apply_difficulty'den SONRA
+        # yazildigi icin zorluk carpani hic uygulanmiyordu; simdi kendi
+        # formulumuzle bir kez uygulanir (H4)
+        self.apply_difficulty(game.wave.get("current_diff", "Normal"))
+
+    def apply_difficulty(self, diff_name):
+        # Enemy.apply_difficulty base_* tabaniyla boss HP'sini eziyordu (H4).
+        # __init__ sirasindaki ilk cagri sessizce atlanir.
+        if not hasattr(self, 'egg_timer'):
+            return
+        from entities.boss import get_boss_diff_mults
+        hp_mult, dmg_mult = get_boss_diff_mults(self.game)
+        ratio = self.hp / self.max_hp if self.max_hp > 0 else 1.0
+        self.max_hp = 100000 * (1.25 ** (self.wave_level // 10)) * hp_mult
+        self.hp = self.max_hp * ratio
+        self.dmg = 200 * dmg_mult
+
     def update(self, dt, game):
         super().update(dt, game)
         if self.dead: return
@@ -41,6 +58,7 @@ class Arachne(Enemy):
             spawn_x = self.x + random.randint(-80, 80)
             spawn_y = self.y + random.randint(-80, 80)
             # Normal Enemy objesi yaratalım, türü spiderling olsun
+            game.entity_id_counter += 1
             spiderling = Enemy(game.entity_id_counter, spawn_x, spawn_y, game, type="spiderling", wave_level=game.wave.get("level", 30))
             spiderling.max_hp = self.max_hp * 0.05
             spiderling.hp = spiderling.max_hp
@@ -52,7 +70,6 @@ class Arachne(Enemy):
             spiderling.gives_xp = False
             
             game.enemies.append(spiderling)
-            game.entity_id_counter += 1
             
     def shoot_web(self, game):
         # Oyuncuyu donduracak bir ağ mermisi (silence/slow etkili)
@@ -61,10 +78,10 @@ class Arachne(Enemy):
         vx = math.cos(angle) * 8
         vy = math.sin(angle) * 8
         # Zehir (poison) tipli bir mermi olarak gönderelim, ama özel tip verebiliriz
+        game.entity_id_counter += 1
         proj = Projectile(game.entity_id_counter, self.x, self.y, vx, vy, self.dmg * 0.2, p_type='web', aoe=50, lifetime=150, is_hostile=True)
         proj.color = (200, 200, 200) # Beyaz ağ
         game.projectiles.append(proj)
-        game.entity_id_counter += 1
 
     def draw(self, screen, camera_x, camera_y):
         # Kraliçe Örümcek Özel Çizimi

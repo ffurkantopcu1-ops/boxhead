@@ -14,6 +14,8 @@ class GroundItem:
         self.dead = False
         self.age = 0.0
         self.max_lifetime = 60.0 if self.is_gold else (90.0 if self.type == 'potion' else None)
+        # Günlük görev sayacı eşya başına bir kez işlensin (G1)
+        self._quest_tracked = False
         
         # Nadirliğe göre renk belirle (Altın ise her zaman Sarı/Gold)
         self.colors = {
@@ -77,6 +79,24 @@ class GroundItem:
         if dist_sq < pickup_range * pickup_range:
             self.pickup(p, game)
 
+    def _track_rarity_quest(self, game):
+        """Nadirlik bazlı günlük görevleri besler (collect_rarity/collect_unique).
+
+        Yalnızca eşya gerçekten toplandığında ve eşya başına BİR kez çalışır
+        (envanter doluyken pickup her karede yeniden çağrılıyor).
+
+        Not: track_quest meta'yı bellek üzerinde tutar (GameLogic.get_meta),
+        her toplamada disk I/O yapılmaz; yazma dalga sonunda flush edilir.
+        """
+        if self._quest_tracked or not hasattr(game, 'track_quest'):
+            return
+        self._quest_tracked = True
+        rarity = self.item_data.get('rarity', 'Normal')
+        if rarity in ('Rare', 'Unique'):
+            game.track_quest("collect_rarity", 1)
+        if rarity == 'Unique':
+            game.track_quest("collect_unique", 1)
+
     def pickup(self, player, game):
         if self.is_gold:
             amount = self.item_data.get('value', 10)
@@ -105,12 +125,14 @@ class GroundItem:
             if should_auto_sell:
                 gold_val = max(1, self.item_data.get('price', 50) // 2)
                 player.gold += gold_val
+                self._track_rarity_quest(game)
                 game.add_event("damage_text", self.x, self.y - 40, value=f"+{gold_val} G (Oto)", color=(241, 196, 15), timer=0.5)
                 self.dead = True
                 return
 
             # Envanter mantığı: Yerden alınan eşya ÇANTAYA düşer
             if player.add_item(self.item_data):
+                self._track_rarity_quest(game)
                 # Efekt: Eşya ismini süzülen bir yazı olarak göster
                 game.add_event("damage_text", self.x, self.y - 40, value=self.item_data['name'], color=self.color, timer=1.0)
                 self.dead = True

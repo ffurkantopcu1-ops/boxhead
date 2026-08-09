@@ -26,6 +26,15 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Büyük Kimyasal Şişe (T2)', 'tier': 2, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_chemical_bottle_large', 'itemBase': { 'poisonDps': 25, 'aoe': 2.5 } },
         { 'type': 'weapon', 'name': 'Nükleer Atık (T1)', 'tier': 1, 'isBomb': True, 'weaponClass': 'alchemist', 'icon_id': 'weapon_nuclear_waste', 'itemBase': { 'poisonDps': 60, 'aoe': 3.5, 'dotDmgMult': 0.5 } },
 
+        # Bombacı: patlayıcı fırlatma. Bomba hasarı poisonDps üzerinden okunur
+        # (entities/player.py -> shoot(), is_bomb dalı); patlama yarıçapı
+        # itemBase['aoe'] + sınıf tabanı + Bomber.AOE_MULT ile büyür.
+        # Simyacı'ya göre vuruş başına daha sert ama daha yavaş (attackCooldown).
+        { 'type': 'weapon', 'name': 'El Bombası Çantası (T4)', 'tier': 4, 'isBomb': True, 'weaponClass': 'bomber', 'icon_id': 'weapon_grenade_pouch', 'itemBase': { 'poisonDps': 8 } },
+        { 'type': 'weapon', 'name': 'Molotof Kokteyli (T3)', 'tier': 3, 'isBomb': True, 'weaponClass': 'bomber', 'icon_id': 'weapon_molotov', 'itemBase': { 'poisonDps': 22, 'aoe': 1.0, 'attackCooldown': 1400 } },
+        { 'type': 'weapon', 'name': 'Dinamit Demeti (T2)', 'tier': 2, 'isBomb': True, 'weaponClass': 'bomber', 'icon_id': 'weapon_dynamite_bundle', 'itemBase': { 'poisonDps': 48, 'aoe': 1.6, 'attackCooldown': 1250 } },
+        { 'type': 'weapon', 'name': 'Termobarik Bomba (T1)', 'tier': 1, 'isBomb': True, 'weaponClass': 'bomber', 'icon_id': 'weapon_thermobaric_bomb', 'itemBase': { 'poisonDps': 110, 'aoe': 2.4, 'attackCooldown': 1100, 'dotDmgMult': 0.4 } },
+
         # --- YENİ SINIF SİLAHLARI ---
         { 'type': 'weapon', 'name': 'Sihir Asası (T4)', 'tier': 4, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_magic', 'itemBase': { 'physDmg': 8, 'elementDmgMult': 0.2 } },
         { 'type': 'weapon', 'name': 'Kristal Asa (T3)', 'tier': 3, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_crystal', 'itemBase': { 'physDmg': 22, 'elementDmgMult': 0.5 } },
@@ -138,7 +147,9 @@ class ItemSystem:
             {'stat': 'minionCount', 'name': 'Minyon Kapasitesi', 'tiers': {1: [1, 1], 2: [1, 1], 3: [1, 1]}},
             {'stat': 'projectileCount', 'name': 'Ekstra Mermi', 'tiers': {1: [2, 2], 2: [1, 1], 3: [1, 1]}},
             {'stat': 'aoe', 'name': 'Alan Etkisi', 'tiers': {1: [0.3, 0.4], 2: [0.15, 0.29], 3: [0.05, 0.14]}},
-            {'stat': 'meleeRange', 'name': 'Menzil', 'tiers': {1: [3, 3], 2: [2, 2], 3: [1, 1]}},
+            # F4: eskiden 'meleeRange' PİKSEL veriyordu -> T1 affix +3 piksel
+            # gibi anlamsız bir bonustu. Artık çarpan havuzuna yazar (0.30 = +%30).
+            {'stat': 'meleeRangeMult', 'name': 'Menzil', 'tiers': {1: [0.30, 0.30], 2: [0.20, 0.20], 3: [0.10, 0.10]}},
             {'stat': 'brutal', 'name': 'Acımasız', 'tiers': {1: [0.4, 0.5], 2: [0.2, 0.39], 3: [0.1, 0.19]}},
             {'stat': 'elementDmgMult', 'name': 'Element Hasarı', 'tiers': {1: [0.4, 0.5], 2: [0.2, 0.39], 3: [0.1, 0.19]}},
             {'stat': 'dotDmgMult', 'name': 'Zehir Etkisi', 'tiers': {1: [0.4, 0.5], 2: [0.2, 0.39], 3: [0.1, 0.19]}}
@@ -422,7 +433,9 @@ class ItemSystem:
             for aff in item['prefixes'] + item['suffixes']:
                 pool = self.affixes.get(f'{group_key}_prefixes', []) + self.affixes.get(f'{group_key}_suffixes', [])
                 match = next((x for x in pool if x['stat'] == aff['stat']), None)
-                if match and 'tier' in aff:
+                # "Kırık" affixler tier 0 ile geliyor ve tiers sözlüğünde yok;
+                # doğrudan indekslemek KeyError: 0 yaratıyordu (C6)
+                if match and aff.get('tier') in match['tiers']:
                     tier = aff['tier']
                     aff['val'] = round(random.uniform(match['tiers'][tier][0], match['tiers'][tier][1]), 2)
 
@@ -443,7 +456,8 @@ class ItemSystem:
             for aff in item['prefixes'] + item['suffixes']:
                 pool = self.affixes.get(f'{group_key}_prefixes', []) + self.affixes.get(f'{group_key}_suffixes', [])
                 match = next((x for x in pool if x['stat'] == aff['stat']), None)
-                if match and 'tier' in aff:
+                # tier 0 ("kırık" affix) tiers sözlüğünde yok -> KeyError (C6)
+                if match and aff.get('tier') in match['tiers']:
                     tier = aff['tier']
                     aff['val'] = round(match['tiers'][tier][1], 2)
 
@@ -478,7 +492,10 @@ class ItemSystem:
         base_name = item.get('base_name', 'Bilinmeyen')
         set_name = ""
         if item.get('setTag'):
-            set_name = f"[{self.set_types[item['setTag']]['name']}]"
+            # Eski kayıtlarda artık tanımsız olan setTag'ler KeyError atıyordu
+            set_info = self.set_types.get(item['setTag'])
+            if set_info:
+                set_name = f"[{set_info.get('name', '')}]"
             
         item['name'] = f"{set_name} {base_name}".strip()
 

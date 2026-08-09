@@ -15,9 +15,14 @@ class StatusEffect:
         self.active = True
         self.vis_accum = 0 # For damage text accumulation
         self.tick_timer = 0.5 # New: Show damage text every 0.5 seconds
+        # Yığın (stack) bekleme sayacı: aynı kaynağın her karede yığın
+        # eklemesini engeller (F5)
+        self.stack_cd = 0.0
 
     def update(self, dt, target, game):
         self.timer -= dt
+        if self.stack_cd > 0:
+            self.stack_cd -= dt
         if self.timer <= 0:
             self.active = False
             return
@@ -52,6 +57,12 @@ class StatusEffect:
                     if hasattr(game, 'kill_enemy'):
                         game.kill_enemy(target)
 
+# Zehir yığınları arasındaki minimum süre. Zehir bulutu her karede
+# apply_dot çağırdığı için 60 FPS'te 4 karede (0.067 sn) tavana ulaşıyor,
+# "yığın" mekaniği sabit 4x çarpana dönüşüyordu (F5).
+POISON_STACK_INTERVAL = 0.5
+
+
 class StatusEffectManager:
     def __init__(self):
         self.effects = [] # List of active effects on a specific entity
@@ -62,8 +73,14 @@ class StatusEffectManager:
             if existing.name == effect.name:
                 if existing.name == "Poison":
                     # Additive yığın en fazla 4 katına çıkabilir; sınırsız yığın
-                    # saldırı hızıyla karesel DPS büyümesi yaratıyordu (F1)
-                    existing.dps = min(existing.dps + effect.dps, effect.dps * 4)
+                    # saldırı hızıyla karesel DPS büyümesi yaratıyordu (F1).
+                    # Yığın artışı ZAMANA bağlı: iki yığın arasında en az
+                    # POISON_STACK_INTERVAL saniye geçmeli (F5).
+                    if existing.stack_cd <= 0:
+                        existing.dps = min(existing.dps + effect.dps, effect.dps * 4)
+                        existing.stack_cd = POISON_STACK_INTERVAL
+                    else:
+                        existing.dps = max(existing.dps, effect.dps)
                 else:
                     existing.dps = max(existing.dps, effect.dps)
                 existing.timer = max(existing.timer, effect.duration)
@@ -103,8 +120,9 @@ class StatusEffectManager:
 def apply_burn(manager, duration=3.0, dps=15.0):
     manager.add_effect(StatusEffect("Burn", duration, dps=dps, color=(231, 76, 60)))
 
-def apply_slow(manager, duration=3.0, mult=0.5):
-    manager.add_effect(StatusEffect("Slow", duration, speed_mult=mult, color=(52, 152, 219)))
+def apply_slow(manager, duration=3.0, mult=0.5, name="Slow"):
+    # name: farkli kaynaklarin (camur/buz/ag) birbirini ezmemesi icin ayrilabilir
+    manager.add_effect(StatusEffect(name, duration, speed_mult=mult, color=(52, 152, 219)))
 
 def apply_silence(manager, duration=3.0):
     manager.add_effect(StatusEffect("Silence", duration, disables_skills=True, color=(149, 165, 166)))

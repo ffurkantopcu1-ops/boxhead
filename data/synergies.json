@@ -2,13 +2,13 @@
   {
     "id": "fire_and_ice",
     "name": "🌊 Buhar Patlaması",
-    "desc": "Ateş + Buz = Her 10sn tüm düşmanlara 50 hasar",
+    "desc": "Ateş + Buz = Yakındaki düşmanlara her saniye 50 hasar",
     "required_cards": [
       "frozen_time",
       "blood_fire"
     ],
     "bonus": {
-      "periodicAoeDmg": 50
+      "static_field": 50
     }
   },
   {
@@ -114,7 +114,7 @@
     "name": "💀 Kaotik İnfaz",
     "desc": "Kaos Teorisi + Cellat = İnfaz eşiği artar, düşman patlar",
     "required_cards": ["chaos_theory", "executioner"],
-    "bonus": {"executeThreshold": 0.15, "executeExplosion": 1}
+    "bonus": {"lowHpExec": 0.15, "executeExplosion": 1}
   },
   {
     "id": "glass_fortress",

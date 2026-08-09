@@ -157,9 +157,10 @@ class LabyrinthOfFire(BossPhase):
             positions = random.sample(positions, 2)
         self.pillars = []
         for px, py in positions:
+            # Desen tutarliligi: once artir sonra kullan (cakisan ID'ler)
+            game.entity_id_counter += 1
             pillar = BossPillar(game.entity_id_counter, px, py, game, boss)
             game.enemies.append(pillar)
-            game.entity_id_counter += 1
             self.pillars.append(pillar)
 
     def update(self, dt, boss, game):
@@ -418,8 +419,10 @@ class AbyssalLord(Enemy):
             p = game.players[game.local_player_id]
             angle, dist = math.atan2(p.y - self.y, p.x - self.x), math.hypot(p.x - self.x, p.y - self.y)
             if dist > 300:
-                self.x += math.cos(angle) * self.speed * dt * 30
-                self.y += math.sin(angle) * self.speed * dt * 30
+                # Yavaslatma/sersemletme boss hareketinde de okunsun (H2)
+                eff_speed = 0.0 if getattr(self, "is_stunned", False) else self.speed * getattr(self, "speed_mod", 1.0)
+                self.x += math.cos(angle) * eff_speed * dt * 30
+                self.y += math.sin(angle) * eff_speed * dt * 30
                 
         # Sınır dışına çıkmayı engelle (Map Boundaries)
         self.x = max(50, min(4950, self.x))
@@ -429,7 +432,8 @@ class AbyssalLord(Enemy):
         if self.invulnerable:
             game.add_event("damage_text", self.x, self.y - 40, value="IMMUNE!", color=(200, 200, 255), scale=0.8)
             return
-        super().take_damage(amount, game, is_crit, is_dot)
+        # from_player dusuruluyordu: lifesteal/storm caller/cift agiz boss'ta olu kaliyordu
+        super().take_damage(amount, game, is_crit, is_dot, from_player)
 
     def draw(self, screen, camera_x, camera_y):
         draw_x, draw_y = int(self.x - camera_x), int(self.y - camera_y)

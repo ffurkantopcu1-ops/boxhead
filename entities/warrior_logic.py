@@ -21,7 +21,7 @@ class Warrior:
             return
 
         # Warrior: Kılıç Savurma (Melee) veya Yumruk
-        range_val = (self.attack_range + player.stats.get("meleeRange", 0)) * player.stats.get("meleeRangeMult", 1.0)
+        range_val = (self.attack_range + player.stats.get("meleeRangeFlat", 0)) * player.stats.get("meleeRangeMult", 1.0)
         angle = player.facing_angle
         
         # Hasar ve Görsel Belirleme
@@ -53,7 +53,9 @@ class Warrior:
                         is_crit = random.random() < player.stats.get("critChance", 0.05)
                         crit_mult = 2.0 + player.stats.get("critDmg", 0)
                         final_dmg = dmg * crit_mult if is_crit else dmg
-                        elem_mult = 1.0 + player.stats.get("elementDmgMult", 0.0)
+                        # Ateş/Buz yüzde statları melee'de yok sayılıyordu (F6);
+                        # menzilli saldırıyla aynı toplamsal formül kullanılır.
+                        fire_mult, frost_mult, elem_mult = player.get_elemental_mults()
 
                         # --- ELEMENTEL UYGULAMA (NEW!) ---
                         # 1. Zehir
@@ -61,11 +63,11 @@ class Warrior:
                         if p_dps > 0: e.apply_dot('poison', p_dps, 3.0)
 
                         # 2. Buz (Sadece DoT, Yavaşlatma Kaldırıldı v1.0.6.6)
-                        f_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats["dmgMult"] * elem_mult
+                        f_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats["dmgMult"] * frost_mult
                         if f_dmg > 0: e.apply_dot('frost', f_dmg * 0.5, 3.5)
 
                         # 3. Ateş (Patlama + Yanma)
-                        fire_dmg = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats["dmgMult"] * elem_mult
+                        fire_dmg = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats["dmgMult"] * fire_mult
                         if fire_dmg > 0:
                             # Vuruş anında mini patlama (AoE Pulse)
                             game.add_event("explosion", e.x, e.y, radius=80, color=(255, 100, 0), timer=0.15)
@@ -76,7 +78,7 @@ class Warrior:
                                     odx = other.x - e.x
                                     ody = other.y - e.y
                                     if odx * odx + ody * ody < 80 * 80:
-                                        other.take_damage(fire_dmg, game)
+                                        other.take_damage(fire_dmg, game, from_player=True)
                                         other.apply_dot('fire', fire_dmg * 0.4, 3.0)
                                         splash_count += 1
                                         if splash_count >= 10:
@@ -84,7 +86,7 @@ class Warrior:
                             # Ana hedefe Yanma
                             e.apply_dot('fire', fire_dmg * 0.4, 3.0)
 
-                        e.take_damage(final_dmg, game)
+                        e.take_damage(final_dmg, game, from_player=True)
                         hit_any = True
         
         # Dash kaldırıldı (İsteğe bağlı sarsıntı eklenebilir ama dash artık yok)

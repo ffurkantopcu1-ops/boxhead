@@ -50,8 +50,12 @@ class Projectile:
         self.bounce = bounce
         self.pierce = pierce
         self.bounce_dmg_mult = bounce_dmg_mult
-        self.hit_history = [] 
-        self.is_katana = (p_type == 'katana')        
+        self.hit_history = []
+        self.is_katana = (p_type == 'katana')
+        # Çılgın Simyacı (mad_bomber) ikinci patlama bayrağı. Projectile
+        # havuzlanmıyor (projectile_pool.py yalnızca BossProjectile'ı havuzlar),
+        # yine de her mermide açıkça sıfırlanır.
+        self._second_blast = False
         
     def update(self, dt, game):
         # Bumerang Geri Dönme Mantığı
@@ -205,21 +209,50 @@ class Projectile:
             return
             
         # Apply Elemental Effects (NEW Standardized)
+        # dotDmgMult menzilli silahlarda tamamen etkisizdi: oyuncu çarpanı
+        # mermiye p.dot_mult olarak taşıyor ama burada okunmuyordu. Çarpan
+        # SADECE DoT'lara uygulanır; explode()'un anlık AoE hasarı fire_dmg'yi
+        # doğrudan kullandığı için oraya sızdırılmaz (çifte sayım olurdu).
+        _dm = getattr(self, 'dot_mult', 1.0)
         if self.fire_dmg > 0:
-            enemy.apply_dot('fire', self.fire_dmg * 0.5, 4.0)
+            enemy.apply_dot('fire', self.fire_dmg * 0.5 * _dm, 4.0)
             # Mini Patlama (AoE Pulse) on hit
             self.explode(game, small=True)
-            
+
         if self.frost_dmg > 0:
-            enemy.apply_dot('frost', self.frost_dmg * 0.5, 4.0)
-            
+            enemy.apply_dot('frost', self.frost_dmg * 0.5 * _dm, 4.0)
+
         if self.poison_dps > 0:
-            enemy.apply_dot('poison', self.poison_dps, 5.0)
+            enemy.apply_dot('poison', self.poison_dps * _dm, 5.0)
         
         # Hasar Uygula
-        enemy.take_damage(self.dmg, game, from_player=not self.is_hostile)
+        # is_crit AKTARILMALI: mermi kritik bilgisini taşıyordu ama take_damage'a
+        # verilmiyordu, bu yüzden krite bağlı efektler (Tetikçi evrimi
+        # crit_ignite, Kritik Aşırı Yük kartı) menzilli silahlarda hiç
+        # tetiklenmiyordu.
+        # minion_kills görevi: bayrak SADECE bu take_damage çağrısı boyunca
+        # açıktır. Enemy.take_damage ölümde game.kill_enemy'yi senkron çağırır,
+        # dolayısıyla kill_enemy bayrağı doğru okur. Çağrı sonrası hemen
+        # temizlenir; bayat bayrak yüzünden oyuncunun öldürdüğü düşman
+        # minyona yazılmaz (DoT/patlama ile sonradan ölüm de sayılmaz).
+        _by_minion = getattr(self, "is_minion_proj", False)
+        enemy.last_hit_by_minion = _by_minion
+        try:
+            enemy.take_damage(self.dmg, game, is_crit=self.is_crit, from_player=not self.is_hostile)
+        finally:
+            enemy.last_hit_by_minion = False
         self.hit_history.append(enemy.id)
-        
+
+        # Ayaz (frostbite) aurası: frost_slow statı tanımlıydı ama okunmuyordu.
+        # Sahibi (oyuncu) üzerinden okunur; düşman mermileri etkilenmez.
+        if not self.is_hostile and game and hasattr(game, "players"):
+            _owner = game.players[game.local_player_id]
+            fs = _owner.stats.get("frost_slow", 0)
+            if fs > 0:
+                from logic.status_effects import apply_slow
+                apply_slow(enemy.effect_manager, duration=2.0,
+                           mult=max(0.0, 1.0 - fs), name="Frostbite")
+
         # Vampir İmparatorluğu (Minion Lifesteal)
         if getattr(self, "is_minion_proj", False) and game and hasattr(game, "players"):
             p = game.players[game.local_player_id]
@@ -269,9 +302,16 @@ class Projectile:
                     dy = e.y - self.y
                     if dx * dx + dy * dy < radius * radius:
                         # Patlama anlık hasarı (Ateş Hasarı * 1.5 gibi bir çarpan veya direkt fire_dmg)
-                        e.take_damage(self.fire_dmg, game, from_player=not self.is_hostile)
-                        # DoT da ekleyelim (Patlamadan etkilenen yanar)
-                        e.apply_dot('fire', self.fire_dmg * 0.4, 3.0)
+                        # Ejder minyonunun alan hasarı da minion_kills sayılır
+                        e.last_hit_by_minion = getattr(self, "is_minion_proj", False)
+                        try:
+                            e.take_damage(self.fire_dmg, game, from_player=not self.is_hostile)
+                        finally:
+                            e.last_hit_by_minion = False
+                        # DoT da ekleyelim (Patlamadan etkilenen yanar).
+                        # Anlık hasar (yukarıdaki take_damage) çarpansız kalır,
+                        # yalnızca yanma dotDmgMult'tan faydalanır.
+                        e.apply_dot('fire', self.fire_dmg * 0.4 * getattr(self, 'dot_mult', 1.0), 3.0)
 
         game.clouds.append(new_cloud)
         game.entity_id_counter += 1
@@ -299,6 +339,24 @@ class Projectile:
         else:
             game.add_event("explosion", self.x, self.y, radius=self.aoe,
                            color=self.color, timer=0.2)
+
+        # --- Çılgın Simyacı (mad_bomber): bombalar %50 şansla ikinci kez patlar ---
+        # Not: taslak `self.p_type` diyordu, gerçek alan adı `self.type`.
+        if (self.type == 'bomb' and not small and not self.is_hostile
+                and not getattr(self, 'is_minion_proj', False)
+                and not self._second_blast):
+            self._second_blast = True   # zincirleme ikinci patlamayı engeller
+            owner = game.players.get(game.local_player_id) if hasattr(game, 'players') else None
+            if getattr(owner, 'evolution_passive', '') == 'mad_bomber' and random.random() < 0.5:
+                r = self.aoe * 0.7
+                game.add_event("explosion", self.x, self.y, radius=int(r),
+                               color=(255, 200, 60), timer=0.25)
+                for e in list(game.iter_enemies_near(self.x, self.y, r)):
+                    if e.dead or getattr(e, 'is_trap', False):
+                        continue
+                    dx, dy = e.x - self.x, e.y - self.y
+                    if dx * dx + dy * dy <= r * r:
+                        e.take_damage(self.dmg * 0.5, game, from_player=True)
 
     def find_next_target(self, game, current_id):
         next_target = None

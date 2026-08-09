@@ -164,9 +164,18 @@ class BiomeSystem:
         if bonus.get('fire_resist'):
             enemy.fire_resist = True
         if bonus.get('frost_aura'):
+            # frost_aura tüketim noktası: entities/enemy.py -> update()
+            # (200 piksel içindeki oyuncuyu yavaşlatır). Aynı bayrağı
+            # elite_system de kurar.
             enemy.frost_aura = True
         if bonus.get('teleport'):
             enemy.can_teleport = True
+
+        # Zorluk degisimi base_* uzerinden yeniden hesapladigi icin biyom
+        # bonuslari siliniyordu (H4)
+        enemy.base_max_hp = enemy.max_hp
+        enemy.base_dmg = enemy.dmg
+        enemy.base_speed = enemy.speed
     
     def get_random_hazard(self, wave_level):
         """Biyoma uygun rastgele bir tehlike türü döndürür."""

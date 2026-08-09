@@ -132,7 +132,7 @@
       2500,
       4000
     ],
-    "desc": "Her seviye, markette aynı anda gösterilen eşya sayısını 1 artırır.",
+    "desc": "Her seviye, markette aynı anda gösterilen eşya sayısını 1 artırır ve eşya kalitesini bir kademe yükseltir.",
     "effect_key": "shop_slots",
     "effect_per_rank": 1
   },
@@ -263,18 +263,6 @@
     "effect_per_rank": 1
   },
   {
-    "id": "card_reroll",
-    "name": "🔁 Kart Yenileme",
-    "category": "cards",
-    "max_rank": 1,
-    "costs": [
-      2500
-    ],
-    "desc": "Her kart seçiminde 1 kez yenileme hakkın olur.",
-    "effect_key": "card_reroll",
-    "effect_per_rank": 1
-  },
-  {
     "id": "legendary_card",
     "name": "🌟 Efsane Kart Şansı",
     "category": "cards",
@@ -289,15 +277,29 @@
     "effect_per_rank": 0.1
   },
   {
-    "id": "blood_moon_mem",
-    "name": "🌙 Kan Ayı Hafızası",
-    "category": "special",
-    "max_rank": 1,
+    "id": "card_reroll",
+    "name": "🔁 Kart Yenileme",
+    "category": "cards",
+    "max_rank": 3,
     "costs": [
+      1200,
+      2500,
       4000
     ],
-    "desc": "Kan Ayı bittiğinde marketi 1 dalga daha erişilebilir tutar.",
-    "effect_key": "blood_moon_memory",
+    "desc": "Her kart seçiminde 1 ek yenileme hakkı verir (taban 3).",
+    "effect_key": "card_reroll",
+    "effect_per_rank": 1
+  },
+  {
+    "id": "start_card",
+    "name": "🃏 Başlangıç Kartı",
+    "category": "cards",
+    "max_rank": 1,
+    "costs": [
+      3500
+    ],
+    "desc": "Her koşuya rastgele bir pasif kartla başlarsın.",
+    "effect_key": "start_with_card",
     "effect_per_rank": 1
   },
   {
@@ -310,30 +312,6 @@
     ],
     "desc": "Karakter evrimini seviye 20 yerine seviye 15'te tetikler.",
     "effect_key": "early_evolution",
-    "effect_per_rank": 1
-  },
-  {
-    "id": "start_card",
-    "name": "🃏 Başlangıç Kartı",
-    "category": "special",
-    "max_rank": 1,
-    "costs": [
-      3500
-    ],
-    "desc": "Her yeni oyunun başında koleksiyonuna 1 rastgele kart ekler.",
-    "effect_key": "start_with_card",
-    "effect_per_rank": 1
-  },
-  {
-    "id": "biome_choice",
-    "name": "🌍 Biyom Seçimi",
-    "category": "special",
-    "max_rank": 1,
-    "costs": [
-      3000
-    ],
-    "desc": "Yeni oyuna başlarken ilk biyomu kendin seçebilmeni sağlar.",
-    "effect_key": "biome_choice",
     "effect_per_rank": 1
   }
 ]

@@ -57,14 +57,6 @@ class Player:
         self.i_frame_timer = 0
         self.level_up_timer = 0 # Görsel efekt için
         
-        # --- META PROGRESSION UPGRADES (CrystalShop) ---
-        try:
-            meta = SaveManager.load_meta()
-            crystal_shop = CrystalShop()
-            crystal_shop.apply_to_player(meta, self)
-        except Exception as e:
-            print("Meta load error:", e)
-
         # --- KART / LANET SİSTEMİ ATRİBÜTLERİ ---
         self.damage_taken_mult = 1.0       # Cam Top, Glass Bones vb.
         self.self_dmg_on_hit = 0.0         # Double Edge
@@ -97,10 +89,26 @@ class Player:
         self._early_evolution = False
         self.berserker_rage = False        # Berserker Rage card flag
         self.skills_permanent = {}         # Kalıcı stat havuzu
-        
+
+        # --- META PROGRESSION UPGRADES (CrystalShop) ---
+        # DİKKAT: Bu blok yukarıdaki varsayılan atamalardan SONRA çalışmalı;
+        # eskiden önce çalıştığı için revive_count/shop_discount/skills_permanent
+        # gibi tüm kristal yükseltmeleri hemen ardından sıfırlanıyordu.
+        try:
+            meta = SaveManager.load_meta()
+            crystal_shop = CrystalShop()
+            crystal_shop.apply_to_player(meta, self)
+        except Exception as e:
+            print("Meta load error:", e)
+
+
         # --- ARTIFACT & ACTIVE EFFECTS ---
         self.artifact_cooldown = 0
         self.artifact_timer = 0 # Aktif efekt süresi (Görünmezlik, Kalkan vb.)
+        # Süreli stat çarpanları (örn. Kan Ritüeli). recalculate_stats bunları
+        # kalıcı statların ÜSTÜNE uygular; böylece araya giren bir yeniden
+        # hesaplama buff'ı silmez (F7).
+        self.temp_buffs = {}
         self.is_invisible = False
         self.is_invulnerable = False
         self.fire_breath_timer = 0
@@ -163,7 +171,8 @@ class Player:
             { 'name': '💂 Ordulu (+1 Minyon Sayı)', 'stat': 'minionCount', 'val': 1, 'lvl': 0, 'max': 2, 'group': 'MİNYON' },
             { 'name': '🎖️ Komutan (+25% Minyon Hasar)', 'stat': 'minionDamage', 'val': 0.25, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '⚡ Çevik Pençeler (+20% Minyon Hızı)', 'stat': 'minionRate', 'val': 0.2, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
-            { 'name': '💖 Fedai (+80 Minyon Canı)', 'stat': 'minionMaxHp', 'val': 80, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
+            # Düz can veriyor; çarpan statını beslerse minyon canı 85.000'e çıkıyordu (F3)
+            { 'name': '💖 Fedai (+80 Minyon Canı)', 'stat': 'minionMaxHpFlat', 'val': 80, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '📏 Keskin Gözler (+15% Minyon Menzil)', 'stat': 'minionRange', 'val': 0.15, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '👊 Pençe Eğitimi (+5 Minyon Fiz. Hasar)', 'stat': 'minionPhysDmgFlat', 'val': 5, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '⚔️ Keskin Pençe (+10% Minyon Fiz. Hasar)', 'stat': 'minionPhysDmgMult', 'val': 0.1, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
@@ -184,6 +193,19 @@ class Player:
         self.class_name = self.class_id
         self.evolution = ""
         self.evolution_passive = ""
+        # --- EVRİM PASİFİ DURUMLARI ---
+        # apply_evolution() yalnızca stat/max_hp uyguluyordu; pasiflerin kendi
+        # sayaçları burada tanımlanır ki update()/shoot() getattr'a düşmesin.
+        self._gladiator_timer = 0.0     # gladiator_rage: öldürme sonrası hız penceresi
+        self._kill_invis_timer = 0.0    # kill_invisible: öldürme sonrası görünmezlik
+        self._ks_stacks = 0             # kill_speed_stack: öldürme yığını
+        self._ks_timer = 0.0            # yığın sıfırlama sayacı
+        self._paladin_tick = 1.0        # paladin_aura tick sayacı
+        self._heal_turret_tick = 1.0    # heal_turret tick sayacı
+        self._phantom_first_shot = False
+        # Negatif baslangic: oyunun ilk saniyelerinde de "2sn beklendi" sayilsin
+        # (pygame.time.get_ticks() acilista kucuk bir deger dondurur)
+        self._last_phantom_shot = -10000
         self.inv_manager = InventoryManager(self)
         self.stats = {} 
         
@@ -212,13 +234,20 @@ class Player:
         if cn == "warrior":
             starting_weapon = {"name": "Eski Kılıç", "type": "weapon", "isMelee": True, "weaponClass": "warrior", "rarity": "Normal", "itemBase": {"physDmg": 12, "meleeRange": 50}, "prefixes": [], "suffixes": []}
         elif cn == "beastmaster":
-            starting_weapon = {"name": "Küçük Kurt", "type": "pet", "rarity": "Normal", "itemBase": {"minionDamage": 0, "minionMaxHp": 50}, "prefixes": [], "suffixes": []}
+            # minionMaxHp ÇARPAN'dır (pet itemleri 0.60-12.0 aralığında);
+            # 50 değeri başlangıç kurduna 5100 can veriyordu (F3)
+            starting_weapon = {"name": "Küçük Kurt", "type": "pet", "rarity": "Normal", "itemBase": {"minionDamage": 0, "minionMaxHp": 0.5}, "prefixes": [], "suffixes": []}
         elif cn == "sniper":
             starting_weapon = {"name": "Basit Arbalet", "type": "weapon", "isRanged": True, "weaponClass": "sniper", "rarity": "Normal", "itemBase": {"physDmg": 18}, "prefixes": [], "suffixes": []}
         elif cn == "ninja":
             starting_weapon = {"name": "Paslı Katana", "type": "weapon", "isMelee": True, "weaponClass": "ninja", "rarity": "Magic", "itemBase": {"physDmg": 15, "attackCooldown": 450, "meleeRange": 20}, "prefixes": [], "suffixes": []}
         elif cn == "alchemist":
             starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "weaponClass": "alchemist", "rarity": "Normal", "itemBase": {"poisonDps": 4}, "prefixes": [], "suffixes": []}
+        elif cn == "bomber":
+            # Bomba hasarı poisonDps üzerinden hesaplanır (shoot(): is_bomb dalı);
+            # physDmg bomba yolunda okunmadığı için taban stat olarak verilmez.
+            # item_system'deki "El Bombası Çantası (T4)" tabanıyla birebir aynı.
+            starting_weapon = {"name": "El Bombası Çantası", "type": "weapon", "isBomb": True, "weaponClass": "bomber", "rarity": "Normal", "itemBase": {"poisonDps": 8}, "prefixes": [], "suffixes": []}
         elif cn == "sorcerer":
             # elementDmgMult 0.2: T4 baz (item_system.py) ile hizalı; 0.6 başlangıçta T2 gücü veriyordu (F6)
             starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "weaponClass": "sorcerer", "rarity": "Magic", "itemBase": {"physDmg": 8, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
@@ -261,6 +290,7 @@ class Player:
         "alchemist": "Simyacı",
         "sorcerer": "Kadim Büyücü",
         "bloodwalker": "Vampir",
+        "bomber": "Bombacı",
     }
 
     def sync_class_name(self):
@@ -294,6 +324,9 @@ class Player:
         elif cn == "alchemist":
             self.specialization = Alchemist()
             self.color = (241, 196, 15)
+        elif cn == "bomber":
+            self.specialization = Bomber()
+            self.color = (211, 84, 0)
         elif cn == "sorcerer":
             self.specialization = Sorcerer()
             self.color = (148, 88, 230)
@@ -346,13 +379,17 @@ class Player:
         if self.artifact_timer > 0:
             self.artifact_timer -= dt
             if self.artifact_timer <= 0:
-                # Süreli efektleri kapat
-                if self.is_invisible:
+                # Süreli efektleri kapat.
+                # Ölüm Gölgesi (kill_invisible) evrimi de görünmezlik veriyor;
+                # onun kendi sayacı doluyken artifact bitişi görünmezliği kesmez.
+                if self.is_invisible and getattr(self, '_kill_invis_timer', 0) <= 0:
                     self.is_invisible = False
                     print("Görünmezlik Bitti")
                 if self.is_invulnerable and not getattr(game, 'cheat_mode', False):
                     self.is_invulnerable = False
-                # Kan Ritüeli bittiyse statları geri çek (Recalculate ile temizle)
+                # Süreli buff'lar bitti: havuzu boşalt ve statları yeniden kur (F7)
+                if getattr(self, 'temp_buffs', None):
+                    self.temp_buffs.clear()
                 self.inv_manager.recalculate_stats()
                 
         if self.fire_breath_timer > 0:
@@ -367,7 +404,9 @@ class Player:
                 game.entity_id_counter += 1
 
         # Kan Ritüeli HP Kaybı (Saniyede %2)
-        if self.artifact_timer > 0 and self.inv_manager.equipped.get("artifact", {}).get("artifactId") == "blood_ritual":
+        # Slot anahtarı var ama değeri None olabildiği için .get default'u devreye
+        # girmiyor; "or {}" gerekli (C7)
+        if self.artifact_timer > 0 and (self.inv_manager.equipped.get("artifact") or {}).get("artifactId") == "blood_ritual":
             self.hp -= self.max_hp * 0.02 * dt
             
         keys = pygame.key.get_pressed()
@@ -380,6 +419,13 @@ class Player:
         if (dx != 0 or dy != 0) and not self.is_stunned:
             mag = math.hypot(dx, dy)
             speed = self.stats["speed"] * self.speed_mod
+            # Adrenalin kartı: 5sn boyunca +%30 hız (P3)
+            if getattr(self, '_adrenaline_timer', 0) > 0:
+                speed *= 1.3
+            # Gladyatör (+%30) ve Fırtına Bıçağı (yığın başına +%4) hız pasifleri
+            if getattr(self, '_gladiator_timer', 0) > 0:
+                speed *= 1.3
+            speed *= 1.0 + 0.04 * getattr(self, '_ks_stacks', 0)
             # DASH SPEED BOOST (%350)
             if self.dash_active_timer > 0:
                 speed *= 3.5
@@ -470,8 +516,9 @@ class Player:
                 self.energy_shield = min(self.max_energy_shield, self.energy_shield + regen * dt)
                 
         if self.hp < self.max_hp:
-            # hpRegen (eşya/aura/kart/evrim)
-            regen = self.stats["regen"] + self.stats.get("hpRegen", 0)
+            # hpRegen (eşya/aura/kart/evrim) + combatRegen (skill/SET_PALADIN/affix).
+            # combatRegen yalnızca HUD'da gösteriliyordu, regene girmiyordu (P3)
+            regen = self.stats["regen"] + self.stats.get("hpRegen", 0) + self.stats.get("combatRegen", 0)
             if game.wave.get("current_diff") == "Impossible":
                 regen *= 0.5 # Can yenileme etkisi yarıya iner
             self.heal(regen * dt)
@@ -492,8 +539,8 @@ class Player:
             self.lifesteal_buffer -= can_heal
             if self.hp >= self.max_hp:
                 self.lifesteal_buffer = 0
-        else:
-            self.lifesteal_buffer = 0
+        # NOT: else dalında havuzu sıfırlamak yok — take_damage 0.2sn cooldown
+        # kurduğu için havuz bir sonraki karede hep siliniyordu (H1)
 
         # --- PASİF KART EFEKTLERİ ---
         # Death Wish: Her saniye HP drain
@@ -502,19 +549,23 @@ class Player:
 
         # Adrenalin Kartı: 20s CD, 5s aktif
         if self.adrenaline_active:
+            # Init timer mantığının ALTINDAYDI: ilk kare boşa tetikleniyordu (P4)
+            if not hasattr(self, '_adrenaline_initialized'):
+                self._adrenaline_cd = 20.0
+                self._adrenaline_timer = 0.0
+                self._adrenaline_initialized = True
             if self._adrenaline_cd > 0:
                 self._adrenaline_cd -= dt
+                if self._adrenaline_cd <= 0:
+                    # Buff penceresi açılıyor
+                    self._adrenaline_timer = 5.0
+                    game.add_event("damage_text", self.x, self.y-50, value="⚡ ADRENALİN!", color=(255, 200, 0), timer=1.0)
             else:
                 self._adrenaline_timer -= dt
                 if self._adrenaline_timer <= 0:
                     # Döngüyü yeniden başlat
                     self._adrenaline_cd = 20.0
-                    self._adrenaline_timer = 5.0
-                    game.add_event("damage_text", self.x, self.y-50, value="⚡ ADRENALİN!", color=(255, 200, 0), timer=1.0)
-            if not hasattr(self, '_adrenaline_initialized'):
-                self._adrenaline_cd = 20.0
-                self._adrenaline_timer = 5.0
-                self._adrenaline_initialized = True
+                    self._adrenaline_timer = 0.0
 
         # Donmuş Zaman Kartı: Her periodic_freeze_cd saniyede tüm düşmanları dondur
         if self.periodic_freeze_cd > 0:
@@ -599,6 +650,54 @@ class Player:
             mult_bonus = max(0, (1.0 - ratio) * 1.0)  # max +1.0 (2x toplam)
             self._low_hp_rage_mult = 1.0 + mult_bonus
 
+        # --- EVRİM PASİFLERİ (zamanlayıcılar) ---
+        evo_p = getattr(self, 'evolution_passive', '')
+
+        # Gladyatör: her öldürmede 1sn hız
+        if self._gladiator_timer > 0:
+            self._gladiator_timer -= dt
+
+        # Ölüm Gölgesi: öldürünce kısa görünmezlik
+        if self._kill_invis_timer > 0:
+            self._kill_invis_timer -= dt
+            if self._kill_invis_timer <= 0:
+                self._kill_invis_timer = 0.0
+                # Artifact görünmezliği hâlâ aktifse ona dokunma
+                if self.artifact_timer <= 0:
+                    self.is_invisible = False
+
+        # Fırtına Bıçağı: öldürme yığını (max 10, 3sn'de sıfırlanır)
+        if self._ks_timer > 0:
+            self._ks_timer -= dt
+            if self._ks_timer <= 0:
+                self._ks_timer = 0.0
+                self._ks_stacks = 0
+
+        # Paladin: 1sn'lik kutsal aura (küçük şifa + çevreyi yavaşlat)
+        if evo_p == 'paladin_aura':
+            self._paladin_tick -= dt
+            if self._paladin_tick <= 0:
+                self._paladin_tick = 1.0
+                from logic.status_effects import apply_slow
+                self.heal(self.max_hp * 0.02)
+                r = 260
+                for e in game.iter_enemies_near(self.x, self.y, r):
+                    if e.dead or getattr(e, 'is_trap', False):
+                        continue
+                    dx, dy = e.x - self.x, e.y - self.y
+                    if dx * dx + dy * dy <= r * r:
+                        apply_slow(e.effect_manager, duration=1.2, mult=0.8, name="Paladin")
+
+        # Kale Mimarı: her taret saniyede %0.5 max HP yeniler
+        if evo_p == 'heal_turret':
+            self._heal_turret_tick -= dt
+            if self._heal_turret_tick <= 0:
+                self._heal_turret_tick = 1.0
+                mine = [t for t in getattr(game, 'turrets', [])
+                        if getattr(t, 'owner', None) is self and not getattr(t, 'dead', False)]
+                if mine:
+                    self.heal(self.max_hp * 0.005 * len(mine))
+
     def get_conditional_dmg_mult(self):
         """Koşullu hasar çarpanları: Berserker Rage kartı ve Şehit (low_hp_rage) evrimi.
         Bu bayraklar update() içinde hesaplanıyordu ama hiçbir hasar formülü okumuyordu (S6)."""
@@ -606,7 +705,34 @@ class Player:
         if getattr(self, '_berserker_active', False):
             m *= 1.8
         m *= getattr(self, '_low_hp_rage_mult', 1.0)
+        # Adrenalin kartı: timer dönüyordu ama hiçbir buff uygulanmıyordu (P3)
+        if getattr(self, '_adrenaline_timer', 0) > 0:
+            m *= 1.2
+        # Asil Vampir: tam canda hasar bonusu
+        if getattr(self, 'evolution_passive', '') == 'full_hp_bonus':
+            if self.hp >= self.max_hp * 0.95:
+                m *= 1.5
+        # Fırtına Bıçağı: öldürme yığını başına +%3 hasar
+        m *= 1.0 + 0.03 * getattr(self, '_ks_stacks', 0)
         return m
+
+    def get_elemental_mults(self):
+        """Element hasar çarpanlarını TOPLAMSAL birleştirir (F1).
+
+        elementDmgMult ve fireDmgMult/frostDmgMult'ın ikisi de "yüzde hasar"
+        statı; eskiden çarpımsal uygulandıkları için tek bir mermide
+        (1+1.3)*(1+1.0) = 4.6x gibi çarpanlar çıkıyor, dmgMult ve dotDmgMult ile
+        birlikte 17x'e ulaşıyordu. Artık aynı havuzda toplanırlar:
+        1.0 + elementDmgMult + <tipe özel>.
+
+        Dönüş: (fire, frost, other) — other zehir/yıldırım gibi tipe özel
+        çarpanı olmayan elementler için.
+        """
+        elem = self.stats.get("elementDmgMult", 0.0)
+        fire = max(0.0, 1.0 + elem + self.stats.get("fireDmgMult", 0.0))
+        frost = max(0.0, 1.0 + elem + self.stats.get("frostDmgMult", 0.0))
+        other = max(0.0, 1.0 + elem)
+        return fire, frost, other
 
     def gain_xp(self, amount):
         self.xp += amount
@@ -614,10 +740,25 @@ class Player:
             self.level_up()
 
     def level_up(self):
+        # XP eşiği HARCANIR, sonra ortak seviye kazanımı uygulanır
+        self.xp -= self.xp_to_next_level
+        self._apply_level_gain()
+
+    def grant_free_level(self):
+        """Bedava seviye verir (kart ekranındaki 'Atla' ödülü gibi).
+
+        Dışarıdan `p.level += 1` yapıldığında xp_to_next_level güncellenmediği
+        için oyuncu sonraki seviyeye 250 XP erken ulaşıyor, ardından eğri
+        zıplıyordu; ayrıca can tazeleme ve Mutasyon kartı tetiklemesi
+        atlanıyordu (F9). Bu metot XP eğrisini senkron tutar.
+        """
+        self._apply_level_gain()
+
+    def _apply_level_gain(self):
+        """level_up ve grant_free_level'ın ortak gövdesi (XP düşümü hariç)."""
         self.level += 1
         if hasattr(self, 'game') and hasattr(self.game, 'track_quest'):
             self.game.track_quest("reach_level", self.level)
-        self.xp -= self.xp_to_next_level
         # YENİ DENGELEME: Katlanarak değil doğrusal artış (Wave 10 -> L14, Wave 20 -> L30 hedefine uygun)
         self.xp_to_next_level = 100 + self.level * 250
         self.skill_points += 1
@@ -675,6 +816,36 @@ class Player:
                 return True
         return False
 
+    def _consume_phantom_crit(self):
+        """Hayalet Nişancı (first_shot_invisible): 2sn beklemeden sonraki ilk atış
+        garantili kritiktir. Atış BAŞINA bir kez çağrılır (mermi başına değil),
+        yoksa çoklu atışta yalnızca ilk mermi kritik olurdu."""
+        if not getattr(self, '_phantom_first_shot', False):
+            return False
+        now = pygame.time.get_ticks()
+        ready = (now - getattr(self, '_last_phantom_shot', -10000)) > 2000
+        self._last_phantom_shot = now
+        return ready
+
+    SHOCKWAVE_RADIUS = 90
+
+    def emit_shockwave(self, game):
+        """'Şok Dalgası' (shockwave) affix'i: her saldırıda oyuncunun etrafında
+        sabit hasarlı bir darbe. Stat tanımlıydı ama hiçbir yerde okunmuyordu."""
+        sw = self.stats.get("shockwave", 0)
+        if sw <= 0:
+            return
+        r = self.SHOCKWAVE_RADIUS
+        for e in game.iter_enemies_near(self.x, self.y, r):
+            if e.dead or getattr(e, 'is_trap', False):
+                continue
+            dx = e.x - self.x
+            dy = e.y - self.y
+            if dx * dx + dy * dy <= r * r:
+                e.take_damage(sw, game, from_player=True)
+        game.add_event("shockwave", self.x, self.y, radius=r,
+                       color=(255, 220, 120), timer=0.25)
+
     def shoot(self, game, is_bomb=None):
         # Silah kontrolü
         weapon = self.inv_manager.equipped.get("weapon")
@@ -704,32 +875,39 @@ class Player:
         if not weapon:
             # EĞER SİLAH YOKSA: Yumruk
             phys_flat = self.stats.get("physDmgFlat", 0)
-            final_dmg = (20 + phys_flat) * self.stats.get("dmgMult", 1.0) * self.get_conditional_dmg_mult()
+            # physDmgMult SADECE fiziksel tarafa uygulanır (yumruk saf fiziksel)
+            final_dmg = ((20 + phys_flat) * self.stats.get("dmgMult", 1.0)
+                         * self.get_conditional_dmg_mult()
+                         * (1.0 + self.stats.get("physDmgMult", 0)))
             game.add_event("damage_text", self.x, self.y - 20, value="YUMRUK!", color=(200, 200, 200), timer=0.3)
             # Görsel Efekt
-            r_val = 80 + self.stats.get("meleeRange", 0)
+            r_val = (80 + self.stats.get("meleeRangeFlat", 0)) * self.stats.get("meleeRangeMult", 1.0)
             game.add_event("slash", self.x, self.y, angle=self.facing_angle, range=r_val, arc=1.0, timer=0.1)
             for e in game.iter_enemies_near(self.x, self.y, r_val):
                 dx = e.x - self.x
                 dy = e.y - self.y
                 if not e.dead and dx * dx + dy * dy < r_val * r_val:
-                    e.take_damage(final_dmg, game)
+                    e.take_damage(final_dmg, game, from_player=True)
             return
 
         # --- RANGET/PROJECTILE ATTACK LOGIC ---
         # (Moved from execute_fallback_melee to solve class shooting issues)
         
         # Base Statlar (Phys, Poison vb.) zaten recalculate_stats ile toplandı
-        base_phys = self.stats.get("physDmg", 20) 
+        base_phys = max(0, self.stats.get("physDmg", 20))  # negatif hasar guard'i (H8)
         base_poison = self.stats.get("poisonDps", 0)
         
         # Çarpanlar
         mult = self.stats.get("dmgMult", 1.0) * self.get_conditional_dmg_mult()
-        # Element hasar çarpanı (Sorcerer sınıf kimliği + Elementalist skill + auralar)
-        elem_mult = 1.0 + self.stats.get("elementDmgMult", 0.0)
-        # Ateş/Buz yüzde skilleri artık gerçekten hasara girer (S7)
-        fire_mult = 1.0 + self.stats.get("fireDmgMult", 0.0)
-        frost_mult = 1.0 + self.stats.get("frostDmgMult", 0.0)
+        # Element hasar çarpanları (Sorcerer sınıf kimliği + Elementalist skill +
+        # auralar). fire/frost yüzdeleri elementDmgMult ile TOPLANIR, çarpılmaz (F1).
+        fire_mult, frost_mult, elem_mult = self.get_elemental_mults()
+
+        # physDmgMult (eşya/affix "Fiziksel Hasar %") YALNIZCA fiziksel hasara
+        # uygulanır. `mult` aşağıda ateş/buz/zehir hasarlarını da besliyor;
+        # oraya karıştırılırsa element hasarı da şişerdi. Bu yüzden ayrı
+        # bir phys_mult tutulur (stat 0 iken phys_mult == mult).
+        phys_mult = mult * (1.0 + self.stats.get("physDmgMult", 0))
 
         # Sabit Hasar Bonusunu (Flat) ekle
         phys_flat = self.stats.get("physDmgFlat", 0)
@@ -745,10 +923,10 @@ class Player:
             final_dmg_base = ((base_poison if base_poison > 0 else 10) + phys_flat) * mult
             p_type = 'bomb'
         elif is_katana:
-            final_dmg_base = (base_phys + phys_flat) * mult
+            final_dmg_base = (base_phys + phys_flat) * phys_mult
             p_type = 'katana'
         else:
-            final_dmg_base = (base_phys + phys_flat) * mult
+            final_dmg_base = (base_phys + phys_flat) * phys_mult
             p_type = 'poison' if getattr(self, "poison_convert", False) else 'normal'
             if not getattr(self, "poison_convert", False):
                 if self.stats.get("fireDmgMult", 0) > 0.2: p_type = 'fire'
@@ -758,10 +936,11 @@ class Player:
         count = int(self.stats.get("projectileCount", 1))
         
         if is_katana:
-            range_val = 180 + self.stats.get("meleeRange", 0) * 1.5
+            # Katana yakın dövüş: piksel taban + piksel bonus, sonra çarpan (F4)
+            range_val = (180 + self.stats.get("meleeRangeFlat", 0) * 1.5) * self.stats.get("meleeRangeMult", 1.0)
             
             # --- KRİTİK VURUŞ ---
-            force_crit = getattr(self, '_sorcerer_force_crit', False)
+            force_crit = getattr(self, '_sorcerer_force_crit', False) or self._consume_phantom_crit()
             is_crit = force_crit or (random.random() < self.stats.get("critChance", 0.05))
             crit_mult = 2.0 + self.stats.get("critDmg", 0)
             final_dmg = final_dmg_base * crit_mult if is_crit else final_dmg_base
@@ -778,12 +957,14 @@ class Player:
                 e.take_damage(final_dmg, game, is_crit=is_crit, from_player=True)
                 
                 # Element Etkileri
+                # Katana elementleri SADECE DoT olarak uygulanır; dot_mult burada
+                # yerinde (anlık hasara değil, süreli hasara giriyor) - F1
                 sorcerer_elem = getattr(self, '_sorcerer_override_element', None)
                 if sorcerer_elem == 'fire':
-                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * fire_mult
+                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * fire_mult
                     e.apply_dot('fire', fire_dmg, 4.0)
                 elif sorcerer_elem == 'frost':
-                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * frost_mult
+                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * frost_mult
                     e.apply_dot('frost', frost_dmg * 0.5, 4.0)
                 elif sorcerer_elem == 'poison':
                     poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
@@ -791,9 +972,9 @@ class Player:
                 else:
                     poison_dps = base_poison * mult * dot_mult * elem_mult
                     if poison_dps > 0: e.apply_dot('poison', poison_dps, 5.0)
-                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult * fire_mult
+                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * fire_mult
                     if fire_dmg > 0: e.apply_dot('fire', fire_dmg, 4.0)
-                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult * frost_mult
+                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * frost_mult
                     if frost_dmg > 0: e.apply_dot('frost', frost_dmg * 0.5, 4.0)
             
             # Görsel
@@ -808,10 +989,16 @@ class Player:
                         'vx': math.cos(p_angle) * p_v, 'vy': math.sin(p_angle) * p_v,
                         'timer': 0.2, 'color': (200, 0, 0), 'size': random.randint(2, 6)
                     })
+            self.emit_shockwave(game)
             return # Katana atışı bitti, normal mermi koduna geçme
-            
-        proj_speed = 15
-        proj_lifetime = 180 + int(self.stats.get("meleeRange", 0) * 1.5)
+
+        # Mermi hızı: bullet_speed (yetenek ağacı, düz +hız) ve rangedSpeed
+        # (SET_LIGHTNING 3pc, yüzde) statları tanımlıydı ama okunmuyordu.
+        proj_speed = (15 + self.stats.get("bullet_speed", 0)) \
+            * (1.0 + self.stats.get("rangedSpeed", 0))
+        # Menzilli merminin ömrü yakın dövüş menzil statına bağlıydı (F4);
+        # yakın dövüş statının menzilli silaha etkisi kaldırıldı.
+        proj_lifetime = 180
         
         # Fırın (Furnace) Kartı Kontrolü
         if getattr(self, "has_furnace", False):
@@ -836,11 +1023,17 @@ class Player:
         aoe = 50 * self.stats.get("aoe", 1.0)
         
         # Çoklu Atış (Multi-shot) - Açılı
-        spread = 0.26 
+        # Taban 15° (~0.26 rad, eski sabit değer). spreadAngle affix'i /
+        # SET_SHOTGUN 3pc yayılımı genişletir; stat 0 iken davranış aynıdır.
+        spread = math.radians(15 + self.stats.get("spreadAngle", 0))
         start_angle = self.facing_angle - (spread * (count - 1) / 2)
         
         bounce_mult = 1.3 if getattr(self, "has_ricochet_master", False) else 1.0
-        
+
+        # Hayalet Nişancı garantili kritiği: atış başına bir kez tüketilir,
+        # salvo'daki tüm mermilere uygulanır
+        phantom_crit = self._consume_phantom_crit()
+
         from entities.projectile import Projectile
         for i in range(count):
             angle = start_angle + (i * spread)
@@ -852,11 +1045,11 @@ class Player:
             sy = self.y + math.sin(angle) * 20
             
             # --- KRİTİK VURUŞ ---
-            force_crit = getattr(self, '_sorcerer_force_crit', False)
+            force_crit = getattr(self, '_sorcerer_force_crit', False) or phantom_crit
             is_crit = force_crit or (random.random() < self.stats.get("critChance", 0.05))
             crit_mult = 2.0 + self.stats.get("critDmg", 0)
             final_dmg = final_dmg_base * crit_mult if is_crit else final_dmg_base
-            
+
             # Mermi Tipi Belirleme
             p_type_final = p_type
             sorcerer_elem = getattr(self, '_sorcerer_override_element', None)
@@ -898,21 +1091,26 @@ class Player:
                 p.pierce = 99
             
             # Elementel Statları Aktar
+            # DİKKAT (F1): p.fire_dmg hem DoT'a hem de explode()'un ANLIK alan
+            # hasarına besleniyor. dotDmgMult "süreli hasar" statı olduğu için
+            # burada UYGULANMAZ; mermi üzerinde p.dot_mult olarak taşınır ve
+            # yalnızca DoT tarafında çarpılır.
+            p.dot_mult = dot_mult
             if self.stats.get("omniElement", 0) > 0:
-                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * max(1, fire_mult)
-                p.frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * max(1, frost_mult)
-                p.poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
+                p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * max(1.0, fire_mult)
+                p.frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * max(1.0, frost_mult)
+                p.poison_dps = (base_poison + 15) * mult * elem_mult
             else:
                 if sorcerer_elem == 'fire':
-                    p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * fire_mult
+                    p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * fire_mult
                 elif sorcerer_elem == 'frost':
-                    p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * dot_mult * elem_mult * frost_mult
+                    p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * frost_mult
                 elif sorcerer_elem == 'poison' or (is_bomb and base_poison > 0):
-                    p.poison_dps = (base_poison + 15) * mult * dot_mult * elem_mult
+                    p.poison_dps = (base_poison + 15) * mult * elem_mult
                 else:
-                    p.poison_dps = base_poison * mult * dot_mult * elem_mult
-                    p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * elem_mult * fire_mult
-                    p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * elem_mult * frost_mult
+                    p.poison_dps = base_poison * mult * elem_mult
+                    p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * fire_mult
+                    p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * frost_mult
             
             game.projectiles.append(p)
             game.entity_id_counter += 1
@@ -927,21 +1125,26 @@ class Player:
                     'timer': 0.1, 'color': (255, 255, 200), 'size': random.randint(2, 5)
                 })
 
+        self.emit_shockwave(game)
+
     def execute_fallback_melee(self, game, weapon):
         """Melee silahı varken specialization hatası/eksikliği durumunda temel savurma yapar."""
         base_phys = self.stats.get("physDmg", 20)
         phys_flat = self.stats.get("physDmgFlat", 0)
         base_poison = self.stats.get("poisonDps", 0)
         mult = self.stats.get("dmgMult", 1.0)
-        
+        # physDmgMult yalnızca fiziksel vuruşa; aşağıdaki zehir DoT'u `mult`
+        # üzerinden hesaplandığı için ayrı tutulur.
+        phys_mult = mult * (1.0 + self.stats.get("physDmgMult", 0))
+
         if getattr(self, "poison_convert", False):
             base_poison += (base_phys + phys_flat)
             base_phys = 0
             phys_flat = 0
-            
-        final_dmg = (base_phys + phys_flat) * mult
-        
-        range_val = 100 + self.stats.get("meleeRange", 0)
+
+        final_dmg = (base_phys + phys_flat) * phys_mult
+
+        range_val = (100 + self.stats.get("meleeRangeFlat", 0)) * self.stats.get("meleeRangeMult", 1.0)
         angle = self.facing_angle
         
         is_flail = weapon.get("isFlail", False) if weapon else False
@@ -961,7 +1164,7 @@ class Player:
                     # Basit Açı Kontrolü (Flail için 360 derece, yani açı sınırı yok)
                     angle_to_e = math.atan2(e.y - self.y, e.x - self.x)
                     if is_flail or abs(angle_to_e - angle) < 0.6: # Yaklaşık 70 derece
-                        e.take_damage(final_dmg, game)
+                        e.take_damage(final_dmg, game, from_player=True)
                         
                         # Knockback Uygula
                         kb_mult = weapon.get("knockbackMult", 0.0) if weapon else 0.0
@@ -978,7 +1181,9 @@ class Player:
                         
                         if base_poison > 0:
                             e.apply_dot('poison', base_poison * mult * (1.0 + self.stats.get("dotDmgMult", 0)), 5.0)
-        
+
+        self.emit_shockwave(game)
+
     def place_turret(self, game):
         limit = int(self.stats.get("turretLimit", 1))
         
@@ -1016,8 +1221,12 @@ class Player:
             
             count = 1 + int(local_stats.get("projectileCount", 0))
             count += int(self.stats.get("minionCount", 0))
-            count = min(count, 8)  # Sürü tavanı
-            
+            # Alfa Bağı kartı: yalnızca 1 aktif pet (C5)
+            if getattr(self, 'alpha_mode', False):
+                count = 1
+            # Alt sınır: negatif minionCount pop() IndexError'ı yaratıyordu (C5)
+            count = max(0, min(count, 8))  # Sürü tavanı
+
             my_pet_minions = [m for m in game.minions if m.owner == self and m.type in ["wolf", "dragon"]]
             
             # TİP KONTROLÜ
@@ -1032,10 +1241,34 @@ class Player:
                     game.minions.append(new_m)
                     game.entity_id_counter += 1
             elif len(my_pet_minions) > count:
-                for _ in range(len(my_pet_minions) - count):
+                for _ in range(max(0, len(my_pet_minions) - count)):
+                    if not my_pet_minions:
+                        break
                     m = my_pet_minions.pop()
-                    game.minions.remove(m)
+                    if m in game.minions:
+                        game.minions.remove(m)
                     
+        # --- YÖRÜNGE DRONU (orbitDrones affix'i) ---
+        # Stat tanımlıydı ama hiç minyon doğurmuyordu. Affix değerleri ondalık
+        # (0.2 - 1.2) geldiği için int() ile kırpmak T3 rulolarını (0.2-0.5)
+        # tamamen ölü bırakırdı; pozitif her değer en az 1 drone verir.
+        orbit_val = self.stats.get("orbitDrones", 0)
+        drone_count = 0
+        if orbit_val > 0:
+            drone_count = min(4, max(1, int(round(orbit_val))))
+        drones = [m for m in game.minions if m.owner == self and m.type == "drone"]
+        if len(drones) < drone_count:
+            from entities.minion import Minion
+            for _ in range(drone_count - len(drones)):
+                new_m = Minion(game.entity_id_counter, self.x, self.y, m_type="drone", owner=self)
+                game.minions.append(new_m)
+                game.entity_id_counter += 1
+        elif len(drones) > drone_count:
+            for _ in range(len(drones) - drone_count):
+                m = drones.pop()
+                if m in game.minions:
+                    game.minions.remove(m)
+
         # --- Doppelganger ---
         if getattr(self, "has_doppelganger", False):
             dop_minions = [m for m in game.minions if m.owner == self and m.type == "doppelganger"]
@@ -1215,12 +1448,23 @@ class Player:
             self._phantom_first_shot = True
 
         self.inv_manager.recalculate_stats()
+
+        # Görev takibi: apply_evolution SADECE oyuncu evrim seçtiğinde çağrılır
+        # (scenes/game_scene.py). Save yüklemesi evrimi doğrudan alan ataması
+        # ile geri yükler (logic/save_manager.py), bu yüzden çift sayım olmaz.
+        game = getattr(self, 'game', None)
+        if game is not None and hasattr(game, 'track_quest'):
+            game.track_quest("evolve", 1)
+
         print(f"EVRİM GEÇİRİLDİ: {self.class_name} | Pasif: {self.evolution_passive}")
 
     def dash(self):
         if self.dash_timer <= 0:
             self.dash_active_timer = self.dash_duration
-            self.dash_timer = self.dash_cooldown
+            # Quantum Leap (dashCooldownReduc, corrupted orb) statı tanımlıydı
+            # ama okunmuyordu. Artifact CDR ile aynı %80 tavanı kullanır.
+            dash_cdr = min(0.8, self.stats.get("dashCooldownReduc", 0))
+            self.dash_timer = self.dash_cooldown * (1.0 - dash_cdr)
             if getattr(self, "class_id", "") == "ninja":
                 self.next_attack_is_backstab = True
             return True
@@ -1239,7 +1483,13 @@ class Player:
         base_cd = art.get("cooldown", 30)
         reduction = self.stats.get("cooldownReduction", 0)
         self.artifact_cooldown = base_cd * (1 - min(0.8, reduction))
-        
+
+        # Görev takibi: yalnızca artifact GERÇEKTEN kullanıldığında sayılır.
+        # Cooldown/susturma/eşya yok durumlarında yukarıdaki return'ler
+        # buraya gelmeyi engeller.
+        if hasattr(game, "track_quest"):
+            game.track_quest("use_artifact", 1)
+
         if a_id == "time_sand":
             # Zaman Kumu: Düşmanları dondur/yavaşlat
             from logic.status_effects import apply_slow
@@ -1256,7 +1506,7 @@ class Player:
                     if dist < 500:
                         gold = 25 + int(game.wave["level"] * 5)
                         self.gold += gold
-                        e.take_damage(200, game)
+                        e.take_damage(200, game, from_player=True)
                         game.add_event("damage_text", e.x, e.y, value=f"+{gold} G", color=(241, 196, 15))
             game.trigger_shake(20)
             
@@ -1271,7 +1521,7 @@ class Player:
                     angle = math.atan2(e.y - self.y, e.x - self.x)
                     e.x += math.cos(angle) * 120
                     e.y += math.sin(angle) * 120
-                    e.take_damage(150, game)
+                    e.take_damage(150, game, from_player=True)
                     
         elif a_id == "titan_shield":
             self.artifact_timer = 5.0
@@ -1290,9 +1540,15 @@ class Player:
             
         elif a_id == "blood_ritual":
             self.artifact_timer = 10.0
-            # Geçici stat artışı (Direkt override edelim, süre sonunda recalcStats düzeltecek)
-            self.stats["dmgMult"] *= 2.5
-            self.stats["speed"] *= 1.6
+            # Geçici stat artışı temp_buffs havuzuna yazılır: doğrudan
+            # self.stats'a yazılınca 10 saniye içinde tetiklenen herhangi bir
+            # recalculate_stats (eşya, seviye, Kan Öfkesi eşiği, kart) buff'ı
+            # sessizce siliyordu (F7).
+            if not hasattr(self, 'temp_buffs'):
+                self.temp_buffs = {}
+            self.temp_buffs["dmgMult"] = 2.5
+            self.temp_buffs["speed"] = 1.6
+            self.inv_manager.recalculate_stats()
             game.add_event("damage_text", self.x, self.y - 40, value="KAN RİTÜELİ!", color=(192, 57, 43))
             
         elif a_id == "dragon_breath":
@@ -1334,6 +1590,12 @@ class Player:
         # Kullanım noktası clamp'i: recalc dışı geçici buff'lar bile %60'ı aşamaz (F2)
         if not is_self_damage and random.random() < min(0.60, self.stats.get("dodgeChance", 0)):
             # Sürekli hasarda (Tick damage) dodge şansını biraz azaltabiliriz veya aynı bırakabiliriz
+            # Görev takibi: track_quest bellekteki meta cache'ini günceller,
+            # disk yazımı yalnızca kristal kazanıldığında olur (P4). Yoğun
+            # dalgada saniyede onlarca dodge tetiklense de I/O yapmaz.
+            game = getattr(self, 'game', None)
+            if game is not None and hasattr(game, 'track_quest'):
+                game.track_quest("dodge_hits", 1)
             return
             
         # --- ARMOR (Zırh) ---
@@ -1347,7 +1609,10 @@ class Player:
             if current_diff == "Impossible":
                 armor *= 0.5
                 
-            final_dmg = amount * (100.0 / (100.0 + armor)) * getattr(self, "damage_taken_mult", 1.0)
+            # Payda clamp'i: negatif zırhta sıfıra bölme / negatif hasar (can
+            # kazanma) oluşuyordu (C3)
+            final_dmg = amount * (100.0 / max(1.0, 100.0 + armor)) * getattr(self, "damage_taken_mult", 1.0)
+            final_dmg = max(0.0, final_dmg)
         else:
             final_dmg = amount
         
@@ -1370,7 +1635,10 @@ class Player:
                     self.energy_shield = 0 # Tamamen sıfırlanır
                     if hasattr(self, 'game') and self.game:
                         from entities.cloud import Cloud
-                        elec_cloud = Cloud(self.x, self.y, duration=0.5, radius=150, dps=self.stats.get("physDmgFlat", 50) * 2, element="electric", source="player")
+                        self.game.entity_id_counter += 1
+                        elec_cloud = Cloud(self.game.entity_id_counter, self.x, self.y,
+                                           radius=150, duration=0.5,
+                                           fire_dmg=self.stats.get("physDmgFlat", 50) * 2)
                         self.game.clouds.append(elec_cloud)
                         self.game.add_event("damage_text", self.x, self.y - 40, value="STATİK PATLAMA!", color=(255, 255, 0), timer=1.5)
                         
@@ -1380,7 +1648,9 @@ class Player:
                     if stored_blood > 0:
                         if hasattr(self, 'game') and self.game:
                             from entities.cloud import Cloud
-                            blood_cloud = Cloud(self.x, self.y, duration=1.0, radius=180, dps=stored_blood, element="poison", source="player")
+                            self.game.entity_id_counter += 1
+                            blood_cloud = Cloud(self.game.entity_id_counter, self.x, self.y,
+                                                radius=180, duration=1.0, poison_dps=stored_blood)
                             self.game.clouds.append(blood_cloud)
                             self.game.add_event("damage_text", self.x, self.y - 60, value=f"KAN PATLAMASI! (+{int(stored_blood)} HP)", color=(255, 0, 0), timer=1.5)
                         self.hp = min(self.max_hp, self.hp + stored_blood)
@@ -1391,7 +1661,10 @@ class Player:
                     if hasattr(self, 'game') and self.game:
                         from entities.cloud import Cloud
                         # Kalkanın maksimum değeri kadar DPS vuran kısa bir alan
-                        shield_cloud = Cloud(self.x, self.y, duration=0.5, radius=200, dps=self.max_energy_shield, element="magic", source="player")
+                        self.game.entity_id_counter += 1
+                        shield_cloud = Cloud(self.game.entity_id_counter, self.x, self.y,
+                                             radius=200, duration=0.5,
+                                             frost_dmg=self.max_energy_shield)
                         self.game.clouds.append(shield_cloud)
                         self.game.add_event("damage_text", self.x, self.y - 40, value="CAM KALE PATLAMASI!", color=(200, 200, 255), timer=1.5)
 
@@ -1409,9 +1682,23 @@ class Player:
                         if not e.dead and not getattr(e, 'is_trap', False):
                             e.take_damage(reflect_dmg, self.game, from_player=True)
                     self.game.add_event("explosion", self.x, self.y, radius=40, color=(200, 200, 255), timer=0.2)
-            
+
+            # Dikenler (Demir Kale sinerjisi / SET_TANK 4pc / affix) — sabit
+            # yansıma hasarı; stat tanımlıydı ama hiçbir yerde okunmuyordu (P3)
+            thorns = self.stats.get("thorns", 0)
+            if thorns > 0 and final_dmg > 0 and not is_self_damage:
+                if hasattr(self, 'game') and self.game:
+                    for e in self.game.iter_enemies_near(self.x, self.y, 120):
+                        if not e.dead and not getattr(e, 'is_trap', False):
+                            e.take_damage(thorns, self.game, from_player=True)
+
             if final_dmg > 0:
                 self.hp -= final_dmg
+
+        # Kan Paktı: hasar alınca XP (kart bayrağı okunmuyordu, P3)
+        xp_on_hit = getattr(self, "xp_on_hit_bonus", 0)
+        if xp_on_hit > 0 and not is_self_damage and final_dmg > 0:
+            self.gain_xp(xp_on_hit)
 
         if hasattr(self, 'game') and hasattr(self.game, 'stats'):
             self.game.stats['total_damage_taken'] += final_dmg
@@ -1462,7 +1749,7 @@ class Player:
         
         # --- ARTIFACT AURA (Görsel Efekt) ---
         if getattr(self, 'artifact_timer', 0) > 0:
-            art = self.inv_manager.equipped.get("artifact", {})
+            art = self.inv_manager.equipped.get("artifact") or {}  # None olabilir (C7)
             a_id = art.get("artifactId")
             aura_color = None
             if a_id == "shadow_cloak": aura_color = (149, 165, 166, 120)  # Gri

@@ -90,6 +90,16 @@ class TestSceneUi(unittest.TestCase):
         logic.market_inventory = []
         logic.orb_market = [{"name": "Test Orbu", "type": "orb", "orb_id": "test", "price": 100}]
         logic.events = []
+        # buy_item -> track_quest zinciri; sahte görev/kayıt bağımlılıkları
+        # olmadan "Quest tracking error" basıyordu. Disk okuma/yazma yok:
+        # meta bellekte tutulur, oyuncunun gerçek meta.json'ı bozulmaz.
+        logic.width, logic.height = 1366, 768
+        logic._meta_cache = {}
+        logic._meta_dirty = False
+        logic.save_manager = SimpleNamespace(load_meta=lambda: {},
+                                             save_meta=lambda meta: None)
+        logic.quest_system = SimpleNamespace(track=lambda event_type, value, meta: 0,
+                                             save_to_meta=lambda meta: meta)
 
         self.assertTrue(logic.buy_item(0, "orbs"))
         self.assertTrue(logic.buy_item(0, "orbs"))

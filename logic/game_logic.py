@@ -14,6 +14,7 @@ from logic.card_system import CardSystem
 from logic.quest_system import QuestSystem
 from logic.biome_system import BiomeSystem
 from logic.elite_system import EliteSystem
+from logic.crystal_shop import CrystalShop
 
 class GameLogic:
     MAX_ACTIVE_ENEMIES = 220
@@ -73,13 +74,36 @@ class GameLogic:
 
         # Günlük Görev Sistemi
         self.quest_system = QuestSystem()
+        # meta.json bellekte tutulur (get_meta/flush_meta); her öldürmede
+        # disk okuma/yazma yapılmaz (P4)
+        self._meta_cache = None
+        self._meta_dirty = False
         try:
             meta = self.save_manager.load_meta()
-            meta = self.quest_system.load_or_reset(meta)
-            self.save_manager.save_meta(meta)
+            self._meta_cache = self.quest_system.load_or_reset(meta)
+            self.save_manager.save_meta(self._meta_cache)
         except Exception as e:
             print("Quest load error:", e)
-        
+
+        # --- KRİSTAL DÜKKÂNI: KART YÜKSELTMELERİ ---
+        # "Kart Yenileme" (card_reroll) yükseltmesi taban 3 hakkın ÜSTÜNE eklenir;
+        # get_effective yalnızca satın alınan rank'ın katkısını döndürür (rank 0 -> 0).
+        self.base_card_rerolls = 3
+        try:
+            self.base_card_rerolls += int(CrystalShop().get_effective(self.get_meta(), "card_reroll"))
+        except Exception as e:
+            print("Kart yenileme bonusu okunamadi:", e)
+        self.card_rerolls = self.base_card_rerolls
+
+        # "Başlangıç Kartı" (start_with_card) yükseltmesi: koşu 1 bedava kartla
+        # başlar. Oyuncu ve inv_manager hazır olduktan sonra çağrılmalı.
+        # NOT: apply_card görev sayacını (pick_cards) tetiklemez — o takip
+        # scenes/game_scene.py'deki gerçek kart seçiminde yapılır.
+        try:
+            self.card_system.grant_start_card(self.players[self.local_player_id])
+        except Exception as e:
+            print("Baslangic karti verilemedi:", e)
+
         self.settings = {'shake': True, 'sound': True}
         self.shake_timer = 0
         
@@ -225,6 +249,10 @@ class GameLogic:
             self.wave["blood_moon_timer"] -= dt
             if self.wave["blood_moon_timer"] <= 0:
                 self.wave["is_blood_moon"] = False
+                # Kan Ayı süresi doldu ve oyuncu hâlâ hayatta (state == PLAYING):
+                # görev tamamlandı. is_blood_moon başka hiçbir yerde False
+                # yapılmadığı için bu tek tetikleme noktasıdır.
+                self.track_quest("blood_moon_survive", 1)
             
         p = self.players[self.local_player_id]
         p.update(dt, self)
@@ -237,13 +265,31 @@ class GameLogic:
         
         # Player Death Check (GDD 42)
         if p.hp <= 0 and self.state != "GAMEOVER":
-            if not getattr(self, 'cheat_mode', False):
+            # --- ANKA KANI (Ölüm Patlaması) ---
+            # Kart bayrağı tanımlıydı ama hiçbir yerde okunmuyordu (P3)
+            if getattr(p, "death_explosion", False):
+                p.death_explosion = False
+                self.add_event("explosion", p.x, p.y, radius=400, color=(255, 140, 0), timer=0.6)
+                for e in self.iter_enemies_near(p.x, p.y, 400):
+                    if not e.dead and not getattr(e, 'is_trap', False):
+                        e.take_damage(200, self, from_player=True)
+
+            # --- ÖLÜMDEN DÖNÜŞ (Zombi Derisi kartı / kristal yükseltmesi) ---
+            if getattr(p, "revive_count", 0) > 0:
+                p.revive_count -= 1
+                p.hp = max(1.0, p.max_hp * 0.5)
+                p.energy_shield = p.max_energy_shield
+                p.i_frame_timer = 3.0
+                p.lifesteal_cooldown_timer = 0
+                self.add_event("damage_text", p.x, p.y - 80, value="⚰️ YENİDEN DOĞUŞ!", color=(150, 50, 200), scale=1.5, timer=2.5)
+                self.trigger_shake(12)
+            elif not getattr(self, 'cheat_mode', False):
                 self.state = "GAMEOVER"
                 
                 # META PROGRESSION: Earn crystals on death
                 crystals_earned = self.wave["level"] * 5 + self.kill_streak * 2
                 try:
-                    meta = self.save_manager.load_meta()
+                    meta = self.get_meta()
                     meta["crystals"] = meta.get("crystals", 0) + crystals_earned
                     
                     # NEMESIS SİSTEMİ: Oyuncuyu öldüren düşmanı kaydet
@@ -251,7 +297,8 @@ class GameLogic:
                         if p.last_attacker_type not in ["boss", "crystal_dragon", "arachne", "crystal_wall"]:
                             meta["nemesis_type"] = p.last_attacker_type
                     
-                    self.save_manager.save_meta(meta)
+                    self._meta_dirty = True
+                    self.flush_meta()
                     print(f"GAMEOVER! {crystals_earned} Kan Kristali kazanıldı.")
                 except Exception as e:
                     print("Meta save error:", e)
@@ -291,7 +338,10 @@ class GameLogic:
                             bounty_target.max_hp *= 1.5
                             bounty_target.hp = bounty_target.max_hp
                             self.wave["bounty_assigned"] = True
-        elif len([e for e in self.enemies if not e.dead and not getattr(e, 'is_trap', False) and not getattr(e, 'is_pillar', False)]) == 0:
+        elif (len([e for e in self.enemies if not e.dead and not getattr(e, 'is_trap', False) and not getattr(e, 'is_pillar', False)]) == 0
+              and not getattr(self, '_pending_spawns', None)):
+            # Bölünen düşmanların çocukları _pending_spawns'ta bekliyorken dalga
+            # bitmiş sayılıyor ve çocuklar bir sonraki dalgaya sızıyordu (P4)
             self.next_wave()
 
         # Çağırıcı düşmanlar update sırasında listeye ekleme yapabildiğinden,
@@ -363,6 +413,8 @@ class GameLogic:
         self.projectiles = [p for p in self.projectiles if not p.dead]
         self.items_on_ground = [it for it in self.items_on_ground if not it.dead]
         self.turrets = [t for t in self.turrets if not t.dead]
+        # Ölü minyonlar hiç temizlenmiyordu (H12)
+        self.minions = [m for m in self.minions if not getattr(m, 'dead', False)]
 
     def spawn_random_hazard(self):
         from logic.hazards import Hazard
@@ -479,8 +531,7 @@ class GameLogic:
         elif enemy_type == "nemesis":
             # Nemesis: Normal bir düşman sınıfının devasa, çok güçlü hali
             try:
-                meta = self.save_manager.load_meta()
-                ntype = meta.get("nemesis_type", "zombie")
+                ntype = self.get_meta().get("nemesis_type", "zombie")
             except:
                 ntype = "zombie"
             new_enemy = Enemy(self.entity_id_counter, ex, ey, self, type=ntype, wave_level=wave_lvl)
@@ -517,19 +568,74 @@ class GameLogic:
         
         p = self.players[self.local_player_id]
         
+        # Lanetli Kan: her öldürmede sabit can (kart bayrağı okunmuyordu, P3)
+        kill_hp = getattr(p, "kill_hp_bonus", 0)
+        if kill_hp > 0 and p.hp > 0:
+            p.hp = min(p.max_hp, p.hp + kill_hp)
+
         # Kill Speed Boost (On Kill temporary speed buff) - tavan +%75 (S8)
         speed_boost = min(0.75, p.stats.get("killSpeedBoost", 0))
         if speed_boost > 0:
             from logic.status_effects import StatusEffect
             p.effect_manager.add_effect(StatusEffect("Kill Speed", 2.0, speed_mult=(1.0 + speed_boost), color=(255, 255, 0)))
             
+        # --- EVRİM PASİFLERİ (öldürme tetikli) ---
+        # NOT: Taslak bu bloğu "görev takibi"nin altına koyuyordu; orası
+        # `if not enemy.is_trap:` dalının içinde ve ondan ÖNCE `no_drop` erken
+        # return'ü var (bölünen elit çocukları/çağrılan düşmanlar). Pasifler
+        # o killerde de çalışmalı, o yüzden blok yukarı alındı ve tuzaklar
+        # kendi koşuluyla eleniyor.
+        evo_p = getattr(p, 'evolution_passive', '')
+        if evo_p and not getattr(enemy, 'is_trap', False):
+            if evo_p == 'gladiator_rage':
+                p._gladiator_timer = 1.0
+            elif evo_p == 'kill_invisible':
+                p.is_invisible = True
+                p._kill_invis_timer = 1.5
+            elif evo_p == 'kill_speed_stack':
+                p._ks_stacks = min(10, getattr(p, '_ks_stacks', 0) + 1)
+                p._ks_timer = 3.0
+            elif evo_p == 'chain_explosion':
+                # Patlama yeni ölümler yaratıp kendini tekrar tetikleyebilir;
+                # zincir derinliği sınırlanmazsa özyineleme patlar (RecursionError)
+                depth = getattr(self, '_chain_explosion_depth', 0)
+                if depth < 2:
+                    self._chain_explosion_depth = depth + 1
+                    try:
+                        blast = enemy.max_hp * 0.30
+                        radius = 150 * p.stats.get("aoe", 1.0)
+                        self.add_event("explosion", enemy.x, enemy.y, radius=int(radius),
+                                       color=(255, 160, 40), timer=0.35)
+                        # list(): take_damage sırasında ölen düşmanlar grid
+                        # üreticisini beslerken listeyi değiştirebiliyor
+                        for e in list(self.iter_enemies_near(enemy.x, enemy.y, radius)):
+                            if e.dead or getattr(e, 'is_trap', False) or e is enemy:
+                                continue
+                            dx, dy = e.x - enemy.x, e.y - enemy.y
+                            if dx * dx + dy * dy <= radius * radius:
+                                e.take_damage(blast, self, from_player=True)
+                    finally:
+                        self._chain_explosion_depth = depth
+            elif evo_p in ('toxic_cloud', 'death_cloud'):
+                # Bulut tavanı: toplu ölümlerde her kill bir bulut bırakıp
+                # kare süresini uçuruyordu
+                if len(self.clouds) < 60:
+                    from entities.cloud import Cloud
+                    self.entity_id_counter += 1
+                    dps = max(20, p.stats.get("poisonDps", 0) * 0.8)
+                    self.clouds.append(Cloud(self.entity_id_counter, enemy.x, enemy.y,
+                                             radius=120 * p.stats.get("aoe", 1.0),
+                                             duration=5.0, poison_dps=dps))
+
         # Minyon Dönüşümü (Ölümsüz Ordu vs.)
         respawn_chance = getattr(p, "minion_respawn_chance", 0.0)
         if respawn_chance > 0 and random.random() < respawn_chance:
             from entities.minion import Minion
-            m = Minion(self.entity_id_counter, enemy.x, enemy.y)
-            self.minions.append(m)
+            # owner verilmezse Minion.update ilk satırda return ediyor: minyon
+            # hiç hareket etmiyor, asla ölmüyor ve listede birikiyordu (H12)
             self.entity_id_counter += 1
+            m = Minion(self.entity_id_counter, enemy.x, enemy.y, m_type="undead", owner=p)
+            self.minions.append(m)
             self.add_event("damage_text", enemy.x, enemy.y - 20, value="DIRILDI!", color=(150, 50, 200), timer=0.8)
             
         # --- KAN PARTİKÜLLERİ ---
@@ -715,10 +821,11 @@ class GameLogic:
                                                     {'type': 'gold', 'value': gold_value * 10, 'rarity': 'Normal'}))
                 self.add_event("damage_text", enemy.x, enemy.y - 120, value="NEMESIS İNTİKAMI ALINDI!", color=(255, 50, 50), scale=2.0, timer=3.0)
                 try:
-                    meta = self.save_manager.load_meta()
+                    meta = self.get_meta()
                     if "nemesis_type" in meta:
                         del meta["nemesis_type"]
-                        self.save_manager.save_meta(meta)
+                        self._meta_dirty = True
+                        self.flush_meta()
                 except: pass
 
             # XP Kazanımı (Basamak çarpanıyla senkronize; düşman tipine göre değişir)
@@ -735,9 +842,17 @@ class GameLogic:
             # Low HP kill
             if p.hp / max(1, p.max_hp) < 0.20:
                 self.track_quest("kill_while_low", 1)
+            # Minyon öldürmesi: bayrak yalnızca minyon kaynaklı hasarın
+            # take_damage çağrısı boyunca True'dur (entities/minion.py,
+            # entities/projectile.py); bayat kalmaz.
+            if getattr(enemy, "last_hit_by_minion", False):
+                self.track_quest("minion_kills", 1)
 
             # --- KILL STREAK ---
             self.kill_streak += 1
+            # max_combo "en yüksek değer" görevidir: her kill +1 eklemez,
+            # ulaşılan en yüksek combo yazılır.
+            self.track_quest("max_combo", self.kill_streak)
             self.stats['enemies_killed'] = self.stats.get('enemies_killed', 0) + 1
             self.streak_timer = 3.5 # 3.5 saniye kill gelmezse biter
             
@@ -748,19 +863,27 @@ class GameLogic:
                 # Combo kristal milestone
                 if self.kill_streak % 50 == 0:
                     try:
-                        meta = self.save_manager.load_meta()
+                        meta = self.get_meta()
                         meta["crystals"] = meta.get("crystals", 0) + 1
-                        self.save_manager.save_meta(meta)
+                        self._meta_dirty = True
+                        self.flush_meta()
                         self.add_event("damage_text", p.x, p.y - 80, value="+1💎 COMBO BONUS", color=(100, 220, 255), timer=1.5)
                     except Exception:
                         pass
                 
             # --- EŞYA DÜŞÜRME (LOOT) ---
-            mf_mult = 1 + math.sqrt(max(0, p.stats.get("magicFind", 1.0) - 1))
+            # Eşya Bulma: gerçek azalan getiri (F2).
+            # sqrt formülü 1'in ALTINDAKİ bonusları büyütüyordu: "+%15 Eşya
+            # Bulma" skili 1+sqrt(0.15)=1.387, yani fiilen +%38.7 veriyordu.
+            # Yeni formül küçük bonuslarda ~lineer, büyüklerde doyuma gider.
+            mf_bonus = max(0.0, p.stats.get("magicFind", 1.0) - 1.0)
+            mf_mult = 1.0 + mf_bonus / (1.0 + mf_bonus * 0.5)
             # Eşya düşürme şansı da her 10 wave'de bir %20 artar
             base_drop = (0.20 if enemy.type == "elite" else 0.04) * r_mod * reward_step_mult
-            drop_chance = base_drop * mf_mult
-            
+            # Üst sınır: zorluk + wave çarpanları drop şansını 1.0'ın üzerine
+            # taşıyıp her düşmanı kesin drop yapıyordu (F2)
+            drop_chance = min(0.95, base_drop * mf_mult)
+
             if enemy.type == "boss":
                 drop_chance = 1.0 # Boss %100 şans
                 
@@ -803,9 +926,10 @@ class GameLogic:
         if p.gold >= amount:
             p.gold -= amount
             try:
-                meta = self.save_manager.load_meta()
+                meta = self.get_meta()
                 meta["crystals"] = meta.get("crystals", 0) + 5
-                self.save_manager.save_meta(meta)
+                self._meta_dirty = True
+                self.flush_meta()
                 self.add_event("damage_text", p.x, p.y-40, value="+5 Kristal", color=(255, 100, 100), timer=1.0)
                 return True
             except Exception as e:
@@ -829,6 +953,7 @@ class GameLogic:
         cost = 500 + max(0, (wave_level - 1) * 400)
         if p.gold >= cost:
             p.gold -= cost
+            self.track_quest("spend_gold", cost)
             self.refresh_market()
             print("Pazar Yenilendi! (-500 Altın)")
             return True
@@ -840,12 +965,17 @@ class GameLogic:
         
         p = self.players[self.local_player_id]
         item = market_list[idx]
-        
-        if p.gold >= item.get('price', 500):
+
+        # Tüccar Ruhu kartı / kristal yükseltmesi indirimi (P3)
+        discount = min(0.9, max(0.0, getattr(p, "shop_discount", 0.0)))
+        price = int(item.get('price', 500) * (1.0 - discount))
+
+        if p.gold >= price:
             # Eşyayı oyuncuya ekle (Kopya alarak)
             if p.add_item(item.copy()):
-                p.gold -= item.get('price', 500)
-                
+                p.gold -= price
+                self.track_quest("spend_gold", price)
+
                 # Normal eşyalar tek stokludur; orblar sınırsız satın alınabilir.
                 if tab == "items":
                     self.market_inventory.pop(idx)
@@ -865,22 +995,47 @@ class GameLogic:
         if hasattr(self, 'biome_system'):
             self.biome_system.apply_modifiers(enemy)
             
+    def get_meta(self):
+        """meta.json bellekte tutulur; her öldürmede load+save yapmak ağır
+        disk I/O yaratıyordu (P4). Yazma flush_meta() ile olur."""
+        if getattr(self, '_meta_cache', None) is None:
+            self._meta_cache = self.save_manager.load_meta()
+        return self._meta_cache
+
+    def flush_meta(self):
+        """Bekleyen meta değişikliklerini diske yaz."""
+        if getattr(self, '_meta_dirty', False) and getattr(self, '_meta_cache', None) is not None:
+            try:
+                self.save_manager.save_meta(self._meta_cache)
+            except Exception as e:
+                print("Meta save error:", e)
+            self._meta_dirty = False
+
     def track_quest(self, event_type, value=1):
         """Helper to track quests and save meta"""
         try:
-            meta = self.save_manager.load_meta()
+            meta = self.get_meta()
             crystals_earned = self.quest_system.track(event_type, value, meta)
             if crystals_earned > 0:
                 meta["crystals"] = meta.get("crystals", 0) + crystals_earned
                 self.add_event("damage_text", self.width//2, self.height//2 + 80, value=f"+{crystals_earned} KRİSTAL (GÖREV)", color=(100, 220, 255), timer=2.0)
-            meta = self.quest_system.save_to_meta(meta)
-            self.save_manager.save_meta(meta)
+            self._meta_cache = self.quest_system.save_to_meta(meta)
+            self._meta_dirty = True
+            # Kristal ödülü kaybolmasın diye anında yazılır; sıradan ilerleme
+            # dalga sonunda (next_wave) diske gider.
+            if crystals_earned > 0:
+                self.flush_meta()
         except Exception as e:
             print("Quest tracking error:", e)
         
     def next_wave(self):
+        # Dalga boyunca biriken görev ilerlemesi burada diske yazılır (P4)
+        self.flush_meta()
         self.wave["level"] += 1
-        
+        # reach_wave "en yüksek değer" görevidir (MAX_VALUE_TYPES): ilerleme
+        # toplanmaz, ulaşılan en yüksek dalga olarak yazılır.
+        self.track_quest("reach_wave", self.wave["level"])
+
         # 1. Biyom Değişimi
         if hasattr(self, 'biome_system'):
             new_biome = self.biome_system.update_biome(self.wave["level"])
@@ -946,7 +1101,7 @@ class GameLogic:
         # --- NEMESIS WAVE ---
         if self.wave["level"] == 5:
             try:
-                meta = self.save_manager.load_meta()
+                meta = self.get_meta()
                 if "nemesis_type" in meta:
                     self.spawn_enemy("nemesis")
                     self.wave["announce_lines"].append("💀 NEMESIS İNTİKAM İÇİN DÖNDÜ! 💀")
@@ -962,7 +1117,7 @@ class GameLogic:
             if cards:
                 self.pending_cards = cards
                 self.state = "CARD_SELECT"
-                self.card_rerolls = 3
+                self.card_rerolls = self.base_card_rerolls
 
     def spawn_traps(self):
         self.enemies = [e for e in self.enemies if not getattr(e, 'is_trap', False)]

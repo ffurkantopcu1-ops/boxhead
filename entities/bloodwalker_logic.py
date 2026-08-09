@@ -31,7 +31,7 @@ class Bloodwalker:
         # Denge: Warrior/Ninja gibi sabit taban + silah physDmg (ham hasarda geri kalmasın)
         dmg_base = (10 + player.stats.get("physDmg", 0)) if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)
-        range_val = (100 + player.stats.get("meleeRange", 0)) * player.stats.get("meleeRangeMult", 1.0)
+        range_val = (100 + player.stats.get("meleeRangeFlat", 0)) * player.stats.get("meleeRangeMult", 1.0)
         
         # Görsel Efekt
         visual = "sweep" if not is_punch else "slash"
@@ -55,7 +55,7 @@ class Bloodwalker:
                 angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
                 diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)
                 if diff < 0.9:  # ~100 derece yay
-                    e.take_damage(final_dmg, game)
+                    e.take_damage(final_dmg, game, from_player=True)
                     hit_any = True
 
                     # Lifesteal — her vuruşta %20 can al
@@ -65,9 +65,11 @@ class Bloodwalker:
                         player.hp = min(player.max_hp, player.hp + heal)
 
                     # Elementel uygulama (Warrior ile aynı mantık)
-                    fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0)
-                    frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0)
-                    p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0)
+                    # Element yüzde statları burada hiç okunmuyordu (F6)
+                    fire_mult, frost_mult, elem_mult = player.get_elemental_mults()
+                    fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0) * fire_mult
+                    frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0) * frost_mult
+                    p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0) * elem_mult
 
                     if fire_dmg > 0:
                         game.add_event("explosion", e.x, e.y, radius=70, color=(200, 60, 0), timer=0.12)
@@ -76,7 +78,7 @@ class Bloodwalker:
                                 odx = other.x - e.x
                                 ody = other.y - e.y
                                 if odx * odx + ody * ody < 70 * 70:
-                                    other.take_damage(fire_dmg, game)
+                                    other.take_damage(fire_dmg, game, from_player=True)
                                     other.apply_dot('fire', fire_dmg * 0.4, 3.0)
                         e.apply_dot('fire', fire_dmg * 0.4, 3.0)
                     if frost_dmg > 0:

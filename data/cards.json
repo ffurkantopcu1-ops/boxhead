@@ -6,7 +6,8 @@
     "category": "survival",
     "apply": "_apply_iron_will",
     "stats": {
-      "max_hp": 50
+      "max_hp": 50,
+      "speed": -0.3
     }
   },
   {
@@ -16,7 +17,7 @@
     "category": "survival",
     "apply": "_apply_zombie_skin",
     "stats": {
-      "max_hp": -20
+      "max_hp_pct": -20
     }
   },
   {
@@ -26,7 +27,7 @@
     "category": "survival",
     "apply": "_apply_blood_pact",
     "stats": {
-      "max_hp": -15
+      "max_hp_pct": -15
     }
   },
   {
@@ -36,7 +37,8 @@
     "category": "survival",
     "apply": "_apply_iron_skin",
     "stats": {
-      "armor": 80
+      "armor": 80,
+      "speed": -0.9
     }
   },
   {
@@ -53,7 +55,7 @@
     "category": "survival",
     "apply": "_apply_phoenix_blood",
     "stats": {
-      "max_hp": -10
+      "max_hp_pct": -10
     }
   },
   {
@@ -73,7 +75,7 @@
     "category": "offense",
     "apply": "_apply_blood_fire",
     "stats": {
-      "max_hp": -30
+      "max_hp_pct": -30
     }
   },
   {
@@ -152,7 +154,8 @@
     "category": "support",
     "apply": "_apply_ice_shirt",
     "stats": {
-      "armor": 50
+      "armor": 50,
+      "speed": -0.6
     }
   },
   {
@@ -164,7 +167,7 @@
     "stats": {
       "lifesteal": 0.15,
       "regen": 2,
-      "max_hp": -20
+      "max_hp_pct": -20
     }
   },
   {
@@ -250,8 +253,7 @@
     "category": "minion",
     "apply": "_apply_alpha_bond",
     "stats": {
-      "minionDamage": 1.0,
-      "minionCount": -10
+      "minionDamage": 1.0
     }
   },
   {
@@ -273,7 +275,8 @@
     "apply": "_apply_fire_soul",
     "stats": {
       "fireDamage": 20,
-      "fireDmgFlat": 10
+      "fireDmgFlat": 10,
+      "speed": -0.45
     }
   },
   {
@@ -293,7 +296,7 @@
     "category": "elemental",
     "apply": "_apply_storm_caller",
     "stats": {
-      "max_hp": -15
+      "max_hp_pct": -15
     }
   },
   {
@@ -393,7 +396,7 @@
   {
     "id": "midas_touch",
     "name": "💰 Midas Dokunuşu",
-    "desc": "Etki: Vuruşlarda %5 ihtimalle düşmanı altına çevirir (düşman 1.5x hasar alır ve ölünce 5x altın düşürür). Bedel: Taban hasarın %20 azalır.",
+    "desc": "Etki: Öldürdüğün düşmanların %10'u altına dönüşür ve 3x altın düşürür. Bedel: Taban hasarın %20 azalır.",
     "category": "offense",
     "apply": "_apply_midas_touch",
     "stats": {

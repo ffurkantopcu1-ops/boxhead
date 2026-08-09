@@ -76,7 +76,10 @@ class MenuScene(BaseScene):
             # Çizimde saklanan rect'ler kullanılır (tek kaynak)
             for i, slot_rect in enumerate(getattr(self, 'load_slot_rects', [])):
                 if slot_rect.collidepoint(mouse_pos):
-                    self.selected_idx = self.load_offset + i
+                    idx = self.load_offset + i
+                    if idx >= len(self.save_slots):
+                        continue
+                    self.selected_idx = idx
                     if mouse_clicked:
                         slot = self.save_slots[self.selected_idx]
                         self.manager.load_game_from_menu(slot['filename'])
@@ -142,7 +145,7 @@ class MenuScene(BaseScene):
                     self.shop_scroll += event.y * 30
                     
                     cols = 3
-                    box_h = 100
+                    box_h = 124  # draw_crystal_shop ile ayni olmali, yoksa son satir kirpilir
                     padding = 20
                     num_items = len(self.shop.UPGRADES)
                     rows = (num_items + cols - 1) // cols
@@ -360,6 +363,9 @@ class MenuScene(BaseScene):
         self.screen.blit(title, (self.width // 2 - title.get_width() // 2, panel.y + 24))
 
         if not self.save_slots:
+            # Bayat rect'ler: kayıt silindikten sonra eski satırlar hâlâ
+            # tıklanabilir kalıyor ve IndexError yaratıyordu (P4)
+            self.load_slot_rects = []
             msg = render_fit("KAYIT BULUNAMADI", 26, (150, 145, 135), panel.width - 40)
             self.screen.blit(msg, (self.width // 2 - msg.get_width() // 2, panel.y + 150))
         else:

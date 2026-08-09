@@ -94,6 +94,12 @@ class Cloud:
         self.is_web = is_web
         self.is_mine = is_mine
         self.mine_dmg = mine_dmg
+
+        # DoT uygulama sayacı: bulut her KAREDE apply_dot çağırdığı için zehir
+        # yığını 0.067 sn'de tavana ulaşıyor, süre de sürekli yenileniyordu.
+        # Artık saniyede iki kez tick atar (F5).
+        self.dot_interval = 0.5
+        self.dot_timer = 0.0
         
         # Mixed color based on strength
         # Zehir (Yeşil), Ateş (Kırmızı), Buz (Mavi), Kara Delik (Koyu Mor), Ağ (Gri), Mayın (Kırmızı/Turuncu)
@@ -133,6 +139,14 @@ class Cloud:
             self.dead = True
             return
             
+        # DoT tick'i (F5): yığın eklemesi ve süre yenilemesi her karede değil,
+        # dot_interval'da bir yapılır. Mayın tetiklemesi her karede kontrol
+        # edilmeye devam eder.
+        self.dot_timer -= dt
+        apply_dot_now = self.dot_timer <= 0
+        if apply_dot_now:
+            self.dot_timer = self.dot_interval
+
         # Düşmanlara DOT veya Mayın patlaması uygula
         for e in game.iter_enemies_near(self.x, self.y, self.radius):
             if not e.dead and getattr(e, 'is_trap', False) == False:
@@ -151,14 +165,19 @@ class Cloud:
                         self.dead = True
                         return
                     
+                    if not apply_dot_now:
+                        continue
+
                     # 1. Zehir Etkisi
                     if self.poison_dps > 0:
                         e.apply_dot('poison', self.poison_dps, 1.5)
-                    
+
                     # 2. Ateş Etkisi
                     if self.fire_dmg > 0:
                         e.apply_dot('fire', self.fire_dmg, 1.5)
-                        if random.random() < 0.05: # %5 şansla patlama tick'i
+                        # Tick başına şans (eskiden kare başınaydı: saniyede ~3
+                        # patlama; artık ~0.5)
+                        if random.random() < 0.25:
                             game.add_event("explosion", e.x, e.y, radius=40, color=(255, 100, 0), timer=0.15)
                             for other in game.iter_enemies_near(e.x, e.y, 40):
                                 if not other.dead and not other.is_trap and other != e:
@@ -190,9 +209,11 @@ class Cloud:
             p = game.players[game.local_player_id]
             dist_to_p = math.hypot(p.x - self.x, p.y - self.y)
             if dist_to_p < self.radius:
-                p.speed_mod = min(p.speed_mod, 0.3) # %70 yavaşlama
-                # Silence (Ateş etmeyi engelleme) flag'i
-                p.is_silenced = True
+                # speed_mod'a dogrudan yazmak etkisizdi: StatusEffectManager her
+                # karede sifirliyor. Etki artik status sistemi uzerinden (H3)
+                from logic.status_effects import apply_slow, apply_silence
+                apply_slow(p.effect_manager, duration=0.4, mult=0.3, name="Web")  # %70 yavaşlama
+                apply_silence(p.effect_manager, duration=0.4)
                 p.silence_timer = 0.5 # Ağa bastığı sürece sürekli yenilenir
 
         # Oyuncuya Hasar Uygula - DEVRE DIŞI BIRAKILDI (GDD 62)

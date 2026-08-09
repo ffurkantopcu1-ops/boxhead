@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import time
@@ -5,6 +6,45 @@ from datetime import datetime
 
 class SaveManager:
     SAVE_DIR = "saves"
+
+    # Kartların oyuncuya yazdığı DAVRANIŞ bayrakları. Kayıtta yalnızca
+    # active_cards tutulduğu için yükleme sırasında bunlar yeniden kurulur;
+    # önce buradaki varsayılanlara sıfırlanır ki (oyun içi yükleme) mevcut
+    # koşunun kartları üst üste binmesin. Değerler entities/player.py'deki
+    # __init__ varsayılanlarıyla birebir aynıdır.
+    CARD_FLAG_DEFAULTS = {
+        "damage_taken_mult": 1.0,
+        "self_dmg_on_hit": 0.0,
+        "poison_convert": False,
+        "stun_on_crit": 0.0,
+        "execute_threshold": 0.0,
+        "revive_count": 0,
+        "death_explosion": False,
+        "passive_hp_drain": 0.0,
+        "passive_shield_cd": 0.0,
+        "adrenaline_active": False,
+        "lifesteal_bonus": 0.0,
+        "xp_on_hit_bonus": 0.0,
+        "kill_hp_bonus": 0.0,
+        "periodic_freeze_cd": 0.0,
+        "lightning_proc_hits": 0,
+        "artifact_hp_cost": 0,
+        "alpha_mode": False,
+        "minion_respawn_chance": 0.0,
+        "shop_discount": 0.0,
+        "pact_devil_waves": 0,
+        "berserker_rage": False,
+        "has_shadow_clone": False,
+        "has_midas_touch": False,
+        "has_mutation": False,
+        "has_static_armor": False,
+        "has_ricochet_master": False,
+        "has_blood_bank": False,
+        "blood_bank_amount": 0,
+        "has_chaos_field": False,
+        "has_doppelganger": False,
+        "has_furnace": False,
+    }
 
     # Başlangıç silahlarında (Player.init_class_specialization) eskiden
     # weaponClass alanı yoktu; o silah geri takıldığında sınıf eski silahın
@@ -39,6 +79,71 @@ class SaveManager:
             w_class = SaveManager.LEGACY_STARTING_WEAPON_CLASSES.get(item.get("name"))
             if w_class:
                 item["weaponClass"] = w_class
+
+    @staticmethod
+    def _reset_card_flags(player):
+        """Kart bayraklarını varsayılana çeker, kristal dükkânı payını korur."""
+        for attr, default in SaveManager.CARD_FLAG_DEFAULTS.items():
+            setattr(player, attr, default)
+
+        # revive_count ve shop_discount kristal yükseltmelerinden de gelebilir;
+        # sıfırlama bunları silmesin diye meta'dan yeniden hesaplanır.
+        try:
+            from logic.crystal_shop import CrystalShop
+            meta = SaveManager.load_meta()
+            shop = CrystalShop()
+            player.revive_count = int(shop.get_effective(meta, "start_revive"))
+            player.shop_discount = min(0.9, shop.get_effective(meta, "shop_discount"))
+        except Exception as e:
+            print("Kristal bonusu geri yuklenemedi:", e)
+
+    @staticmethod
+    def restore_card_effects(logic, player, saved_cards, saved_synergies):
+        """active_cards listesinden kart DAVRANIŞ bayraklarını yeniden kurar.
+
+        Kayıtta yalnızca kart kimlikleri var; `damage_taken_mult`, `revive_count`
+        gibi bayraklar kayıp oluyordu (Cam Top'un x2 hasar bedeli yüklemede
+        siliniyor, kart saf buff'a dönüyordu). apply_card stat katkılarını da
+        tekrar eklediği için skills_permanent snapshot'ı geri konur; böylece
+        statlar çift sayılmaz.
+        """
+        card_system = logic.card_system
+        # Sinerjiler önce kurulur: check_synergies zaten aktif olanları atlar,
+        # böylece sinerji bonusları da tekrar eklenmez.
+        card_system.synergy_system.active_synergies = list(saved_synergies)
+
+        snapshot = copy.deepcopy(getattr(player, "skills_permanent", {}))
+        SaveManager._reset_card_flags(player)
+
+        card_system.active_cards = []
+        for card_id in saved_cards:
+            try:
+                card_system.apply_card(card_id, player)
+            except Exception as e:
+                print(f"Kart geri yuklenemedi ({card_id}):", e)
+
+        # Kayıttaki sıra/liste korunur (apply_card bulamadığı kartı eklemez)
+        card_system.active_cards = list(saved_cards)
+        # Stat çift sayımını geri al
+        player.skills_permanent = snapshot
+
+        # Evrimden gelen tek-pet modu kart sıfırlamasında kaybolmasın
+        if getattr(player, "evolution_passive", "") == "alpha_pet":
+            player.alpha_mode = True
+
+    @staticmethod
+    def delete_save(slot_name):
+        """Kayıt dosyasını siler. Dönüş: silindiyse True, dosya yoksa False."""
+        file_path = os.path.join(SaveManager.SAVE_DIR, f"{slot_name}.json")
+        try:
+            os.remove(file_path)
+            return True
+        except FileNotFoundError:
+            print(f"Silinecek kayit bulunamadi: {file_path}")
+            return False
+        except OSError as e:
+            print(f"Kayit silinemedi ({file_path}): {e}")
+            return False
 
     @staticmethod
     def ensure_dir():
@@ -96,6 +201,13 @@ class SaveManager:
                 "y": p.y,
                 "auto_sell": getattr(p, 'auto_sell', False),
                 "active_auras": getattr(p, 'active_auras', []),
+                # Öz yatırımı ve satın alınan auralar eskiden kaydedilmiyordu:
+                # oyuncu harcadığı özleri/aura parasını yüklemede kaybediyordu.
+                "essence_stats": getattr(p, 'essence_stats', {}),
+                "is_essence_system_unlocked": getattr(p, 'is_essence_system_unlocked', False),
+                "purchased_auras": getattr(p, 'purchased_auras', []),
+                # aura_limit KAYDEDİLMEZ: recalculate_stats her çağrıda onu
+                # kuşanılan eşyalardan yeniden hesaplıyor (türetilmiş stat).
                 "evolutions": getattr(p, 'evolutions', []),
                 "is_evolved": getattr(p, 'is_evolved', False),
                 "color": p.color,
@@ -140,17 +252,28 @@ class SaveManager:
         p.xp_to_next_level = pd.get("xp_to_next_level", 100)
         p.gold = pd.get("gold", 0)
         p.skill_points = pd.get("skill_points", 0)
-        p.hp = pd.get("hp", 100)
-        p.energy_shield = pd.get("energy_shield", 0)
         p.class_id = pd.get("class_id", "warrior")
         p.base_class_id = pd.get("base_class_id", p.class_id)
         p.class_name = pd.get("class_name", "Savaşçı")
-        p.skills = pd.get("skills", {"str": 1, "dex": 1, "int": 1, "vit": 1})
+        # p.skills gerçek yapısı list-of-dict; eski/bozuk kayıtta dict gelirse
+        # yetenek sekmesi çöküyordu. Geçersizse sınıfın varsayılan listesi kalır.
+        saved_skills = pd.get("skills")
+        if isinstance(saved_skills, list) and all(isinstance(s, dict) for s in saved_skills):
+            p.skills = saved_skills
+        else:
+            print("Kayittaki yetenek listesi gecersiz, varsayilan liste korundu.")
         p.skills_permanent = pd.get("skills_permanent", {})
         p.x = pd.get("x", p.x)
         p.y = pd.get("y", p.y)
         p.auto_sell = pd.get("auto_sell", False)
         p.active_auras = pd.get("active_auras", [])
+        # Öz/aura yatırımı (eski kayıtlarda yoksa mevcut değerler korunur)
+        p.essence_stats = pd.get("essence_stats", getattr(p, 'essence_stats', {}))
+        p.is_essence_system_unlocked = pd.get(
+            "is_essence_system_unlocked", getattr(p, 'is_essence_system_unlocked', False))
+        # purchased_auras kaydedilmiyordu: kuşanılmış aura "satın alınmamış"
+        # görünüyor, kuşandan çıkarınca geri takılamıyordu.
+        p.purchased_auras = pd.get("purchased_auras", list(p.active_auras))
         p.evolutions = pd.get("evolutions", [])
         p.is_evolved = pd.get("is_evolved", False)
         # Evrim durumu eskiden kaydedilmiyordu; eski kayıtlarda gösterim
@@ -160,9 +283,7 @@ class SaveManager:
             p.EVOLUTIONS.get(p.evolution, {}).get("passive", "")
         if "color" in pd:
             p.color = tuple(pd["color"])
-        p.passive_shield_cd = pd.get("passive_shield_cd", 0)
-        p.speed_mod = pd.get("speed_mod", 1.0)
-        
+
         if hasattr(p, 'reinit_specialization'):
             p.reinit_specialization()
 
@@ -179,24 +300,35 @@ class SaveManager:
         
         # Card System
         card_data = save_data.get("card_system", {})
-        logic.card_system.active_cards = card_data.get("active_cards", [])
+        saved_cards = list(card_data.get("active_cards", []))
         logic.card_system.passive_stats = card_data.get("passive_stats", {})
         saved_synergies = card_data.get("active_synergies")
         if saved_synergies is None:
             # Eski kayıtlar sinerji kimliklerini saklamıyordu. Bonusları zaten
             # skills_permanent içinde olduğu için yalnızca aktif kimlikleri çıkar.
-            active_cards = set(logic.card_system.active_cards)
+            active_cards = set(saved_cards)
             saved_synergies = [
                 synergy["id"]
                 for synergy in logic.card_system.synergy_system.SYNERGIES
                 if all(card_id in active_cards for card_id in synergy["required_cards"])
             ]
-        logic.card_system.synergy_system.active_synergies = saved_synergies
+        # Kart bayrakları (bedeller dâhil) yeniden kurulur; statlar çift sayılmaz
+        SaveManager.restore_card_effects(logic, p, saved_cards, saved_synergies)
 
         logic.next_wave()
-        
-        # Recalculate
+
+        # Kayıtta açıkça tutulan alanlar; Demir İrade'den gelen CD kaybolmasın
+        p.passive_shield_cd = max(pd.get("passive_shield_cd", 0) or 0,
+                                  getattr(p, 'passive_shield_cd', 0) or 0)
+        p.speed_mod = pd.get("speed_mod", 1.0)
+
+        # Recalculate (apply_card can/max_hp'yi değiştirdiği için hp en sona)
         p.inv_manager.recalculate_stats()
+        p.hp = min(pd.get("hp", 100), p.max_hp)
+        p.energy_shield = pd.get("energy_shield", 0)
+        max_es = getattr(p, 'max_energy_shield', 0)
+        if max_es:
+            p.energy_shield = min(p.energy_shield, max_es)
         print(f"Oyun yüklendi: {file_path}")
         return True
 
