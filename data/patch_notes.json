@@ -1,11 +1,26 @@
 {
   "versions": [
     {
+      "version": "1.18.1",
+      "date": "2026-08-10",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "büyücü ve bombacı erken oyun güçlendirmesi"
+        ],
+        "📦 Diğer": [
+          "sınıf denge regresyon testi (dalga-1 DPS/EHP + class_bases envelope)"
+        ]
+      }
+    },
+    {
       "version": "1.18.0",
       "date": "2026-08-10",
       "categories": {
         "✨ Yeni Özellikler": [
           "ascendancy (alt-sınıf) sistemi — seviye 20 evrimiyle açılan mini ağaçlar"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.0"
         ]
       }
     },
