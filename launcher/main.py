@@ -433,7 +433,18 @@ class LauncherApp:
             print(f"[launcher] tema yuklenemedi, klasik arayuz: {error}")
             for child in self.root.winfo_children():
                 child.destroy()
+            # KRİTİK: temalı kurulum overrideredirect(True)'dan SONRA
+            # patlarsa pencere çerçevesiz KALIYORDU — başlık çubuğu yok,
+            # görev çubuğu düğmesi yok (WS_POPUP + WS_EX_TOOLWINDOW), yani
+            # başka bir pencereye geçince kayboluyor ve geri getirilemiyor.
+            # Klasik arayüz normal pencere bekler; bayrağı geri al.
+            try:
+                self.root.overrideredirect(False)
+            except Exception:
+                pass
         self._build_ui_classic()
+        # Klasik yolda da güvenceye al (normal pencerede zararsız).
+        self.root.after(30, self._enable_taskbar_button)
 
     def _load_chrome(self):
         """Gerekli PNG'leri yükler. Eksik olan varsa hata verir."""
@@ -589,6 +600,13 @@ class LauncherApp:
         try:
             self.root.update_idletasks()
             hwnd = self.root.winfo_id()
+            # GetAncestor(GA_ROOT) kullanılır: GetParent, popup pencerelerde
+            # üst pencereyi değil SAHİBİNİ döndürür ve stil yanlış pencereye
+            # uygulanabilir. GA_ROOT her durumda gerçek top-level'ı verir.
+            GA_ROOT = 2
+            root_hwnd = user32.GetAncestor(hwnd, GA_ROOT)
+            if root_hwnd:
+                return root_hwnd
             parent = user32.GetParent(hwnd)
             return parent or hwnd
         except Exception:
@@ -613,12 +631,46 @@ class LauncherApp:
             SW_HIDE, SW_SHOW = 0, 5
 
             style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            if (style & WS_EX_APPWINDOW) and not (style & WS_EX_TOOLWINDOW):
+                self._schedule_taskbar_watchdog()
+                return          # zaten doğru; gizle/göster döngüsüne girme
             style = (style & ~WS_EX_TOOLWINDOW) | WS_EX_APPWINDOW
             user32.ShowWindow(hwnd, SW_HIDE)
             user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
             user32.ShowWindow(hwnd, SW_SHOW)
         except Exception as error:
             print(f"[launcher] gorev cubugu dugmesi eklenemedi: {error}")
+        self._schedule_taskbar_watchdog()
+
+    def _schedule_taskbar_watchdog(self):
+        """Stil bozulursa geri getirir.
+
+        Tk, pencereyi bazı işlemlerde (ör. overrideredirect'in yeniden
+        uygulanması) yeniden haritalıyor ve genişletilmiş stiller sıfırlanıyor;
+        bu olduğunda görev çubuğu düğmesi kayboluyor ve pencere geri
+        getirilemiyor. Saniyede bir sadece OKUMA yapan ucuz bir kontrol,
+        yalnızca gerçekten bozulmuşsa düzeltmeyi tekrar uygular.
+        """
+        if getattr(self, '_taskbar_watchdog_on', False):
+            return
+        self._taskbar_watchdog_on = True
+
+        def check():
+            try:
+                hwnd = self._hwnd()
+                _, user32 = _win32()
+                if hwnd and user32 is not None:
+                    style = user32.GetWindowLongW(hwnd, -20)
+                    broken = (not (style & 0x00040000)) or (style & 0x00000080)
+                    if broken:
+                        self._taskbar_watchdog_on = False
+                        self._enable_taskbar_button()
+                        return
+                self.root.after(1000, check)
+            except Exception:
+                self._taskbar_watchdog_on = False
+
+        self.root.after(1000, check)
 
     def _minimize(self):
         """Görev çubuğuna küçültür.

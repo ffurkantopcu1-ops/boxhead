@@ -1,6 +1,18 @@
 {
     "versions": [
         {
+            "version": "1.13.1",
+            "date": "2026-08-09",
+            "categories": {
+                "🪟 Launcher görev çubuğu düzeltmesi": [
+                    "Launcher bazı durumlarda görev çubuğunda hiç görünmüyordu ve başka bir pencereye geçince arkada kaybolup geri getirilemiyordu.",
+                    "Sebep: temalı arayüz kurulumu, pencere çerçevesi kaldırıldıktan SONRA bir hata verirse klasik arayüze düşülüyor ama çerçevesizlik geri alınmıyordu — sonuçta ne başlık çubuğu ne de görev çubuğu düğmesi olan bir pencere kalıyordu.",
+                    "Artık yedek arayüze düşülürken pencere normal hâline döndürülüyor ve görev çubuğu düğmesi her iki arayüz yolunda da garanti ediliyor.",
+                    "Ek güvence: pencere stili herhangi bir sebeple bozulursa saniyede bir çalışan hafif bir kontrol onu geri getiriyor."
+                ]
+            }
+        },
+        {
             "version": "1.13.0",
             "date": "2026-08-09",
             "categories": {
