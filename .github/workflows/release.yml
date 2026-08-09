@@ -91,13 +91,28 @@ jobs:
           $hash | Out-File -FilePath "$zipName.sha256" -Encoding utf8 -NoNewline
 
           # update.json manifest
+          # min_launcher_version SABIT "1.0.0" yaziliyordu; launcher'daki
+          # "guncelleme gerekli" uyarisi bu yuzden HIC tetiklenmiyordu ve
+          # eski/hatali launcher kullanan oyuncu bunu asla ogrenemiyordu.
+          # Artik tek kaynak launcher/config.py.
           $size = (Get-Item $zipName).Length
+          $minLauncher = (python -c "import launcher.config as c; print(c.MIN_LAUNCHER_VERSION)").Trim()
+          $curLauncher = (python -c "import launcher.config as c; print(c.LAUNCHER_VERSION)").Trim()
+          if (-not $minLauncher -or -not $curLauncher) {
+            Write-Error "launcher/config.py surum degerleri okunamadi"
+            exit 1
+          }
+          Write-Host "min_launcher_version = $minLauncher / latest = $curLauncher"
           $manifest = @{
             version = $ver
             filename = $zipName
             sha256 = $hash
             size = $size
-            min_launcher_version = "1.0.0"
+            min_launcher_version = $minLauncher
+            # Bu yayindaki Launcher.exe'nin surumu. Launcher kendini
+            # guncelleyemedigi icin eski surum kullanan oyuncu bununla
+            # bilgilendirilir (bkz. launcher/main.py latest_launcher_version).
+            latest_launcher_version = $curLauncher
           } | ConvertTo-Json -Depth 3
           $manifest | Out-File -FilePath "update.json" -Encoding utf8
 

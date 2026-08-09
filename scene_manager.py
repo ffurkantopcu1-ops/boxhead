@@ -56,6 +56,12 @@ def create_display(mode, logical_w, logical_h):
     """İstenen ekran modunda fiziksel pencereyi oluşturur.
     Mantıksal çözünürlük 1920x1080'de kalır; manuel ölçekleme yapılır.
     """
+    # Münhasır tam ekranda SDL, pencere odağı kaybedince oyunu VARSAYILAN
+    # OLARAK simge durumuna küçültür. Bu yüzden Win+Shift+S (ekran alıntısı),
+    # bildirim tıklaması veya alt-tab oyunu alta düşürüyordu. Hint set_mode'dan
+    # ÖNCE verilmeli.
+    os.environ.setdefault("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0")
+
     desktop_sizes = pygame.display.get_desktop_sizes()
     desktop_w, desktop_h = desktop_sizes[0] if desktop_sizes else (1920, 1080)
     

@@ -891,14 +891,31 @@ class LauncherApp:
                 local_ver = get_local_version()
                 min_lv = release_info.get('min_launcher_version', '1.0.0')
 
+                # Launcher KENDİNİ güncelleyemez (güncelleme ZIP'i Launcher.exe
+                # içermez; çalışan exe kendi üzerine yazamaz). Bu yüzden yeni
+                # bir launcher çıktığında oyuncuyu BİLGİLENDİRMEK gerekiyor —
+                # aksi halde eski/hatalı launcher'la kaldığını asla öğrenmiyor.
+                latest_lv = release_info.get('latest_launcher_version')
+                launcher_old = bool(latest_lv) and compare_versions(
+                    LAUNCHER_VERSION, latest_lv) < 0
+
                 if compare_versions(LAUNCHER_VERSION, min_lv) < 0:
                     self._set_status(
                         "Launcher güncellemesi gerekli", self.colors['red'],
-                        f"Bu sürüm Launcher v{min_lv} veya üzerini gerektiriyor.",
+                        f"Bu sürüm Launcher v{min_lv} veya üzerini gerektiriyor. "
+                        f"GitHub sürümler sayfasından Launcher.exe'yi indir.",
                     )
                     self.root.after(0, self._disable_actions)
                 elif compare_versions(remote_ver, local_ver) > 0:
                     self.root.after(0, self._show_update_available)
+                elif launcher_old:
+                    # Engellemez: oyun oynanabilir, yalnızca haber verir
+                    self.root.after(0, self._show_ready)
+                    self.root.after(60, lambda: self._set_status(
+                        "Oyun güncel — yeni launcher var", self.colors['orange'],
+                        f"Launcher v{latest_lv} yayımlandı (sende v{LAUNCHER_VERSION}). "
+                        f"GitHub sürümler sayfasından indirebilirsin.",
+                    ))
                 else:
                     self.root.after(0, self._show_ready)
             except Exception as error:
