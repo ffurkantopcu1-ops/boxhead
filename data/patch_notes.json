@@ -1,6 +1,32 @@
 {
     "versions": [
         {
+            "version": "1.14.0",
+            "date": "2026-08-09",
+            "categories": {
+                "📊 Maç sonu özeti": [
+                    "Öldüğünde artık koşunun tam dökümünü görüyorsun: hayatta kalma süresi, ulaşılan dalga, seviye, sınıf, öldürme sayısı, en yüksek combo, verilen/alınan hasar, en yüksek DPS, toplanan altın, alınan kart sayısı, ölüm nedeni ve kazanılan kristal.",
+                    "Ölüm nedeni seni öldüren düşmanın adıyla gösteriliyor."
+                ],
+                "🌟 Özel dalgalar artık gerçekten özel": [
+                    "Dalga 5, 15 ve 25'teki özel dalgalar bugüne kadar yalnızca bir afiş gösteriyordu; kural olarak normal dalga oynanıyordu. Üçü de gerçekten çalışıyor.",
+                    "Hızlı Büyüme Yarışı (dalga 5): 60 saniye boyunca yoğun düşman akışı; süre sonunda öldürme başına altın ödülü.",
+                    "Hayatta Kalma (dalga 15): 120 saniye sürekli baskı; hayatta kalırsan altın ve canının yarısı yenilenir.",
+                    "Boss Rush (dalga 25): boss gerçekten doğuyor; boss'u indirirsen süre beklemeden biter.",
+                    "Özel dalgada alanı temizlemek dalgayı erken bitirmiyor — kural süre. Kalan süre ve yarış skoru HUD'da görünüyor."
+                ],
+                "⚡ Dalga olayları çalışır hale geldi": [
+                    "✨ LÜTUF: XP'yi yarıya indirip can yenilenmesini ikiye katlıyor. İkisi de daha önce hiç uygulanmıyordu.",
+                    "🔇 GÜRÜLTÜ YASAĞI: ateş edersen düşmanlar sesi duyup üstüne geliyor; görünmezlik de seni saklamıyor.",
+                    "💀 ELİTE YAĞMURU: nadir eşya şansı gerçekten artıyor."
+                ],
+                "🐞 Düzeltmeler": [
+                    "Sınıf seçim ekranındaki hız değerleri 9 sınıfın 8'inde yanlıştı (gerçeğin 1/1.2'si). Statlar artık elle yazılmıyor, gerçek taban değerlerden türetiliyor — bir daha ayrışamaz.",
+                    "Sınıf kartlarındaki uzun açıklamalar sıkışıyordu, kısaltıldı."
+                ]
+            }
+        },
+        {
             "version": "1.13.2",
             "date": "2026-08-09",
             "categories": {

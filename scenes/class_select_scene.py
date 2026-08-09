@@ -1,23 +1,31 @@
 import pygame
 from scenes.base_scene import BaseScene
 from ui_elements import Button, ClassCard, render_fit, get_skull_crest
+from logic.inventory_manager import InventoryManager
 
 class ClassSelectScene(BaseScene):
     def on_enter(self):
         self.bg_color = (20, 20, 30)
         
-        # Sınıf Verileri
+        # Sınıf Verileri — yalnızca SUNUM bilgisi (ad, renk, tanıtım).
+        # Statlar ELLE YAZILMAZ: InventoryManager.CLASS_BASES'ten türetilir.
+        # Eskiden burada elle kopya vardı ve sınıf tabanlarına yapılan %20 hız
+        # zammından sonra güncellenmediği için 9 sınıfın 8'inde ekranda yanlış
+        # hız yazıyordu. Oyuncuya yanlış sayı göstermek, yanlış sayı kadar
+        # zararlı: build kararını gördüğü rakama göre veriyor.
         self.class_list = [
-            {"id": "warrior", "name": "Warrior", "color": (46, 204, 113), "desc": ["Yakın dövüş uzmanı."], "stats": {"HP": "+20%", "Hız": 5.0, "Hasar": "+20%"}},
-            {"id": "beastmaster", "name": "Ruh Terbiyecisi", "color": (155, 89, 182), "desc": ["Pet odaklı uzman."], "stats": {"HP": "+10%", "Hız": 4.6, "Minyon": "+30%"}},
-            {"id": "sniper", "name": "Keskin Nişancı", "color": (230, 126, 34), "desc": ["Uzak mesafe uzmanı."], "stats": {"Hız": 4.0, "Hasar": "+50%", "Sekme": "+1", "Delme": "+1"}},
-            {"id": "engineer", "name": "Mühendis", "color": (52, 152, 219), "desc": ["Savunma ustası."], "stats": {"Zırh": "+10", "Hız": 4.2, "Taret": "+1"}},
-            {"id": "ninja", "name": "Gölge Ninja", "color": (44, 62, 80), "desc": ["Suikastçı hızı."], "stats": {"Hız": 6.0, "S.Hızı": "+30%", "Dodge": "25%"}},
-            {"id": "alchemist", "name": "Simyacı", "color": (241, 196, 15), "desc": ["Zehir ve patlayıcılar."], "stats": {"Hız": 4.2, "Alan": "+40%", "DoT": "+30%"}},
-            {"id": "sorcerer", "name": "Kadim Büyücü", "color": (148, 88, 230), "desc": ["3 Elementli Döngü."], "stats": {"HP": "-30%", "Elem": "+60%", "Hız": 4.0}},
-            {"id": "bloodwalker", "name": "Vampir", "color": (192, 40, 40), "desc": ["Can çalan savaşçı."], "stats": {"Hız": 4.6, "Emme": "+20%", "Hasar": "+40%"}},
-            {"id": "bomber", "name": "Bombacı", "color": (211, 84, 0), "desc": ["Mayın döşeyen tuzakçı."], "stats": {"Hız": 4.4, "Alan": "+60%", "Hasar": "+20%"}}
+            {"id": "warrior", "name": "Warrior", "color": (46, 204, 113), "desc": ["Yakın dövüş uzmanı."]},
+            {"id": "beastmaster", "name": "Ruh Terbiyecisi", "color": (155, 89, 182), "desc": ["Pet odaklı uzman."]},
+            {"id": "sniper", "name": "Keskin Nişancı", "color": (230, 126, 34), "desc": ["Uzak mesafe uzmanı."]},
+            {"id": "engineer", "name": "Mühendis", "color": (52, 152, 219), "desc": ["Savunma ustası."]},
+            {"id": "ninja", "name": "Gölge Ninja", "color": (44, 62, 80), "desc": ["Suikastçı hızı."]},
+            {"id": "alchemist", "name": "Simyacı", "color": (241, 196, 15), "desc": ["Zehir ve patlayıcılar."]},
+            {"id": "sorcerer", "name": "Kadim Büyücü", "color": (148, 88, 230), "desc": ["3 Elementli Döngü."]},
+            {"id": "bloodwalker", "name": "Vampir", "color": (192, 40, 40), "desc": ["Can çalan savaşçı."]},
+            {"id": "bomber", "name": "Bombacı", "color": (211, 84, 0), "desc": ["Mayın döşeyen tuzakçı."]},
         ]
+        for _c in self.class_list:
+            _c["stats"] = InventoryManager.get_class_preview(_c["id"])
 
         detailed_desc = {
             "warrior": ["Dayanıklı yakın dövüşçü.", "Kılıcı öndeki düşmanları biçer.", "+%20 hasar ve +%20 can."],
@@ -25,10 +33,10 @@ class ClassSelectScene(BaseScene):
             "sniper": ["Güvenli mesafeden tek hedef avlar.", "Basit Arbalet ile başlar.", "+1 sekme, +1 delme, +%20 kritik."],
             "engineer": ["Taretlerle alan tutar, alev silahıyla yakar.", "R tuşuyla taret kurar (2 şarj biriktirir).", "+10 zırh; her şarj 5 sn'de dolar."],
             "ninja": ["Hızlı ve kaçınmaya dayalı suikastçı.", "Paslı Katana ile başlar.", "Atılma sonrası ilk vuruş 2 kat."],
-            "alchemist": ["Şişesi anında patlar ve kalıcı zehir bulutu bırakır.", "Zehir Şişesi ile başlar.", "+%40 patlama alanı, +%30 DoT. Hasar birikimlidir: alanı zehirle, düşmanı içine sür."],
+            "alchemist": ["Şişesi patlayıp kalıcı zehir bulutu bırakır.", "Zehir Şişesi ile başlar.", "Alanı zehirle, düşmanı içine sür."],
             "sorcerer": ["Ateş, buz ve zehir arasında döner.", "Sihir Asası ile başlar.", "Her 4. saldırı kritik ve 2 kat alanlı."],
             "bloodwalker": ["Can çalarak riskli oynar.", "Kan Kılıcı ile başlar.", "%30 can altında hasar ve hız +%40."],
-            "bomber": ["Bombası patlamaz, yere mayın döşer.", "Mayın düşman yaklaşınca tetiklenir ve komşu mayınları zincirler.", "En geniş alan; en yavaş atış. Zehir yok, tek seferlik büyük patlama."],
+            "bomber": ["Bombası patlamaz, yere mayın döşer.", "Mayın yaklaşınca patlar, komşuları zincirler.", "En geniş alan; en yavaş atış."],
         }
 
         # Kartları Oluştur

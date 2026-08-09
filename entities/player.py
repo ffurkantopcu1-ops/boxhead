@@ -528,6 +528,11 @@ class Player:
             regen = self.stats["regen"] + self.stats.get("hpRegen", 0) + self.stats.get("combatRegen", 0)
             if game.wave.get("current_diff") == "Impossible":
                 regen *= 0.5 # Can yenileme etkisi yarıya iner
+            # "✨ LÜTUF" dalga olayı: XP yarıya iner, can yenilenmesi 2x.
+            # İkinci yarısının hiç anahtarı yoktu, sadece açıklamada yazıyordu.
+            _ev = game.wave.get("event")
+            if _ev:
+                regen *= _ev.get("regen_mult", 1.0)
             self.heal(regen * dt)
 
         # --- CAN ÇALMA GÜNCELLEMELERİ ---

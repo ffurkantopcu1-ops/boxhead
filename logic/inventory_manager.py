@@ -122,25 +122,77 @@ class InventoryManager:
         self._track_sold(sold_count)
         return sold_count, total_gold
 
+    # 🟢 SINIF TABAN STATLARI — TEK DOĞRULUK KAYNAĞI
+    # Sınıf seçim ekranı da bunu okur (bkz. get_class_preview). Eskiden bu
+    # sözlük recalculate_stats'ın İÇİNDE yerel değişkendi ve seçim ekranı
+    # değerleri ELLE kopyalıyordu; sınıf hızlarına global %20 zam yapılınca
+    # ekran güncellenmedi ve 9 sınıfın 8'inde gösterilen hız yanlış kaldı
+    # (hepsi tam 1.2 kat). Artık gösterilen değer türetiliyor, yazılmıyor.
+    CLASS_BASES = {
+        "warrior":     {"dmgMult": 0.2,  "max_hp_mult": 0.2,  "speed": 6.0, "regen": 0.5},
+        "sniper":      {"dmgMult": 0.5,  "critChance": 0.2,   "speed": 4.8, "bounce": 1, "pierce": 1, "attack_cooldown": 500},
+        "engineer":    {"turretLimit": 1, "armor": 10,         "speed": 5.0},
+        "beastmaster": {"minionDamage": 0.3, "max_hp_mult": 0.1, "speed": 5.5},
+        "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 7.2, "regen": 0.5},
+        "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 5.0, "attack_cooldown": 900},
+        # Bombacı: TUZAKÇI. Simyacı'nın uç versiyonu DEĞİL — bombası
+        # patlamaz, yere tetiklemeli mayın bırakır (bkz. bomber_logic).
+        # Anlık hasar yok, hasar mayın tetiklenince tek seferde gelir;
+        # bedeli oyunun en uzun vuruş aralığı (1500ms).
+        "bomber":      {"aoe": 0.6,      "dmgMult": 0.2,      "speed": 4.4, "attack_cooldown": 1500},
+        # --- YENİ SINIFLAR ---
+        "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.8, "attack_cooldown": 400},
+        "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 5.5, "regen": 0.5},
+    }
+
+    # Sınıf kartında gösterilecek statlar: (anahtar, etiket, biçim).
+    # Sıra önemli — kartta bu sırayla çıkar. "pct" yüzdeye çevirir,
+    # "flat" tam sayı olarak +N yazar, "raw" ham sayıyı basar.
+    CLASS_PREVIEW_STATS = [
+        ("max_hp_mult",       "HP",     "pct"),
+        ("dmgMult",           "Hasar",  "pct"),
+        ("speed",             "Hız",    "raw"),
+        ("armor",             "Zırh",   "flat"),
+        ("critChance",        "Kritik", "pct"),
+        ("attack_speed_mult", "S.Hızı", "pct"),
+        ("dodgeChance",       "Dodge",  "pct"),
+        ("aoe",               "Alan",   "pct"),
+        ("dotDmgMult",        "DoT",    "pct"),
+        ("elementDmgMult",    "Elem",   "pct"),
+        ("lifesteal",         "Emme",   "pct"),
+        ("minionDamage",      "Minyon", "pct"),
+        ("turretLimit",       "Taret",  "flat"),
+        ("bounce",            "Sekme",  "flat"),
+        ("pierce",            "Delme",  "flat"),
+    ]
+
+    @classmethod
+    def get_class_preview(cls, class_id, limit=3):
+        """Sınıf kartında gösterilecek stat sözlüğü — TABANDAN TÜRETİLİR.
+
+        Elle yazılmış bir kopya değil; `CLASS_BASES` neyse onu gösterir.
+        Böylece taban değiştiğinde ekran otomatik doğru kalır.
+        """
+        base = cls.CLASS_BASES.get(class_id, {})
+        out = {}
+        for key, label, fmt in cls.CLASS_PREVIEW_STATS:
+            if key not in base:
+                continue
+            val = base[key]
+            if fmt == "pct":
+                out[label] = f"{val * 100:+.0f}%"
+            elif fmt == "flat":
+                out[label] = f"{val:+.0f}"
+            else:
+                out[label] = round(val, 1)
+            if len(out) >= limit:
+                break
+        return out
+
     def recalculate_stats(self):
-        # 🟢 STEP 1: CLASS-SPECIFIC BASE STATS (Source of Truth)
-        class_bases = {
-            "warrior":     {"dmgMult": 0.2,  "max_hp_mult": 0.2,  "speed": 6.0, "regen": 0.5},
-            "sniper":      {"dmgMult": 0.5,  "critChance": 0.2,   "speed": 4.8, "bounce": 1, "pierce": 1, "attack_cooldown": 500},
-            "engineer":    {"turretLimit": 1, "armor": 10,         "speed": 5.0},
-            "beastmaster": {"minionDamage": 0.3, "max_hp_mult": 0.1, "speed": 5.5},
-            "ninja":       {"attack_speed_mult": 0.3, "dodgeChance": 0.25, "speed": 7.2, "regen": 0.5},
-            "alchemist":   {"aoe": 0.4,      "dotDmgMult": 0.3,   "speed": 5.0, "attack_cooldown": 900},
-            # Bombacı: TUZAKÇI. Simyacı'nın uç versiyonu DEĞİL — bombası
-            # patlamaz, yere tetiklemeli mayın bırakır (bkz. bomber_logic).
-            # Anlık hasar yok, hasar mayın tetiklenince tek seferde gelir;
-            # bedeli oyunun en uzun vuruş aralığı (1500ms).
-            "bomber":      {"aoe": 0.6,      "dmgMult": 0.2,      "speed": 4.4, "attack_cooldown": 1500},
-            # --- YENİ SINIFLAR ---
-            "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.8, "attack_cooldown": 400},
-            "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 5.5, "regen": 0.5},
-        }
-        
+        # 🟢 STEP 1: CLASS-SPECIFIC BASE STATS (tek kaynak: CLASS_BASES)
+        class_bases = self.CLASS_BASES
+
         # Genel Varsayılanlar
         base_stats = {
             "speed": 4.8, "max_hp": 100, "dmgMult": 1.0, "armor": 0, "regen": 0.5,

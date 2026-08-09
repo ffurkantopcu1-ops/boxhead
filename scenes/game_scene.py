@@ -1291,9 +1291,26 @@ class GameScene(BaseScene):
         self.screen.blit(wave_surf, (self.width // 2 - wave_surf.get_width() // 2,
                                      self._hud_wave_y))
 
+        # Aktif ÖZEL DALGA şeridi: kalan süre ve (yarışta) skor.
+        # Özel dalganın kuralı SÜRE olduğu için sayaç görünmezse oyuncu neyi
+        # beklediğini bilmiyordu — eskiden yalnızca başlangıçta afiş çıkıyordu.
+        sp = self.logic.wave.get("special")
+        if sp and self.logic.wave.get("special_timer", 0) > 0:
+            left = self.logic.wave["special_timer"]
+            label = f"🌟 {sp['name']} — {int(left)}s"
+            if sp.get("type") == "kill_race":
+                label += f"  •  {self.logic.wave.get('special_kills', 0)} öldürme"
+            sp_txt = render_fit(label, 20,
+                                ui_theme.readable(ui_theme.COLORS["arcane"]),
+                                self.width // 2, bold=True)
+            sp_rect = sp_txt.get_rect(center=(self.width // 2, self._hud_event_y))
+            ui_theme.draw_plate(self.screen, sp_rect.inflate(48, 16), "hover",
+                                ui_theme.COLORS["arcane"])
+            self.screen.blit(sp_txt, sp_rect)
+
         # Aktif dalga olayı şeridi (dalga boyunca görünür kalır)
         evt = self.logic.wave.get("event")
-        if evt:
+        if evt and not sp:
             strip_txt = render_fit(evt["desc"], 18,
                                    ui_theme.readable(ui_theme.COLORS["gold"]),
                                    self.width // 2, bold=True)
@@ -2611,7 +2628,7 @@ class GameScene(BaseScene):
         import ui_theme
         title = ui_theme.render_title("ÖLDÜN", 64,
                                       ui_theme.readable(ui_theme.COLORS["blood"]))
-        t_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 150))
+        t_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 215))
         self.screen.blit(title, t_rect)
         crest = get_skull_crest(52)
         if crest is not None:
@@ -2620,28 +2637,38 @@ class GameScene(BaseScene):
             self.screen.blit(crest, (t_rect.right + 24,
                                      t_rect.centery - crest.get_height() // 2))
         
-        # Stats Display
-        if hasattr(self, 'stats_tracker'):
-            # Sync with logic stats if available
-            if hasattr(self.logic, 'stats'):
-                self.stats_tracker['total_damage_dealt'] = int(self.logic.stats.get('total_damage_dealt', 0))
-                self.stats_tracker['total_damage_taken'] = int(self.logic.stats.get('total_damage_taken', 0))
-                self.stats_tracker['gold_earned'] = int(self.logic.stats.get('gold_earned', 0))
-                
-            stats = [
-                f"Hasar Verilen: {self.stats_tracker['total_damage_dealt']}",
-                f"Hasar Alınan: {self.stats_tracker['total_damage_taken']}",
-                f"Kazanılan Altın: {self.stats_tracker['gold_earned']}",
-                f"Geçilen Dalga: {self.stats_tracker['waves_survived']}"
-            ]
-            sy = self.height // 2 - 80
-            for st_str in stats:
-                st_txt = render_fit(st_str, 26, (204, 198, 186), 520)
-                self.screen.blit(st_txt, (self.width // 2 - st_txt.get_width() // 2, sy))
-                sy += 30
-        
+        # --- MAÇ SONU TELEMETRİSİ ---
+        # Değerler GameLogic.get_run_summary()'den gelir (tek kaynak); ekran
+        # kendi hesabını yapmaz, yoksa gösterilen sayı ile gerçek ayrışabilir.
+        summary = self.logic.get_run_summary()
+        panel_w, row_h = 620, 30
+        rows = (len(summary) + 1) // 2          # iki sütun
+        panel_h = rows * row_h + 34
+        # y: başlığın ALTINDA başlar. draw_panel çerçeveyi rect'in DIŞINA
+        # çizdiği için (DESIGN.md) rect'i başlığa yaslamak çerçeveyi başlığın
+        # üstüne bindiriyordu.
+        panel = pygame.Rect(self.width // 2 - panel_w // 2,
+                            self.height // 2 - 120, panel_w, panel_h)
+        ui_theme.draw_panel(self.screen, panel, alpha=215)
+
+        col_w = (panel_w - 60) // 2
+        for i, (label, value, strong) in enumerate(summary):
+            col, row = i % 2, i // 2
+            x = panel.x + 30 + col * col_w
+            y = panel.y + 18 + row * row_h
+            lbl = render_fit(label, 19, (150, 143, 130), col_w - 110)
+            self.screen.blit(lbl, (x, y))
+            val_col = ui_theme.readable(ui_theme.COLORS["gold"]) if strong else (222, 216, 202)
+            val = render_fit(str(value), 20, val_col, col_w - 14, bold=strong)
+            self.screen.blit(val, (x + col_w - 14 - val.get_width(), y - 1))
+
+
         # Buttons - hitbox tek kaynak: rect saklanır
-        restart_rect = pygame.Rect(self.width // 2 - 200, self.height // 2 + 80, 400, 60)
+        # Buton panelin ALTINDAN konumlanır: özet satır sayısı değişince
+        # sabit y ile üst üste biniyordu.
+        # +70: draw_panel çerçevesi rect'in dışına ~52px taşıyor, +26 boşluk
+        # butonu alt çerçevenin üstüne bindiriyordu.
+        restart_rect = pygame.Rect(self.width // 2 - 200, panel.bottom + 70, 400, 60)
         self.game_over_restart_rect = restart_rect
         
         # Hover Kontrolü

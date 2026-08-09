@@ -498,9 +498,21 @@ class Enemy:
         # Tum hareket satirlari icin tek efektif hiz: yavaslatma (speed_mod)
         # ve sersemletme yalnizca tek bir satirda okunuyordu (H2)
         eff_speed = 0.0 if getattr(self, "is_stunned", False) else self.speed * self.speed_mod
-        
+
+        # "🔇 GÜRÜLTÜ YASAĞI" dalga olayı: ateş etmek düşmanları çeker.
+        # sound_aggro anahtarı tanımlıydı ama HİÇ okunmuyordu; olay yalnızca
+        # afiş gösteriyordu. Artık son 1.5 sn içinde ateş edildiyse düşmanlar
+        # "sesi duyar": daha hızlı gelirler ve görünmezlik onları şaşırtmaz.
+        _ev = game.wave.get("event")
+        _noisy = False
+        if _ev and _ev.get("sound_aggro"):
+            _since = pygame.time.get_ticks() - getattr(p, "last_shot_time", -99999)
+            _noisy = _since < 1500
+            if _noisy:
+                eff_speed *= 1.35
+
         # Görünmezlik Kontrolü
-        if p.is_invisible:
+        if p.is_invisible and not _noisy:
              # Eğer görünmezse rastgele küçük hareketler yap (Wander)
              self.x += random.uniform(-1, 1) * eff_speed * dt * 20
              self.y += random.uniform(-1, 1) * eff_speed * dt * 20

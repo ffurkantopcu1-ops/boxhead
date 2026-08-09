@@ -34,8 +34,10 @@ class GameLogic:
         {"id": "fast_enemies", "desc": "⚡ HIZLI DALGA! Düşmanlar 2x hızlı!", "gold_mult": 1.5, "enemy_speed": 2.0},
         {"id": "elite_rain",   "desc": "💀 ELİTE YAĞMURU! Herkes elite!", "force_elite": True, "rare_drop": True},
         {"id": "swarm",        "desc": "🦇 SÜRÜ! 3x düşman sayısı!", "enemy_count_mult": 3},
-        {"id": "no_shooting",  "desc": "🔇 GÜRÜLTÜ YASAĞI! Ateş edersen ses çıkar!", "sound_aggro": True},
-        {"id": "boon",         "desc": "✨ LÜTUF! XP Yarıya iner ama can yenilenmesi 2x.", "invulnerable": False, "xp_mult": 0.5}
+        {"id": "no_shooting",  "desc": "🔇 GÜRÜLTÜ YASAĞI! Ateş edersen düşmanlar sesi duyar!", "sound_aggro": True},
+        # invulnerable her zaman False'tu ve hiçbir yerde okunmuyordu — kaldırıldı.
+        # regen_mult eklendi: açıklama "can yenilenmesi 2x" diyordu ama karşılığı yoktu.
+        {"id": "boon",         "desc": "✨ LÜTUF! XP yarıya iner ama can yenilenmesi 2x.", "xp_mult": 0.5, "regen_mult": 2.0}
     ]
 
     SPECIAL_WAVES = {
@@ -136,7 +138,8 @@ class GameLogic:
             'total_damage_dealt': 0,
             'total_damage_taken': 0,
             'enemies_killed': 0,
-            'gold_earned': 0
+            'gold_earned': 0,
+            'max_combo': 0,
         }
 
         # Hasar takibi (C paneli): son vuruş, anlık ve maksimum DPS
@@ -309,6 +312,12 @@ class GameLogic:
         if getattr(self, 'cheat_mode', False):
             self.handle_cheat_mode(p)
         
+        # Maç süresi (maç sonu telemetrisi için) — yalnızca oynanırken artar
+        self._run_seconds = getattr(self, '_run_seconds', 0.0) + dt
+
+        # Özel dalga kuralları (süre, sürekli akış, ödül)
+        self._update_special_wave(dt)
+
         # Wave Management
         if self.wave["enemies_to_spawn"] > 0:
             self.wave["spawn_timer"] -= dt
@@ -339,9 +348,12 @@ class GameLogic:
                             bounty_target.hp = bounty_target.max_hp
                             self.wave["bounty_assigned"] = True
         elif (len([e for e in self.enemies if not e.dead and not getattr(e, 'is_trap', False) and not getattr(e, 'is_pillar', False)]) == 0
-              and not getattr(self, '_pending_spawns', None)):
+              and not getattr(self, '_pending_spawns', None)
+              and not self._special_wave_active()):
             # Bölünen düşmanların çocukları _pending_spawns'ta bekliyorken dalga
-            # bitmiş sayılıyor ve çocuklar bir sonraki dalgaya sızıyordu (P4)
+            # bitmiş sayılıyor ve çocuklar bir sonraki dalgaya sızıyordu (P4).
+            # Süreli özel dalga sürerken de bitmemeli: alanı temizlemek dalgayı
+            # erken kapatıyordu, oysa özel dalganın kuralı SÜRE.
             self.next_wave()
 
         # Çağırıcı düşmanlar update sırasında listeye ekleme yapabildiğinden,
@@ -572,6 +584,133 @@ class GameLogic:
         player.skill_points = max(player.skill_points, 99)
         player.is_invulnerable = True # God Mode
         
+    # Ölüm nedeni olarak gösterilecek okunabilir adlar. Bilinmeyen tipler
+    # ham anahtarıyla gösterilir (yanlış ad uydurmaktan iyidir).
+    DEATH_CAUSE_NAMES = {
+        "zombie": "Zombi", "kamikaze": "Kamikaze", "juggernaut": "Ezici",
+        "necromancer": "Nekromancer", "swarm_bat": "Yarasa Sürüsü",
+        "venom_spider": "Zehirli Örümcek", "web_weaver": "Ağ Dokuyucu",
+        "frost_crawler": "Buz Sürüngeni", "fire_shaman": "Ateş Şamanı",
+        "void_walker": "Boşluk Gezgini", "mad_scientist": "Çılgın Bilim İnsanı",
+        "shieldbearer": "Kalkanlı", "pack_leader": "Sürü Lideri",
+        "splitting_slime": "Bölünen Balçık", "parasite": "Parazit",
+        "war_tower": "Savaş Kulesi", "magnetar": "Magnetar",
+        "burrowing_worm": "Yeraltı Solucanı", "boss": "Boss",
+        "arachne": "Arachne", "crystal_dragon": "Kristal Ejderha",
+        "lava_pit": "Lav Çukuru", "toxic_pit": "Zehir Çukuru",
+    }
+
+    def get_run_summary(self):
+        """Maç sonu telemetrisi — TEK KAYNAK.
+
+        Ekran kendi hesabını yapmaz, buradan okur. Böylece gösterilen sayı
+        ile gerçek sayı ayrışamaz (sınıf seçim ekranındaki hız hatasının
+        aynısı burada da olabilirdi).
+
+        (etiket, değer, vurgulu_mu) üçlülerinden oluşan liste döndürür.
+        """
+        p = self.players[self.local_player_id]
+        st = self.stats
+        secs = int(getattr(self, '_run_seconds', 0))
+        dmg = int(st.get('total_damage_dealt', 0))
+        taken = int(st.get('total_damage_taken', 0))
+
+        cause_key = getattr(p, 'last_attacker_type', '') or ''
+        cause = self.DEATH_CAUSE_NAMES.get(cause_key, cause_key or "bilinmiyor")
+
+        cards = len(getattr(p, 'active_cards', []) or [])
+        crystals = self.wave["level"] * 5 + self.kill_streak * 2
+
+        return [
+            ("Hayatta kalma",   f"{secs // 60}:{secs % 60:02d}", True),
+            ("Ulaşılan dalga",  str(self.wave.get("level", 1)), True),
+            ("Seviye",          str(getattr(p, 'level', 1)), False),
+            ("Sınıf",           getattr(p, 'class_name', '') or getattr(p, 'class_id', '-'), False),
+            ("Öldürme",         str(int(st.get('enemies_killed', 0))), True),
+            ("En yüksek combo", str(int(st.get('max_combo', 0))), False),
+            ("Hasar verilen",   f"{dmg:,}".replace(",", "."), False),
+            ("Hasar alınan",    f"{taken:,}".replace(",", "."), False),
+            ("En yüksek DPS",   f"{getattr(self, 'max_dps', 0):.0f}", False),
+            ("Toplanan altın",  str(int(st.get('gold_earned', 0))), False),
+            ("Alınan kart",     str(cards), False),
+            ("Ölüm nedeni",     cause, False),
+            ("Kazanılan kristal", f"+{crystals}", True),
+        ]
+
+    # --- ÖZEL DALGALAR ---
+    # `SPECIAL_WAVES` uzun süredir tanımlıydı ama `special["type"]` kod
+    # tabanında HİÇ okunmuyordu: oyun "🌟 ÖZEL DALGA: Hayatta Kalma!" afişini
+    # basıp tamamen normal bir dalga oynatıyordu. `special_timer` da kuruluyor
+    # ama hiç azalmıyordu. Oyuncuya mekanik vaat edip vermemek, eksik içerikten
+    # daha kötü: verilen sözün tutulmadığını öğretiyor.
+
+    def _special_wave_active(self):
+        """Süreli özel dalga devam ediyor mu? (alan temizlense de bitmemeli)"""
+        sp = self.wave.get("special")
+        return bool(sp) and self.wave.get("special_timer", 0) > 0
+
+    def _update_special_wave(self, dt):
+        sp = self.wave.get("special")
+        if not sp:
+            return
+        if self.wave.get("special_timer", 0) <= 0:
+            return
+
+        self.wave["special_timer"] -= dt
+        kind = sp.get("type")
+
+        # Süre boyunca düşman akışı kesilmesin: kural "hepsini öldür" değil,
+        # "süreyi doldur". Akış bitince dalga erken kapanıyordu.
+        if self.wave["enemies_to_spawn"] <= 0 and self.wave["special_timer"] > 0:
+            if kind == "kill_race":
+                self.wave["enemies_to_spawn"] = 12      # yoğun, hızlı akış
+            elif kind == "survival":
+                self.wave["enemies_to_spawn"] = 8       # sürekli baskı
+            elif kind == "boss_rush":
+                # Boss'lar ölmüşse dalga erken bitsin (süre üst sınır)
+                alive_boss = any(
+                    not e.dead and getattr(e, 'type', '') in
+                    ("boss", "crystal_dragon", "arachne")
+                    for e in self.enemies)
+                if not alive_boss:
+                    self.wave["special_timer"] = 0
+            self.wave["total_to_spawn"] = max(1, self.wave["enemies_to_spawn"])
+
+        if self.wave["special_timer"] <= 0:
+            self._finish_special_wave(sp)
+
+    def _finish_special_wave(self, sp):
+        """Süre dolunca ödülü ver ve dalgayı kapat."""
+        p = self.players[self.local_player_id]
+        kind = sp.get("type")
+        kills = self.wave.get("special_kills", 0)
+
+        if kind == "kill_race":
+            gold = 25 + kills * 12
+            p.gold += gold
+            self.add_event("damage_text", p.x, p.y - 90,
+                           value=f"YARIŞ BİTTİ! {kills} öldürme → +{gold} altın",
+                           color=(241, 196, 15), timer=2.5)
+        elif kind == "survival":
+            gold = 150 + self.wave["level"] * 10
+            p.gold += gold
+            p.heal(p.max_hp * 0.5)
+            self.add_event("damage_text", p.x, p.y - 90,
+                           value=f"HAYATTA KALDIN! +{gold} altın, can yenilendi",
+                           color=(46, 204, 113), timer=2.5)
+        elif kind == "boss_rush":
+            gold = 400
+            p.gold += gold
+            self.add_event("damage_text", p.x, p.y - 90,
+                           value=f"BOSS RUSH TAMAM! +{gold} altın",
+                           color=(231, 76, 60), timer=2.5)
+
+        self.wave["special"] = None
+        self.wave["special_timer"] = 0
+        self.wave["special_kills"] = 0
+        # Alanı temizle ki bir sonraki dalga temiz başlasın
+        self.wave["enemies_to_spawn"] = 0
+
     def kill_enemy(self, enemy):
         # NOT: enemy.dead kontrolü burada yapılmamalı çünkü projeyle vurulduğunda take_damage'de True yapılıyor
         # Sadece bir kere ödül vermek için yeni bir flag kullanalım
@@ -844,7 +983,12 @@ class GameLogic:
             # XP Kazanımı (Basamak çarpanıyla senkronize; düşman tipine göre değişir)
             xp_to_give = reward_base * reward_step_mult * r_mod
             if getattr(enemy, "is_nemesis", False): xp_to_give *= 5
-            p.gain_xp(xp_to_give * (1.0 + p.stats.get("xpGain", 0)))
+            # "✨ LÜTUF" dalga olayı XP'yi yarıya indirmeyi vaat ediyordu ama
+            # xp_mult hiçbir yerde okunmuyordu: olay tamamen afişten ibaretti.
+            _xp_ev = 1.0
+            if self.wave.get("event"):
+                _xp_ev = self.wave["event"].get("xp_mult", 1.0)
+            p.gain_xp(xp_to_give * (1.0 + p.stats.get("xpGain", 0)) * _xp_ev)
             
             # --- GÜNLÜK GÖREV TAKİBİ ---
             self.track_quest("kill", 1)
@@ -866,7 +1010,13 @@ class GameLogic:
             # max_combo "en yüksek değer" görevidir: her kill +1 eklemez,
             # ulaşılan en yüksek combo yazılır.
             self.track_quest("max_combo", self.kill_streak)
+            # Maç sonu özeti için en yüksek combo (kill_streak sıfırlanıyor)
+            if self.kill_streak > self.stats.get('max_combo', 0):
+                self.stats['max_combo'] = self.kill_streak
             self.stats['enemies_killed'] = self.stats.get('enemies_killed', 0) + 1
+            # Özel dalga (kill_race) skoru: süre sonunda ödüle çevrilir
+            if self.wave.get("special"):
+                self.wave["special_kills"] = self.wave.get("special_kills", 0) + 1
             self.streak_timer = 3.5 # 3.5 saniye kill gelmezse biter
             
             if self.kill_streak % 10 == 0:
@@ -901,9 +1051,15 @@ class GameLogic:
                 drop_chance = 1.0 # Boss %100 şans
                 
             if random.random() < drop_chance:
+                # "💀 ELİTE YAĞMURU" dalga olayı rare_drop vaat ediyordu ama
+                # anahtar hiçbir yerde okunmuyordu: olay yalnızca afiş
+                # gösteriyordu. Nadir eşya şansını magicFind üzerinden yükseltir.
+                _mf = p.stats.get("magicFind", 1.0)
+                if self.wave.get("event") and self.wave["event"].get("rare_drop"):
+                    _mf *= 2.5
                 item_data = self.item_system.generate(
-                    mf_value=p.stats.get("magicFind", 1.0), 
-                    difficulty=self.wave["current_diff"], 
+                    mf_value=_mf,
+                    difficulty=self.wave["current_diff"],
                     wave_level=self.wave["level"],
                     is_boss=(enemy.type == "boss")
                 )
@@ -1065,6 +1221,11 @@ class GameLogic:
         if self.wave["level"] in self.SPECIAL_WAVES:
             self.wave["special"] = self.SPECIAL_WAVES[self.wave["level"]]
             self.wave["special_timer"] = self.wave["special"]["duration"]
+            self.wave["special_kills"] = 0
+            # Boss Rush: süre başlarken boss'u gerçekten doğur (eskiden
+            # yalnızca afiş çıkıyordu, ortada boss yoktu)
+            if self.wave["special"].get("type") == "boss_rush":
+                self.spawn_enemy("boss")
 
         # 3. Dalga Olayları (Wave Events) - %40 İhtimal (Özel dalga veya boss dalgası değilse)
         self.wave["event"] = None
