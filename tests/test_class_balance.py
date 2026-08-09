@@ -51,10 +51,11 @@ def _stats_for(class_id):
     return p.stats
 
 
-# Doğrudan-hasar (combat) sınıfları: alt sınır da uygulanır.
-# Utility/summon/DoT (engineer, beastmaster, alchemist, bomber, sorcerer) gücü
-# taret/minyon/DoT/element'te olduğu için kaba DPS formülü onları düşük gösterir.
-DIRECT_CLASSES = {"warrior", "sniper", "ninja", "bloodwalker"}
+# Doğrudan-hasar (combat) sınıfları: alt sınır da uygulanır. Büyücü de bir
+# hasar sınıfıdır (utility değil) — bu yüzden burada; erken güç yeterli olmalı.
+# Gerçek utility/summon/DoT (engineer, beastmaster, alchemist, bomber) kaba
+# DPS formülünce düşük görünür, alt sınır uygulanmaz.
+DIRECT_CLASSES = {"warrior", "sniper", "ninja", "bloodwalker", "sorcerer"}
 
 # class_bases stat -> (min, max) izinli aralık (mevcut değerler bunları sağlar).
 ENVELOPE = {

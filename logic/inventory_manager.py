@@ -151,10 +151,11 @@ class InventoryManager:
         # Bombacı: TUZAKÇI. Simyacı'nın uç versiyonu DEĞİL — bombası
         # patlamaz, yere tetiklemeli mayın bırakır (bkz. bomber_logic).
         # Anlık hasar yok, hasar mayın tetiklenince tek seferde gelir.
-        # Erken oyun hasarı çok düşük hissettiriyordu: dmgMult 0.2->0.35
-        # (dmgMult bomba/poisonDps'i çarpar) ve vuruş aralığı 1500->1300ms
-        # (daha hızlı mayın döşeme). Yine de oyunun en yavaş sınıfı.
-        "bomber":      {"aoe": 0.6,      "dmgMult": 0.35,     "speed": 4.4, "attack_cooldown": 1300},
+        # Erken oyun zayıf/tepkisiz hissettiriyordu (tuzakçı: gecikmeli,
+        # koşullu hasar). dmgMult 0.2->0.35 ve vuruş aralığı 1500->1100ms
+        # (mayın tarlasını daha hızlı kur). Mayın hissi cloud.py'de ayrıca
+        # düzeltildi (ömrü dolunca patlar + daha geniş tetik menzili).
+        "bomber":      {"aoe": 0.6,      "dmgMult": 0.35,     "speed": 4.4, "attack_cooldown": 1100},
         # --- YENİ SINIFLAR ---
         "sorcerer":    {"elementDmgMult": 0.6, "max_hp_mult": -0.30, "speed": 4.8, "attack_cooldown": 400},
         "bloodwalker": {"dmgMult": 0.4,  "lifesteal": 0.20,   "speed": 5.5, "regen": 0.5},

@@ -267,8 +267,11 @@ class Player:
             # item_system'deki "El Bombası Çantası (T4)" tabanıyla birebir aynı.
             starting_weapon = {"name": "El Bombası Çantası", "type": "weapon", "isBomb": True, "weaponClass": "bomber", "rarity": "Normal", "itemBase": {"poisonDps": 8}, "prefixes": [], "suffixes": []}
         elif cn == "sorcerer":
-            # elementDmgMult 0.2: T4 baz (item_system.py) ile hizalı; 0.6 başlangıçta T2 gücü veriyordu (F6)
-            starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "weaponClass": "sorcerer", "rarity": "Magic", "itemBase": {"physDmg": 8, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
+            # elementDmgMult 0.2: T4 baz (item_system.py) ile hizalı; 0.6 başlangıçta T2 gücü veriyordu (F6).
+            # physDmg 8->12: erken oyunda büyücü çok zayıftı — elementDmgMult
+            # (sınıf kimliği) düz element hasarı olmadan uykuda kaldığı için
+            # başlangıçta yalnızca 8 fiziksel vuruyordu. Taban 12'ye çekildi.
+            starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "weaponClass": "sorcerer", "rarity": "Magic", "itemBase": {"physDmg": 12, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
         elif cn == "bloodwalker":
             starting_weapon = {"name": "Kan Kılıcı", "type": "weapon", "isMelee": True, "weaponClass": "bloodwalker", "rarity": "Normal", "itemBase": {"physDmg": 14, "lifesteal": 0.15, "meleeRange": 50}, "prefixes": [], "suffixes": []}
         elif cn == "engineer":

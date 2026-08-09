@@ -167,7 +167,13 @@ class Cloud:
     def update(self, dt, game):
         self.duration -= dt
         if self.duration <= 0:
-            self.dead = True
+            # Süresi dolan MAYIN boşa gitmesin: kurulmuşsa patlayarak biter.
+            # (Eskiden hiç tetiklenmeden yok oluyordu -> "hiçbir şey yapmadım"
+            # hissi. Artık ömrü dolan mayın son bir patlama verir.)
+            if self.is_mine and self.arm_timer <= 0 and not self.dead:
+                self.detonate(game)
+            else:
+                self.dead = True
             return
 
         if self.arm_timer > 0:
@@ -181,12 +187,17 @@ class Cloud:
         if apply_dot_now:
             self.dot_timer = self.dot_interval
 
-        # Düşmanlara DOT veya Mayın patlaması uygula
-        for e in game.iter_enemies_near(self.x, self.y, self.radius):
+        # Düşmanlara DOT veya Mayın patlaması uygula.
+        # Mayın, patlama yarıçapından biraz DAHA GENİŞ bir "cezbetme" menzilinden
+        # tetiklenir: düşmanlar tam üstüne gelmeden de patlar (daha tepkili his).
+        # Patlama HASARININ yarıçapı yine self.radius'tur (detonate); yalnız
+        # tetik menzili genişler. DoT bulutları kendi yarıçapında kalır.
+        trig_r = self.radius * 1.35 if self.is_mine else self.radius
+        for e in game.iter_enemies_near(self.x, self.y, trig_r):
             if not e.dead and getattr(e, 'is_trap', False) == False:
                 dx = e.x - self.x
                 dy = e.y - self.y
-                if dx * dx + dy * dy < self.radius * self.radius:
+                if dx * dx + dy * dy < trig_r * trig_r:
                     if self.is_mine:
                         # Mayın Patlaması. Kurma gecikmesi dolmadan tetiklenmez;
                         # yoksa oyuncunun ayağının dibindeki düşman mayını
