@@ -1,11 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.18.5",
+      "date": "2026-08-10",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "zorluk yeniden dengelemesi — HP süngeri yerine TEHLİKE ölçekleme"
+        ]
+      }
+    },
+    {
       "version": "1.18.4",
       "date": "2026-08-10",
       "categories": {
         "⚖️ Denge Değişiklikleri": [
           "ninja nerf + geç-oyun yığılma (stacking) regresyon testi"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.4"
         ]
       }
     },
