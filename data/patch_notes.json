@@ -1,461 +1,216 @@
 {
-    "versions": [
-        {
-            "version": "1.15.1",
-            "date": "2026-08-09",
-            "categories": {
-                "🖥️ Tam ekran düzeltmesi": [
-                    "Win+Shift+S ile ekran görüntüsü alırken, bildirime tıklarken veya alt-tab yaparken oyun alta düşüp simge durumuna küçülüyordu. Artık odak kaybedince küçülmüyor."
-                ],
-                "🔔 Launcher sürüm bildirimi": [
-                    "Launcher kendini güncelleyemiyor (güncelleme paketi Launcher.exe içermez). Artık yeni bir launcher yayımlandığında oyuncu bilgilendiriliyor — oyun engellenmeden, sadece haber veriliyor.",
-                    "Daha önce bu uyarı mekanizması vardı ama sürüm numarası hiç artmadığı için hiç çalışmıyordu."
-                ]
-            }
-        },
-        {
-            "version": "1.15.0",
-            "date": "2026-08-09",
-            "categories": {
-                "🔊 Oyunun sesi var artık": [
-                    "Oyunda hiç ses yoktu. Vuruş, kritik, düşman ölümü, hasar alma, patlama, alev, mermi, yakın dövüş savurması, sıyırma, iyileşme, seviye atlama, altın toplama, taret kurma ve arayüz sesleri eklendi.",
-                    "Sık duyulan sesler (isabet, ölüm) birden çok varyasyonla çalınıyor; aynı örneğin üst üste binmesi kulak tırmalıyordu.",
-                    "Ses dosyaları Kenney'nin CC0 paketlerinden: Sci-fi Sounds, Impact Sounds, RPG Audio, Interface Sounds.",
-                    "Ses kartı yoksa veya açılamazsa oyun sessiz devam eder, hata vermez."
-                ],
-                "🎚️ Yüzdesel ses ayarı": [
-                    "Duraklatma menüsüne ses seviyesi eklendi: 0-100 arası, %10'luk adımlarla. Sol/sağ ok tuşlarıyla veya tıklayarak ayarlanır ve çubukla gösterilir.",
-                    "Ayar kaydediliyor; her açılışta kaldığın seviyeden devam ediyor.",
-                    "Ayarlardaki eski 'ses açık/kapalı' anahtarı hiçbir şeye bağlı değildi (oyunda ses yoktu). Artık yüzde olarak çalışıyor; eski kayıtlar otomatik dönüştürülüyor."
-                ],
-                "🐞 Düzeltmeler": [
-                    "Mühendis taret kitiyle başlıyordu ama taret R tuşuna taşındığından kit artık vurmayan bir ekipman: sınıf hiç hasar veremeden başlıyordu. Artık alev silahıyla başlıyor.",
-                    "Yerden düşen 4 taret kiti de kuşanıldığında saldırıyı tamamen kesiyordu (tuzak eşya). Artık kit takan oyuncu zayıf yumrukla dövüşebiliyor: güçlü taret / zayıf şahsi hasar dengesi.",
-                    "Duraklatma menüsünün son satırı ('Oyuna geri dön') ne çiziliyor ne tıklanabiliyordu; satır sayısı sabit yazılmıştı."
-                ]
-            }
-        },
-        {
-            "version": "1.14.0",
-            "date": "2026-08-09",
-            "categories": {
-                "📊 Maç sonu özeti": [
-                    "Öldüğünde artık koşunun tam dökümünü görüyorsun: hayatta kalma süresi, ulaşılan dalga, seviye, sınıf, öldürme sayısı, en yüksek combo, verilen/alınan hasar, en yüksek DPS, toplanan altın, alınan kart sayısı, ölüm nedeni ve kazanılan kristal.",
-                    "Ölüm nedeni seni öldüren düşmanın adıyla gösteriliyor."
-                ],
-                "🌟 Özel dalgalar artık gerçekten özel": [
-                    "Dalga 5, 15 ve 25'teki özel dalgalar bugüne kadar yalnızca bir afiş gösteriyordu; kural olarak normal dalga oynanıyordu. Üçü de gerçekten çalışıyor.",
-                    "Hızlı Büyüme Yarışı (dalga 5): 60 saniye boyunca yoğun düşman akışı; süre sonunda öldürme başına altın ödülü.",
-                    "Hayatta Kalma (dalga 15): 120 saniye sürekli baskı; hayatta kalırsan altın ve canının yarısı yenilenir.",
-                    "Boss Rush (dalga 25): boss gerçekten doğuyor; boss'u indirirsen süre beklemeden biter.",
-                    "Özel dalgada alanı temizlemek dalgayı erken bitirmiyor — kural süre. Kalan süre ve yarış skoru HUD'da görünüyor."
-                ],
-                "⚡ Dalga olayları çalışır hale geldi": [
-                    "✨ LÜTUF: XP'yi yarıya indirip can yenilenmesini ikiye katlıyor. İkisi de daha önce hiç uygulanmıyordu.",
-                    "🔇 GÜRÜLTÜ YASAĞI: ateş edersen düşmanlar sesi duyup üstüne geliyor; görünmezlik de seni saklamıyor.",
-                    "💀 ELİTE YAĞMURU: nadir eşya şansı gerçekten artıyor."
-                ],
-                "🐞 Düzeltmeler": [
-                    "Sınıf seçim ekranındaki hız değerleri 9 sınıfın 8'inde yanlıştı (gerçeğin 1/1.2'si). Statlar artık elle yazılmıyor, gerçek taban değerlerden türetiliyor — bir daha ayrışamaz.",
-                    "Sınıf kartlarındaki uzun açıklamalar sıkışıyordu, kısaltıldı."
-                ]
-            }
-        },
-        {
-            "version": "1.13.2",
-            "date": "2026-08-09",
-            "categories": {
-                "🖼️ Uygulama ikonu": [
-                    "Oyun ve launcher artık kendi ikonunu kullanıyor; görev çubuğunda ve alt+tab listesinde jenerik ikon yerine Boxhead logosu görünüyor.",
-                    "İkon 16x16'dan 256x256'ya kadar yedi boyutta hazırlandı, böylece küçük ve büyük gösterimlerde bulanıklaşmıyor."
-                ]
-            }
-        },
-        {
-            "version": "1.13.1",
-            "date": "2026-08-09",
-            "categories": {
-                "🪟 Launcher görev çubuğu düzeltmesi": [
-                    "Launcher bazı durumlarda görev çubuğunda hiç görünmüyordu ve başka bir pencereye geçince arkada kaybolup geri getirilemiyordu.",
-                    "Sebep: temalı arayüz kurulumu, pencere çerçevesi kaldırıldıktan SONRA bir hata verirse klasik arayüze düşülüyor ama çerçevesizlik geri alınmıyordu — sonuçta ne başlık çubuğu ne de görev çubuğu düğmesi olan bir pencere kalıyordu.",
-                    "Artık yedek arayüze düşülürken pencere normal hâline döndürülüyor ve görev çubuğu düğmesi her iki arayüz yolunda da garanti ediliyor.",
-                    "Ek güvence: pencere stili herhangi bir sebeple bozulursa saniyede bir çalışan hafif bir kontrol onu geri getiriyor."
-                ]
-            }
-        },
-        {
-            "version": "1.13.0",
-            "date": "2026-08-09",
-            "categories": {
-                "🔧 Mühendis yeniden tasarlandı": [
-                    "Taret artık saldırı tuşuna değil, R tuşuna bağlı bir YETENEK. Eskiden taret kiti takılıyken Mühendis hiç doğrudan hasar veremiyordu; saldırı tuşu 5 saniye boyunca hiçbir şey yapmıyordu.",
-                    "Taret 2 ŞARJ biriktiriyor: iki tareti arka arkaya kurup sonra bekleyebilirsin. Her şarj 5 saniyede doluyor.",
-                    "Yetenek çubuğunda (Atılma'nın yanında) R butonu ve üstünde şarj noktaları görünüyor.",
-                    "Taret kurunca mavi bir enerji dalgası çıkıyor; limit dolduğu için en eski taret sökülünce duman ve enkaz efekti veriyor (eskiden sessizce yok oluyordu)."
-                ],
-                "🔥 Yeni silah türü: Alev Silahı": [
-                    "Mühendis'e alev silahı geldi. Mermi atmaz — önündeki koniyi tarar, saniyede ~10 kez vurur ve yanma yığar.",
-                    "Asıl hasar tek vuruştan değil, alevin içinde kalan düşmanın biriken yanmasından gelir.",
-                    "Dipte koni genişler: yakınındaki düşmanları da yakalar.",
-                    "4 tier: Sızdıran Alev Tabancası (T4), Basınçlı Alev Silahı (T3), Ağır Alev Püskürtücü (T2), Ejderha Nefesi (T1).",
-                    "Üst tier'ler daha uzun menzil, daha yüksek ateş hasarı ve daha uzun yanma süresi veriyor.",
-                    "Alev için özel görsel: sıcak koni, savrulan alev dilleri ve namlu parlaması."
-                ],
-                "🃏 Yeni kartlar (taret)": [
-                    "⚙️ Seri Üretim — +1 taret şarjı. Bedel: verdiğin hasar %15 azalır.",
-                    "🏭 Fabrika Hattı — +1 taret limiti ve taretler %25 hızlı ateş eder. Bedel: hareket hızın %20 azalır.",
-                    "🔧 Aşırı Yükleme — +2 taret limiti, +1 şarj, taretler %40 sert vurur. Bedel: taret canı yarıya iner, maksimum canın %15 azalır."
-                ]
-            }
-        },
-        {
-            "version": "1.12.2",
-            "date": "2026-08-09",
-            "categories": {
-                "⚔️ Yakın dövüş geri bildirimi": [
-                    "Yakın dövüş sınıfları (Savaşçı, Ninja, Vampir, Simyacı, Bombacı, Mühendis, Hayvan Terbiyecisi) isabet kıvılcımı almıyordu — sadece menzilli saldırılar alıyordu. Hepsi bağlandı.",
-                    "Vuruşun elementi görselden anlaşılıyor: ateş turuncu, buz mavi, zehir yeşil.",
-                    "Minyonların zehir aurası da artık isabet efekti üretiyor."
-                ],
-                "🐞 Düzeltmeler": [
-                    "Savaşçı, Ninja ve Vampir kritik vuruş hesaplıyordu ama bunu düşmana bildirmiyordu: Tetikçi evriminin kritik yakması ve Kritik Aşırı Yük kartının sersemletmesi yakın dövüşte hiç çalışmıyordu. Düzeltildi.",
-                    "Kritik vuruşlar artık yakın dövüşte de sarı yıldız patlamasıyla görünüyor."
-                ]
-            }
-        },
-        {
-            "version": "1.12.1",
-            "date": "2026-08-09",
-            "categories": {
-                "🚀 Performans": [
-                    "Görsel efekt sisteminin kare maliyeti belirgin düşürüldü: yoğun dalgalarda %32, atış sırasında %72 daha ucuz.",
-                    "Efekt dokuları artık ekranın yalnızca gerçekten kullanılan bölümünü işliyor.",
-                    "Yoğun anlarda (çok sayıda patlama + parçacık) kare düşmesi azaldı."
-                ]
-            }
-        },
-        {
-            "version": "1.12.0",
-            "date": "2026-08-09",
-            "categories": {
-                "💣 Bombacı ve Simyacı ayrıştı": [
-                    "Bombacı artık bir TUZAKÇI: attığı bomba anında patlamıyor, yere tetiklemeli mayın bırakıyor.",
-                    "Mayın düşman yaklaşınca patlıyor ve komşu mayınları zincirleme tetikliyor. Kısa bir kurma süresi var.",
-                    "Mayın tek seferlik büyük fiziksel patlama veriyor; Bombacı'da zehir yok.",
-                    "Aynı anda en fazla 8 mayın yerde durabilir (Mayın Uzmanı ile 12).",
-                    "Simyacı ise ALAN KONTROLCÜSÜ: şişesi anında patlıyor ve geride uzun süreli zehir bulutu bırakıyor.",
-                    "Simyacı bulutu artık 1.3 saniye yerine ~4.5 saniye yerde kalıyor; 'Etki Süresi' bonusları buluta da yansıyor.",
-                    "Bombacı'nın 'Kimyager' evrimi Simyacı'nın zehir kimliğini kopyalıyordu; yerine 🧨 Mayın Uzmanı geldi (mayınlar +%35 hasar, +%40 yarıçap, +4 kapasite)."
-                ],
-                "✨ Görsel efektler yeniden yazıldı": [
-                    "Efektler artık ömrü boyunca sönüyor ve büyüyor. Önceden aniden belirip aniden kayboluyorlardı.",
-                    "Patlama ve şok dalgası artık birbirinden ayırt edilebiliyor; eskiden ikisi de aynı boş daireydi.",
-                    "Yakın dövüş savurması saldırı yönünü kullanıyor. Eskiden nereye vurursan vur aynı çarpı şekli çiziliyordu.",
-                    "15 yeni efekt dokusu eklendi (Kenney Particle Pack, CC0 lisanslı).",
-                    "Elementlerin kendi görsel dili var: ateş turuncu alev, buz mavi kıvılcım, zehir yeşil duman, yıldırım mavi ark."
-                ],
-                "🎯 Artık gördüğün geri bildirimler": [
-                    "Normal isabet: mermi düşmana çarptığında kıvılcım çıkıyor. Eskiden sadece hasar sayısı vardı.",
-                    "Kritik vuruş: sarı yıldız patlaması ile normal vuruştan ayırt ediliyor.",
-                    "Dodge: hasarı savuşturduğunda mavi halka ve 'SIYIRDI' yazısı çıkıyor.",
-                    "Şifa ve can çalma: yeşil parlama süzülüyor.",
-                    "Seviye atlama: altın sarısı büyülü patlama.",
-                    "Altın ve iksir toplama: parıltı efekti.",
-                    "Düşman üzerindeki durum etkileri artık görünüyor — yanan düşmandan alev, zehirlenenden yeşil duman, donmuştan buz kıvılcımı, sersemlemişten sarı yıldız çıkıyor.",
-                    "Bombacı mayını yerde beklerken is lekesi ve nabız gibi atan tetikleme halkası ile görünüyor; kurulmadan önce soluk, kurulduktan sonra parlak.",
-                    "Namlu ateşi dokulu parlama ve kıvılcım konisine dönüştü."
-                ],
-                "🐞 Düzeltmeler": [
-                    "Kaynak koddan çalıştırırken Türkçe karakterli mesajların oyunu çökertmesi giderildi.",
-                    "Kristal dükkânının son satırı 1080p'de ekranın altında kırpılıyordu, düzeltildi.",
-                    "Dash izi parçacıkları saydam olması gerekirken tamamen opak çiziliyordu."
-                ]
-            }
-        },
-        {
-            "version": "1.11.0",
-            "date": "2026-08-09",
-            "categories": {
-                "💣 Yeni Sınıf": [
-                    "Bombacı oynanabilir hale geldi: oyunun en geniş patlama alanına sahip, en yavaş vuran sınıfı.",
-                    "Bombacı'ya özel 4 silah: El Bombası Çantası, Molotof Kokteyli, Dinamit Demeti, Termobarik Bomba.",
-                    "Bombacı evrimleri açıldı: Nükleer Bombacı (zincirleme patlama) ve Kimyager (zehir bulutu).",
-                    "Sınıf seçim ızgarası 9 sınıfa göre kendini ayarlıyor, alt satır ekrandan taşmıyor."
-                ],
-                "⚔️ Sınıf Evrimleri artık çalışıyor": [
-                    "20. seviyede seçtiğin evrimin özel yeteneği bugüne kadar hiç devreye girmiyordu; 15 pasifin tamamı düzeltildi.",
-                    "Gladyatör: her öldürmede 1 saniye %30 hız. Paladin: saniyede %2 can yenileme ve düşmanları yavaşlatan aura.",
-                    "Tetikçi: kritikler düşmanı tutuşturur. Hayalet Nişancı: 2 saniye bekleyip attığın ilk atış garantili kritik.",
-                    "Elektrikçi: vuruşların 2 düşmana sıçrayan yıldırıma dönüşür. Nükleer Bombacı: öldürdüğün düşman patlar.",
-                    "Kimyager ve Zehir Tanrısı: öldürdüğün düşman zehir bulutu bırakır. Ateş Başbüyücüsü: vuruşların çevreye yanma bulaştırır.",
-                    "Buz Büyücüsü: her vuruş yavaşlatır, %10 şansla tamamen dondurur. Asil Vampir: canın doluyken %50 fazla hasar.",
-                    "Ölüm Gölgesi: her öldürmede 1.5 saniye görünmezlik. Fırtına Bıçağı: öldürme yığını başına hasar ve hız.",
-                    "Kale Mimarı: taretlerin sana can yeniler. Pet İmparatoru: minyonların %40 hızlı, %30 sık saldırır."
-                ],
-                "🃏 Kartlar ve Sinerjiler": [
-                    "Kart seçince statların artık ANINDA uygulanıyor. 47 kartın 37'si bugüne kadar seçildiği anda hiçbir şey yapmıyordu.",
-                    "Lanet kartlarının maksimum can bedelleri gerçekten yüzdesel oldu; geç oyunda da hissediliyor.",
-                    "Ölü kart etkileri hayata döndü: ölümden dönüş, ölüm patlaması, cellat, tüccar indirimi, kritikte sersemletme, vuruşta XP, öldürünce can.",
-                    "Adrenalin kartı artık gerçekten hız ve hasar veriyor; eskiden sadece ekranda yazı çıkıyordu.",
-                    "Alfa Bağı artık tek güçlü pet veriyor; eskiden pet sayısını sıfırlayıp oyunu çökertiyordu.",
-                    "Buhar Patlaması sinerjisi çalışır hale geldi. Sürü Psikolojisi aurası yeniden yazıldı.",
-                    "Yeni aura: Kıyım Momentumu — combo sayacın hasarını artırır (%200 tavanlı).",
-                    "Kart ekranındaki 'Atla' seçeneği artık deneyim eğrisini bozmuyor, canını tazeliyor ve Mutasyon kartını tetikliyor."
-                ],
-                "💎 Eşyalar, Setler ve Elitler": [
-                    "Şok Dalgası, Yayılım Açısı, Acımasız, Çalma Şansı, Yörünge Dronu, Etki Süresi ve Fiziksel Hasar özellikleri artık gerçekten çalışıyor.",
-                    "Pompalı Usta, Fırtına Efendisi, Zehir Ustası ve Simyacı Lordu set kademeleri etkinleştirildi.",
-                    "Quantum Leap (atılma bekleme süresi) ve Singularity (kara delik) küre özellikleri devreye girdi.",
-                    "Elit modifikatörleri: Dikenli hasar yansıtıyor, Vampir vurdukça iyileşiyor, Dondurucu ve buz biyomu oyuncuyu yavaşlatıyor.",
-                    "'Menzil' özelliği artık birkaç piksel yerine gerçek bir çarpan veriyor (T1 +%30).",
-                    "Yetenek ağacındaki 'Gerilim' artık gerçekten mermi hızını artırıyor.",
-                    "İstatistik panelinde 16 yeni stat adıyla ve açıklamasıyla görünüyor."
-                ],
-                "🎯 Görevler ve Meta İlerleme": [
-                    "Günlük görev sistemi 20 görev tipinin tamamını takip ediyor; önceden yalnız 6'sı çalışıyordu ve görevlerin %70'i tamamlanamıyordu.",
-                    "Yeni takip edilenler: dalgaya ulaşma, combo rekoru, altın harcama, kart seçme, artifact kullanma, Kan Ayı'nı atlatma, minyon öldürmeleri, dodge, eşya satışı ve evrim.",
-                    "'Wave 20'ye ulaş' türü görevler doğru sayıyor: ilerleme toplanmıyor, ulaşılan en yüksek değer yazılıyor.",
-                    "Kristal dükkânındaki tüm yükseltmeler artık gerçekten etki ediyor; hiçbir şey yapmayanlar kaldırıldı.",
-                    "Kart Görünürlüğü, Efsane Kart Şansı, Ekstra Market Slotu, Kart Yenileme ve Başlangıç Kartı yükseltmeleri devreye girdi.",
-                    "Kristal dükkânının son satırı artık ekranda kırpılmıyor."
-                ],
-                "⚖️ Denge": [
-                    "Element hasarı yeniden dengelendi: bonuslar birbirini katlamıyor, toplanıyor. Uç ateş build'lerinin hasarı yaklaşık üçte birine indi.",
-                    "Ateş ve Buz yüzdeleri artık yakın dövüşte de işliyor; aynı yetenek sınıfa göre farklı güç vermiyor.",
-                    "Minyon canı düzeltildi: 85.000 cana ulaşabiliyordu, artık hedeflenen aralıkta.",
-                    "Eşya Bulma artık yazdığını yapıyor (+%15 gerçekten %15). Her düşmanın kesin eşya düşürmesi sona erdi.",
-                    "Zehir bulutları anında değil, yarım saniyede bir yığılıyor.",
-                    "XP ve altın kazanımındaki gizli 2 kat çarpan kaldırıldı; yüzde bonusları artık tam etki ediyor.",
-                    "Taret mermi sayısı çift sayılıyordu, düzeltildi. Kart hız cezaları ilk kez uygulanıyor.",
-                    "Zorluk yükseltmek artık boss'ları gerçekten güçlendiriyor; eskiden zayıflatıyordu."
-                ],
-                "🐞 Hata Düzeltmeleri": [
-                    "Kalkan kırılınca oyunun çökmesi giderildi (Statik Zırh, Kan Bankası ve Cam Kale).",
-                    "Özel Küre sonrası İlahi/Kutsanmış Küre kullanınca oluşan çökme giderildi.",
-                    "Zırh eksiye düşünce oyunun çökmesi ve hasarın oyuncuyu iyileştirmesi giderildi.",
-                    "Lanet kartları üst üste alınınca maksimum canın eksiye düşüp anında ölmesi giderildi.",
-                    "Artifact'i kullanırken çıkarınca oluşan çökme giderildi.",
-                    "Can çalma (lifesteal) hiç çalışmıyordu; tüm kaynaklarda düzeltildi.",
-                    "Düşman yavaşlatma, dondurma ve sersemletme etkisizdi; Donmuş Zaman, Zaman Kumu ve buz biyomu artık işliyor.",
-                    "Envanterde küre 'KULLAN' butonunun yığını yok etmesi ve craft 'GERİ AL' butonunun eşyayı çoğaltması giderildi.",
-                    "Öldüğün karedeki tıklama artık ölüm ekranını atlamıyor; evrim ekranında yanlış evrim seçilemiyor.",
-                    "Envanter açıkken Q ve R yetenekleri boşa harcanmıyor. SET nadirlik filtresi seçilebiliyor.",
-                    "Kuşanılan eşya gerçekten sağ tıkla çıkarılıyor; tooltip okurken sol tıklayınca silah düşmüyor.",
-                    "Oyunu kaynak koddan çalıştırırken Türkçe karakter içeren mesajların oyunu çökertmesi giderildi."
-                ],
-                "💾 Kaydetme": [
-                    "Kaydet/yükle artık kartların bedellerini de hatırlıyor; Cam Top gibi kartlar yüklemede bedava güçlendirmeye dönüşmüyor.",
-                    "Kart statları yüklemede iki kez sayılmıyor.",
-                    "Kalıcı Öz yatırımların ve satın aldığın auralar artık kaydediliyor; daha önce yüklemede yok oluyordu.",
-                    "Eski veya bozuk kayıtlarda Yetenek sekmesinin ve bilinmeyen set eşyalarının çökmesi giderildi."
-                ],
-                "🚀 Performans": [
-                    "Yakın dövüş süpürme efekti çok daha ucuz çiziliyor; yoğun anlarda kare düşmesi azaldı.",
-                    "İkonu olmayan eşyalar her karede diskte aranmıyor.",
-                    "Her düşman ölümünde yapılan disk yazımı kaldırıldı.",
-                    "Sahipsiz minyonların sonsuza kadar birikmesine yol açan bellek sızıntısı giderildi.",
-                    "Tam ekranda fare imleci ile arayüz vurgusunun kayması düzeltildi."
-                ]
-            }
-        },
-        {
-            "version": "1.10.0",
-            "date": "2026-08-08",
-            "categories": {
-                "🐞 Hata Düzeltmeleri": [
-                    "silah degistirince eski sinifin saldirisi uzerinde kalmasi giderildi"
-                ]
-            }
-        },
-        {
-            "version": "1.9.2",
-            "date": "2026-08-08",
-            "categories": {
-                "🐞 Hata Düzeltmeleri": [
-                    "necromancer/swarm_egg Enemy UnboundLocalError duzeltildi (v1.9.2)"
-                ]
-            }
-        },
-        {
-            "version": "1.9.1",
-            "date": "2026-08-08",
-            "categories": {
-                "🐞 Hata Düzeltmeleri": [
-                    "ninja pasli katana menzili artirildi, boks eldiveni atis hizi dengelendi, dash atan dusman hiz/hitbox nerflendi, silah degistirme sonrasi stat birikme bug'i giderildi"
-                ]
-            }
-        },
-        {
-            "version": "1.9.0",
-            "date": "2026-08-08",
-            "categories": {
-                "✨ Yeni Özellikler": [
-                    "simyaci sise mekanigi, zehir bulutu gorseli ve launcher duzeltmeleri"
-                ]
-            }
-        },
-        {
-            "version": "1.8.3",
-            "date": "2026-08-08",
-            "categories": {
-                "📦 Diğer": [
-                    "Fix NameError in projectile.py (bounce_dmg_mult missing in init args)"
-                ]
-            }
-        },
-        {
-            "version": "1.8.2",
-            "date": "2026-08-08",
-            "categories": {
-                "📦 Diğer": [
-                    "Fix BOM issue in version.txt for GitHub Actions",
-                    "Fix Ninja range, adjust Wave 1 spawn pool, and nerf dash enemy"
-                ]
-            }
-        },
-        {
-            "version": "1.8.1",
-            "date": "2026-08-08",
-            "categories": {
-                "📦 Diğer": [
-                    "update version to 1.8.1",
-                    "yeni silahlar ve yaratıklar eklendi"
-                ]
-            }
-        },
-        {
-            "version": "1.8.0",
-            "date": "2026-08-08",
-            "categories": {
-                "✨ Yeni Özellikler": [
-                    "gotik pixel-art UI seti, 9-slice altyapisi ve cerçevesiz launcher"
-                ]
-            }
-        },
-        {
-            "version": "1.7.3",
-            "date": "2026-08-08",
-            "categories": {
-                "✨ Yeni Özellikler": [
-                    "simyaci evrimleri yeniden tasarlandi ve dengelendi"
-                ],
-                "🐞 Hata Düzeltmeleri": [
-                    "oyun baslangicinda otomatik atlanan wave 1 sorunu cozuldu",
-                    "combo speed nerfi, alchemist baslangic silahi nerfi, xp ve es kart dengelenmesi, bomba sekme/delme bagisikligi"
-                ],
-                "📦 Diğer": [
-                    "bump version to 1.7.3 for release"
-                ]
-            }
-        },
-        {
-            "version": "1.7.2",
-            "date": "2026-08-08",
-            "categories": {
-                "⚖️ Denge Değişiklikleri": [
-                    "tum siniflara 0.5 saniyede can yenilemesi eklendi, yakin dovus siniflarina ekstra +0.5 (toplam 1.0) verildi",
-                    "simyaci siselerinin zehir hasarlari yari yariya nerflendi",
-                    "dash atan dusman hasari %15 azaltildi ve tum siniflarin hareket hizi %20 artirildi"
-                ],
-                "📦 Diğer": [
-                    "update version.txt to 1.7.2 for release",
-                    "silah mirasi ozelligi tier yerine rarity bazli olarak duzeltildi",
-                    "yeni ozellikler plani guncellendi ve fikir havuzu eklendi"
-                ]
-            }
-        },
-        {
-            "version": "1.7.1",
-            "date": "2026-08-08",
-            "categories": {
-                "✨ Yeni Özellikler": [
-                    "ekran modu secenegi (tam ekran / cercevesiz pencere / pencere)",
-                    "koyu fantastik pixel-art UI temasi (banner butonlar + metal paneller)"
-                ],
-                "🐞 Hata Düzeltmeleri": [
-                    "buton cizim/hitbox uyusmazliklari tek kaynaga alindi"
-                ],
-                "📦 Diğer": [
-                    "Fix UI crispness, rebuild display scaling engine, and bump version to v1.7.1"
-                ]
-            }
-        },
-        {
-            "version": "1.7.0",
-            "date": "2026-08-08",
-            "categories": {
-                "✨ Yeni Özellikler": [
-                    "oyun ici ve launcher icin otomatik patch notes sistemi"
-                ],
-                "🐞 Hata Düzeltmeleri": [
-                    "dalga ve olay duyurulari ekran-alani HUD bannerinda gosteriliyor"
-                ],
-                "⚖️ Denge Değişiklikleri": [
-                    "sistemik stat tavanlari ve broken build duzeltmeleri"
-                ],
-                "📦 Diğer": [
-                    "bump checkout to v5 and setup-python to v6 (Node 20 deprecation)",
-                    "mark spec files as release-critical in AGENTS.md"
-                ]
-            }
-        },
-        {
-            "version": "1.6.3",
-            "date": "2026-08-08",
-            "categories": {
-                "🐞 Hata Düzeltmeleri": [
-                    "restore Boxhead_Launcher.spec required by release workflow"
-                ],
-                "⚙️ İyileştirmeler": [
-                    "move static game data tables to data/*.json"
-                ],
-                "📦 Diğer": [
-                    "Balance and bugfix pass: boss difficulty scaling, class logic and UI tweaks",
-                    "Add new features implementation plan and Engineer UI requirements",
-                    "clean up obsolete and temporary files"
-                ]
-            }
-        },
-        {
-            "version": "1.6.2",
-            "date": "2026-08-08",
-            "categories": {
-                "📦 Diğer": [
-                    "Improve UI, launcher updates, and game performance"
-                ]
-            }
-        },
-        {
-            "version": "1.6.1",
-            "date": "2026-08-08",
-            "categories": {
-                "🐞 Hata Düzeltmeleri": [
-                    "publish complete game executable"
-                ]
-            }
-        },
-        {
-            "version": "1.6.0",
-            "date": "2026-08-08",
-            "categories": {
-                "✨ Yeni Özellikler": [
-                    "publish standalone launcher in releases"
-                ],
-                "🐞 Hata Düzeltmeleri": [
-                    "fetch updates from release repository",
-                    "quote CI smoke test command for YAML",
-                    "allow CI workflow reuse in releases"
-                ]
-            }
-        },
-        {
-            "version": "1.1.0",
-            "date": "2026-08-08",
-            "categories": {
-                "📦 Diğer": [
-                    "proje"
-                ]
-            }
-        }
-    ]
+  "versions": [
+    {
+      "version": "1.16.0",
+      "date": "2026-08-09",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "sınıf kimlik kartları ve sınıf-uyumlu (affinity) kart havuzu",
+          "node tabanlı yetenek ağacı (skill tree)"
+        ],
+        "📦 Diğer": [
+          "erken erişim (early access) etiketi ve CLAUDE.md"
+        ]
+      }
+    },
+    {
+      "version": "1.10.0",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "silah degistirince eski sinifin saldirisi uzerinde kalmasi giderildi"
+        ]
+      }
+    },
+    {
+      "version": "1.9.2",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "necromancer/swarm_egg Enemy UnboundLocalError duzeltildi (v1.9.2)"
+        ]
+      }
+    },
+    {
+      "version": "1.9.1",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "ninja pasli katana menzili artirildi, boks eldiveni atis hizi dengelendi, dash atan dusman hiz/hitbox nerflendi, silah degistirme sonrasi stat birikme bug'i giderildi"
+        ]
+      }
+    },
+    {
+      "version": "1.9.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "simyaci sise mekanigi, zehir bulutu gorseli ve launcher duzeltmeleri"
+        ]
+      }
+    },
+    {
+      "version": "1.8.3",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Fix NameError in projectile.py (bounce_dmg_mult missing in init args)"
+        ]
+      }
+    },
+    {
+      "version": "1.8.2",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Fix BOM issue in version.txt for GitHub Actions",
+          "Fix Ninja range, adjust Wave 1 spawn pool, and nerf dash enemy"
+        ]
+      }
+    },
+    {
+      "version": "1.8.1",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "update version to 1.8.1",
+          "yeni silahlar ve yaratıklar eklendi"
+        ]
+      }
+    },
+    {
+      "version": "1.8.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "gotik pixel-art UI seti, 9-slice altyapisi ve cerçevesiz launcher"
+        ]
+      }
+    },
+    {
+      "version": "1.7.3",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "simyaci evrimleri yeniden tasarlandi ve dengelendi"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "oyun baslangicinda otomatik atlanan wave 1 sorunu cozuldu",
+          "combo speed nerfi, alchemist baslangic silahi nerfi, xp ve es kart dengelenmesi, bomba sekme/delme bagisikligi"
+        ],
+        "📦 Diğer": [
+          "bump version to 1.7.3 for release"
+        ]
+      }
+    },
+    {
+      "version": "1.7.2",
+      "date": "2026-08-08",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "tum siniflara 0.5 saniyede can yenilemesi eklendi, yakin dovus siniflarina ekstra +0.5 (toplam 1.0) verildi",
+          "simyaci siselerinin zehir hasarlari yari yariya nerflendi",
+          "dash atan dusman hasari %15 azaltildi ve tum siniflarin hareket hizi %20 artirildi"
+        ],
+        "📦 Diğer": [
+          "update version.txt to 1.7.2 for release",
+          "silah mirasi ozelligi tier yerine rarity bazli olarak duzeltildi",
+          "yeni ozellikler plani guncellendi ve fikir havuzu eklendi"
+        ]
+      }
+    },
+    {
+      "version": "1.7.1",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "ekran modu secenegi (tam ekran / cercevesiz pencere / pencere)",
+          "koyu fantastik pixel-art UI temasi (banner butonlar + metal paneller)"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "buton cizim/hitbox uyusmazliklari tek kaynaga alindi"
+        ],
+        "📦 Diğer": [
+          "Fix UI crispness, rebuild display scaling engine, and bump version to v1.7.1"
+        ]
+      }
+    },
+    {
+      "version": "1.7.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "oyun ici ve launcher icin otomatik patch notes sistemi"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "dalga ve olay duyurulari ekran-alani HUD bannerinda gosteriliyor"
+        ],
+        "⚖️ Denge Değişiklikleri": [
+          "sistemik stat tavanlari ve broken build duzeltmeleri"
+        ],
+        "📦 Diğer": [
+          "bump checkout to v5 and setup-python to v6 (Node 20 deprecation)",
+          "mark spec files as release-critical in AGENTS.md"
+        ]
+      }
+    },
+    {
+      "version": "1.6.3",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "restore Boxhead_Launcher.spec required by release workflow"
+        ],
+        "⚙️ İyileştirmeler": [
+          "move static game data tables to data/*.json"
+        ],
+        "📦 Diğer": [
+          "Balance and bugfix pass: boss difficulty scaling, class logic and UI tweaks",
+          "Add new features implementation plan and Engineer UI requirements",
+          "clean up obsolete and temporary files"
+        ]
+      }
+    },
+    {
+      "version": "1.6.2",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Improve UI, launcher updates, and game performance"
+        ]
+      }
+    },
+    {
+      "version": "1.6.1",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "publish complete game executable"
+        ]
+      }
+    },
+    {
+      "version": "1.6.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "publish standalone launcher in releases"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "fetch updates from release repository",
+          "quote CI smoke test command for YAML",
+          "allow CI workflow reuse in releases"
+        ]
+      }
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "proje"
+        ]
+      }
+    }
+  ]
 }
