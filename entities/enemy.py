@@ -420,11 +420,16 @@ class Enemy:
     def apply_difficulty(self, diff_name):
         if diff_name == "Very Hard": diff_name = "Nightmare"
         
+        # ZORLUK = TEHLİKE, HP SÜNGERİ DEĞİL. Eski hp 5/20/100 düşmanları mermi
+        # süngerine çeviriyordu (bıktırıcı grind). Yeni eğri HP'yi düşük tutup
+        # HIZ + hasarı öne çıkarır; asıl tehlike game_logic'teki düşman sayısı /
+        # aktif tavan / spawn temposu / elit sıklığından gelir. (Impossible ayrıca
+        # oyuncu hasarını ve zırhını yarıya indirir -> ham hp/dmg kasten düşük.)
         diff_mults = {
-            "Normal":    {"hp": 1.0,  "dmg": 1.0, "speed": 1.0, "armor": 1.0},
-            "Hard":      {"hp": 5.0,  "dmg": 3.0, "speed": 1.0, "armor": 1.0},
-            "Nightmare": {"hp": 20.0, "dmg": 7.0, "speed": 1.0, "armor": 2.0},
-            "Impossible":{"hp": 100.0, "dmg": 20.0, "speed": 1.3, "armor": 5.0}
+            "Normal":    {"hp": 1.0, "dmg": 1.0, "speed": 1.00, "armor": 1.0},
+            "Hard":      {"hp": 1.8, "dmg": 1.8, "speed": 1.12, "armor": 1.0},
+            "Nightmare": {"hp": 3.2, "dmg": 3.2, "speed": 1.25, "armor": 1.3},
+            "Impossible":{"hp": 5.5, "dmg": 5.5, "speed": 1.40, "armor": 1.5}
         }
         mult = diff_mults.get(diff_name, diff_mults["Normal"])
         

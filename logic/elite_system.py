@@ -14,12 +14,12 @@ class EliteSystem:
     MODIFIERS = _MODIFIERS
 
     @staticmethod
-    def should_apply(wave_level):
-        """Wave seviyesine göre elit düşman olma şansı."""
+    def should_apply(wave_level, diff_mult=1.0):
+        """Wave seviyesine (ve zorluğa) göre elit düşman olma şansı."""
         if wave_level < 5:
             return False
-        # Wave 5: %10, Wave 10: %20, Wave 20: %35, cap at %40
-        chance = min(0.40, 0.05 + wave_level * 0.015)
+        # Wave 5: %10, Wave 20: %35; zorluk çarpanıyla artar, tavan %75.
+        chance = min(0.75, (0.05 + wave_level * 0.015) * diff_mult)
         return random.random() < chance
     
     @staticmethod

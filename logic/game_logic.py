@@ -332,14 +332,18 @@ class GameLogic:
                     if not enemy.dead and not enemy.is_trap
                     and not getattr(enemy, 'is_pillar', False)
                 )
-                if active_enemy_count >= self.MAX_ACTIVE_ENEMIES:
+                _cap = {"Hard": 260, "Very Hard": 320, "Impossible": 400}.get(
+                    self.wave["current_diff"], self.MAX_ACTIVE_ENEMIES)
+                if active_enemy_count >= _cap:
                     self.wave["spawn_timer"] = 0.08
                 else:
                     spawned = self.spawn_enemy()
                     if spawned is None: spawned = 1
                     self.wave["enemies_to_spawn"] -= spawned
                     # Tüm dalganın belirlenen süre içinde doğması için dinamik interval hesapla
-                    wave_duration = 20.0 if self.wave.get("level", 1) <= 5 else 10.0
+                    _dur_mult = {"Hard": 0.9, "Very Hard": 0.75, "Impossible": 0.6}.get(
+                        self.wave["current_diff"], 1.0)
+                    wave_duration = (20.0 if self.wave.get("level", 1) <= 5 else 10.0) * _dur_mult
                     interval = wave_duration / max(1, self.wave["total_to_spawn"])
                     self.wave["spawn_timer"] = interval * spawned
 
@@ -487,7 +491,9 @@ class GameLogic:
         if getattr(enemy, 'is_trap', False) or enemy.type in ["boss", "loot_goblin"]:
             return
             
-        if EliteSystem.should_apply(self.wave["level"]):
+        _elite_mult = {"Hard": 1.4, "Very Hard": 2.2, "Impossible": 3.0}.get(
+            self.wave["current_diff"], 1.0)
+        if EliteSystem.should_apply(self.wave["level"], _elite_mult):
             EliteSystem.apply_modifier(enemy, self.wave["level"])
 
     def spawn_enemy(self, enemy_type=None):
@@ -1240,7 +1246,11 @@ class GameLogic:
                 self.wave["event"] = random.choice(self.WAVE_EVENTS)
 
         # Yaratık sayısını 5 kat artır (15 -> 75 taban sayı)
-        count = int((15 + self.wave["level"] * 8) * 5 * 0.85) 
+        # Zorluk düşman SAYISINI artırır (HP yerine yoğunluk = gerçek tehlike);
+        # MAX_WAVE_ENEMIES tavanı (aşağıda) kaçmayı önler.
+        _diff_count = {"Normal": 1.0, "Hard": 1.25, "Very Hard": 1.6, "Impossible": 2.0}
+        count = int((15 + self.wave["level"] * 8) * 5 * 0.85
+                    * _diff_count.get(self.wave["current_diff"], 1.0))
         if self.wave["event"] and self.wave["event"].get("enemy_count_mult"):
             count *= self.wave["event"]["enemy_count_mult"]
         count = min(count, self.MAX_WAVE_ENEMIES)
@@ -1384,11 +1394,13 @@ class GameLogic:
                         yield enemy
 
     def can_spawn_summoned_enemy(self):
+        _cap = {"Hard": 260, "Very Hard": 320, "Impossible": 400}.get(
+            self.wave["current_diff"], self.MAX_ACTIVE_ENEMIES)
         return sum(
             1 for enemy in self.enemies
             if not enemy.dead and not enemy.is_trap
             and not getattr(enemy, 'is_pillar', False)
-        ) < self.MAX_ACTIVE_ENEMIES
+        ) < _cap
 
     def apply_separation(self, dt):
         # Separation force to prevent overlapping (The Core Difficulty Fix)
