@@ -5,7 +5,8 @@ class Sorcerer:
     """
     Büyücü (Sorcerer) - 3 element rotasyonlu uzak saldırı sınıfı (cam top).
     - Her atış sırayla fire -> frost -> poison; her 4. atış otomatik kritik + 2x AoE.
-    - +%60 element hasarı (elementDmgMult) — tüm ateş/buz/zehir hasarlarını güçlendirir.
+    - Element hasarı çarpanı (elementDmgMult) — tüm ateş/buz/zehir hasarlarını
+      güçlendirir (başlangıç asasında 0.2, sınıf tabanı +0.6 ile birlikte).
     - Bedeli: -%30 maksimum can (70 HP) - en kırılgan sınıf.
     """
     def __init__(self):

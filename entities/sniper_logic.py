@@ -8,9 +8,6 @@ class Sniper:
     - +%50 hasar ve +%20 kritik şansı; mermileri +1 sekme ve +1 delip geçme ile atar.
     - Ağır silah: taban saldırı süresi 500ms (diğer sınıflardan yavaş ama vuruş başına güçlü).
     """
-    def __init__(self):
-        self.attack_range = 800
-        
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
         

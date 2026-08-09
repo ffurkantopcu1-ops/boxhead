@@ -11,10 +11,6 @@ class Engineer:
       (physDmg) ve turretDmg/turretRate statlarıyla ölçeklenir.
     - Taretler düşman saldırısını üstüne çeker (aggro emer).
     """
-    def __init__(self):
-        self.attack_range = 300
-        self.turret_cooldown = 0
-        
     # --- ALEV SİLAHI (Flamethrower) ---
     # Diğer arketiplerden farkı: mermi üretmez, her saldırıda ÖNÜNDEKİ KONİYİ
     # tarar. Atış aralığı çok kısa olduğu için sürekli bir akış hissi verir;

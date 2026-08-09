@@ -382,48 +382,7 @@ class InventorySlot:
         if self.item and self.item.get('is_corrupted'):
             draw_corrupted_pulse(screen, self.rect)
 
-class SkillButton:
-    def __init__(self, x, y, w, h, text, skill_id):
-        self.rect = pygame.Rect(x, y, w, h)
-        self.text = text
-        self.skill_id = skill_id
-        self.is_hovered = False
-        self.detail_font = pygame.font.SysFont(UI_FONT_NAME, 14)
-
-    def update(self):
-        self.is_hovered = self.rect.collidepoint(pygame.mouse.get_pos())
-        return self.is_hovered and pygame.mouse.get_pressed()[0]
-
-    def draw(self, screen, font, can_afford, description=None):
-        # Tema: gotik taş çerçeve; alınabilirlik yeşil tonla gösterilir
-        import ui_theme
-        active = can_afford and self.is_hovered
-        if can_afford:
-            base = ui_theme.COLORS["moss"]
-            tint = tuple(int(c * (0.50 if active else 0.34)) for c in base)
-        else:
-            tint = tuple(int(c * 0.16) for c in ui_theme.METAL_LO)
-        content = ui_theme.draw_inset_frame(
-            screen, self.rect, "panel_frame_small.png",
-            fill=(30, 38, 32) if can_afford else (28, 25, 32),
-            alpha=246, tint=tint, pad=12)
-
-        max_width = content.width
-        name_col = ui_theme.TEXT_COL if can_afford else (162, 156, 146)
-        # render_fit: shrink_to_width bulanıklaştırıyordu
-        txt = render_fit(self.text, 19, name_col, max_width, bold=can_afford)
-        text_y = content.y + 2 if description else self.rect.centery - txt.get_height() // 2
-        screen.blit(txt, txt.get_rect(midtop=(content.centerx, text_y)))
-
-        if description:
-            # Ortak wrap_text (bu sınıfın kendi kopyası vardı)
-            lines = wrap_text(self.detail_font, description, max_width)
-            desc_col = (204, 210, 206) if can_afford else (150, 145, 138)
-            y = text_y + txt.get_height() + 4
-            for line in lines[:2]:
-                detail = self.detail_font.render(line, True, desc_col)
-                screen.blit(detail, detail.get_rect(midtop=(content.centerx, y)))
-                y += self.detail_font.get_height() + 1
+# (SkillButton kaldırıldı — eski düz yetenek ızgarası; node ağacı yerini aldı.)
 
 class TabButton:
     def __init__(self, x, y, w, h, text, tab_id):

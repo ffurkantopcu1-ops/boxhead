@@ -1,7 +1,7 @@
 from scenes.base_scene import BaseScene
 from logic.game_logic import GameLogic
 from entities.player import Player
-from ui_elements import (TabButton, EquippedRow, BackpackItemCard, SkillButton,
+from ui_elements import (TabButton, EquippedRow, BackpackItemCard,
                          MarketCard, render_fit, shrink_to_width,
                          strip_unsupported, get_skull_crest)
 from logic.skill_tree import SkillTree
@@ -249,19 +249,11 @@ class GameScene(BaseScene):
             # 6 slot için aralığı 75 yaptık
             self.equip_rows.append(EquippedRow(self.width // 2 - 450, 140 + i * 75, 400, 68, stype))
             
-        # YETENEK BUTONLARI (3. Sekme) - Dinamik 2 Sütun
-        self.skill_btns = []
-        self.skill_sub_tabs = ["HAYATTA KALMA", "SALDIRI", "YARDIMCI", "TARET", "MİNYON"]
-        self.active_skill_sub_tab = "HAYATTA KALMA"
-        
+        # SIFIRLA butonu — yetenek AĞACI sekmesi kullanır (reset_btn_rect).
+        # Eski düz 56-yetenek ızgarası (skill_btns + p_template Player üretimi)
+        # kaldırıldı; node ağacı yerini aldı.
         self.reset_btn_rect = pygame.Rect(self.width // 2 + 250, 85, 150, 40)
         self.refresh_btn_rect = pygame.Rect(self.width // 2 + 250, 105, 180, 45)
-        
-        # Player.skills'deki tüm yetenekler için buton üret (Grup bazlı yerleştirme)
-        p_template = Player("tmp", 0, 0)
-        # Butonları draw sırasında filtreleyeceğiz, burada sadece listeyi hazır tutuyoruz
-        for i, sk in enumerate(p_template.skills):
-            self.skill_btns.append(SkillButton(0, 0, 340, 75, sk['name'], i))
         # ÇANTA (SAĞ) - 6x2 Izgara (12 Slot)
         self.bp_cards = []
         self.inventory_page = 0
@@ -2938,21 +2930,6 @@ class GameScene(BaseScene):
 
         if hover:
             self._draw_tree_tooltip(hover, mouse_pos, allocated, allocatable)
-
-    def buy_skill(self, p, skill_idx):
-        if p.skill_points <= 0: return
-        
-        sk = p.skills[skill_idx]
-        if sk['lvl'] < sk['max']:
-            sk['lvl'] += 1
-            p.skill_points -= 1
-            
-            # HP ise anlık canı da artır
-            if sk['stat'] == 'max_hp':
-                p.hp += sk['val']
-            
-            p.inv_manager.recalculate_stats()
-            print(f"Skill Purchased: {sk['name']}")
 
 
     def draw_card_select_screen(self):

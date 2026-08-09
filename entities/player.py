@@ -1837,29 +1837,6 @@ class Player:
         if not force:
             self.i_frame_timer = 0.5 # 0.5 saniye dokunulmazlık
         
-    def reset_skills(self):
-        """Tüm yetenekleri sıfırlar ve harcanan SP'leri iade eder."""
-        wave_level = 1
-        if hasattr(self, 'game') and self.game:
-            wave_level = self.game.wave.get("level", 1)
-        cost = 2000 + max(0, (wave_level - 1) * 400)
-        
-        if self.gold < cost:
-            return False
-            
-        self.gold -= cost
-        total_refund = 0
-        for sk in self.skills:
-            total_refund += sk['lvl']
-            sk['lvl'] = 0
-            
-        self.skill_points += total_refund
-        self.inv_manager.recalculate_stats()
-        # Canı yeni max_hp'ye göre sınırla
-        self.hp = min(self.hp, self.max_hp)
-        print(f"Yetenekler Sıfırlandı! {total_refund} SP iade edildi. {cost} Gold harcandı.")
-        return True
-
 
     def draw(self, screen, camera_x, camera_y):
         draw_x = self.x - camera_x

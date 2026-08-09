@@ -403,9 +403,16 @@ def readable(color, min_lum=150):
     return tuple(min(255, int(c * k)) for c in color[:3])
 
 
+_TITLE_FONT_CACHE = {}
+
+
 def render_title(text, size, color=TEXT_COL, shadow=(16, 10, 12)):
     """Tema serif fontuyla gölgeli başlık yüzeyi (menü/ekran başlıkları)."""
-    font = pygame.font.SysFont(_FONT_NAME, size, bold=True)
+    # Font önbelleği: her çağrıda yeni SysFont açmak profilde draw maliyetiydi.
+    font = _TITLE_FONT_CACHE.get(size)
+    if font is None:
+        font = pygame.font.SysFont(_FONT_NAME, size, bold=True)
+        _TITLE_FONT_CACHE[size] = font
     body = font.render(text, True, color)
     sh = font.render(text, True, shadow)
     off = max(2, size // 16)
