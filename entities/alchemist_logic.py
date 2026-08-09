@@ -1,6 +1,7 @@
 import math
 import pygame
 import random
+import vfx
 
 class Alchemist:
     """
@@ -72,6 +73,7 @@ class Alchemist:
             dx, dy = e.x - player.x, e.y - player.y
             if not e.dead and dx * dx + dy * dy < 110 * 110:
                 e.take_damage(dmg, game, from_player=True)
+                vfx.hit(game, e.x, e.y, 'poison')
                 if random.random() < 0.3: # Şans eseri zehirle
                     e.apply_dot('poison', 5 * player.stats["dmgMult"], 2.0)
         

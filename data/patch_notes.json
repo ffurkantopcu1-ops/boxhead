@@ -1,6 +1,21 @@
 {
     "versions": [
         {
+            "version": "1.12.2",
+            "date": "2026-08-09",
+            "categories": {
+                "⚔️ Yakın dövüş geri bildirimi": [
+                    "Yakın dövüş sınıfları (Savaşçı, Ninja, Vampir, Simyacı, Bombacı, Mühendis, Hayvan Terbiyecisi) isabet kıvılcımı almıyordu — sadece menzilli saldırılar alıyordu. Hepsi bağlandı.",
+                    "Vuruşun elementi görselden anlaşılıyor: ateş turuncu, buz mavi, zehir yeşil.",
+                    "Minyonların zehir aurası da artık isabet efekti üretiyor."
+                ],
+                "🐞 Düzeltmeler": [
+                    "Savaşçı, Ninja ve Vampir kritik vuruş hesaplıyordu ama bunu düşmana bildirmiyordu: Tetikçi evriminin kritik yakması ve Kritik Aşırı Yük kartının sersemletmesi yakın dövüşte hiç çalışmıyordu. Düzeltildi.",
+                    "Kritik vuruşlar artık yakın dövüşte de sarı yıldız patlamasıyla görünüyor."
+                ]
+            }
+        },
+        {
             "version": "1.12.1",
             "date": "2026-08-09",
             "categories": {

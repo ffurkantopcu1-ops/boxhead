@@ -1,5 +1,6 @@
 import math
 import pygame
+import vfx
 
 class Warrior:
     """
@@ -86,7 +87,13 @@ class Warrior:
                             # Ana hedefe Yanma
                             e.apply_dot('fire', fire_dmg * 0.4, 3.0)
 
-                        e.take_damage(final_dmg, game, from_player=True)
+                        # is_crit AKTARILMALI: kritik hesaplanıyordu ama
+                        # take_damage'a verilmiyordu, bu yüzden krite bağlı
+                        # mekanikler (Tetikçi evrimi, Kritik Aşırı Yük kartı)
+                        # yakın dövüşte hiç tetiklenmiyordu.
+                        e.take_damage(final_dmg, game, is_crit=is_crit, from_player=True)
+                        vfx.hit(game, e.x, e.y,
+                                'fire' if fire_dmg > 0 else 'phys', is_crit=is_crit)
                         hit_any = True
         
         # Dash kaldırıldı (İsteğe bağlı sarsıntı eklenebilir ama dash artık yok)

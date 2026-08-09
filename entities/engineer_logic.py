@@ -1,5 +1,6 @@
 import math
 import pygame
+import vfx
 
 class Engineer:
     """
@@ -40,6 +41,7 @@ class Engineer:
             dx, dy = e.x - player.x, e.y - player.y
             if not e.dead and dx * dx + dy * dy < 110 * 110:
                 e.take_damage(dmg, game, from_player=True)
+                vfx.hit(game, e.x, e.y, 'phys')
         
     def update(self, dt, player, game):
         pass

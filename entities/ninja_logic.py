@@ -1,6 +1,7 @@
 import math
 import pygame
 import random
+import vfx
 
 class Ninja:
     """
@@ -75,7 +76,11 @@ class Ninja:
                         if p_dps > 0:
                             e.apply_dot('poison', p_dps, 3.0)
 
-                        e.take_damage(dmg, game, from_player=True)
+                        # is_crit aktarımı: krite bağlı mekanikler melee'de de çalışsın
+                        e.take_damage(dmg, game, is_crit=is_crit, from_player=True)
+                        vfx.hit(game, e.x, e.y,
+                                'fire' if fire_dmg > 0 else ('frost' if frost_dmg > 0
+                                else ('poison' if p_dps > 0 else 'phys')), is_crit=is_crit)
                         hit_any = True
         
         if hit_any:

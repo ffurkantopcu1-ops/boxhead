@@ -1,5 +1,6 @@
 import math
 import random
+import vfx
 
 class Bloodwalker:
     """
@@ -55,7 +56,9 @@ class Bloodwalker:
                 angle_to_e = math.atan2(e.y - player.y, e.x - player.x)
                 diff = abs(((angle_to_e - angle) + math.pi) % (2 * math.pi) - math.pi)
                 if diff < 0.9:  # ~100 derece yay
-                    e.take_damage(final_dmg, game, from_player=True)
+                    # is_crit aktarımı: krite bağlı mekanikler melee'de de çalışsın
+                    e.take_damage(final_dmg, game, is_crit=is_crit, from_player=True)
+                    vfx.hit(game, e.x, e.y, 'phys', is_crit=is_crit)
                     hit_any = True
 
                     # Lifesteal — her vuruşta %20 can al

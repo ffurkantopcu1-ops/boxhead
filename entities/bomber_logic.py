@@ -1,6 +1,7 @@
 import math
 import pygame
 import random
+import vfx
 
 
 class Bomber:
@@ -95,6 +96,7 @@ class Bomber:
             dx, dy = e.x - player.x, e.y - player.y
             if not e.dead and not getattr(e, 'is_trap', False) and dx * dx + dy * dy < range_val * range_val:
                 e.take_damage(dmg, game, from_player=True)
+                vfx.hit(game, e.x, e.y, 'fire')
                 if random.random() < 0.25:
                     e.apply_dot('fire', 8 * player.stats.get("dmgMult", 1.0), 2.0)
 

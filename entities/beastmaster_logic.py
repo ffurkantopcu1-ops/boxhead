@@ -1,6 +1,7 @@
 import math
 import pygame
 import random
+import vfx
 
 class Beastmaster:
     """
@@ -54,6 +55,7 @@ class Beastmaster:
         if target_enemy:
             # Denge: Kamçı artık işaretlediği hedefe hasar da vurur (eskiden 0 hasar)
             target_enemy.take_damage(dmg, game, from_player=True)
+            vfx.hit(game, target_enemy.x, target_enemy.y, 'phys')
             for m in game.minions:
                 if m.owner == player:
                     m.priority_target = target_enemy

@@ -1,6 +1,7 @@
 import pygame
 import math
 import random
+import vfx
 
 class Minion:
     def __init__(self, id, x, y, m_type="wolf", owner=None, local_stats=None):
@@ -162,6 +163,7 @@ class Minion:
                         e.last_hit_by_minion = True
                         try:
                             e.take_damage(aura_dmg, game, from_player=True)
+                            vfx.hit(game, e.x, e.y, 'poison')
                         finally:
                             e.last_hit_by_minion = False
                         game.add_event("damage_text", e.x, e.y - 10, value=aura_dmg, color=(46, 204, 113), scale=0.6)
