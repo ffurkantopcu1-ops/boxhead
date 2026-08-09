@@ -83,8 +83,13 @@ class BossProjectile:
         if not self.active: return
         draw_x = int(self.x - camera_x)
         draw_y = int(self.y - camera_y)
-        pygame.draw.circle(screen, self.color, (draw_x, draw_y), self.radius)
-        pygame.draw.circle(screen, (255, 255, 255), (draw_x, draw_y), self.radius + 1, 1)
+        # Dolu gövde + KALIN koyu kontur + parlak çekirdek. İnce 1px beyaz halka
+        # dünya yüzeyi NEAREST ölçeklenirken piksel düşmesiyle "blink" ediyordu;
+        # kalın dolu şekil ölçeklemede kaybolmaz.
+        r = self.radius + 1
+        pygame.draw.circle(screen, (18, 10, 12), (draw_x, draw_y), r + 1)     # koyu kontur
+        pygame.draw.circle(screen, self.color, (draw_x, draw_y), r)           # gövde
+        pygame.draw.circle(screen, (255, 240, 220), (draw_x, draw_y), max(2, r // 3))  # çekirdek
 
 class ProjectilePool:
     def __init__(self, size=2000):

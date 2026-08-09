@@ -483,16 +483,18 @@ class Projectile:
         else:
             p_color = self.color if not self.is_crit else (255, 255, 0)
             if self.is_hostile:
-                # Düşman Mermisi: Elmas/Baklava Şekli (Kırmızı-Turuncu Tonları)
-                p_color = (231, 76, 60) # Radikal Kırmızı
-                points = [
-                    (draw_x, draw_y - self.radius - 2),
-                    (draw_x + self.radius + 2, draw_y),
-                    (draw_x, draw_y + self.radius + 2),
-                    (draw_x - self.radius - 2, draw_y)
-                ]
-                pygame.draw.polygon(screen, p_color, points)
-                pygame.draw.polygon(screen, (255, 255, 255), points, 1) # Beyaz kenarlık
+                # Düşman Mermisi: DOLU kırmızı elmas + kalın koyu kontur + parlak
+                # çekirdek. Eski hâli küçük + 1px beyaz kenarlıklıydı; dünya
+                # yüzeyi ekrana NEAREST ölçeklenirken (zoom) bu ince/küçük şekil
+                # piksel düşmesiyle "blink" ediyordu. Büyük + dolu şekil ölçeklemede
+                # kaybolmaz. Tam sayı koordinat da alt-piksel titremesini keser.
+                cx, cy = int(draw_x), int(draw_y)
+                r = self.radius + 4
+                outer = [(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)]
+                inner = [(cx, cy - r + 3), (cx + r - 3, cy), (cx, cy + r - 3), (cx - r + 3, cy)]
+                pygame.draw.polygon(screen, (54, 10, 8), outer)        # kalın koyu kontur
+                pygame.draw.polygon(screen, (231, 76, 60), inner)      # gövde
+                pygame.draw.circle(screen, (255, 214, 170), (cx, cy), max(2, r // 3))  # çekirdek
             else:
                 # Oyuncu Mermisi: Standart Yuvarlak
                 pygame.draw.circle(screen, p_color, (int(draw_x), int(draw_y)), self.radius)
