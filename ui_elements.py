@@ -4,8 +4,10 @@ import time
 import os
 
 # --- Ortak Metin Yardımcıları ---
+# Gotik temayla uyumlu serif (başlıklar zaten Georgia; gövde metni de aynı
+# aileye çekilerek modern sans-serif "Segoe UI" görünümü kaldırıldı).
 _FONT_CACHE = {}
-UI_FONT_NAME = "Segoe UI, Arial"
+UI_FONT_NAME = "Georgia, Times New Roman, serif"
 
 def get_font(size, bold=False):
     """Boyuta göre önbelleğe alınmış font döndürür."""
@@ -225,7 +227,7 @@ class ClassCard:
         self.data = class_data # {id, name, desc, color, stats: {}}
         self.font_main = font_main
         self.font_sub = font_sub
-        self.font_desc = pygame.font.SysFont("Segoe UI, Arial", 18) # Daha modern font
+        self.font_desc = pygame.font.SysFont(UI_FONT_NAME, 18)
         
         self.is_hovered = False
         self.glow_alpha = 0
@@ -386,7 +388,7 @@ class SkillButton:
         self.text = text
         self.skill_id = skill_id
         self.is_hovered = False
-        self.detail_font = pygame.font.SysFont("Segoe UI, Arial", 14)
+        self.detail_font = pygame.font.SysFont(UI_FONT_NAME, 14)
 
     def update(self):
         self.is_hovered = self.rect.collidepoint(pygame.mouse.get_pos())

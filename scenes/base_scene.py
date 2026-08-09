@@ -6,9 +6,11 @@ class BaseScene:
         self.screen = screen
         self.width = width
         self.height = height
-        self.font_main = pygame.font.SysFont("Outfit, Roboto, Inter, Segoe UI, Arial", 72, bold=True)
-        self.font_sub = pygame.font.SysFont("Outfit, Roboto, Inter, Segoe UI, Arial", 32)
-        self.font_desc = pygame.font.SysFont("Outfit, Roboto, Inter, Segoe UI, Arial", 20)
+        # Gotik temayla uyumlu serif (bkz. ui_elements.UI_FONT_NAME)
+        _THEME_FONT = "Georgia, Times New Roman, serif"
+        self.font_main = pygame.font.SysFont(_THEME_FONT, 72, bold=True)
+        self.font_sub = pygame.font.SysFont(_THEME_FONT, 32)
+        self.font_desc = pygame.font.SysFont(_THEME_FONT, 20)
 
     def on_enter(self):
         # Sahneler arası geçişte yapılacak işlemler

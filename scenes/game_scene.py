@@ -12,6 +12,39 @@ import random
 import sys
 import vfx
 
+# --- Eşya tooltip: okunur stat etiketleri + kıyaslama ---
+ITEM_STAT_LABEL = {
+    "physDmg": "Fiziksel Hasar", "meleeRange": "Menzil", "attackCooldown": "Vuruş Süresi",
+    "fireDamage": "Ateş Hasarı", "frostDamage": "Buz Hasarı", "poisonDps": "Zehir DPS",
+    "elementDmgMult": "Element Hasarı", "fireDmgMult": "Ateş Hasarı", "frostDmgMult": "Buz Hasarı",
+    "dmgMult": "Hasar", "physDmgFlat": "Fiziksel", "fireDmgFlat": "Ateş", "frostDmgFlat": "Buz",
+    "aoe": "Alan", "lifesteal": "Can Çalma", "critChance": "Kritik Şans", "critDmg": "Kritik Hasar",
+    "armor": "Zırh", "maxHp": "Can", "max_hp": "Can", "maxEnergyShield": "Kalkan",
+    "dodgeChance": "Kaçınma", "pierce": "Delme", "bounce": "Sekme", "projectileCount": "Mermi",
+    "attack_speed_bonus": "Saldırı Hızı", "attack_speed_mult": "Saldırı Hızı", "speed": "Hız",
+    "regen": "Can Yenileme", "magicFind": "Eşya Bulma", "goldGain": "Altın", "xpGain": "Deneyim",
+    "turretDmg": "Taret Hasarı", "turretRate": "Taret Hızı", "turretMaxHp": "Taret Canı",
+    "turretLimit": "Taret Limiti", "minionDamage": "Minyon Hasarı", "minionCount": "Minyon Sayısı",
+    "minionMaxHpFlat": "Minyon Canı", "aura_limit": "Aura Limiti", "armorPen": "Zırh Delme",
+    "dotDmgMult": "DoT Hasarı", "cooldownReduction": "Bekleme Azaltma",
+}
+_PCT_STATS = {"elementDmgMult", "fireDmgMult", "frostDmgMult", "dmgMult", "aoe", "lifesteal",
+              "critChance", "critDmg", "dodgeChance", "attack_speed_bonus", "attack_speed_mult",
+              "magicFind", "goldGain", "xpGain", "turretDmg", "turretRate", "minionDamage",
+              "armorPen", "dotDmgMult", "cooldownReduction"}
+_LOWER_BETTER = {"attackCooldown"}   # düşük = daha iyi (kıyasta yön ters)
+_EQUIP_SLOTS = {"weapon", "helmet", "chest", "amulet", "pet", "artifact"}
+
+
+def _fmt_stat_val(stat, val):
+    """Stat değerini okunur biçimle: yüzde statları %N, diğerleri düz sayı."""
+    if stat in _PCT_STATS:
+        return f"%{val * 100:.0f}"
+    if isinstance(val, float) and val.is_integer():
+        val = int(val)
+    return f"{val:g}" if isinstance(val, (int, float)) else str(val)
+
+
 SKILL_HELP = {
     'max_hp': 'Daha fazla hasara dayanmanı sağlar; mevcut canı da artırır.',
     'regen': 'Her saniye pasif olarak can yeniler.',
@@ -131,9 +164,11 @@ class GameScene(BaseScene):
         self.floor_color_1 = (140, 135, 125)
         self.floor_color_2 = (140, 135, 125)
         self.grid_line_color = (110, 105, 95)
-        self.font_main = pygame.font.SysFont("Arial", 48, bold=True)
-        self.font_sub = pygame.font.SysFont("Arial", 24)
-        self.font_desc = pygame.font.SysFont("Arial", 18)
+        # Gotik temayla uyumlu serif (bkz. ui_elements.UI_FONT_NAME)
+        _THEME_FONT = "Georgia, Times New Roman, serif"
+        self.font_main = pygame.font.SysFont(_THEME_FONT, 48, bold=True)
+        self.font_sub = pygame.font.SysFont(_THEME_FONT, 24)
+        self.font_desc = pygame.font.SysFont(_THEME_FONT, 18)
         self.active_tab = "inventory" # inventory, hero, skills, market, aura
         
         # Aura & Essence UI State
@@ -146,8 +181,13 @@ class GameScene(BaseScene):
         # Market & Crafting States
         self.market_tab = "items" # "items" or "orbs"
         self.show_craft_window = False
-        self.show_inventory = False 
+        self.show_inventory = False
         self.show_stats_panel = False
+        # --- YETENEK AĞACI GÖRÜNÜMÜ (kaydır/yakınlaştır) ---
+        self._tree_view = None       # {scale, ox, oy} — ilk çizimde fit'e kurulur
+        self._tree_fit_scale = 1.0
+        self._tree_area = None        # son çizilen grafik alanı (hit-test/pan için)
+        self._tree_drag = None        # {start, last, moved} sürükleme durumu
         self.crafting_target = None
         # Craft hata mesajı yalnız pencere açılırken atanıyordu; çizim buna
         # koşulsuz bakıyor, farklı bir yol pencereyi açarsa AttributeError olur.
@@ -171,7 +211,7 @@ class GameScene(BaseScene):
         # Süpürme efekti yüzeyi: efektin sınırlayıcı kutusu kadar büyür.
         # Eskiden 3840x2160 sabitti ve her efektte ~8.3M piksel fill ediliyordu.
         self._sweep_surface = pygame.Surface((256, 256), pygame.SRCALPHA)
-        self.font_combo = pygame.font.SysFont("Arial", 28, bold=True)
+        self.font_combo = pygame.font.SysFont("Georgia, Times New Roman, serif", 28, bold=True)
         # font_boss_name / font_boss_hp kaldırıldı: boss barı artık render_fit
         # kullanıyor (tek metin yardımcısı, otomatik sığdırma).
         
@@ -404,6 +444,30 @@ class GameScene(BaseScene):
                     -getattr(self, "_synergy_max_scroll", 0),
                     min(0, self.synergy_scroll + event.y * 45))
 
+            # YETENEK AĞACI: sol tık sürükle = kaydır, tekerlek = yakınlaştır.
+            # Düğüm tahsisi mouse-UP'ta (sürükleme değilse) yapılır.
+            if self.show_inventory and self.active_tab == "skills":
+                if event.type == pygame.MOUSEWHEEL:
+                    self._tree_zoom_at(pygame.mouse.get_pos(), event.y)
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if self._tree_area and self._tree_area.collidepoint(event.pos):
+                        self._tree_drag = {"start": event.pos, "last": event.pos, "moved": False}
+                elif event.type == pygame.MOUSEMOTION and self._tree_drag:
+                    lx, ly = self._tree_drag["last"]
+                    self._tree_drag["last"] = event.pos
+                    if self._tree_view:
+                        self._tree_view["ox"] += event.pos[0] - lx
+                        self._tree_view["oy"] += event.pos[1] - ly
+                        self._tree_clamp_view()
+                    if (abs(event.pos[0] - self._tree_drag["start"][0])
+                            + abs(event.pos[1] - self._tree_drag["start"][1]) > 6):
+                        self._tree_drag["moved"] = True
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1 and self._tree_drag:
+                    _drag = self._tree_drag
+                    self._tree_drag = None
+                    if not _drag["moved"]:
+                        self._tree_click_node(pygame.mouse.get_pos(), p)
+
             if event.type == pygame.KEYDOWN:
                 # ESC: Menüyü aç/kapat
                 if event.key == pygame.K_ESCAPE:
@@ -517,7 +581,16 @@ class GameScene(BaseScene):
                 for i, opt_rect in enumerate(rows):
                     if opt_rect.collidepoint(mouse_pos):
                         self.selected_setting_idx = i
-                        if mouse_clicked: self._trigger_setting_action(i)
+                        if mouse_clicked:
+                            if i == self.SOUND_ROW:
+                                # Ses satırı bir kaydırıcı gibi: sol yarı (<)
+                                # AZALTIR, sağ yarı (>) ARTIRIR. Eskiden tıklama
+                                # yalnız artırıyordu (sesi kısmak imkânsızdı).
+                                self.adjust_volume(
+                                    -self.VOLUME_STEP if mouse_pos[0] < opt_rect.centerx
+                                    else self.VOLUME_STEP)
+                            else:
+                                self._trigger_setting_action(i)
             elif self.setting_tab == "save":
                 for i, opt_rect in enumerate(rows):
                     if opt_rect.collidepoint(mouse_pos):
@@ -777,6 +850,9 @@ class GameScene(BaseScene):
         # 2. ANA TABLAR
         for btn in self.tab_buttons:
             if btn.rect.collidepoint(pos):
+                # Yetenek ağacına her girişte görünümü fit'e sıfırla
+                if btn.tab_id == "skills":
+                    self._tree_view = None
                 self.active_tab = btn.tab_id
                 return
 
@@ -878,20 +954,15 @@ class GameScene(BaseScene):
                         return
 
         elif self.active_tab == "skills":
-            # YETENEK AĞACI: sıfırla ya da tıklanan düğümü tahsis et
+            # YETENEK AĞACI: SIFIRLA tıklamada işlenir; düğüm tahsisi ise
+            # sürükleme(pan) ayrımı için mouse-UP'ta yapılır (event döngüsü,
+            # _tree_click_node). Böylece kaydırma yanlışlıkla düğüm almaz.
             if self.reset_btn_rect.collidepoint(pos):
                 if self.reset_skill_tree(p):
                     self.logic.add_event("damage_text", p.x, p.y-60, value="Yetenek Ağacı Sıfırlandı!", color=(46, 204, 113))
                 else:
                     self.logic.add_event("damage_text", p.x, p.y-60, value="Yetersiz Altın!", color=(231, 76, 60))
                 return
-
-            for nid, rect in getattr(self, 'tree_node_hit', []):
-                if rect.collidepoint(pos):
-                    ok, msg = SkillTree.allocate(p, nid)
-                    color = (241, 196, 15) if ok else (231, 76, 60)
-                    self.logic.add_event("damage_text", p.x, p.y-60, value=msg, color=color)
-                    return
 
         elif self.active_tab == "hero":
             diff_names = ["Normal", "Hard", "Very Hard", "Impossible"]
@@ -1192,7 +1263,7 @@ class GameScene(BaseScene):
             if not audio.is_ready():
                 vol_txt = "[SES YOK]"
             return [
-                f"SES: {vol_txt}   < >",
+                f"SES: {vol_txt}",
                 f"EKRAN SARSINTISI: {'[AÇIK]' if self.logic.settings['shake'] else '[KAPALI]'}",
                 f"EKRAN MODU: [{self.manager.get_display_mode_label()}]",
                 f"HİLE MODU: {'[AÇIK]' if self.logic.cheat_mode else '[KAPALI]'}",
@@ -1235,8 +1306,15 @@ class GameScene(BaseScene):
                                     "hover" if active else "normal",
                                     ui_theme.COLORS[key])
                 col = ui_theme.TEXT_COL if active else (176, 170, 158)
-                txt = render_fit(label, 20, col, row.width - 28, bold=active)
+                txt = render_fit(label, 20, col, row.width - 60, bold=active)
                 self.screen.blit(txt, txt.get_rect(center=row.center))
+                # Ses satırında sol/sağ ok afordansı (tıklanabilir yarımlar)
+                if self.setting_tab == "main" and i == self.SOUND_ROW:
+                    lt = render_fit("<", 26, col, 28, bold=True)
+                    gt = render_fit(">", 26, col, 28, bold=True)
+                    self.screen.blit(lt, (row.x + 14, row.centery - lt.get_height() // 2))
+                    self.screen.blit(gt, (row.right - 14 - gt.get_width(),
+                                          row.centery - gt.get_height() // 2))
             return
 
         # --- load ---
@@ -1323,9 +1401,50 @@ class GameScene(BaseScene):
 
         self._hud_combo_y = y + 6
 
+    def draw_minimap(self, p):
+        """Sağ-alt köşede dairesel gotik mini harita: oyuncu merkezde (altın),
+        düşmanlar kırmızı nokta, iri düşman/boss mor. Ekrana (HUD) çizilir."""
+        R = 92
+        cx, cy = self.width - R - 34, self.height - R - 40
+        # Koyu taş zemin (yarı saydam daire)
+        bg = pygame.Surface((R * 2 + 10, R * 2 + 10), pygame.SRCALPHA)
+        pygame.draw.circle(bg, (16, 13, 18, 232), (R + 5, R + 5), R + 2)
+        self.screen.blit(bg, (cx - R - 5, cy - R - 5))
+
+        # Dünya -> minimap ölçeği (oyuncunun ~1000px çevresini gösterir)
+        world_r = 1000.0
+        scale = R / world_r
+        inner = (R - 6) * (R - 6)
+        for e in self.logic.enemies:
+            if getattr(e, 'dead', False):
+                continue
+            dx = (e.x - p.x) * scale
+            dy = (e.y - p.y) * scale
+            if dx * dx + dy * dy > inner:
+                continue
+            big = getattr(e, 'radius', 12) >= 28
+            col = (178, 78, 224) if big else (231, 76, 60)
+            pygame.draw.circle(self.screen, col, (int(cx + dx), int(cy + dy)), 5 if big else 3)
+
+        # Oyuncu (merkez, altın) + koyu kontur
+        pygame.draw.circle(self.screen, (255, 214, 96), (cx, cy), 5)
+        pygame.draw.circle(self.screen, (20, 16, 14), (cx, cy), 5, 1)
+
+        # Gotik metal çerçeve halkaları
+        pygame.draw.circle(self.screen, (24, 20, 22), (cx, cy), R + 4, 4)   # koyu kontur
+        pygame.draw.circle(self.screen, (122, 126, 134), (cx, cy), R + 1, 3)  # metal
+        pygame.draw.circle(self.screen, (156, 160, 168), (cx, cy), R - 1, 1)  # parlak iç kenar
+
+        # Üstte kurukafa arması
+        crest = get_skull_crest(30)
+        if crest is not None:
+            self.screen.blit(crest, (cx - crest.get_width() // 2,
+                                     cy - R - crest.get_height() // 2 - 2))
+
     def draw_hud(self):
         import ui_theme
         p = self.logic.players[self.logic.local_player_id]
+        self.draw_minimap(p)
         # Wave Bilgisi
         wave_surf = render_fit(f"WAVE: {self.logic.wave['level']}", 26,
                                ui_theme.readable(ui_theme.COLORS["gold"]), 300, bold=True)
@@ -1595,12 +1714,16 @@ class GameScene(BaseScene):
 
     def draw_live_stats_panel(self, p):
         """Tüm kaynaklardan gelen son statları ve kartların ham katkısını gösterir."""
-        panel_w = 430
-        panel = pygame.Rect(self.width - panel_w - 20, 120, panel_w, min(720, self.height - 135))
-        surface = pygame.Surface(panel.size, pygame.SRCALPHA)
-        surface.fill((18, 22, 32, 238))
-        self.screen.blit(surface, panel.topleft)
-        pygame.draw.rect(self.screen, (80, 135, 190), panel, width=2, border_radius=10)
+        import ui_theme
+        panel_w = 460
+        outer = pygame.Rect(self.width - panel_w - 16, 100, panel_w,
+                            min(840, self.height - 120))
+        # Gotik çerçeve rect'in İÇİNE çizilir (draw_inset_frame): dış ölçü sabit
+        # kalır, ekran kenarına yaslı panelde draw_panel gibi dışa taşmaz.
+        panel = ui_theme.draw_inset_frame(
+            self.screen, outer, "panel_frame_small.png",
+            fill=(20, 17, 24), alpha=248, pad=26)
+        gold = ui_theme.readable(ui_theme.COLORS["gold"])
 
         card_system = self.logic.card_system
         card_bonus = card_system.get_stat_contributions()
@@ -1611,12 +1734,12 @@ class GameScene(BaseScene):
             if all(card_id in active for card_id in synergy["required_cards"])
         )
 
-        title = self.font_sub.render("ANLIK İSTATİSTİKLER", True, (130, 200, 255))
+        title = self.font_sub.render("ANLIK İSTATİSTİKLER", True, gold)
         self.screen.blit(title, (panel.x + 16, panel.y + 12))
-        count_txt = self.font_desc.render(f"{card_count} kart • {synergy_count} sinerji", True, (175, 185, 200))
+        count_txt = self.font_desc.render(f"{card_count} kart • {synergy_count} sinerji", True, (176, 168, 155))
         self.screen.blit(count_txt, (panel.right - count_txt.get_width() - 16, panel.y + 17))
 
-        info = self.font_desc.render("Toplam: tüm kaynaklar  |  Kart: ham kart+sinerji katkısı", True, (145, 155, 170))
+        info = self.font_desc.render("Toplam: tüm kaynaklar  |  Kart: ham kart+sinerji katkısı", True, (150, 144, 132))
         if info.get_width() > panel.width - 32:
             ratio = (panel.width - 32) / info.get_width()
             info = pygame.transform.smoothscale(info, (panel.width - 32, max(12, int(info.get_height() * ratio))))
@@ -1627,17 +1750,17 @@ class GameScene(BaseScene):
 
         def section(label):
             nonlocal y
-            pygame.draw.line(self.screen, (65, 80, 105), (panel.x + 14, y + 9), (panel.right - 14, y + 9), 1)
-            text_surf = self.font_desc.render(label, True, (241, 196, 15))
+            pygame.draw.line(self.screen, (78, 68, 58), (panel.x + 14, y + 9), (panel.right - 14, y + 9), 1)
+            text_surf = self.font_desc.render(label, True, gold)
             bg = pygame.Rect(panel.x + 14, y, text_surf.get_width() + 12, text_surf.get_height())
-            pygame.draw.rect(self.screen, (18, 22, 32), bg)
+            pygame.draw.rect(self.screen, (20, 17, 24), bg)
             self.screen.blit(text_surf, (panel.x + 20, y))
             y += 25
 
         def row(label, value, bonus_value=0, percent_bonus=False):
             nonlocal y
-            label_surf = self.font_desc.render(label, True, (190, 195, 205))
-            value_surf = self.font_desc.render(str(value), True, (255, 255, 255))
+            label_surf = self.font_desc.render(label, True, (176, 170, 158))
+            value_surf = self.font_desc.render(str(value), True, ui_theme.TEXT_COL)
             self.screen.blit(label_surf, (panel.x + 20, y))
             self.screen.blit(value_surf, (panel.x + 270 - value_surf.get_width(), y))
             bonus_text = self._format_stat_bonus(bonus_value, percent_bonus)
@@ -2064,6 +2187,17 @@ class GameScene(BaseScene):
             center=(self.width // 2, self.mkt_prev_rect.centery)))
 
 
+    def _item_total_stats(self, item):
+        """Eşyanın toplam statları: itemBase + prefix/suffix affixleri."""
+        if not item:
+            return {}
+        tot = dict(item.get("itemBase", {}))
+        for aff in item.get("prefixes", []) + item.get("suffixes", []):
+            s = aff.get("stat")
+            if s is not None:
+                tot[s] = tot.get(s, 0) + aff.get("val", 0)
+        return tot
+
     def _tooltip_lines(self, item, p, text_w):
         """Tooltip içeriğini önce ÜRETİR (çizmeden).
 
@@ -2084,15 +2218,43 @@ class GameScene(BaseScene):
         lines.append((None, 0, 'rule'))
 
         for stat, val in item.get("itemBase", {}).items():
-            lines.append((render_fit(f"[*] {stat}: {val}", 17, (176, 122, 82), text_w), 0, 'text'))
+            label = f"{ITEM_STAT_LABEL.get(stat, stat)}: {_fmt_stat_val(stat, val)}"
+            lines.append((render_fit(label, 18, (206, 182, 140), text_w), 0, 'text'))
 
         # T1 altın, T2 yeşil, T3 mavi — renkler paletten
         tier_keys = {1: "gold", 2: "moss", 3: "night"}
         for aff in item.get("prefixes", []) + item.get("suffixes", []):
             tier = aff.get('tier', 3)
             a_col = ui_theme.readable(ui_theme.COLORS[tier_keys.get(tier, "night")])
-            label = f"[{aff.get('label', '?')} (T{tier})] +{aff['val']} {aff['stat']}"
+            label = f"+{_fmt_stat_val(aff['stat'], aff['val'])} {ITEM_STAT_LABEL.get(aff['stat'], aff['stat'])}  (T{tier})"
             lines.append((render_fit(label, 17, a_col, text_w), 0, 'text'))
+
+        # --- KUŞANILANLA KIYAS (bag'daki eşyayı slottaki eşyayla karşılaştır) ---
+        slot = item.get("type")
+        equipped = p.inv_manager.equipped.get(slot)
+        if slot in _EQUIP_SLOTS and equipped is not item:
+            gold = ui_theme.readable(ui_theme.COLORS["gold"])
+            green = (96, 214, 130)
+            red = (222, 104, 98)
+            lines.append((None, 0, 'rule'))
+            head = "KUŞANILANLA KIYAS" if equipped else "KUŞANILAN YOK — bu slot boş"
+            lines.append((render_fit(head, 16, gold, text_w, bold=True), 0, 'text'))
+            cur = self._item_total_stats(item)
+            old = self._item_total_stats(equipped) if equipped else {}
+            any_diff = False
+            for stat in sorted(set(cur) | set(old)):
+                d = cur.get(stat, 0) - old.get(stat, 0)
+                if abs(d) < 1e-9:
+                    continue
+                any_diff = True
+                better = (d < 0) if stat in _LOWER_BETTER else (d > 0)
+                col = green if better else red
+                sign = "+" if d > 0 else "-"
+                shown = f"{sign}{_fmt_stat_val(stat, abs(d))}"
+                lbl = f"{ITEM_STAT_LABEL.get(stat, stat)}: {shown}"
+                lines.append((render_fit(lbl, 16, col, text_w), 0, 'text'))
+            if not any_diff and equipped:
+                lines.append((render_fit("(fark yok)", 15, (150, 144, 132), text_w), 0, 'text'))
 
         if item.get('desc'):
             lines.append((None, 0, 'rule'))
@@ -2324,32 +2486,37 @@ class GameScene(BaseScene):
 
     # Kahraman sekmesi geometrisi (çizim ve tıklama tek kaynak)
     def _hero_panel_rect(self):
-        return pygame.Rect(self.width // 2 - 320, 165, 640, 545)
+        # Kahraman sekmesi artık BÜYÜK envanter panelini doldurur (eskiden
+        # 640x545 küçük kutuydu, geniş gotik çerçevenin içinde boş görünüyordu).
+        return self._inventory_panel_rect()
 
     def _diff_button_rects(self):
-        """Zorluk butonları panelin ALTINA sabitlenir (eskiden y=570 gömülüydü,
-        panel taşınınca hitbox çizimden ayrı düşüyordu). -96: çerçevenin 40px
-        köşe süslerinin üstünde kalsınlar."""
+        """Zorluk butonları panelin ALTINA sabitlenir. -104: büyük çerçevenin
+        52px köşe süslerinin üstünde kalsınlar."""
         panel = self._hero_panel_rect()
-        w, gap = 140, 8
+        w, gap = 168, 12
         total = 4 * w + 3 * gap
         x0 = panel.centerx - total // 2
-        y = panel.bottom - 96
-        return [pygame.Rect(x0 + i * (w + gap), y, w, 42) for i in range(4)]
+        y = panel.bottom - 104
+        return [pygame.Rect(x0 + i * (w + gap), y, w, 44) for i in range(4)]
 
     def draw_hero_tab(self, p):
         import ui_theme
         panel = self._hero_panel_rect()
-        content = ui_theme.draw_inset_frame(
-            self.screen, panel, "panel_frame_small.png",
-            fill=(24, 21, 30), alpha=246, pad=26)
+        gold = ui_theme.readable(ui_theme.COLORS["gold"])
+        mouse_pos = pygame.mouse.get_pos()
 
-        # Sınıf Bilgisi ve Pasif
+        # İçerik alanı: büyük gotik çerçevenin (panel_frame.png, 52px inset) içi
+        padx, padtop = 74, 62
+        cx0 = panel.x + padx
+        cw = panel.width - 2 * padx
+        top = panel.y + padtop
+
+        # Başlık: sınıf adı — tema serifi, ortalı
         c_name = getattr(p, 'class_name', 'Bilinmiyor')
-        class_name_txt = render_fit(f"Sınıf: {c_name}", 28,
-                                    ui_theme.readable(ui_theme.COLORS["gold"]),
-                                    content.width, bold=True)
-        self.screen.blit(class_name_txt, (content.x, content.y))
+        title = ui_theme.render_title(c_name, 46, ui_theme.COLORS["gold"])
+        self.screen.blit(title, (panel.centerx - title.get_width() // 2, top))
+        y = top + title.get_height() + 12
 
         passives = {
             "warrior": "Geniş Savuruş — Önündeki konide bulunan tüm düşmanlara aynı saldırıyla vurur.",
@@ -2360,40 +2527,66 @@ class GameScene(BaseScene):
             "alchemist": "Uçucu Karışım — Bomba alanı %40 büyür; yakın saldırılar %30 ihtimalle zehirler.",
             "sorcerer": "Element Döngüsü — Ateş, buz ve zehir arasında döner; her 4. atış kritik ve 2 kat alanlıdır.",
             "bloodwalker": "Kan Öfkesi — Can %30'un altındayken hasar ve hız %40 artar; R ile mermi emilir.",
+            "bomber": "Mayın Tarlası — Bombalar patlamaz; yere tetiklemeli mayın bırakır, düşman üstüne basınca patlar.",
         }
         passive_desc = passives.get(getattr(p, 'class_id', 'warrior'), "")
-        # Stat listesi pasif metnin GERÇEK altından başlar (sabit y değil)
-        y = self.draw_text_wrapped(f"Pasif: {passive_desc}",
-                                   content.x, content.y + class_name_txt.get_height() + 8,
-                                   content.width, (176, 192, 226), self.font_desc) + 14
+        if passive_desc:
+            y = self.draw_text_wrapped(f"Pasif: {passive_desc}", cx0, y, cw,
+                                       (176, 192, 226), self.font_sub) + 18
 
+        # Zorluk butonları önce yerini alır; stat gridi kalan alanı doldurur
+        diff_rects = self._diff_button_rects()
+        diff_label_y = diff_rects[0].y - 34
+
+        # ANLIK statlar (p.stats canlı okunur) — İKİ SÜTUN, kalan alanı doldurur
+        st = p.stats
+        aps = 1000.0 / max(1.0, st.get('attack_cooldown', 350))
+        phys = (st.get('physDmg', 20) + st.get('physDmgFlat', 0)) * st.get('dmgMult', 1)
         stats = [
             ("MAKSİMUM CAN", f"{int(p.hp)} / {int(p.max_hp)}"),
-            ("HAREKET HIZI", round(p.stats.get('speed', 0), 1)),
-            ("ZIRH (Hasar Azaltma)", p.stats.get('armor', 0)),
-            ("KAÇINMA ŞANSI", f"%{int(p.stats.get('dodgeChance', 0) * 100)}"),
-            ("KRİTİK ŞANS", f"%{int(p.stats.get('critChance', 0.05) * 100)}"),
-            ("CAN ÇALMA", f"%{int(p.stats.get('lifesteal', 0) * 100)}"),
-            ("CAN YENİLENME", f"{round(p.stats.get('hpRegen', 0) + p.stats.get('combatRegen', 0), 1)}/sn"),
-            ("EŞYA BULMA (MF)", f"%{int(p.stats.get('magicFind', 0) * 100)}"),
-            ("HASAR ÇARPANI", f"x{round(p.stats.get('dmgMult', 1), 2)}"),
-            ("MİNYON HASARI", f"x{round(p.stats.get('minionDamage', 1), 2)}")
+            ("HASAR ÇARPANI", f"x{round(st.get('dmgMult', 1), 2)}"),
+            ("FİZİKSEL VURUŞ", f"{phys:.0f}"),
+            ("SALDIRI / SANİYE", f"{aps:.2f}"),
+            ("KRİTİK ŞANS", f"%{int(st.get('critChance', 0.05) * 100)}"),
+            ("KRİTİK ÇARPANI", f"x{2.0 + st.get('critDmg', 0):.2f}"),
+            ("ALAN ETKİSİ", f"x{round(st.get('aoe', 1), 2)}"),
+            ("DoT ÇARPANI", f"x{round(1.0 + st.get('dotDmgMult', 0), 2)}"),
+            ("HAREKET HIZI", round(st.get('speed', 0), 1)),
+            ("ZIRH", int(st.get('armor', 0))),
+            ("KAÇINMA", f"%{int(st.get('dodgeChance', 0) * 100)}"),
+            ("CAN ÇALMA", f"%{int(st.get('lifesteal', 0) * 100)}"),
+            ("CAN YENİLENME", f"{round(st.get('regen', 0) + st.get('combatRegen', 0), 1)}/sn"),
+            ("EŞYA BULMA (MF)", f"%{int(st.get('magicFind', 1) * 100)}"),
+            ("MİNYON HASARI", f"x{round(st.get('minionDamage', 1), 2)}"),
+            ("MİNYON LİMİTİ", max(1, int(st.get('minionCount', 1)))),
         ]
-        # Değer sütunu sağa dayalı: sabit offsetle hizalanınca uzun değerler
-        # (100 / 100) etikete giriyordu.
-        val_col_w = 150
-        for label, val in stats:
-            l_surf = render_fit(label, 19, (154, 148, 138), content.width - val_col_w - 20)
-            v_surf = render_fit(str(val), 19, ui_theme.TEXT_COL, val_col_w, bold=True)
-            self.screen.blit(l_surf, (content.x, y))
-            self.screen.blit(v_surf, (content.right - v_surf.get_width(), y))
-            y += 28
+        grid_top = y
+        grid_bottom = diff_label_y - 14
+        col_gap = 54
+        col_w = (cw - col_gap) // 2
+        half = (len(stats) + 1) // 2
+        row_h = min(60, max(38, (grid_bottom - grid_top) // half))
+        block_h = row_h * half
+        gy0 = grid_top + max(0, (grid_bottom - grid_top - block_h) // 2)
+        for i, (label_t, val) in enumerate(stats):
+            col = 0 if i < half else 1
+            row = i - col * half
+            rx = cx0 + col * (col_w + col_gap)
+            ry = gy0 + row * row_h
+            l_surf = render_fit(label_t, 22, (176, 170, 158), col_w - 120)
+            v_surf = render_fit(str(val), 22, ui_theme.TEXT_COL, 120, bold=True)
+            self.screen.blit(l_surf, (rx, ry))
+            self.screen.blit(v_surf, (rx + col_w - v_surf.get_width(), ry))
+            pygame.draw.line(self.screen, (52, 46, 42),
+                             (rx, ry + row_h - 8), (rx + col_w, ry + row_h - 8), 1)
+        # Sütun ayıracı
+        midx = cx0 + col_w + col_gap // 2
+        pygame.draw.line(self.screen, (62, 55, 50),
+                         (midx, gy0 - 4), (midx, gy0 + block_h - 10), 1)
 
-        # ZORLUK SEÇİMİ (panel altına sabit)
-        diff_rects = self._diff_button_rects()
-        label = render_fit("ZORLUK SEÇİMİ (Dalga anında güncellenir)", 18,
-                           ui_theme.readable(ui_theme.COLORS["gold"]), content.width)
-        self.screen.blit(label, (content.x, diff_rects[0].y - label.get_height() - 8))
+        # ZORLUK SEÇİMİ (panel altına sabit, ortalı)
+        label = render_fit("ZORLUK SEÇİMİ (Dalga anında güncellenir)", 20, gold, cw)
+        self.screen.blit(label, (panel.centerx - label.get_width() // 2, diff_label_y))
 
         diff_names = ["Normal", "Hard", "Very Hard", "Impossible"]
         diff_colors = {"Normal": "moss", "Hard": "gold",
@@ -2441,9 +2634,15 @@ class GameScene(BaseScene):
                              self.reset_btn_rect.width - 30)
         self.screen.blit(reset_t, reset_t.get_rect(center=self.reset_btn_rect.center))
 
+        # Kullanım ipucu (ortada, başlık satırında)
+        hint = render_fit("Sürükle: kaydır   •   Tekerlek: yakınlaştır", 16,
+                          (150, 144, 132), 520)
+        self.screen.blit(hint, (panel.centerx - hint.get_width() // 2, inner_top + 14))
+
         # Ağaç çizim alanı (başlığın altı). Çizim buraya kırpılır.
         area = pygame.Rect(panel.x + 28, inner_top + 50,
                            panel.width - 56, panel.height - 108)
+        self._tree_area = area
         tf = self._skill_tree_transform(area)
         allocated = SkillTree._ensure_set(p)
         allocatable = set(SkillTree.allocatable_nodes(allocated))
@@ -2493,8 +2692,9 @@ class GameScene(BaseScene):
             self._draw_tree_tooltip(hover_node, mouse_pos, allocated, allocatable)
 
     def _skill_tree_transform(self, area):
-        """Ağaç tuvalini (düğüm pos'ları) çizim alanına ölçekleyip ortalayan
-        dönüşümü döndürür. Tüm ağaç tek ekrana sığar; pan/zoom yok."""
+        """Ağaç düğümlerini ekrana çeviren dönüşüm. İlk açılışta ağaç panele
+        sığar (fit); sonra kullanıcı sürükleyerek kaydırır, tekerlekle
+        yakınlaştırır (bkz. _tree_zoom_at / event döngüsü)."""
         if not hasattr(self, "_tree_bbox"):
             xs = [n["pos"][0] for n in SkillTree.NODES]
             ys = [n["pos"][1] for n in SkillTree.NODES]
@@ -2503,13 +2703,55 @@ class GameScene(BaseScene):
         bw = max(1, maxx - minx)
         bh = max(1, maxy - miny)
         pad = 48
-        scale = min((area.width - 2 * pad) / bw, (area.height - 2 * pad) / bh)
-        ox = area.x + (area.width - bw * scale) / 2 - minx * scale
-        oy = area.y + (area.height - bh * scale) / 2 - miny * scale
+        fit = min((area.width - 2 * pad) / bw, (area.height - 2 * pad) / bh)
+        self._tree_fit_scale = fit
+        if not self._tree_view:
+            self._tree_view = {
+                "scale": fit,
+                "ox": area.x + (area.width - bw * fit) / 2 - minx * fit,
+                "oy": area.y + (area.height - bh * fit) / 2 - miny * fit,
+            }
+        v = self._tree_view
+        v["scale"] = max(fit * 0.7, min(fit * 4.0, v["scale"]))
 
         def tf(pos):
-            return (int(pos[0] * scale + ox), int(pos[1] * scale + oy))
+            return (int(pos[0] * v["scale"] + v["ox"]), int(pos[1] * v["scale"] + v["oy"]))
         return tf
+
+    def _tree_zoom_at(self, pos, wheel_y):
+        """Tekerlekle imlecin ÜSTÜNDEKİ noktayı sabit tutarak yakınlaştırır."""
+        v = self._tree_view
+        if not v:
+            return
+        new = max(self._tree_fit_scale * 0.7,
+                  min(self._tree_fit_scale * 4.0, v["scale"] * (1.18 ** wheel_y)))
+        factor = new / v["scale"] if v["scale"] else 1.0
+        cx, cy = pos
+        v["ox"] = cx - (cx - v["ox"]) * factor
+        v["oy"] = cy - (cy - v["oy"]) * factor
+        v["scale"] = new
+        self._tree_clamp_view()
+
+    def _tree_clamp_view(self):
+        """Ağacın tamamen ekrandan kaybolmasını önler (kenarda pay bırakır)."""
+        area, v = self._tree_area, self._tree_view
+        if not area or not v or not hasattr(self, "_tree_bbox"):
+            return
+        minx, miny, maxx, maxy = self._tree_bbox
+        s, m = v["scale"], 120
+        lo, hi = sorted((area.left + m - maxx * s, area.right - m - minx * s))
+        v["ox"] = max(lo, min(hi, v["ox"]))
+        lo, hi = sorted((area.top + m - maxy * s, area.bottom - m - miny * s))
+        v["oy"] = max(lo, min(hi, v["oy"]))
+
+    def _tree_click_node(self, pos, p):
+        """Sürükleme değil de gerçek tık ise imlecin altındaki düğümü tahsis et."""
+        for nid, rect in getattr(self, 'tree_node_hit', []):
+            if rect.collidepoint(pos):
+                ok, msg = SkillTree.allocate(p, nid)
+                color = (241, 196, 15) if ok else (231, 76, 60)
+                self.logic.add_event("damage_text", p.x, p.y - 60, value=msg, color=color)
+                return
 
     @staticmethod
     def _tree_node_radius(ntype):
