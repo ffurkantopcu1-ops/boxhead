@@ -953,7 +953,7 @@ class GameScene(BaseScene):
         # Partiküller
         # VFX katmanı: parçacıklar ve efektler buraya çizilir, kare sonunda
         # tek seferde toplamalı (additive) basılır. Bkz. vfx.begin_frame.
-        fx = vfx.begin_frame(world_surf.get_size())
+        fx = vfx.begin_frame(world_surf.get_size(), world_surf)
         for part in getattr(self.logic, 'particles', []):
             if not (
                 final_cam_x - 20 <= part['x'] <= final_cam_x + internal_w + 20

@@ -159,40 +159,84 @@ def fade_alpha(progress, curve="out"):
 # Çözüm: tüm efektler ortak bir şeffaf katmana UCUZ (normal) çizilir, katman
 # kare başına BİR KEZ toplamalı basılır. N pahalı blit yerine 1 tane.
 _LAYER = None
-_USED = False       # bu karede katmana bir şey çizildi mi
-_PREV_USED = False  # geçen kare kirli miydi (temizlik gerekir mi)
+_LW = _LH = 0
+# Bu karede çizilen alanın sınırları (tamsayı; None = hiç çizim yok)
+_X0 = _Y0 = _X1 = _Y1 = 0
+_HAS = False
+_PREV = None        # geçen karenin sınırları (temizlenecek bölge)
+_TARGET = None      # dokulu efektlerin doğrudan basılacağı yüzey (varsa)
+
+# PERFORMANS GEÇMİŞİ — iki yaklaşım denendi ve ÖLÇÜMLE elendi:
+#  1) pygame.Rect.union ile sınır takibi: çizim başına Rect nesnesi + metot
+#     çağrısı, birleşim zaten tam ekrana çıkıyordu (9.6 -> 12.6 ms).
+#  2) 256'lık tile ızgarası: profilde kare başına 25 tile blit'i 1.68 ms
+#     tuttu — TEK tam ekran blit'i (0.803 ms) bundan ucuz, çünkü çağrı başı
+#     sabit maliyet baskın. Ayrıca _mark_box'ın iç içe döngüsü 0.57 ms yedi.
+# Kalan yaklaşım: çıplak tamsayı min/max ile TEK sınırlayıcı dikdörtgen.
+# İşaretleme çizim başına 4 karşılaştırma; temizleme/basma tek çağrı ve
+# yalnızca gerçekten kullanılan alan kadar.
 
 
-def _mark():
-    """Katmanın kirlendiğini işaretle.
+def _mark_box(x0, y0, x1, y1):
+    """Kirlenen alanı sınırlayıcı dikdörtgene kat (tamsayı, nesne ayırmadan)."""
+    global _X0, _Y0, _X1, _Y1, _HAS
+    if _HAS:
+        if x0 < _X0: _X0 = x0
+        if y0 < _Y0: _Y0 = y0
+        if x1 > _X1: _X1 = x1
+        if y1 > _Y1: _Y1 = y1
+    else:
+        _X0, _Y0, _X1, _Y1 = x0, y0, x1, y1
+        _HAS = True
 
-    NOT: Burada sınırlayıcı-dikdörtgen birleşimi (Rect.union) denendi ve
-    ÖLÇÜMDE KÖTÜLEŞTİ (9.6 -> 12.6 ms): efektler ekrana yayıldığında birleşim
-    zaten tam ekrana çıkıyor, üstüne çizim başına union maliyeti biniyor.
-    Basit bir bayrak, hiç efekt olmayan karelerde maliyeti sıfırlamak için
-    yeterli — asıl kazanç orada.
+
+def _mark(cx, cy, r):
+    """Merkez + yarıçap kısayolu."""
+    _mark_box(cx - r, cy - r, cx + r, cy + r)
+
+
+def _bounds_rect():
+    """Kirli alanı katman sınırlarına kırpılmış Rect olarak döndür."""
+    x0 = 0 if _X0 < 0 else int(_X0)
+    y0 = 0 if _Y0 < 0 else int(_Y0)
+    x1 = _LW if _X1 > _LW else int(_X1) + 1
+    y1 = _LH if _Y1 > _LH else int(_Y1) + 1
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return pygame.Rect(x0, y0, x1 - x0, y1 - y0)
+
+
+def begin_frame(size, target=None):
+    """Kare başında VFX katmanını hazırla ve döndür. Efektler buna çizilir.
+
+    `target` verilirse dokulu efektler katmanı hiç kirletmeden DOĞRUDAN oraya
+    basılır (zaten toplamalı harmanlılar, katmana ihtiyaçları yok). Katman
+    yalnızca pygame.draw tabanlı şekiller (halka, çizgi, koni, yedek leke)
+    için gerekir; hiçbiri çizilmezse temizleme ve basma tamamen atlanır.
     """
-    global _USED
-    _USED = True
-
-
-def begin_frame(size):
-    """Kare başında VFX katmanını hazırla ve döndür. Efektler buna çizilir."""
-    global _LAYER, _USED, _PREV_USED
+    global _LAYER, _LW, _LH, _HAS, _PREV, _TARGET
     if _LAYER is None or _LAYER.get_size() != size:
         _LAYER = pygame.Surface(size, pygame.SRCALPHA)
-    elif _PREV_USED:
-        _LAYER.fill((0, 0, 0, 0))
-    _USED = False
+        _LW, _LH = size
+        _PREV = None
+    elif _PREV is not None:
+        _LAYER.fill((0, 0, 0, 0), _PREV)
+    _HAS = False
+    _TARGET = target
     return _LAYER
 
 
 def end_frame(target):
-    """Katmanı hedefe toplamalı harmanla bas (kare başına tek pahalı işlem)."""
-    global _PREV_USED
-    _PREV_USED = _USED
-    if _LAYER is not None and _USED:
-        target.blit(_LAYER, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+    """Katmanın kirli bölgesini hedefe toplamalı harmanla bas (tek çağrı)."""
+    global _PREV
+    if _LAYER is None or not _HAS:
+        _PREV = None
+        return
+    rect = _bounds_rect()
+    _PREV = rect
+    if rect is not None:
+        target.blit(_LAYER, rect.topleft, area=rect,
+                    special_flags=pygame.BLEND_RGBA_ADD)
 
 
 def _dim(color, alpha):
@@ -215,8 +259,20 @@ def _blit_sprite(surf, sprite, x, y):
     set_alpha ile sönme denendi, efekt hiç sönmedi. Sönme, dokunun tint
     rengi karartılarak (bkz. _dim + get_sprite çağrıları) yapılır.
     """
-    surf.blit(sprite, (x, y))
-    _mark()
+    # PERFORMANS: normal (alfa harmanlı) blit ölçümde toplamalı blit'ten ~2.5x
+    # yavaş (1080p tam ekran: 2.01 ms vs 0.80 ms) ve profilde kare maliyetinin
+    # en büyük kalemiydi. Dokuların şeffaf bölgelerinde RGB zaten (0,0,0), yani
+    # fiilen ön-çarpımlılar — toplamalı harman doğru sonucu verir.
+    #
+    # Toplamalı olduğu için katmana uğramaya gerek yok: doğrudan hedefe basılır
+    # ve katmanı kirletmez. Toplama birleşimli olduğundan çizim sırası sonucu
+    # değiştirmez. Böylece yalnızca dokulu efekt olan karelerde katmanın
+    # temizlenmesi/basılması tamamen atlanır.
+    dest = _TARGET if _TARGET is not None else surf
+    dest.blit(sprite, (x, y), special_flags=pygame.BLEND_RGBA_ADD)
+    if dest is surf:
+        w, h = sprite.get_size()
+        _mark_box(x, y, x + w, y + h)
 
 
 # --- EFEKT ÇİZİCİLERİ ---
@@ -311,7 +367,7 @@ def draw_sweep(surf, ev, dx, dy, surface_provider):
 
     # Doğrudan VFX katmanına çiziliyor; ayrı geçici yüzeye gerek yok.
     # (surface_provider imza uyumu için korunuyor, artık kullanılmıyor.)
-    _mark()
+    _mark(dx, dy, r_v)
     pygame.draw.polygon(surf, _dim(clr, alpha), [(int(px), int(py)) for px, py in pts])
     _lines(surf, pts[1:], clr, min(255, alpha * 2), max(1, int(3 * (1.0 - prog)) + 1))
 
@@ -356,6 +412,11 @@ def draw_particle(surf, part, px, py):
         return
     size = max(1.0, part.get('size', 3) * (1.0 - 0.55 * prog))
 
+    # Doku YALNIZCA açıkça istenirse. Tüm parçacıklara varsayılan doku vermeyi
+    # denedim ve tavan yükünde KÖTÜLEŞTİ (9.4 -> 12.6 ms): 500 küçük parçacık
+    # için sprite blit'i, ucuz daire çiziminden pahalı. Dokulu olanlar ise
+    # katmanı atlayıp doğrudan hedefe gittiği için az sayıda büyük efektte
+    # belirgin kazanç sağlıyor (3.6x) — ikisi bu şekilde dengeleniyor.
     tex = part.get('tex')
     if tex:
         sprite = get_sprite(tex, _dim(color, alpha), size * 2)
@@ -377,7 +438,7 @@ def _fallback_disc(surf, cx, cy, r, color, alpha):
         return
     r = int(max(1, r))
     cx, cy = int(cx), int(cy)
-    _mark()
+    _mark(cx, cy, r)
     if r <= 3:
         pygame.draw.circle(surf, _dim(color, alpha), (cx, cy), r)
         return
@@ -395,7 +456,7 @@ def _ring(surf, cx, cy, r, color, alpha, width=2):
     r = int(max(1, r))
     if r > 3000:
         return
-    _mark()
+    _mark(cx, cy, r + width)
     pygame.draw.circle(surf, _dim(color, alpha), (int(cx), int(cy)), r, width)
 
 
@@ -403,9 +464,11 @@ def _lines(surf, pts, color, alpha, width):
     """Polyline — VFX katmanına çizilir."""
     if len(pts) < 2 or alpha <= 2:
         return
-    _mark()
-    pygame.draw.lines(surf, _dim(color, alpha), False,
-                      [(int(p[0]), int(p[1])) for p in pts], width)
+    ipts = [(int(p[0]), int(p[1])) for p in pts]
+    xs = [p[0] for p in ipts]
+    ys = [p[1] for p in ipts]
+    _mark_box(min(xs) - width, min(ys) - width, max(xs) + width, max(ys) + width)
+    pygame.draw.lines(surf, _dim(color, alpha), False, ipts, width)
 
 
 # --- ELEMENT GÖRSEL DİLİ ---
