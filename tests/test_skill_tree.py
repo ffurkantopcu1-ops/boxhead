@@ -118,5 +118,137 @@ class TestStatResolution(unittest.TestCase):
         self.assertEqual(SkillTree.resolve_stats({"start_warrior"}), {})
 
 
+class TestTreeShape(unittest.TestCase):
+    """Yeniden tasarlanan çark ağacının sözleşmesi (bkz. SKILL_TREE.md).
+
+    Eski ağacın somut kusurlarını regresyon olarak kilitler: güçlü düğümlerin
+    ucuza sıralanması, sınıflar arası bedava geçiş, kategorisiz düğümler.
+    """
+
+    CLASSES = ["warrior", "sniper", "engineer", "beastmaster", "bomber",
+               "alchemist", "sorcerer", "bloodwalker", "ninja"]
+
+    @staticmethod
+    def _cost_map(start_id):
+        """Başlangıçtan her düğüme en ucuz yol (SP = düğüm sayısı)."""
+        import collections
+        dist = {start_id: 0}
+        q = collections.deque([start_id])
+        while q:
+            cur = q.popleft()
+            for nb in SkillTree.ADJ[cur]:
+                if nb not in dist:
+                    dist[nb] = dist[cur] + 1
+                    q.append(nb)
+        return dist
+
+    def test_all_nodes_reachable_from_every_class(self):
+        total = len(SkillTree.BY_ID)
+        for c in self.CLASSES:
+            self.assertEqual(len(self._cost_map(f"start_{c}")), total,
+                             f"{c} başlangıcından erişilemeyen düğüm var")
+
+    def test_keystone_is_a_real_commitment(self):
+        # Eskiden dış halkaya varan biri keystone'ları sırayla alıyordu.
+        for c in self.CLASSES:
+            cost = self._cost_map(f"start_{c}")[f"{c}_keystone"]
+            self.assertGreaterEqual(cost, 12, f"{c} keystone'u çok ucuz ({cost} SP)")
+
+    def test_notables_are_not_chainable(self):
+        # Aynı sınıfın iki notable'ı arasında en az 2 SP olmalı; 1 SP olsaydı
+        # hepsi tek tek sıralanabilirdi (eski ağacın asıl sorunu).
+        for c in self.CLASSES:
+            nots = [n["id"] for n in SkillTree.NODES
+                    if n["type"] == "notable" and n["arm"] == c]
+            self.assertGreater(len(nots), 1)
+            for a in nots:
+                d = self._cost_map(a)
+                nearest = min(d[b] for b in nots if b != a)
+                self.assertGreaterEqual(
+                    nearest, 2, f"{c}: {a} -> komşu notable yalnızca {nearest} SP")
+
+    def test_foreign_keystone_costs_more_than_own(self):
+        for c in self.CLASSES:
+            d = self._cost_map(f"start_{c}")
+            own = d[f"{c}_keystone"]
+            for o in self.CLASSES:
+                if o != c:
+                    self.assertGreater(d[f"{o}_keystone"], own,
+                                       f"{c} için {o} keystone'u kendi keystone'undan ucuz")
+
+    # Renk tablosunun anahtarları (scenes/game_scene.py -> TREE_CAT_COLORS).
+    # Burada elle yazılı: testin pygame ekranı açmasına gerek kalmasın.
+    VALID_CATS = {"damage", "element", "dot", "minion", "turret", "defense",
+                  "utility", "core"}
+
+    def test_every_node_has_a_category(self):
+        # Kategori = düğüm rengi (ve ileride ikon). Eksikse düğüm nötr çizilir.
+        for n in SkillTree.NODES:
+            self.assertIn(n.get("cat"), self.VALID_CATS,
+                          f"{n['id']} kategorisi geçersiz: {n.get('cat')}")
+
+    def test_category_table_matches_renderer(self):
+        """Üreticinin ürettiği kategoriler ile çizicinin renk tablosu aynı
+        kümeyi kullanmalı; biri değişip diğeri unutulursa düğümler nötr çizilir."""
+        import re, io, os
+        src = io.open(os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "scenes", "game_scene.py"),
+            encoding="utf-8").read()
+        block = src.split("TREE_CAT_COLORS = {", 1)[1].split("}", 1)[0]
+        renderer_cats = set(re.findall(r'"(\w+)"\s*:', block))
+        self.assertEqual(renderer_cats, self.VALID_CATS)
+
+    def test_keystones_have_a_downside(self):
+        for n in SkillTree.NODES:
+            if n["type"] == "keystone":
+                self.assertTrue(any(v < 0 for v in n["stats"].values()),
+                                f"{n['name']} bedelsiz keystone")
+
+    def test_stale_saved_nodes_are_refunded(self):
+        """Ağaç yeniden üretilince eski kayıttaki id'ler kaybolur. Sessizce
+        atılırlarsa oyuncu yatırdığı tüm SP'yi kaybeder — iade edilmeli."""
+        import json, os, tempfile
+        from logic.save_manager import SaveManager
+
+        class _P:
+            def __init__(self):
+                self.base_class_id = "warrior"
+                self.class_id = "warrior"
+                self.skill_points = 0
+                self.skills = []
+                self.allocated_nodes = set()
+
+        p = _P()
+        # Eski ray düzeninden kalma id'ler (yeni ağaçta çark var, ray yok).
+        # Bilerek YALNIZCA artık var olmayanlar seçildi.
+        pd = {"allocated_nodes": ["start_warrior", "warrior_C4",
+                                  "warrior_L5", "warrior_R2"]}
+        for stale_id in ("warrior_C4", "warrior_L5", "warrior_R2"):
+            self.assertNotIn(stale_id, SkillTree.BY_ID,
+                             "test verisi güncel değil: bu id hâlâ mevcut")
+        # load_game'in ilgili bloğunu birebir taklit et
+        saved = set(pd["allocated_nodes"])
+        stale = {n for n in saved if n not in SkillTree.BY_ID}
+        refund = sum(1 for n in stale if not SkillTree.is_start(n))
+        p.skill_points += refund
+        p.allocated_nodes = (saved - stale) | set(
+            SkillTree.start_nodes_for(p.base_class_id))
+
+        self.assertEqual(refund, 3, "geçersiz düğümler iade edilmedi")
+        self.assertEqual(p.allocated_nodes, {"start_warrior"})
+        for nid in p.allocated_nodes:
+            self.assertIn(nid, SkillTree.BY_ID)
+
+    def test_requested_stats_present(self):
+        want = ["shopRarity", "goldGain", "magicFind", "bounce", "pierce",
+                "lifesteal", "max_hp", "regen", "maxEnergyShield", "esRegen",
+                "meleeRangeFlat", "aoe_bonus", "speed", "minionPierce",
+                "minionBounce", "minionRate", "minionRange", "minionDamage",
+                "turretRange", "turretRate", "turretDmg"]
+        used = {s for n in SkillTree.NODES for s in n.get("stats", {})}
+        for w in want:
+            self.assertIn(w, used, f"ağaçta '{w}' veren düğüm yok")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,7 @@ from logic.game_logic import GameLogic
 from entities.player import Player
 from ui_elements import (TabButton, EquippedRow, BackpackItemCard,
                          MarketCard, render_fit, shrink_to_width,
-                         strip_unsupported, get_skull_crest)
+                         strip_unsupported, get_skull_crest, ImageLoader)
 from logic.skill_tree import SkillTree
 import pygame
 import math
@@ -181,6 +181,11 @@ class GameScene(BaseScene):
         self._tree_fit_scale = 1.0
         self._tree_area = None        # son çizilen grafik alanı (hit-test/pan için)
         self._tree_drag = None        # {start, last, moved} sürükleme durumu
+        self._tree_fullscreen = False # F: ağacı tüm ekrana yay
+        self._tree_search = ""        # arama kutusundaki metin
+        self._tree_search_active = False
+        self._tree_match = set()      # aramaya uyan düğüm id'leri (önbellek)
+        self._tree_search_rect = pygame.Rect(0, 0, 0, 0)
         self.crafting_target = None
         # Craft hata mesajı yalnız pencere açılırken atanıyordu; çizim buna
         # koşulsuz bakıyor, farklı bir yol pencereyi açarsa AttributeError olur.
@@ -424,10 +429,17 @@ class GameScene(BaseScene):
             # YETENEK AĞACI: sol tık sürükle = kaydır, tekerlek = yakınlaştır.
             # Düğüm tahsisi mouse-UP'ta (sürükleme değilse) yapılır.
             if self.show_inventory and self.active_tab == "skills":
+                # Klavye: F = tam ekran, yazı = arama. Arama kutusu aktifken
+                # tuşlar YUTULUR; yoksa "f" yazmak ekranı değiştirirdi.
+                if event.type == pygame.KEYDOWN and self._tree_handle_key(event):
+                    continue
                 if event.type == pygame.MOUSEWHEEL:
                     self._tree_zoom_at(pygame.mouse.get_pos(), event.y)
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if self._tree_area and self._tree_area.collidepoint(event.pos):
+                    if self._tree_search_rect.collidepoint(event.pos):
+                        self._tree_search_active = True
+                    elif self._tree_area and self._tree_area.collidepoint(event.pos):
+                        self._tree_search_active = False
                         self._tree_drag = {"start": event.pos, "last": event.pos, "moved": False}
                 elif event.type == pygame.MOUSEMOTION and self._tree_drag:
                     lx, ly = self._tree_drag["last"]
@@ -2599,13 +2611,37 @@ class GameScene(BaseScene):
     # Eski düz 56-yetenek ızgarasının yerini alan yollu (pathing) düğüm ağacı.
     # Tasarım: SKILL_TREE.md. Veri: data/skill_tree.json, motor: logic/skill_tree.
 
-    _TREE_TYPE_COLORS = {
-        "start": "moss", "minor": "steel", "notable": "gold", "keystone": "blood",
+    # DÜĞÜM KATEGORİ RENKLERİ — kaynak: data/skill_tree.json'daki "cat" alanı
+    # (tools/generate_skill_tree.py -> STAT_CAT). Düğümün ne işe yaradığı
+    # renginden okunuyor; ağaç 370 düğüm ve renk olmadan okunmuyordu.
+    # İKON KANCASI: ileride kategori başına ikon eklemek için tek yapılacak iş
+    # TREE_CAT_ICON'a dosya adı yazmak — _draw_tree_node onu blit'ler.
+    TREE_CAT_COLORS = {
+        "damage":  (198,  74,  58),   # kızıl — saldırı
+        "element": (108, 150, 224),   # mavi — ateş/buz/element
+        "dot":     (126, 176,  74),   # yeşil — zehir/DoT/alan
+        "minion":  (206, 148,  62),   # amber — minyon
+        "turret":  ( 92, 178, 176),   # camgöbeği — taret
+        "defense": (176, 122, 200),   # mor — hayatta kalma
+        "utility": (214, 190,  96),   # altın — ganimet/yardımcı
+        "core":    (150, 144, 132),   # nötr — başlangıç/geçit
     }
+    # cat -> assets/ui/gothic altındaki ikon dosyası (boş = ikon yok, sadece renk)
+    TREE_CAT_ICON = {}
+
+    _TREE_SEARCH_HINT = "Ara: özellik adı (örn. delme, minyon, can çalma)"
 
     def draw_skills_tab(self, p):
         import ui_theme
-        panel = self._inventory_panel_rect()
+        # TAM EKRAN (F): ağaç 370 düğüm; envanter paneline sıkışınca düğümler
+        # üst üste biniyordu. Tam ekranda panel çerçevesi atlanır.
+        if self._tree_fullscreen:
+            panel = pygame.Rect(0, 0, self.width, self.height)
+            # OPAK dolgu: draw_panel yarı saydam olduğu için altındaki sekme
+            # çubuğu ve HUD sızıyordu. Önce ekranı tamamen kapat.
+            self.screen.fill((18, 15, 20))
+        else:
+            panel = self._inventory_panel_rect()
         inner_top = panel.y + 52
         mouse_pos = pygame.mouse.get_pos()
 
@@ -2626,14 +2662,36 @@ class GameScene(BaseScene):
                              self.reset_btn_rect.width - 30)
         self.screen.blit(reset_t, reset_t.get_rect(center=self.reset_btn_rect.center))
 
-        # Kullanım ipucu (ortada, başlık satırında)
-        hint = render_fit("Sürükle: kaydır   •   Tekerlek: yakınlaştır", 16,
-                          (150, 144, 132), 520)
-        self.screen.blit(hint, (panel.centerx - hint.get_width() // 2, inner_top + 14))
+        # --- ARAMA KUTUSU + ipucu (başlık satırının altı) ---
+        sb_w = min(440, panel.width // 3)
+        self._tree_search_rect.update(panel.centerx - sb_w // 2, inner_top + 4, sb_w, 34)
+        sb = self._tree_search_rect
+        ui_theme.draw_inset_frame(self.screen, sb, "panel_frame_small.png",
+                                  fill=(26, 22, 28), alpha=240, pad=6)
+        if self._tree_search:
+            txt, col = self._tree_search, ui_theme.TEXT_COL
+        else:
+            txt, col = self._TREE_SEARCH_HINT, (118, 112, 104)
+        if self._tree_search_active:
+            # yanıp sönen imleç
+            txt += "|" if int(time.time() * 2) % 2 == 0 else " "
+            pygame.draw.rect(self.screen, ui_theme.readable(ui_theme.COLORS["gold"]),
+                             sb, 2)
+        self.screen.blit(render_fit(txt, 17, col, sb.width - 20), (sb.x + 10, sb.y + 8))
+        if self._tree_search:
+            found = render_fit(f"{len(self._tree_match)} eşleşme", 15,
+                               ui_theme.readable(ui_theme.COLORS["moss"]), 160)
+            self.screen.blit(found, (sb.right + 10, sb.y + 9))
+
+        hint = render_fit(
+            "Sürükle: kaydır  •  Tekerlek: yakınlaştır  •  F: "
+            + ("panele dön" if self._tree_fullscreen else "tam ekran"),
+            15, (150, 144, 132), panel.width // 3)
+        self.screen.blit(hint, (panel.centerx - hint.get_width() // 2, inner_top + 42))
 
         # Ağaç çizim alanı (başlığın altı). Çizim buraya kırpılır.
-        area = pygame.Rect(panel.x + 28, inner_top + 50,
-                           panel.width - 56, panel.height - 108)
+        area = pygame.Rect(panel.x + 28, inner_top + 68,
+                           panel.width - 56, panel.height - 126)
         self._tree_area = area
         tf = self._skill_tree_transform(area)
         allocated = SkillTree._ensure_set(p)
@@ -2659,9 +2717,12 @@ class GameScene(BaseScene):
         # 2) DÜĞÜMLER — kilitli önce, açık/alınmış en son (tema kuralı: seçili üstte)
         self.tree_node_hit = []
         hover_node = None
+        # Çizim sırası: kilitli en altta, sonra alınabilir/alınmış, EŞLEŞENLER
+        # en üstte — arama halesi başka düğümlerin altında kalmasın.
         order = sorted(
             SkillTree.NODES,
-            key=lambda n: (n["id"] in allocated, n["id"] in allocatable))
+            key=lambda n: (n["id"] in allocated, n["id"] in allocatable,
+                           n["id"] in self._tree_match))
         for node in order:
             nid = node["id"]
             cx, cy = tf(node["pos"])
@@ -2674,7 +2735,8 @@ class GameScene(BaseScene):
                 state = "open"
             else:
                 state = "locked"
-            self._draw_tree_node(node, (cx, cy), r, state)
+            self._draw_tree_node(node, (cx, cy), r, state,
+                                 matched=nid in self._tree_match)
             if rect.collidepoint(mouse_pos):
                 hover_node = node
 
@@ -2736,6 +2798,58 @@ class GameScene(BaseScene):
         lo, hi = sorted((area.top + m - maxy * s, area.bottom - m - miny * s))
         v["oy"] = max(lo, min(hi, v["oy"]))
 
+    # --- ARAMA ---------------------------------------------------------
+    # Türkçe karakterleri sadeleştirir: "delme" yazan biri "Delme"yi de,
+    # "MİNYON" yazan biri "Minyon"u da bulsun. str.lower() Türkçe'de
+    # İ/I çiftini beklendiği gibi çözmediği için elle eşleme yapılır.
+    _TR_FOLD = str.maketrans({
+        "İ": "i", "I": "i", "ı": "i", "Ş": "s", "ş": "s", "Ğ": "g", "ğ": "g",
+        "Ü": "u", "ü": "u", "Ö": "o", "ö": "o", "Ç": "c", "ç": "c",
+    })
+
+    @classmethod
+    def _fold(cls, s):
+        return s.translate(cls._TR_FOLD).lower()
+
+    def _tree_recompute_match(self):
+        """Arama metnine uyan düğümleri bulur.
+
+        Hem düğüm ADINDA hem AÇIKLAMASINDA (yani verdiği özelliklerde) arar;
+        böylece "delme" yazınca hem '+1 Delme' minörleri hem 'Zırh Delici'
+        notable'ı yanar. Boş sorgu = vurgu yok."""
+        q = self._fold(self._tree_search.strip())
+        if not q:
+            self._tree_match = set()
+            return
+        self._tree_match = {
+            n["id"] for n in SkillTree.NODES
+            if q in self._fold(n.get("name", "")) or q in self._fold(n.get("desc", ""))
+        }
+
+    def _tree_handle_key(self, event):
+        """Yetenek ağacı sekmesindeki klavye girdisi. Dönen: olay yutuldu mu."""
+        if event.key == pygame.K_f and not self._tree_search_active:
+            self._tree_fullscreen = not self._tree_fullscreen
+            self._tree_view = None      # alan değişti -> yeniden fit et
+            return True
+        if event.key == pygame.K_ESCAPE and (self._tree_search_active or self._tree_search):
+            self._tree_search_active = False
+            self._tree_search = ""
+            self._tree_recompute_match()
+            return True
+        if not self._tree_search_active:
+            return False
+        if event.key == pygame.K_BACKSPACE:
+            self._tree_search = self._tree_search[:-1]
+        elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self._tree_search_active = False
+        elif event.unicode and event.unicode.isprintable() and len(self._tree_search) < 28:
+            self._tree_search += event.unicode
+        else:
+            return False
+        self._tree_recompute_match()
+        return True
+
     def _tree_click_node(self, pos, p):
         """Sürükleme değil de gerçek tık ise imlecin altındaki düğümü tahsis et."""
         for nid, rect in getattr(self, 'tree_node_hit', []):
@@ -2749,26 +2863,47 @@ class GameScene(BaseScene):
     def _tree_node_radius(ntype):
         return {"keystone": 19, "notable": 16, "start": 15}.get(ntype, 12)
 
-    def _draw_tree_node(self, node, center, r, state):
+    def _draw_tree_node(self, node, center, r, state, matched=False):
+        """Tek düğüm. Renk KATEGORİDEN gelir (ne işe yaradığı), parlaklık
+        DURUMDAN (alınmış / alınabilir / kilitli). `matched` arama sonucudur:
+        eşleşen düğüm kilitli bile olsa belirgin şekilde parlar."""
         import ui_theme
         cx, cy = center
-        base = ui_theme.COLORS[self._TREE_TYPE_COLORS.get(node["type"], "steel")]
+        base = self.TREE_CAT_COLORS.get(node.get("cat", "core"),
+                                        self.TREE_CAT_COLORS["core"])
         gold = ui_theme.readable(ui_theme.COLORS["gold"])
         if state == "allocated":
-            fill = ui_theme.readable(base, 110)
+            fill = tuple(min(255, int(c * 1.15)) for c in base)
             ring, ring_w = gold, 3
         elif state == "open":
-            fill = tuple(c // 3 + 10 for c in base)
+            fill = tuple(int(c * 0.55) for c in base)
             ring, ring_w = gold, 3
-        else:  # locked
-            fill = (34, 30, 32)
+        else:  # locked — kategori rengi korunur ama iyice söner
+            fill = tuple(int(c * 0.24) for c in base)
             ring, ring_w = (72, 64, 60), 2
+
+        # ARAMA VURGUSU: eşleşen düğümün arkasına nabız gibi bir hale çizilir.
+        # Kilitli düğümlerde de görünür — amaç "bu statı nerede bulurum"a cevap.
+        if matched:
+            pulse = 0.65 + 0.35 * math.sin(time.time() * 5.0)
+            glow_r = int(r + 10 + 4 * pulse)
+            glow = pygame.Surface((glow_r * 2, glow_r * 2), pygame.SRCALPHA)
+            pygame.draw.circle(glow, (*base, int(120 * pulse)), (glow_r, glow_r), glow_r)
+            pygame.draw.circle(glow, (255, 246, 214, int(220 * pulse)),
+                               (glow_r, glow_r), glow_r, 3)
+            self.screen.blit(glow, (cx - glow_r, cy - glow_r))
 
         pygame.draw.circle(self.screen, (16, 14, 16), (cx, cy), r + 3)   # yuva
         pygame.draw.circle(self.screen, fill, (cx, cy), r)
         pygame.draw.circle(self.screen, ring, (cx, cy), r, ring_w)
-        # Notable/keystone: parlak iç mücevher noktası
-        if node["type"] in ("notable", "keystone") and state != "locked":
+
+        icon = self.TREE_CAT_ICON.get(node.get("cat"))
+        if icon:
+            img = ImageLoader.get_item_icon(icon, (int(r * 1.4), int(r * 1.4)))
+            if img:
+                self.screen.blit(img, img.get_rect(center=(cx, cy)))
+        elif node["type"] in ("notable", "keystone") and state != "locked":
+            # İkon yokken notable/keystone'u ayırt eden parlak mücevher noktası
             hi = tuple(min(255, c + 60) for c in fill)
             pygame.draw.circle(self.screen, hi, (cx - r // 3, cy - r // 3), max(2, r // 4))
 

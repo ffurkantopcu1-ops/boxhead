@@ -284,7 +284,19 @@ class SaveManager:
         # sıfırlanır; yoksa recalculate_stats hem ağacı hem eski skili sayar.
         from logic.skill_tree import SkillTree
         if "allocated_nodes" in pd:
-            p.allocated_nodes = set(pd.get("allocated_nodes", []))
+            saved = set(pd.get("allocated_nodes", []))
+            # Ağaç yeniden üretildiğinde (topoloji değişimi) eski düğüm id'leri
+            # kaybolur. Bunlar sessizce atılırsa oyuncu yatırdığı TÜM puanı
+            # kaybeder — resolve_stats bilinmeyen id'yi zaten yok sayıyor.
+            # Bu yüzden geçersiz id başına 1 SP İADE edilir; oyuncu yeni ağaçta
+            # yeniden harcar. (Aynı desen aşağıdaki eski-skill göçünde de var.)
+            stale = {nid for nid in saved if nid not in SkillTree.BY_ID}
+            if stale:
+                refund = sum(1 for nid in stale if not SkillTree.is_start(nid))
+                p.skill_points = getattr(p, "skill_points", 0) + refund
+                print(f"[skill_tree] {len(stale)} eski dugum bulunamadi, "
+                      f"{refund} SP iade edildi")
+            p.allocated_nodes = saved - stale
             p.allocated_nodes |= set(SkillTree.start_nodes_for(p.base_class_id))
         else:
             refund = 0
