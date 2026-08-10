@@ -6,8 +6,6 @@ from logic.save_manager import SaveManager
 
 class MenuScene(BaseScene):
     def on_enter(self):
-        # Arka plan rengini ve başlığı belirle
-        self.bg_color = (15, 15, 25)
         self.title_text = "BOXHEAD 2.0"
         self.subtitle_text = "NATIVE EVOLUTION"
         

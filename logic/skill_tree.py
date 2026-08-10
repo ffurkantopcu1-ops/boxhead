@@ -135,15 +135,6 @@ class SkillTree:
         cls._sync_player(player)
         return refunded
 
-    @classmethod
-    def reseed_start(cls, player):
-        """Karakterin sinifina ait baslangic dugumunu ekler, mevcut tahsisleri
-        korur. Baska sinifin baslangicini SILMEZ (yol kopmasin)."""
-        allocated = cls._ensure_set(player)
-        for nid in cls.start_nodes_for(cls._class_of(player)):
-            allocated.add(nid)
-        cls._sync_player(player)
-
     # ------------------------------------------------------------------
     # Stat cozumleme (recalculate_stats buradan okur)
     # ------------------------------------------------------------------

@@ -530,6 +530,9 @@ class LauncherApp:
             canvas.tag_bind(item, '<B1-Motion>', self._drag_move)
 
         icon_y = (T - 26) // 2
+        # DİKKAT: bu iki referans hiçbir yerde OKUNMUYOR ama silinemez —
+        # _IconButton PhotoImage'ları kendi içinde tutar; örnek çöp toplanırsa
+        # canvas üzerindeki ikonlar boşalır. "Kullanılmayan atama" değildir.
         self.close_btn = _IconButton(
             canvas, {s: img[f'btn_close_{s}.png'] for s in ('normal', 'hover')},
             W - 38, icon_y, self._quit)

@@ -47,9 +47,6 @@ class GroundItem:
             (glow_size // 2, glow_size // 2), glow_size // 2,
         )
 
-    def slice_icons(self, sheet):
-        return {}
-
     def update(self, dt, game):
         self.age += dt
         if self.max_lifetime is not None and self.age >= self.max_lifetime:

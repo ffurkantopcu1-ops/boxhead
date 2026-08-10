@@ -5,8 +5,6 @@ from logic.inventory_manager import InventoryManager
 
 class ClassSelectScene(BaseScene):
     def on_enter(self):
-        self.bg_color = (20, 20, 30)
-        
         # Sınıf Verileri — yalnızca SUNUM bilgisi (ad, renk, tanıtım).
         # Statlar ELLE YAZILMAZ: InventoryManager.CLASS_BASES'ten türetilir.
         # Eskiden burada elle kopya vardı ve sınıf tabanlarına yapılan %20 hız

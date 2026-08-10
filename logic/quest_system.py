@@ -153,9 +153,6 @@ class QuestSystem:
                 earned += q.get("reward", 0)
         return earned  # Kazanılan kristal miktarı
 
-    def get_display_quests(self):
-        return self.active_quests
-
     def save_to_meta(self, meta):
         meta["daily_quests"] = self.active_quests
         return meta

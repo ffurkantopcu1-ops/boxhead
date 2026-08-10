@@ -73,8 +73,7 @@ _ready = False          # mixer açıldı mı
 _failed = False         # açılamadıysa bir daha deneme
 _sounds = {}            # olay -> [Sound, ...]
 _last_played = {}       # olay -> son çalma zamanı (ms)
-_volume_pct = 70        # 0-100
-_muted = False
+_volume_pct = 70        # 0-100 (0 = sessiz; ayrı bir mute bayrağı yok)
 
 
 def init(volume_pct=70):
@@ -118,7 +117,7 @@ def init(volume_pct=70):
 def _apply_volume():
     if not _ready:
         return
-    factor = 0.0 if _muted else (_volume_pct / 100.0)
+    factor = _volume_pct / 100.0
     for event, variants in _sounds.items():
         rel = EVENTS[event][1]
         for snd in variants:
@@ -136,23 +135,13 @@ def get_volume():
     return _volume_pct
 
 
-def set_muted(flag):
-    global _muted
-    _muted = bool(flag)
-    _apply_volume()
-
-
-def is_muted():
-    return _muted
-
-
 def is_ready():
     return _ready
 
 
 def play(event, volume_scale=1.0):
     """Bir olay sesi çal. Ses yoksa veya olay tanımsızsa sessizce geçer."""
-    if not _ready or _muted or _volume_pct <= 0:
+    if not _ready or _volume_pct <= 0:
         return
     variants = _sounds.get(event)
     if not variants:
@@ -174,8 +163,3 @@ def play(event, volume_scale=1.0):
         # Tek seferlik ölçek: kaynak Sound'un seviyesini kalıcı bozmadan
         channel.set_volume(min(1.0, snd.get_volume() * volume_scale))
     channel.play(snd)
-
-
-def stop_all():
-    if _ready:
-        pygame.mixer.stop()

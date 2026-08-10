@@ -83,11 +83,3 @@ class EliteSystem:
         enemy.base_armor = getattr(enemy, 'armor', 0)
 
         return applied
-    
-    @staticmethod
-    def get_elite_name(enemy):
-        """Get display name for an elite enemy."""
-        if not hasattr(enemy, 'elite_mods') or not enemy.elite_mods:
-            return ""
-        names = [m['name'] for m in enemy.elite_mods]
-        return " ".join(names)

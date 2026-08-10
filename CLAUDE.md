@@ -85,8 +85,7 @@ Flow: `main.py → SceneManager → Scene → GameLogic/entities`. Preserve it.
   `GameLogic`, `Player`, and `InventoryManager`. Adding a persistent field means
   updating both serialization and restoration, defaulting for old saves (`.get()`/
   `getattr()`), and testing a round trip. Never overwrite/normalize real files in
-  `saves/` during tests. Use `logic.save_manager.SaveManager` — the root-level
-  `save_manager.py` is stale and not imported by runtime code.
+  `saves/` during tests. Use `logic.save_manager.SaveManager`.
 - **String IDs are shared contracts**: class names, item/orb IDs, rarities, card
   IDs, enemy types, scene names, difficulty labels. Search all consumers before
   renaming one.

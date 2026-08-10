@@ -410,11 +410,10 @@ class Enemy:
         self.base_dmg = self.dmg
         self.base_speed = self.speed
         self.base_armor = getattr(self, 'armor', 0)
-        # Knockback vektorleri ve boss-minion bayragi: apply_difficulty'yi
-        # override eden bosslar bunlari kaybetmesin diye burada da kurulur
+        # Knockback vektorleri: apply_difficulty'yi override eden bosslar
+        # bunlari kaybetmesin diye burada da kurulur
         self.kb_x = 0.0
         self.kb_y = 0.0
-        self._is_boss_minion = False
         self.apply_difficulty(diff_name)
 
     def apply_difficulty(self, diff_name):
@@ -439,8 +438,7 @@ class Enemy:
         self.dmg = self.base_dmg * mult["dmg"]
         self.speed = self.base_speed * mult["speed"]
         self.armor = self.base_armor * mult["armor"]
-        self._is_boss_minion = False
-        
+
         # Knockback (Savrulma) Vektörleri
         self.kb_x = 0.0
         self.kb_y = 0.0

@@ -58,6 +58,3 @@ class SynergySystem:
             player.inv_manager.recalculate_stats()
             player.hp = min(player.hp, player.max_hp)
         return True
-
-    def get_active_synergies(self):
-        return [s for s in self.SYNERGIES if s['id'] in self.active_synergies]

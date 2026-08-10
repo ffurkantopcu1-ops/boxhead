@@ -87,8 +87,6 @@ use them.
   accept camera offsets; `GameScene` owns camera/zoom and HUD coordinates.
 - Collections are mutated during gameplay. Follow the existing snapshot iteration
   pattern (`items[:]`) or deferred removal when removing elements during updates.
-- Use `logic.save_manager.SaveManager`. The root-level `save_manager.py` is not
-  imported by current runtime code and has a different API.
 - Save/load is a cross-module contract between `logic/save_manager.py`,
   `GameLogic`, `Player`, and `InventoryManager`. When adding persistent fields,
   update both serialization and restoration, use defaults for old saves, and test

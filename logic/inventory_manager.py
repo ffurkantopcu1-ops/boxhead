@@ -80,10 +80,6 @@ class InventoryManager:
             return True
         return False
 
-    def unequip_all(self):
-        for slot in self.equipped:
-            self.unequip(slot)
-
     def _track_sold(self, count):
         """Satış görevini besler. game referansı Player.update() içinde
         atanır (player.game); henüz oyun döngüsü başlamadıysa sessizce geçer."""
