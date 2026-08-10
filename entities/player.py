@@ -1,4 +1,5 @@
 import pygame
+import copy
 import math
 import time
 import random
@@ -21,6 +22,7 @@ from entities.alchemist_logic import Alchemist
 from entities.sorcerer_logic import Sorcerer
 from entities.bloodwalker_logic import Bloodwalker
 from logic.inventory_manager import InventoryManager
+from logic.item_system import ItemSystem
 from logic.save_manager import SaveManager
 from logic.crystal_shop import CrystalShop
 from logic.skill_tree import SkillTree
@@ -48,11 +50,6 @@ class Player:
         # --- INITIALIZE ALL ATTRIBUTES BEFORE SPECIALIZATION ---
         self.xp = 0
         self.xp_to_next_level = 100
-        # Midnight Slate: Göz yormayan, mermilerin net göründüğü modern koyu tema
-        self.tile_size = 128
-        self.floor_color_1 = (24, 28, 35)
-        self.floor_color_2 = (28, 32, 40)
-        self.grid_line_color = (35, 40, 50)
         self.gold = 0
         self.level = 1
         self.skill_points = 0
@@ -82,12 +79,9 @@ class Player:
         self.periodic_freeze_cd = 0.0     # Frozen Time
         self._freeze_timer = 0.0
         self.lightning_proc_hits = 0       # Storm Caller
-        self._lightning_counter = 0
-        self.void_armor_pen = False        # Void Touch (zırh yoksay)
         self.artifact_hp_cost = 0          # Mana Overload
         self.alpha_mode = False            # Alpha Bond
         self.minion_respawn_chance = 0.0   # Undead Army
-        self.minion_death_transfer = 0.0   # Spirit Link
         self.shop_discount = 0.0           # Merchant Soul
         self.pact_devil_waves = 0          # Pact Devil
         self._meta_start_card = False
@@ -121,8 +115,7 @@ class Player:
         self.is_invulnerable = False
         self.fire_breath_timer = 0
         self.kill_streak = 0
-        self.kill_streak_timer = 0
-        
+
         # --- VELOCITY TRACKING FOR AI ---
         self.vx = 0
         self.vy = 0
@@ -241,44 +234,71 @@ class Player:
         
         self.init_class_specialization()
         
+    # Sınıf -> başlangıç silahının TÜRETİLDİĞİ T4 taban adı (logic/item_system.py).
+    # Başlangıç silahları eskiden burada ELLE yazılıydı ve aynı isimli T4 tabanının
+    # ikinci bir kopyasıydı. İki kaynak zamanla birbirinden kaydı: başlangıç
+    # katanası fazladan meleeRange 20, başlangıç asası physDmg 12 (T4 dropu 8)
+    # taşıyordu — yani T4'ü yerden alan oyuncu ELİNDEKİNDEN KÖTÜSÜNÜ takıyordu.
+    # Artık tek doğruluk kaynağı ItemSystem.bases; kayma yapısal olarak imkânsız.
+    # (Bu farklar tabana taşındı, bkz. item_system.py katana hattı + Sihir Asası.)
+    STARTING_WEAPON_BASES = {
+        "warrior":     "Eski Kılıç (T4)",
+        "ninja":       "Paslı Katana (T4)",
+        "sniper":      "Basit Arbalet (T4)",
+        "alchemist":   "Zehir Şişesi (T4)",
+        "bomber":      "El Bombası Çantası (T4)",
+        "sorcerer":    "Sihir Asası (T4)",
+        "bloodwalker": "Kan Kılıcı (T4)",
+        "engineer":    "Sızdıran Alev Tabancası (T4)",
+    }
+
+    # Ruh Terbiyecisi tek sınıf olarak silahla değil PET ile başlar ve bu pet
+    # T4 pet tabanından (Yavru Kurt) kasıtlı olarak zayıftır: minionDamage 0.
+    # minionMaxHp ÇARPAN'dır (pet itemleri 0.60-12.0 aralığında); 50 değeri
+    # başlangıç kurduna 5100 can veriyordu (F3). Türetilmez, elle tanımlıdır.
+    STARTING_PET = {
+        "name": "Küçük Kurt", "type": "pet", "rarity": "Normal",
+        "icon_id": "pet_wolf_small",
+        "itemBase": {"minionDamage": 0, "minionMaxHp": 0.5},
+        "prefixes": [], "suffixes": [],
+    }
+
+    @classmethod
+    def build_starting_item(cls, class_id):
+        """Sınıfın başlangıç eşyasını T4 tabanından türetir.
+
+        İsimden "(T4)" eki atılır: envanterde "Paslı Katana" yazar, yerden düşen
+        kopya "Paslı Katana (T4)" olarak ayrışır ama statlar birebir aynıdır.
+        Taban sözlükleri SALT OKUNUR kabul edilir — deepcopy ile kopyalanır,
+        yoksa craft/orb işlemleri global tabanı kalıcı olarak bozar.
+
+        weaponClass tabandan gelir; eksik olsaydı başka bir sınıf silahından geri
+        dönüldüğünde eski sınıfın saldırısı üzerinde takılı kalırdı.
+        """
+        if class_id == "beastmaster":
+            return copy.deepcopy(cls.STARTING_PET)
+
+        base_name = cls.STARTING_WEAPON_BASES.get(class_id)
+        if not base_name:
+            return None
+
+        base = next((b for b in ItemSystem.bases if b.get("name") == base_name), None)
+        if base is None:
+            print(f"UYARI: '{base_name}' tabani bulunamadi -> {class_id} silahsiz basliyor")
+            return None
+
+        item = copy.deepcopy(base)
+        item["name"] = base_name.replace(" (T4)", "")
+        # Başlangıç eşyaları affixsizdir; "Magic" rozeti yanıltıcıydı ve toplu
+        # satış filtrelerinde 9 sınıfın 2'sini farklı kovaya sokuyordu.
+        item["rarity"] = "Normal"
+        item["prefixes"] = []
+        item["suffixes"] = []
+        return item
+
     def init_class_specialization(self):
         # --- BAŞLANGIÇ EKİPMANLARI ---
-        cn = self.class_id
-        starting_weapon = None
-        
-        # weaponClass: silah takıldığında sınıf mantığını belirler
-        # (inventory_manager.recalculate_stats). Eksik olursa başka bir sınıf
-        # silahından geri dönüldüğünde eski sınıfın saldırısı takılı kalıyor.
-        if cn == "warrior":
-            starting_weapon = {"name": "Eski Kılıç", "type": "weapon", "isMelee": True, "weaponClass": "warrior", "rarity": "Normal", "itemBase": {"physDmg": 12, "meleeRange": 50}, "prefixes": [], "suffixes": []}
-        elif cn == "beastmaster":
-            # minionMaxHp ÇARPAN'dır (pet itemleri 0.60-12.0 aralığında);
-            # 50 değeri başlangıç kurduna 5100 can veriyordu (F3)
-            starting_weapon = {"name": "Küçük Kurt", "type": "pet", "rarity": "Normal", "itemBase": {"minionDamage": 0, "minionMaxHp": 0.5}, "prefixes": [], "suffixes": []}
-        elif cn == "sniper":
-            starting_weapon = {"name": "Basit Arbalet", "type": "weapon", "isRanged": True, "weaponClass": "sniper", "rarity": "Normal", "itemBase": {"physDmg": 18}, "prefixes": [], "suffixes": []}
-        elif cn == "ninja":
-            starting_weapon = {"name": "Paslı Katana", "type": "weapon", "isMelee": True, "weaponClass": "ninja", "rarity": "Magic", "itemBase": {"physDmg": 15, "attackCooldown": 450, "meleeRange": 20}, "prefixes": [], "suffixes": []}
-        elif cn == "alchemist":
-            starting_weapon = {"name": "Zehir Şişesi", "type": "weapon", "isBomb": True, "weaponClass": "alchemist", "rarity": "Normal", "itemBase": {"poisonDps": 4}, "prefixes": [], "suffixes": []}
-        elif cn == "bomber":
-            # Bomba hasarı poisonDps üzerinden hesaplanır (shoot(): is_bomb dalı);
-            # physDmg bomba yolunda okunmadığı için taban stat olarak verilmez.
-            # item_system'deki "El Bombası Çantası (T4)" tabanıyla birebir aynı.
-            starting_weapon = {"name": "El Bombası Çantası", "type": "weapon", "isBomb": True, "weaponClass": "bomber", "rarity": "Normal", "itemBase": {"poisonDps": 8}, "prefixes": [], "suffixes": []}
-        elif cn == "sorcerer":
-            # elementDmgMult 0.2: T4 baz (item_system.py) ile hizalı; 0.6 başlangıçta T2 gücü veriyordu (F6).
-            # physDmg 8->12: erken oyunda büyücü çok zayıftı — elementDmgMult
-            # (sınıf kimliği) düz element hasarı olmadan uykuda kaldığı için
-            # başlangıçta yalnızca 8 fiziksel vuruyordu. Taban 12'ye çekildi.
-            starting_weapon = {"name": "Sihir Asası", "type": "weapon", "isRanged": True, "weaponClass": "sorcerer", "rarity": "Magic", "itemBase": {"physDmg": 12, "elementDmgMult": 0.2}, "prefixes": [], "suffixes": []}
-        elif cn == "bloodwalker":
-            starting_weapon = {"name": "Kan Kılıcı", "type": "weapon", "isMelee": True, "weaponClass": "bloodwalker", "rarity": "Normal", "itemBase": {"physDmg": 14, "lifesteal": 0.15, "meleeRange": 50}, "prefixes": [], "suffixes": []}
-        elif cn == "engineer":
-            # Taret artık R yeteneği; taret kiti ise "vurmayan ekipman".
-            # Mühendis onunla başlayınca HİÇ doğrudan hasar veremiyordu.
-            # Başlangıç silahı sınıfın gerçek hasar kolu olan alev silahı.
-            starting_weapon = {"name": "Sızdıran Alev Tabancası", "type": "weapon", "isFlamethrower": True, "weaponClass": "engineer", "rarity": "Normal", "itemBase": {"fireDamage": 4, "attackCooldown": 115}, "prefixes": [], "suffixes": []}
+        starting_weapon = self.build_starting_item(self.class_id)
 
         # Sınıf mantığını kur (Renk vb.)
         # --- POWER SCALING SYSTEMS ---
@@ -831,10 +851,6 @@ class Player:
             self.hp = min(self.hp, self.max_hp)
             if hasattr(self, 'game') and self.game:
                 self.game.add_event("damage_text", self.x, self.y - 40, value=f"Mutasyon: +{buff_stat} / -{debuff_stat}", color=(200, 50, 200), timer=2.0)
-        
-        # Sınıf Evrimi Tetikleyicisi
-        if self.level == 20:
-            self.ready_for_evolution = True
 
     def add_item(self, item):
         """Envantere eşya ekler. Orb ise istifler, değilse yer varsa ekler."""

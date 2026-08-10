@@ -10,10 +10,16 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Mithril Kılıç (T2)', 'tier': 2, 'isMelee': True, 'weaponClass': 'warrior', 'icon_id': 'weapon_mithril_sword', 'itemBase': { 'physDmg': 55, 'meleeRange': 60 } },
         { 'type': 'weapon', 'name': 'Güneş Kılıcı (T1)', 'tier': 1, 'isMelee': True, 'weaponClass': 'warrior', 'icon_id': 'weapon_sun_sword', 'itemBase': { 'physDmg': 110, 'meleeRange': 65, 'fireDamage': 30 } },
         
-        { 'type': 'weapon', 'name': 'Paslı Katana (T4)', 'tier': 4, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_katana_rusty', 'itemBase': { 'physDmg': 15, 'attackCooldown': 450 } },
-        { 'type': 'weapon', 'name': 'Keskin Katana (T3)', 'tier': 3, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_katana_sharp', 'itemBase': { 'physDmg': 35, 'attackCooldown': 420 } },
-        { 'type': 'weapon', 'name': 'Usta İşi Katana (T2)', 'tier': 2, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_katana_master', 'itemBase': { 'physDmg': 70, 'attackCooldown': 380 } },
-        { 'type': 'weapon', 'name': 'Muramasa (T1)', 'tier': 1, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_muramasa', 'itemBase': { 'physDmg': 130, 'attackCooldown': 340, 'lifesteal': 0.1 } },
+        # Katana hattı 'meleeRange' taşımıyordu; ninjanın başlangıç katanası ise
+        # (entities/player.py'de elle tanımlıydı) meleeRange 20 taşıyordu. Sonuç:
+        # T4 katanayı yerden alan ninja ELİNDEKİNDEN menzilsizini takıyordu.
+        # Menzil hatta taşındı ve tier'a göre artıyor (kılıç hattı gibi), böylece
+        # yükseltmek asla menzil kaybettirmez. Ninja vuruş yarıçapı
+        # (entities/ninja_logic.py): 180 + meleeRangeFlat.
+        { 'type': 'weapon', 'name': 'Paslı Katana (T4)', 'tier': 4, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_katana_rusty', 'itemBase': { 'physDmg': 15, 'attackCooldown': 450, 'meleeRange': 20 } },
+        { 'type': 'weapon', 'name': 'Keskin Katana (T3)', 'tier': 3, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_katana_sharp', 'itemBase': { 'physDmg': 35, 'attackCooldown': 420, 'meleeRange': 25 } },
+        { 'type': 'weapon', 'name': 'Usta İşi Katana (T2)', 'tier': 2, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_katana_master', 'itemBase': { 'physDmg': 70, 'attackCooldown': 380, 'meleeRange': 30 } },
+        { 'type': 'weapon', 'name': 'Muramasa (T1)', 'tier': 1, 'isMelee': True, 'weaponClass': 'ninja', 'icon_id': 'weapon_muramasa', 'itemBase': { 'physDmg': 130, 'attackCooldown': 340, 'lifesteal': 0.1, 'meleeRange': 35 } },
 
         # --- SİLAHLAR (Ranged/Bomb) ---
         { 'type': 'weapon', 'name': 'Basit Arbalet (T4)', 'tier': 4, 'isRanged': True, 'weaponClass': 'sniper', 'icon_id': 'weapon_crossbow_simple', 'itemBase': { 'physDmg': 18 } },
@@ -36,7 +42,11 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Termobarik Bomba (T1)', 'tier': 1, 'isBomb': True, 'weaponClass': 'bomber', 'icon_id': 'weapon_thermobaric_bomb', 'itemBase': { 'poisonDps': 110, 'aoe': 2.4, 'attackCooldown': 1100, 'dotDmgMult': 0.4 } },
 
         # --- YENİ SINIF SİLAHLARI ---
-        { 'type': 'weapon', 'name': 'Sihir Asası (T4)', 'tier': 4, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_magic', 'itemBase': { 'physDmg': 8, 'elementDmgMult': 0.2 } },
+        # physDmg 8->12: büyücünün başlangıç asası (elle tanımlıyken) zaten 12'ydi;
+        # T4 dropu 8'de kalınca yerden alınan asa elde olandan zayıf çıkıyordu.
+        # Gerekçe (eski yorum): elementDmgMult sınıf kimliği düz element hasarı
+        # olmadan uykuda kaldığı için büyücü erken oyunda yalnızca fizikselle vurur.
+        { 'type': 'weapon', 'name': 'Sihir Asası (T4)', 'tier': 4, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_magic', 'itemBase': { 'physDmg': 12, 'elementDmgMult': 0.2 } },
         { 'type': 'weapon', 'name': 'Kristal Asa (T3)', 'tier': 3, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_crystal', 'itemBase': { 'physDmg': 22, 'elementDmgMult': 0.5 } },
         { 'type': 'weapon', 'name': 'Ejder Asası (T2)', 'tier': 2, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_dragon', 'itemBase': { 'physDmg': 44, 'elementDmgMult': 0.9, 'fireDamage': 20, 'frostDamage': 20 } },
         { 'type': 'weapon', 'name': 'Kadim Ruh Asası (T1)', 'tier': 1, 'isRanged': True, 'weaponClass': 'sorcerer', 'icon_id': 'weapon_wand_ancient', 'itemBase': { 'physDmg': 80, 'elementDmgMult': 1.5, 'fireDamage': 50, 'frostDamage': 50 } },
