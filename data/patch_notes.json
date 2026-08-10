@@ -1,11 +1,30 @@
 {
   "versions": [
     {
+      "version": "1.19.0",
+      "date": "2026-08-10",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "prosedürel arena haritası — seed'li karo/dekor/yer izleri; biyom zemin renkleri artık ekrana yansıyor",
+          "11 yeni eşya ikonu — tüm T4 silahları artık ikonlu"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "başlangıç silahları T4 tabanından türetiliyor — ninja/büyücü stat kayması giderildi"
+        ],
+        "⚙️ İyileştirmeler": [
+          "ölü kod temizliği — çağrılmayan metotlar, yazılıp okunmayan alanlar, iki artık modül"
+        ]
+      }
+    },
+    {
       "version": "1.18.6",
       "date": "2026-08-10",
       "categories": {
         "⚙️ İyileştirmeler": [
           "ölü kod temizliği + font önbelleği + SKILL_TREE.md güncelleme"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.6"
         ]
       }
     },
