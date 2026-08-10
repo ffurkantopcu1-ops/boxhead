@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.20.0",
+      "date": "2026-08-10",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "yetenek ağacı yeniden tasarlandı — çark yapısı, 370 düğüm, kategori renkleri, arama ve tam ekran"
+        ]
+      }
+    },
+    {
       "version": "1.19.0",
       "date": "2026-08-10",
       "categories": {
@@ -13,6 +22,9 @@
         ],
         "⚙️ İyileştirmeler": [
           "ölü kod temizliği — çağrılmayan metotlar, yazılıp okunmayan alanlar, iki artık modül"
+        ],
+        "📦 Diğer": [
+          "release: v1.19.0"
         ]
       }
     },
