@@ -4,6 +4,10 @@ import os
 import time
 from datetime import datetime
 
+# tilemap saf veri modülü (pygame/logic bağımlılığı yok) — döngüsel import riski
+# taşımaz; game_logic zaten save_manager'ı import ediyor.
+from logic.tilemap import TileMap
+
 class SaveManager:
     SAVE_DIR = "saves"
 
@@ -225,7 +229,11 @@ class SaveManager:
             },
             "wave": {
                 "level": logic.wave["level"],
-                "difficulty": getattr(logic, 'difficulty', 'normal')
+                "difficulty": getattr(logic, 'difficulty', 'normal'),
+                # Prosedürel arena tohumu: harita dizi olarak saklanmaz, bu tek
+                # sayıdan türetilir (logic/tilemap.py). Kaydedilmezse yüklenen
+                # oyun başka bir arenada açılırdı.
+                "map_seed": getattr(logic, 'map_seed', 0),
             },
             "card_system": {
                 "active_cards": getattr(logic.card_system, 'active_cards', []),
@@ -331,7 +339,22 @@ class SaveManager:
         wave_data = save_data.get("wave", {})
         logic.wave["level"] = max(1, wave_data.get("level", 1) - 1)
         logic.difficulty = wave_data.get("difficulty", "normal")
-        
+
+        # Prosedürel arena: tohumu geri yükle (eski kayıtlarda yok -> mevcut
+        # rastgele tohum korunur, sadece arena farklı görünür, oyun bozulmaz).
+        seed = wave_data.get("map_seed")
+        if seed is not None and hasattr(logic, 'tilemap'):
+            logic.map_seed = int(seed)
+            logic.tilemap = TileMap(logic.map_seed, world_size=logic.arena_size)
+
+        # Biyomu kaydedilen dalgayla eşitle. Eskiden yüklenen oyun hangi
+        # dalgada olursa olsun "forest" zemininde açılıyor, ancak bir sonraki
+        # dalga geçişinde doğru biyoma atlıyordu.
+        if hasattr(logic, 'biome_system'):
+            biome_id, _ = logic.biome_system.get_biome_for_wave(logic.wave["level"])
+            logic.biome_system.current_biome_id = biome_id
+            logic.wave["biome"] = biome_id
+
         # Card System
         card_data = save_data.get("card_system", {})
         saved_cards = list(card_data.get("active_cards", []))

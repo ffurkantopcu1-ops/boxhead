@@ -11,6 +11,7 @@ import time
 import random
 import sys
 import vfx
+import tile_renderer
 
 # --- Eşya tooltip: okunur stat etiketleri + kıyaslama ---
 ITEM_STAT_LABEL = {
@@ -155,15 +156,9 @@ class GameScene(BaseScene):
             self.logic.setup_boss_test()
             self.is_boss_test = False # Reset
         
-        # Warm Stone: sıcak gri zemin teması (geçerli olan tema — eski
-        # "Midnight Slate" atamaları buranın hemen üstünde tekrarlanıyor ve
-        # aynı satırlar tarafından eziliyordu).
-        # NOT: floor_color_1 yalnızca YEDEKtir; draw_floor_to_surf zemin
-        # rengini GameLogic.BIOMES[biome]["color"] üzerinden alır.
-        self.tile_size = 128
-        self.floor_color_1 = (140, 135, 125)
-        self.floor_color_2 = (140, 135, 125)
-        self.grid_line_color = (110, 105, 95)
+        # Zemin prosedürel (tile_renderer + logic/tilemap): karo boyutu ve renk
+        # verisi oradan gelir. Yeni oyunda seed değiştiği için önbellek geçersiz.
+        tile_renderer.clear_cache()
         # Gotik temayla uyumlu serif (bkz. ui_elements.UI_FONT_NAME)
         _THEME_FONT = "Georgia, Times New Roman, serif"
         self.font_main = pygame.font.SysFont(_THEME_FONT, 48, bold=True)
@@ -175,9 +170,7 @@ class GameScene(BaseScene):
         self.aura_page = 0
         self.synergy_scroll = 0        # sinerji listesi kaydırma ofseti (<= 0)
         self._synergy_max_scroll = 0
-        self.aura_msg = ""
-        self.aura_msg_timer = 0
-        
+
         # Market & Crafting States
         self.market_tab = "items" # "items" or "orbs"
         self.show_craft_window = False
@@ -192,7 +185,6 @@ class GameScene(BaseScene):
         # Craft hata mesajı yalnız pencere açılırken atanıyordu; çizim buna
         # koşulsuz bakıyor, farklı bir yol pencereyi açarsa AttributeError olur.
         self.craft_error_msg = ""
-        self.craft_error_timer = 0.0
 
         # Önceki oyundan kalan rect'ler yeni sahnede yanlış tıklamaya yol
         # açıyordu (bayat hitbox). Her girişte temizlenir.
@@ -211,7 +203,6 @@ class GameScene(BaseScene):
         # Süpürme efekti yüzeyi: efektin sınırlayıcı kutusu kadar büyür.
         # Eskiden 3840x2160 sabitti ve her efektte ~8.3M piksel fill ediliyordu.
         self._sweep_surface = pygame.Surface((256, 256), pygame.SRCALPHA)
-        self.font_combo = pygame.font.SysFont("Georgia, Times New Roman, serif", 28, bold=True)
         # font_boss_name / font_boss_hp kaldırıldı: boss barı artık render_fit
         # kullanıyor (tek metin yardımcısı, otomatik sığdırma).
         
@@ -269,12 +260,6 @@ class GameScene(BaseScene):
         self.inv_prev_rect = pygame.Rect(self.width // 2 + 20, inventory_pager_y, 120, 35)
         self.inv_next_rect = pygame.Rect(self.width - 160, inventory_pager_y, 120, 35)
         
-        # Craft Sayfalama
-        self.craft_orb_prev_rect = pygame.Rect(self.width // 2 - 430, self.height // 2 + 250, 100, 35)
-        self.craft_orb_next_rect = pygame.Rect(self.width // 2 - 200, self.height // 2 + 250, 100, 35)
-        self.craft_mkt_prev_rect = pygame.Rect(self.width // 2 + 170, self.height // 2 + 250, 100, 35)
-        self.craft_mkt_next_rect = pygame.Rect(self.width // 2 + 350, self.height // 2 + 250, 100, 35)
-        
         self.show_settings = False # ESC Menüsü
         self.setting_tab = "main" # main, save, load
         self.selected_setting_idx = 0
@@ -310,7 +295,6 @@ class GameScene(BaseScene):
         # CRAFT SAYFALAMA
         self.orb_inv_page = 0
         self.orb_market_page = 0
-        # self.craft_orb_prev_rect'ler init_ui_components içinde
 
         # ENVANTER FİLTRELEME & TOPLU SATIŞ
         self.inv_filter_rarity = "TÜMÜ" # TÜMÜ, Normal, Magic, Rare, Unique, Set
@@ -811,7 +795,6 @@ class GameScene(BaseScene):
                     err = self.logic.item_system.apply_orb(self.crafting_target, orb['orb_id'])
                     if err:
                         self.craft_error_msg = err
-                        self.craft_error_timer = 2.0
                     else:
                         # Başarılı: Orbu tüket
                         orb['stack'] = orb.get('stack', 1) - 1
@@ -1022,9 +1005,6 @@ class GameScene(BaseScene):
         elif self.active_tab == "aura":
             if self.update_aura_clicks(pos, p): return
                         
-    def handle_mouse_wheel(self, y):
-        self.zoom_level = max(self.min_zoom, min(self.max_zoom, self.zoom_level + y * 0.1))
-
     def draw(self):
         # --- ZOOM & CAMERA SETUP ---
         internal_w = int(self.width / self.zoom_level)
@@ -1359,22 +1339,18 @@ class GameScene(BaseScene):
                                     panel.bottom - 44))
 
     def draw_floor_to_surf(self, surf, camera_x, camera_y, width, height):
-        # Sadece ekranda görünen karoları çiz (Optimizasyon)
-        start_x = int(camera_x // self.tile_size)
-        start_y = int(camera_y // self.tile_size)
-        end_x = int((camera_x + width) // self.tile_size) + 1
-        end_y = int((camera_y + height) // self.tile_size) + 1
-        
-        # Biyom Rengini Çek
-        biome_id = self.logic.wave.get("biome", "normal")
-        floor_color = self.logic.BIOMES.get(biome_id, {}).get("color", self.floor_color_1)
-        
-        for tx in range(start_x, end_x):
-            for ty in range(start_y, end_y):
-                rect = (tx * self.tile_size - camera_x, ty * self.tile_size - camera_y, self.tile_size, self.tile_size)
-                # Checkerboard kaldırıldı, tek renk zemin çiziliyor
-                pygame.draw.rect(surf, floor_color, rect)
-                pygame.draw.rect(surf, self.grid_line_color, rect, 1)
+        """Prosedürel zemin (bkz. tile_renderer / logic/tilemap).
+
+        Eskiden burada görünen her karo için 2 adet `pygame.draw.rect`
+        çağrılıyordu (min zoom'da ~644 çağrı/kare, önbellek yok) ve sonuç düz
+        renk + sabit ızgara çizgisiydi. Artık karo görselleri ve karo ızgarası
+        biyom başına bir kez üretilip önbelleğe alınıyor; kare başına iş iki
+        toplu `blits()`.
+        """
+        tile_renderer.draw_floor(
+            surf, camera_x, camera_y, width, height,
+            self.logic.wave.get("biome", "forest"), self.logic.tilemap,
+        )
 
     def _draw_hud_bar(self, x, y, w, h, ratio, fill_asset, flat_color, label):
         """Gotik çerçeveli durum çubuğu; varlık yoksa eski düz çizime düşer."""
@@ -2020,7 +1996,6 @@ class GameScene(BaseScene):
         plate_btn(L["orb_prev"], "<< GERİ", "night", self.orb_inv_page > 0)
         plate_btn(L["orb_next"], "İLERİ >>", "night",
                   (self.orb_inv_page + 1) * self.ORB_ROWS_PER_PAGE < len(orbs_in_inv))
-        self.craft_orb_prev_rect, self.craft_orb_next_rect = L["orb_prev"], L["orb_next"]
 
         # 2. ORTA: HEDEF EŞYA
         title_c = render_fit("HEDEF EŞYA", 22, gold, 280, bold=True)
@@ -2058,7 +2033,6 @@ class GameScene(BaseScene):
             self.screen.blit(af_t, (ic.x, y_s))
             y_s += 23
 
-        self.craft_take_back_rect = L["take_back"]
         plate_btn(L["take_back"], "GERİ AL", "night")
 
         # 3. SAĞ: ORB MARKET (DÜKKAN)
@@ -2087,7 +2061,6 @@ class GameScene(BaseScene):
         plate_btn(L["mkt_prev"], "<< GERİ", "night", self.orb_market_page > 0)
         plate_btn(L["mkt_next"], "İLERİ >>", "night",
                   (self.orb_market_page + 1) * self.MARKET_ROWS_PER_PAGE < len(market_list))
-        self.craft_mkt_prev_rect, self.craft_mkt_next_rect = L["mkt_prev"], L["mkt_next"]
 
         # Çıkış Butonu
         plate_btn(L["close"], "X", "ember")
@@ -2388,8 +2361,6 @@ class GameScene(BaseScene):
         grid_h = max(120, mass_y - 10 - grid_y)
         row_h = max(64, min(86, grid_h // 6))
 
-        self._inv_grid_y = grid_y
-        self._inv_row_h = row_h
 
         # Filtre butonları
         start_x = self.width // 2 + 20

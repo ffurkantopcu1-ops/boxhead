@@ -13,6 +13,7 @@ from entities.projectile_pool import ProjectilePool
 from logic.card_system import CardSystem
 from logic.quest_system import QuestSystem
 from logic.biome_system import BiomeSystem
+from logic.tilemap import TileMap
 from logic.elite_system import EliteSystem
 from logic.crystal_shop import CrystalShop
 import audio
@@ -23,13 +24,11 @@ class GameLogic:
     MAX_VISUAL_EVENTS = 320
     MAX_PARTICLES = 500
 
-    BIOMES = {
-        "normal":  {"name": "Ova", "color": (24, 28, 35), "enemy_speed_mult": 1.0},
-        "desert":  {"name": "Çöl", "color": (60, 45, 20), "enemy_speed_mult": 1.3},
-        "ice":     {"name": "Buz Tundra", "color": (20, 40, 70), "enemy_speed_mult": 0.8},
-        "volcano": {"name": "Yanardağ", "color": (50, 20, 10), "enemy_speed_mult": 1.1},
-        "dark":    {"name": "Karanlık Vadi", "color": (10, 10, 15), "enemy_speed_mult": 1.2}
-    }
+    # NOT: Eski `BIOMES` tablosu (normal/desert/ice/volcano/dark) BURADAN
+    # KALDIRILDI. Tek tüketicisi zemin rengiydi ve id'leri BiomeSystem.BIOMES
+    # (forest/lava/ice/void) ile uyuşmadığı için "ice" dışında hiçbir rengi
+    # ekrana ulaşmıyordu; enemy_speed_mult alanı da hiç okunmuyordu.
+    # Biyom verisinin tek doğruluk kaynağı artık logic/biome_system.py.
 
     WAVE_EVENTS = [
         {"id": "fast_enemies", "desc": "⚡ HIZLI DALGA! Düşmanlar 2x hızlı!", "gold_mult": 1.5, "enemy_speed": 2.0},
@@ -121,7 +120,9 @@ class GameLogic:
             "current_diff": "Normal", # İsim bazlı (Normal, Hard, Very Hard, Impossible)
             "is_blood_moon": False,
             "blood_moon_timer": 0,
-            "biome": "normal",
+            # BiomeSystem.__init__ ile aynı başlangıç: eskiden "normal" yazıyordu
+            # ama BiomeSystem'de böyle bir biyom yok (wave 1-10 = "forest").
+            "biome": "forest",
             "event": None,
             "special": None,
             "special_timer": 0,
@@ -153,7 +154,12 @@ class GameLogic:
         self.streak_timer = 0
         self.entity_id_counter = 0
         self.arena_size = 5000
-        
+
+        # Prosedürel arena: harita dizi olarak tutulmaz, seed'den türetilir.
+        # Seed kayda yazılır (SaveManager) — yüklenen oyun aynı arenayı gösterir.
+        self.map_seed = random.randint(0, 2 ** 31 - 1)
+        self.tilemap = TileMap(self.map_seed, world_size=self.arena_size)
+
         # Grid System for Collision (Spatial Partitioning)
         self.grid_size = 128
         self.grid = {}
@@ -584,10 +590,6 @@ class GameLogic:
             self._apply_global_modifiers(new_enemy)
         self.enemies.append(new_enemy)
         return 1
-        
-    def add_projectile(self, x, y, vx, vy, dmg):
-        self.entity_id_counter += 1
-        self.projectiles.append(Projectile(self.entity_id_counter, x, y, vx, vy, dmg))
         
     def handle_cheat_mode(self, player):
         """Hile modu aktifken kaynakları maksimize eder."""
@@ -1102,22 +1104,6 @@ class GameLogic:
                     self.entity_id_counter += 1
                     self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x + random.uniform(-40, 40), enemy.y + random.uniform(-40, 40), item_data))
 
-    def gold_to_crystal(self, amount=1000):
-        p = self.players[self.local_player_id]
-        if p.gold >= amount:
-            p.gold -= amount
-            try:
-                meta = self.get_meta()
-                meta["crystals"] = meta.get("crystals", 0) + 5
-                self._meta_dirty = True
-                self.flush_meta()
-                self.add_event("damage_text", p.x, p.y-40, value="+5 Kristal", color=(255, 100, 100), timer=1.0)
-                return True
-            except Exception as e:
-                print("Crystal conversion error:", e)
-                return False
-        return False
-
     def refresh_market(self):
         p = self.players[self.local_player_id]
         self.market_inventory = []
@@ -1176,10 +1162,6 @@ class GameLogic:
         event["t0"] = _t
         self.events.append(event)
 
-    def apply_enemy_modifiers(self, enemy):
-        if hasattr(self, 'biome_system'):
-            self.biome_system.apply_modifiers(enemy)
-            
     def get_meta(self):
         """meta.json bellekte tutulur; her öldürmede load+save yapmak ağır
         disk I/O yaratıyordu (P4). Yazma flush_meta() ile olur."""
@@ -1447,13 +1429,3 @@ class GameLogic:
                 e.apply_difficulty(new_diff)
                 
         self.add_event("damage_text", self.width//2, self.height//2, value=f"ZORLUK: {new_diff}", color=(255, 255, 255), timer=1.5)
-
-    def draw(self, screen, camera_x, camera_y):
-        # Prosedürel Zemin Çizimi (Grid)
-        # TODO: Optimize with TileSprites if needed
-        pass
-        
-    def draw_floor(self, screen, camera_x, camera_y):
-        # ... (Assuming draw_floor is actually in GameScene, checking GameLogic again)
-        # TODO: Optimize with TileSprites if needed
-        pass

@@ -2,14 +2,26 @@ import random
 
 class BiomeSystem:
     """Biyom sistemi - Her 10 wave'de dünya değişir."""
-    
+
+    # ZEMİN PALETİ — tüketim noktası: tile_renderer._palette (prosedürel karo
+    # üretimi). Bu alanlar uzun süre ÖLÜ veriydi: zemini çizen kod biome id'sini
+    # GameLogic.BIOMES'te (normal/desert/volcano/dark) arıyordu, buradaki
+    # id'lerle (forest/lava/ice/void) yalnızca "ice" eşleşiyordu; diğer tüm
+    # dalgalarda sabit gri bir zemin çiziliyordu. O tablo kaldırıldı, tek
+    # doğruluk kaynağı burası.
+    #
+    # Renkler ayrıca AÇILDI: eski değerler (20,35,20) gibi neredeyse siyahtı;
+    # prosedürel doku/dekor o koyulukta hiç okunmuyordu. Yeni değerler
+    # orta-koyu — varlıklar (parlak sınıf renkleri) hâlâ zeminden ayrışıyor.
+    # accent_color dekor ve yama rengini besler.
     BIOMES = {
         "forest": {
             "name": "🌲 Karanlık Orman",
             "desc": "Yoğun ağaçlar ve gölgeler",
-            "floor_color_1": (20, 35, 20),
-            "floor_color_2": (25, 40, 25),
-            "grid_line_color": (30, 50, 30),
+            "floor_color_1": (64, 78, 54),
+            "floor_color_2": (76, 92, 62),
+            "grid_line_color": (28, 38, 26),
+            "accent_color": (86, 116, 58),
             "waves": (1, 10),
             "enemy_bonus": {"speed": 1.1},  # Orman düşmanları biraz hızlı
             "hazards": ["poison_pool", "thorn_bush"],
@@ -19,9 +31,10 @@ class BiomeSystem:
         "lava": {
             "name": "🌋 Volkan Vadisi",
             "desc": "Lav akıntıları ve ateş yağmuru",
-            "floor_color_1": (40, 20, 15),
-            "floor_color_2": (50, 25, 18),
-            "grid_line_color": (60, 30, 20),
+            "floor_color_1": (78, 54, 46),
+            "floor_color_2": (94, 64, 52),
+            "grid_line_color": (36, 22, 18),
+            "accent_color": (168, 72, 28),
             "waves": (11, 20),
             "enemy_bonus": {"dmg": 1.2, "fire_resist": True},
             "hazards": ["lava_pool", "fire_rain"],
@@ -31,9 +44,10 @@ class BiomeSystem:
         "ice": {
             "name": "❄️ Buzul Çölü",
             "desc": "Kaygan zeminler ve buz fırtınaları",
-            "floor_color_1": (25, 30, 45),
-            "floor_color_2": (30, 35, 50),
-            "grid_line_color": (40, 45, 60),
+            "floor_color_1": (76, 90, 112),
+            "floor_color_2": (90, 106, 128),
+            "grid_line_color": (52, 64, 84),
+            "accent_color": (166, 198, 224),
             "waves": (21, 30),
             "enemy_bonus": {"hp": 1.3, "frost_aura": True},
             "hazards": ["ice_patch", "blizzard"],
@@ -43,9 +57,10 @@ class BiomeSystem:
         "void": {
             "name": "🌑 Boşluk",
             "desc": "Boyutlar arası karanlık",
-            "floor_color_1": (15, 10, 25),
-            "floor_color_2": (20, 12, 30),
-            "grid_line_color": (30, 20, 45),
+            "floor_color_1": (56, 46, 78),
+            "floor_color_2": (70, 58, 94),
+            "grid_line_color": (26, 20, 40),
+            "accent_color": (140, 88, 186),
             "waves": (31, 99),
             "enemy_bonus": {"hp": 1.5, "dmg": 1.3, "teleport": True},
             "hazards": ["void_rift", "shadow_zone"],
@@ -129,8 +144,7 @@ class BiomeSystem:
     
     def __init__(self):
         self.current_biome_id = "forest"
-        self.transition_timer = 0  # Visual transition effect
-    
+
     def get_biome_for_wave(self, wave_level):
         """Wave seviyesine göre aktif biyomu döndürür."""
         for biome_id, biome in self.BIOMES.items():
@@ -143,12 +157,8 @@ class BiomeSystem:
         new_id, new_biome = self.get_biome_for_wave(wave_level)
         if new_id != self.current_biome_id:
             self.current_biome_id = new_id
-            self.transition_timer = 2.0  # 2 second transition
             return new_biome  # Return new biome for visual update
         return None
-    
-    def get_current_biome(self):
-        return self.BIOMES.get(self.current_biome_id, self.BIOMES['forest'])
     
     def apply_enemy_bonus(self, enemy, wave_level):
         """Biyom bonuslarını düşmana uygula."""
@@ -185,10 +195,3 @@ class BiomeSystem:
             return None
         hazard_id = random.choice(hazard_ids)
         return self.HAZARD_TYPES.get(hazard_id)
-    
-    def update_transition(self, dt):
-        """Biyom geçiş efektini güncelle."""
-        if self.transition_timer > 0:
-            self.transition_timer = max(0, self.transition_timer - dt)
-            return self.transition_timer / 2.0  # 0.0 to 1.0 progress
-        return 0
