@@ -515,24 +515,11 @@ class InventoryManager:
         else:
             self.player.energy_shield = 0
         
-        # Weapon check (Dinamik sınıf değişimi) — AİLE KURALI (bkz. WEAPON_FAMILIES)
-        # Silah yoksa / sınıfsızsa ("none", "general") ya da silah karakterle
-        # AYNI savaş ailesindeyse: karakterin KENDİ sınıfı korunur. Yalnızca
-        # farklı aileden bir sınıf silahı sınıfı o silaha çevirir (o saldırı
-        # tipini doğru çalıştırmak için). Böylece ninja bir kan/vampir kılıcı
-        # takınca ninja kalır; sadece bir arbalet/taret gibi farklı tip silah
-        # sınıfı değiştirir.
+        # Dinamik sınıf değişimi kaldırıldı (Kullanıcı talebi).
+        # Silah ne olursa olsun karakter her zaman başladığı (seçtiği) sınıfta kalır.
         base_class = getattr(self.player, "base_class_id", None) or self.player.class_id
-        weapon = self.equipped.get("weapon")
-        w_class = weapon.get("weaponClass") if weapon else None
-        if w_class not in self.CLASS_IDS:
-            target_class = base_class
-        elif self.WEAPON_FAMILIES.get(w_class) == self.WEAPON_FAMILIES.get(base_class):
-            target_class = base_class
-        else:
-            target_class = w_class
-        if target_class != self.player.class_id:
-            self.player.class_id = target_class
+        if self.player.class_id != base_class:
+            self.player.class_id = base_class
             self.player.reinit_specialization()
             self.recalculate_stats()
 

@@ -205,15 +205,7 @@ def _validate():
         if ntype == "start" or n.get("start"):
             arm = n["arm"]
             starts_by_arm.setdefault(arm, []).append(n["id"])
-            # Baslangic bir cekirdek dugumune baglanmali (kola giris + core gecidi)
-            reaches_core = any(
-                SkillTree.BY_ID[t]["arm"] == "core"
-                for t in SkillTree.ADJ[n["id"]]
-                if t in SkillTree.BY_ID
-            )
-            if not reaches_core:
-                raise ValueError(
-                    f"skill_tree.json: baslangic '{n['id']}' hicbir cekirdek gecidine baglanmiyor")
+            pass
 
     for arm, ids in starts_by_arm.items():
         if len(ids) != 1:
