@@ -1,11 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.21.1",
+      "date": "2026-10-03",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "Yayin paketinde eski surum notlarinin gecmisini koru"
+        ]
+      }
+    },
+    {
       "version": "1.21.0",
-      "date": "2026-10-02",
+      "date": "2026-10-03",
       "categories": {
         "⚖️ Denge Değişiklikleri": [
           "Temas ve surekli hasari build olcumleriyle dengele, savunma ve hiz tavanlarini duzelt"
+        ],
+        "📦 Diğer": [
+          "Release v1.21.0 patch notes"
         ]
       }
     },
@@ -28,6 +40,350 @@
         ],
         "📦 Diğer": [
           "Refactor skill tree structure and fix dynamic class change bug"
+        ]
+      }
+    },
+    {
+      "version": "1.20.0",
+      "date": "2026-08-10",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "yetenek ağacı yeniden tasarlandı — çark yapısı, 370 düğüm, kategori renkleri, arama ve tam ekran"
+        ],
+        "📦 Diğer": [
+          "release: v1.20.0"
+        ]
+      }
+    },
+    {
+      "version": "1.19.0",
+      "date": "2026-08-10",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "prosedürel arena haritası — seed'li karo/dekor/yer izleri; biyom zemin renkleri artık ekrana yansıyor",
+          "11 yeni eşya ikonu — tüm T4 silahları artık ikonlu"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "başlangıç silahları T4 tabanından türetiliyor — ninja/büyücü stat kayması giderildi"
+        ],
+        "⚙️ İyileştirmeler": [
+          "ölü kod temizliği — çağrılmayan metotlar, yazılıp okunmayan alanlar, iki artık modül"
+        ],
+        "📦 Diğer": [
+          "release: v1.19.0"
+        ]
+      }
+    },
+    {
+      "version": "1.18.6",
+      "date": "2026-08-10",
+      "categories": {
+        "⚙️ İyileştirmeler": [
+          "ölü kod temizliği + font önbelleği + SKILL_TREE.md güncelleme"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.6"
+        ]
+      }
+    },
+    {
+      "version": "1.18.5",
+      "date": "2026-08-10",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "zorluk yeniden dengelemesi — HP süngeri yerine TEHLİKE ölçekleme"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.5"
+        ]
+      }
+    },
+    {
+      "version": "1.18.4",
+      "date": "2026-08-10",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "ninja nerf + geç-oyun yığılma (stacking) regresyon testi"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.4"
+        ]
+      }
+    },
+    {
+      "version": "1.18.3",
+      "date": "2026-08-10",
+      "categories": {
+        "📦 Diğer": [
+          "release: v1.18.3",
+          "perf+fix: DPS penceresi artımlı toplam (~%55 update hızlanması) + özel dalga çökme düzeltmesi"
+        ]
+      }
+    },
+    {
+      "version": "1.18.2",
+      "date": "2026-08-10",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "kamikaze hız tavanı 8.0->7.2 (en hızlı sınıfı geçmesin)"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.2"
+        ]
+      }
+    },
+    {
+      "version": "1.18.1",
+      "date": "2026-08-10",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "büyücü ve bombacı erken oyun güçlendirmesi"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.1",
+          "sınıf denge regresyon testi (dalga-1 DPS/EHP + class_bases envelope)"
+        ]
+      }
+    },
+    {
+      "version": "1.18.0",
+      "date": "2026-08-10",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "ascendancy (alt-sınıf) sistemi — seviye 20 evrimiyle açılan mini ağaçlar"
+        ],
+        "📦 Diğer": [
+          "release: v1.18.0"
+        ]
+      }
+    },
+    {
+      "version": "1.17.0",
+      "date": "2026-08-09",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "mini harita, eşya kıyas tooltip'i, gotik yazı tipi ve ağaç kaydır/yakınlaştır",
+          "devasa PoE-tarzı yetenek ağacı (çark, ~230 düğüm)"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "yanlış silahla sınıf değişimi (savaş ailesi kuralı) + bombacı erken hasar dengesi",
+          "düşman mermileri ekran ölçeklemesinde kaybolup titriyordu (blink)"
+        ],
+        "📦 Diğer": [
+          "release: v1.17.0"
+        ]
+      }
+    },
+    {
+      "version": "1.16.0",
+      "date": "2026-08-09",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "sınıf kimlik kartları ve sınıf-uyumlu (affinity) kart havuzu",
+          "node tabanlı yetenek ağacı (skill tree)"
+        ],
+        "📦 Diğer": [
+          "release: v1.16.0",
+          "erken erişim (early access) etiketi ve CLAUDE.md"
+        ]
+      }
+    },
+    {
+      "version": "1.10.0",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "silah degistirince eski sinifin saldirisi uzerinde kalmasi giderildi"
+        ]
+      }
+    },
+    {
+      "version": "1.9.2",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "necromancer/swarm_egg Enemy UnboundLocalError duzeltildi (v1.9.2)"
+        ]
+      }
+    },
+    {
+      "version": "1.9.1",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "ninja pasli katana menzili artirildi, boks eldiveni atis hizi dengelendi, dash atan dusman hiz/hitbox nerflendi, silah degistirme sonrasi stat birikme bug'i giderildi"
+        ]
+      }
+    },
+    {
+      "version": "1.9.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "simyaci sise mekanigi, zehir bulutu gorseli ve launcher duzeltmeleri"
+        ]
+      }
+    },
+    {
+      "version": "1.8.3",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Fix NameError in projectile.py (bounce_dmg_mult missing in init args)"
+        ]
+      }
+    },
+    {
+      "version": "1.8.2",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Fix BOM issue in version.txt for GitHub Actions",
+          "Fix Ninja range, adjust Wave 1 spawn pool, and nerf dash enemy"
+        ]
+      }
+    },
+    {
+      "version": "1.8.1",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "update version to 1.8.1",
+          "yeni silahlar ve yaratıklar eklendi"
+        ]
+      }
+    },
+    {
+      "version": "1.8.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "gotik pixel-art UI seti, 9-slice altyapisi ve cerçevesiz launcher"
+        ]
+      }
+    },
+    {
+      "version": "1.7.3",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "simyaci evrimleri yeniden tasarlandi ve dengelendi"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "oyun baslangicinda otomatik atlanan wave 1 sorunu cozuldu",
+          "combo speed nerfi, alchemist baslangic silahi nerfi, xp ve es kart dengelenmesi, bomba sekme/delme bagisikligi"
+        ],
+        "📦 Diğer": [
+          "bump version to 1.7.3 for release"
+        ]
+      }
+    },
+    {
+      "version": "1.7.2",
+      "date": "2026-08-08",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "tum siniflara 0.5 saniyede can yenilemesi eklendi, yakin dovus siniflarina ekstra +0.5 (toplam 1.0) verildi",
+          "simyaci siselerinin zehir hasarlari yari yariya nerflendi",
+          "dash atan dusman hasari %15 azaltildi ve tum siniflarin hareket hizi %20 artirildi"
+        ],
+        "📦 Diğer": [
+          "update version.txt to 1.7.2 for release",
+          "silah mirasi ozelligi tier yerine rarity bazli olarak duzeltildi",
+          "yeni ozellikler plani guncellendi ve fikir havuzu eklendi"
+        ]
+      }
+    },
+    {
+      "version": "1.7.1",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "ekran modu secenegi (tam ekran / cercevesiz pencere / pencere)",
+          "koyu fantastik pixel-art UI temasi (banner butonlar + metal paneller)"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "buton cizim/hitbox uyusmazliklari tek kaynaga alindi"
+        ],
+        "📦 Diğer": [
+          "Fix UI crispness, rebuild display scaling engine, and bump version to v1.7.1"
+        ]
+      }
+    },
+    {
+      "version": "1.7.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "oyun ici ve launcher icin otomatik patch notes sistemi"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "dalga ve olay duyurulari ekran-alani HUD bannerinda gosteriliyor"
+        ],
+        "⚖️ Denge Değişiklikleri": [
+          "sistemik stat tavanlari ve broken build duzeltmeleri"
+        ],
+        "📦 Diğer": [
+          "bump checkout to v5 and setup-python to v6 (Node 20 deprecation)",
+          "mark spec files as release-critical in AGENTS.md"
+        ]
+      }
+    },
+    {
+      "version": "1.6.3",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "restore Boxhead_Launcher.spec required by release workflow"
+        ],
+        "⚙️ İyileştirmeler": [
+          "move static game data tables to data/*.json"
+        ],
+        "📦 Diğer": [
+          "Balance and bugfix pass: boss difficulty scaling, class logic and UI tweaks",
+          "Add new features implementation plan and Engineer UI requirements",
+          "clean up obsolete and temporary files"
+        ]
+      }
+    },
+    {
+      "version": "1.6.2",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "Improve UI, launcher updates, and game performance"
+        ]
+      }
+    },
+    {
+      "version": "1.6.1",
+      "date": "2026-08-08",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "publish complete game executable"
+        ]
+      }
+    },
+    {
+      "version": "1.6.0",
+      "date": "2026-08-08",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "publish standalone launcher in releases"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "fetch updates from release repository",
+          "quote CI smoke test command for YAML",
+          "allow CI workflow reuse in releases"
+        ]
+      }
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-08-08",
+      "categories": {
+        "📦 Diğer": [
+          "proje"
         ]
       }
     }
