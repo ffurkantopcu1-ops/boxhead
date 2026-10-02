@@ -1,11 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.22.0",
+      "date": "2026-10-03",
+      "categories": {
+        "⚖️ Denge Değişiklikleri": [
+          "Silah aileleri, kritik ve alan hasarini build olcumleriyle dengele"
+        ]
+      }
+    },
+    {
       "version": "1.21.1",
       "date": "2026-10-03",
       "categories": {
         "🐞 Hata Düzeltmeleri": [
           "Yayin paketinde eski surum notlarinin gecmisini koru"
+        ],
+        "📦 Diğer": [
+          "Release v1.21.1 patch notes"
         ]
       }
     },
