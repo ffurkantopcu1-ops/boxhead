@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.23.0",
+      "date": "2026-10-03",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "Echelion bossunu okunakli saldirilar ve yakin dovus firsatlariyla yeniden tasarla"
+        ]
+      }
+    },
+    {
       "version": "1.22.0",
       "date": "2026-10-03",
       "categories": {
