@@ -34,6 +34,7 @@ class InventoryManager:
     # Azalan getiri + mutlak tavan tablosu: stat -> (knee, k, hard_cap)
     # knee üstü: knee + excess / (1 + excess * k); hard_cap None değilse min() ile kırpılır
     SOFT_CAPS = {
+        "speed":          (7.5,  0.5, 9.0),
         "dmgMult":        (2.0,  0.3, None),
         "critChance":     (0.75, 2.0, 1.0),
         "lifesteal":      (0.30, 3.0, 0.50),

@@ -286,7 +286,7 @@ class StaticSilence(BossPhase):
             in_spot = any(math.hypot(p.x - ss.x, p.y - ss.y) < ss.radius for ss in self.safe_spots)
             if not in_spot:
                 # Denge: force=True olmadan i-frame'e takılıp neredeyse etkisizdi
-                p.take_damage(boss.attack_damage(10) * dt * 3, force=True)
+                p.take_damage(boss.attack_damage(10) * dt * 3, force=True, is_dot=True)
                 if int(time.time() * 10) % 2 == 0:
                     game.add_event("damage_text", p.x, p.y-20, value="OUT OF SAFE ZONE!", color=(231, 76, 60), scale=0.6)
 

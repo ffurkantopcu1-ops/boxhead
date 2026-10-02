@@ -82,7 +82,7 @@ def _cloud_surface(color, diameter):
 
 
 class Cloud:
-    def __init__(self, id, x, y, radius, duration, poison_dps=0, fire_dmg=0, frost_dmg=0, is_black_hole=False, is_web=False, is_mine=False, mine_dmg=0):
+    def __init__(self, id, x, y, radius, duration, poison_dps=0, fire_dmg=0, frost_dmg=0, is_black_hole=False, is_web=False, is_mine=False, mine_dmg=0, is_hostile=False):
         self.id = id
         self.x = x
         self.y = y
@@ -93,6 +93,7 @@ class Cloud:
         self.frost_dmg = frost_dmg
         self.dead = False
         
+        self.is_hostile = is_hostile
         self.is_black_hole = is_black_hole
         self.is_web = is_web
         self.is_mine = is_mine
@@ -165,6 +166,10 @@ class Cloud:
                 c.detonate(game, _chain_depth + 1)
 
     def update(self, dt, game):
+        if self.dead:
+            return
+        if self.is_black_hole and self.is_hostile:
+            dt = min(max(0.0, dt), max(0.0, self.duration))
         self.duration -= dt
         if self.duration <= 0:
             # Süresi dolan MAYIN boşa gitmesin: kurulmuşsa patlayarak biter.
@@ -174,7 +179,8 @@ class Cloud:
                 self.detonate(game)
             else:
                 self.dead = True
-            return
+            if not (self.is_black_hole and self.is_hostile):
+                return
 
         if self.arm_timer > 0:
             self.arm_timer -= dt
@@ -207,6 +213,13 @@ class Cloud:
                         self.detonate(game)
                         return
                     
+                    if self.is_black_hole and not self.is_hostile and not getattr(e, "is_boss", False) and e.type not in ("boss", "crystal_dragon", "arachne"):
+                        distance = math.hypot(dx, dy)
+                        if distance > 0:
+                            pull = min(distance, 60.0 * dt)
+                            e.x -= dx / distance * pull
+                            e.y -= dy / distance * pull
+
                     if not apply_dot_now:
                         continue
 
@@ -233,7 +246,7 @@ class Cloud:
                         e.apply_dot('frost', self.frost_dmg * 0.5, 1.5)
 
         # Kara Delik Etkisi
-        if self.is_black_hole:
+        if self.is_black_hole and self.is_hostile:
             p = game.players[game.local_player_id]
             dist_to_p = math.hypot(p.x - self.x, p.y - self.y)
             if dist_to_p < self.radius:
@@ -244,7 +257,7 @@ class Cloud:
                 p.y += math.sin(angle_to_center) * pull_strength
                 # Hasar ver
                 dmg = getattr(self, 'dmg', 10)
-                p.take_damage(dmg * dt, force=True)
+                p.take_damage(dmg * dt, force=True, is_dot=True)
 
         # Ağ Etkisi (Oyuncuyu yavaşlatır ve susturur)
         if getattr(self, 'is_web', False):

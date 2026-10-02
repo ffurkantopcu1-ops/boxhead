@@ -242,3 +242,168 @@ def test_all_generated_stats_have_player_facing_labels():
     generator = runpy.run_path(str(root / "tools" / "generate_skill_tree.py"))
     used = {key for node in generator["generate"]() for key in node["stats"]}
     assert used <= set(generator["STAT_LABEL"])
+
+
+@pytest.mark.parametrize("fps", [30, 60, 144])
+def test_contact_has_discrete_frame_independent_damage_and_thorns(combat, fps):
+    p,e,g = combat()
+    p.stats["thorns"] = 3
+    before = e.hp
+    for _ in range(fps*10):
+        e.update_contact(1/fps,p)
+    assert p.hp == pytest.approx(1000-20*e.dmg)
+    assert before-e.hp == pytest.approx(60)
+    assert g.stats["total_damage_taken"] == pytest.approx(20*e.dmg)
+
+def test_contact_leaving_does_not_reset_cooldown(combat):
+    p,e,g = combat()
+    e.update_contact(.5,p)
+    e.update_contact(.1,p,False)
+    e.update_contact(.1,p)
+    assert p.hp == pytest.approx(1000-e.dmg)
+    e.update_contact(.3,p)
+    assert p.hp == pytest.approx(1000-2*e.dmg)
+
+@pytest.mark.parametrize("fps", [30,60,144])
+def test_fire_hazard_exact_duration_bypasses_hit_defenses(combat,fps):
+    from logic.hazards import Hazard
+    p,e,g = combat()
+    p.stats.update(armor=10000,dodgeChance=1,thorns=30)
+    p.i_frame_timer = 5
+    p.dash_active_timer = 5
+    hazard = Hazard(0,0,"fire",duration=2)
+    before=e.hp
+    for _ in range(fps*3):
+        hazard.update(1/fps,[p],[],g)
+    assert p.hp == pytest.approx(990)
+    assert not hazard.active
+    assert e.hp == before
+    assert p.i_frame_timer == 5
+
+def test_dot_uses_shield_and_actual_damage_accounting(combat):
+    p,e,g=combat()
+    p.hp=3
+    p.energy_shield=5
+    assert p.take_damage(20,is_dot=True)==8
+    assert p.hp==0
+    assert p.energy_shield==0
+    assert g.stats["total_damage_taken"]==8
+
+@pytest.mark.parametrize("armor,expected", [(10000,2.5),(-10000,40)])
+def test_armor_has_damage_envelope_even_for_temporary_stats(combat,armor,expected):
+    p,e,g=combat()
+    p.stats["armor"]=armor
+    p.take_damage(10,force=True)
+    assert 1000-p.hp==pytest.approx(expected)
+
+def test_status_effect_applies_final_partial_tick_and_shield(combat):
+    from logic.status_effects import StatusEffect
+    p,e,g=combat()
+    p.energy_shield=2
+    effect=StatusEffect("Poison",duration=.15,dps=20)
+    effect.update(.1,p,g)
+    effect.update(.1,p,g)
+    assert not effect.active
+    assert p.energy_shield==0
+    assert p.hp==pytest.approx(999)
+
+@pytest.mark.parametrize("fps",[30,60,144])
+def test_lightning_keeps_tick_remainder_without_player_ownership(combat,fps):
+    from logic.hazards import Hazard
+    p,e,g=combat()
+    p.stats.update(lifesteal=.5,bossDmgMult=10)
+    e.x=e.y=0
+    e.type="boss"
+    hazard=Hazard(0,0,"lightning",duration=2.2)
+    before=e.hp
+    for _ in range(fps*3):
+        hazard.update(1/fps,[p],[e],g)
+    assert before-e.hp==pytest.approx(40)
+    assert p.hp==pytest.approx(960)
+    assert p.lifesteal_buffer==0
+    assert hazard.tick_timer==pytest.approx(.2)
+
+def test_weak_poison_reapplication_does_not_reduce_existing_stack(combat):
+    from logic.status_effects import StatusEffectManager,StatusEffect
+    manager=StatusEffectManager()
+    manager.add_effect(StatusEffect("Poison",3,dps=100))
+    manager.add_effect(StatusEffect("Poison",3,dps=1))
+    assert manager.effects[0].dps>=100
+
+def test_player_slow_uses_strongest_source_with_floor_after_haste_cap(combat):
+    from logic.status_effects import apply_slow
+    p,e,g=combat()
+    p.stats["speed"]=100
+    p._base_speed_mod=2
+    p._adrenaline_timer=1
+    p._gladiator_timer=1
+    p._ks_stacks=50
+    apply_slow(p.effect_manager,3,.5,"Mud")
+    apply_slow(p.effect_manager,3,.1,"Ice")
+    p.effect_manager.update(.01,p,g)
+    assert p.get_movement_speed()==pytest.approx(2.4)
+    p.dash_active_timer=1
+    assert p.get_movement_speed()==pytest.approx(8.4)
+
+def test_friendly_black_hole_does_not_pull_or_hurt_owner(combat):
+    from entities.cloud import Cloud
+    p,e,g=combat()
+    p.x=10
+    cloud=Cloud(8,0,0,120,3,is_black_hole=True)
+    cloud.update(.1,g)
+    assert p.x==10
+    assert p.hp==1000
+    assert e.x<70
+    assert e.hp==1000000
+
+def test_hostile_black_hole_deals_continuous_damage(combat):
+    from entities.cloud import Cloud
+    p,e,g=combat()
+    p.x=10
+    p.stats["dodgeChance"]=1
+    cloud=Cloud(8,0,0,120,3,is_black_hole=True,is_hostile=True)
+    cloud.dmg=20
+    cloud.update(.1,g)
+    assert p.x<10
+    assert p.hp==pytest.approx(998)
+
+@pytest.mark.parametrize("fps",[30,60,144])
+def test_shield_recovery_preserves_partial_delay(combat,fps):
+    p,e,g=combat()
+    p.max_energy_shield=100
+    p.energy_shield=0
+    p.es_timer=.35
+    for _ in range(fps):
+        p.update_recovery(1/fps,g)
+    assert p.energy_shield==pytest.approx(6.5)
+
+@pytest.mark.parametrize("fps",[30,60,144])
+def test_hostile_black_hole_terminal_tick(combat,fps):
+    from entities.cloud import Cloud
+    p,e,g=combat()
+    cloud=Cloud(8,0,0,120,.15,is_black_hole=True,is_hostile=True)
+    cloud.dmg=20
+    for _ in range(fps):
+        cloud.update(1/fps,g)
+    assert p.hp==pytest.approx(997)
+    assert cloud.dead
+
+def test_equal_budget_warrior_builds_keep_damage_survival_tradeoff():
+    from tools.measure_combat_balance import build,primary_dps,survival
+    tank=build("warrior",20,19,2,"defense")
+    damage=build("warrior",20,19,2,"offense")
+    tdps,tleech=primary_dps(tank,20)
+    ddps,dleech=primary_dps(damage,20)
+    assert len(tank.allocated_nodes)==len(damage.allocated_nodes)==20
+    assert ddps > tdps*1.2
+    assert survival(tank,20,tleech)["survival_s"] > survival(damage,20,dleech)["survival_s"]*1.5
+    # Six contacts must remain threatening even with a sustainable primary attack.
+    assert not survival(tank,20,tleech)["alive"]
+
+def test_late_sustain_cannot_afk_through_six_contacts():
+    from tools.measure_combat_balance import build,primary_dps,survival
+    p=build("bloodwalker",50,49,1,"offense")
+    _,leech=primary_dps(p,50)
+    result=survival(p,50,leech)
+    assert not result["alive"]
+    assert 5 < result["survival_s"] < 25

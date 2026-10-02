@@ -15,21 +15,26 @@ class Hazard:
         self.active = True
         self.tick_timer = 0
         self._lightning_fired = False
+        self._lightning_ticks = 0
 
     def update(self, dt, players, enemies, game):
-        self.timer += dt
-        if self.timer >= self.duration:
-            self.active = False
+        if not self.active:
             return
+        dt = min(max(0.0, dt), max(0.0, self.duration - self.timer))
+        self.timer += dt
+        if self.timer >= self.duration - 1e-9:
+            self.active = False
 
         # Yıldırım sayacı kare başına bir kez ilerler (eskiden menzildeki her
         # hedef için ayrı ilerleyip vuruş sıklığını hedef sayısına bağlıyordu)
         self._lightning_fired = False
+        self._lightning_ticks = 0
         if self.type == "lightning":
             self.tick_timer += dt
-            if self.tick_timer >= 1.0:
-                self.tick_timer = 0
-                self._lightning_fired = True
+            while self.tick_timer >= 1.0 - 1e-9:
+                self.tick_timer = max(0.0, self.tick_timer - 1.0)
+                self._lightning_ticks += 1
+            self._lightning_fired = self._lightning_ticks > 0
 
 
         # Etki Alanı Kontrolü
@@ -60,9 +65,9 @@ class Hazard:
             # Saniyede 5 Hasar
             if hasattr(target, 'take_damage'):
                 if is_enemy:
-                    target.take_damage(5 * dt, game)
+                    target.take_damage(5 * dt, game, is_dot=True)
                 else:
-                    target.take_damage(5 * dt)
+                    target.take_damage(5 * dt, force=True, is_dot=True)
         elif self.type == "ice":
             from logic.status_effects import apply_slow
             apply_slow(target.effect_manager, duration=0.4, mult=0.1, name="IceHazard")  # Neredeyse durdur
@@ -71,10 +76,11 @@ class Hazard:
             # o karede tetiklendiyse hasar uygulanır (P4: hedef başına sayaç bug'ı)
             if self._lightning_fired:
                 if hasattr(target, 'take_damage'):
-                    if is_enemy:
-                        target.take_damage(20, game, from_player=True)
-                    else:
-                        target.take_damage(20)
+                    for _ in range(self._lightning_ticks):
+                        if is_enemy:
+                            target.take_damage(20, game)
+                        else:
+                            target.take_damage(20, force=True)
 
     def draw(self, screen, cam_x, cam_y):
         dx = self.x - cam_x

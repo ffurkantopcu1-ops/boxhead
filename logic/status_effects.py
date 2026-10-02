@@ -20,12 +20,10 @@ class StatusEffect:
         self.stack_cd = 0.0
 
     def update(self, dt, target, game):
-        self.timer -= dt
-        if self.stack_cd > 0:
-            self.stack_cd -= dt
-        if self.timer <= 0:
-            self.active = False
-            return
+        dt = min(max(0.0, dt), max(0.0, self.timer))
+        self.timer = max(0.0, self.timer - dt)
+        self.stack_cd = max(0.0, self.stack_cd - dt)
+        self.active = self.timer > 1e-9
 
         # Apply DPS
         if self.dps > 0:
@@ -35,8 +33,10 @@ class StatusEffect:
                 # DoT zırh/kalkan formülünden geçsin diye take_damage üzerinden akar;
                 # take_damage ölümde kill_enemy'yi zaten çağırır (çift çağrı olmasın)
                 target.take_damage(damage, game, is_dot=True, from_player=True)
+            elif hasattr(target, 'take_damage'):
+                target.take_damage(damage, force=True, is_dot=True)
             elif hasattr(target, 'hp'):
-                target.hp -= damage
+                target.hp = max(0.0, target.hp - damage)
 
             if hasattr(target, 'hp'):
                 self.vis_accum += damage
@@ -77,7 +77,7 @@ class StatusEffectManager:
                     # Yığın artışı ZAMANA bağlı: iki yığın arasında en az
                     # POISON_STACK_INTERVAL saniye geçmeli (F5).
                     if existing.stack_cd <= 0:
-                        existing.dps = min(existing.dps + effect.dps, effect.dps * 4)
+                        existing.dps = max(existing.dps, min(existing.dps + effect.dps, effect.dps * 4))
                         existing.stack_cd = POISON_STACK_INTERVAL
                     else:
                         existing.dps = max(existing.dps, effect.dps)
@@ -93,6 +93,8 @@ class StatusEffectManager:
         target.speed_mod = getattr(target, '_base_speed_mod', 1.0)
         target.is_silenced = False
         target.is_stunned = False
+        target.slow_mult = 1.0
+        is_player = hasattr(target, 'class_id')
 
         for eff in self.effects[:]:
             eff.update(dt, target, game)
@@ -101,12 +103,18 @@ class StatusEffectManager:
                 continue
             
             # Apply multipliers/flags
-            target.speed_mod *= eff.speed_mult
+            if is_player and eff.speed_mult < 1.0:
+                target.slow_mult = min(target.slow_mult, max(0.20, eff.speed_mult))
+            else:
+                target.speed_mod *= eff.speed_mult
             if eff.disables_skills:
                 target.is_silenced = True
             if eff.disables_movement:
                 target.is_stunned = True
                 target.speed_mod = 0
+
+        if is_player:
+            target.speed_mod *= target.slow_mult
 
     def draw_icons(self, screen, x, y, radius):
         # Draw small dots or icons above the target

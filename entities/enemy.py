@@ -54,6 +54,7 @@ class Enemy:
         self.color = (231, 76, 60) # Standart Kırmızı
         
         self.dead = False
+        self.contact_cooldown = 0.5
         self.is_trap = False
         self.speed_mod = 1.0 # Çevresel hız çarpanı
         
@@ -879,7 +880,7 @@ class Enemy:
                     # Oyuncunun olduğu yere (veya yakınına) bir karadelik oluştur
                     bh_x = p.x + random.uniform(-20, 20)
                     bh_y = p.y + random.uniform(-20, 20)
-                    bh_cloud = Cloud(game.entity_id_counter, bh_x, bh_y, radius=120, duration=4.0, frost_dmg=0, is_black_hole=True)
+                    bh_cloud = Cloud(game.entity_id_counter, bh_x, bh_y, radius=120, duration=4.0, frost_dmg=0, is_black_hole=True, is_hostile=True)
                     bh_cloud.dmg = self.dmg
                     game.clouds.append(bh_cloud)
                     game.add_event("explosion", bh_x, bh_y, radius=120, color=(44, 62, 80, 150), timer=0.5)
@@ -1017,14 +1018,22 @@ class Enemy:
         # HASAR MANTIĞI
         # Saldırı menzilini biraz genişletiyoruz (radius + 10) çünkü kalabalık durumlarda yaratıklar birbirini ittiği için 
         # oyuncunun tam üstüne binemeyebiliyorlar, bu da hasar verememelerine sebep oluyordu.
-        if dist < self.radius + p.radius + 10 and not getattr(self, 'is_invulnerable', False):
-            # Temas Hasarı: Kullanıcı İsteği - AFK kalmayı önlemek için i-frame aşılır ve sürekli vurur
-            # Denge: x3 çarpanı üst üste binen düşmanlarla anlık ölüm yaratıyordu, x2'ye indirildi
-            self.hit_player(p, self.dmg * dt * 2, force=True)
+        in_contact = dist < self.radius + p.radius + 10 and not getattr(self, 'is_invulnerable', False)
+        self.update_contact(dt, p, in_contact)
             
         # Sınır dışına çıkmayı engelle (Map Boundaries)
         self.x = max(50, min(4950, self.x))
         self.y = max(50, min(4950, self.y))
+
+    def update_contact(self, dt, player, in_contact=True):
+        """Düşman başına 0.5s vuruş: eski 2*dmg DPS, tek kaçınma/tetikleme."""
+        self.contact_cooldown = getattr(self, "contact_cooldown", 0.5) - max(0.0, dt)
+        if not in_contact:
+            self.contact_cooldown = max(0.0, self.contact_cooldown)
+            return
+        while self.contact_cooldown <= 1e-9 and player.hp > 0 and not self.dead:
+            self.contact_cooldown += 0.5
+            self.hit_player(player, self.dmg, force=True)
 
     def hit_player(self, p, dmg, force=False):
         """Düşmanın oyuncuya hasar verdiği TEK nokta.
@@ -1040,8 +1049,9 @@ class Enemy:
             p.take_damage(dmg, force=force)
             return
         before = p.hp + getattr(p, 'energy_shield', 0)
-        p.take_damage(dmg, force=force)
-        dealt = before - (p.hp + getattr(p, 'energy_shield', 0))
+        dealt = p.take_damage(dmg, force=force)
+        if dealt is None:  # Eski hedef/test sözleşmesi
+            dealt = max(0.0, before - (p.hp + getattr(p, 'energy_shield', 0)))
         if dealt > 0:
             self.hp = min(self.max_hp, self.hp + dealt * ls)
 

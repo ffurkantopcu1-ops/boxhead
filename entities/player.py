@@ -464,17 +464,7 @@ class Player:
         
         if (dx != 0 or dy != 0) and not self.is_stunned:
             mag = math.hypot(dx, dy)
-            speed = self.stats["speed"] * self.speed_mod
-            # Adrenalin kartı: 5sn boyunca +%30 hız (P3)
-            if getattr(self, '_adrenaline_timer', 0) > 0:
-                speed *= 1.3
-            # Gladyatör (+%30) ve Fırtına Bıçağı (yığın başına +%4) hız pasifleri
-            if getattr(self, '_gladiator_timer', 0) > 0:
-                speed *= 1.3
-            speed *= 1.0 + 0.04 * getattr(self, '_ks_stacks', 0)
-            # DASH SPEED BOOST (%350)
-            if self.dash_active_timer > 0:
-                speed *= 3.5
+            speed = self.get_movement_speed()
             
             new_x = self.x + (dx / mag) * speed * dt * 60
             new_y = self.y + (dy / mag) * speed * dt * 60
@@ -550,32 +540,7 @@ class Player:
                     game.minions.append(new_m)
                     game.entity_id_counter += 1
             
-        # Regen
-        # Energy Shield Regen (5s timer)
-        if self.es_timer > 0:
-            self.es_timer -= dt
-        else:
-            if self.energy_shield < self.max_energy_shield:
-                regen = self.stats.get("esRegen", 0) + 10.0 # Base regen
-                if game.wave.get("current_diff") == "Impossible":
-                    regen *= 0.5
-                self.energy_shield = min(self.max_energy_shield, self.energy_shield + regen * dt)
-                
-        if self.hp < self.max_hp:
-            # hpRegen (eşya/aura/kart/evrim) + combatRegen (skill/SET_PALADIN/affix).
-            # combatRegen yalnızca HUD'da gösteriliyordu, regene girmiyordu (P3)
-            regen = self.stats["regen"] + self.stats.get("hpRegen", 0) + self.stats.get("combatRegen", 0)
-            if game.wave.get("current_diff") == "Impossible":
-                regen *= 0.5 # Can yenileme etkisi yarıya iner
-            # "✨ LÜTUF" dalga olayı: XP yarıya iner, can yenilenmesi 2x.
-            # İkinci yarısının hiç anahtarı yoktu, sadece açıklamada yazıyordu.
-            _ev = game.wave.get("event")
-            if _ev:
-                regen *= _ev.get("regen_mult", 1.0)
-            self.heal(regen * dt)
-
-        # Can çalma saniye ve maksimum can üzerinden hesaplanır.
-        self.update_lifesteal(dt)
+        self.update_recovery(dt, game)
 
         # --- PASİF KART EFEKTLERİ ---
         # Death Wish: Her saniye HP drain
@@ -1698,6 +1663,24 @@ class Player:
             
         return actual_heal, overheal
 
+    def update_recovery(self, dt, game):
+        """ES gecikmesinin kalan kısmını ve yaşam iyileşmesini saniye ile işler."""
+        if self.hp <= 0:
+            self.lifesteal_buffer = 0.0
+            return
+        dt = max(0.0, dt)
+        shield_dt = max(0.0, dt - max(0.0, self.es_timer))
+        self.es_timer = max(0.0, self.es_timer - dt)
+        difficulty_mult = 0.5 if game.wave.get("current_diff") == "Impossible" else 1.0
+        if self.energy_shield < self.max_energy_shield:
+            regen = max(0.0, self.stats.get("esRegen", 0) + 10.0) * difficulty_mult
+            self.energy_shield = min(self.max_energy_shield, self.energy_shield + regen * shield_dt)
+        regen = max(0.0, self.stats.get("regen", 0) + self.stats.get("hpRegen", 0) + self.stats.get("combatRegen", 0))
+        event = game.wave.get("event") or {}
+        if self.hp < self.max_hp:
+            self.heal(regen * difficulty_mult * event.get("regen_mult", 1.0) * dt)
+        self.update_lifesteal(dt)
+
     def update_lifesteal(self, dt):
         """Recover leeched life at a max-life-based rate, independent of FPS."""
         pool_cap = max(0.0, self.max_hp * 0.20)
@@ -1713,17 +1696,32 @@ class Player:
         if self.hp >= self.max_hp:
             self.lifesteal_buffer = 0
 
-    def take_damage(self, amount, force=False, is_self_damage=False, is_reflected=False):
-        """Hasar alma mantığı. force=True ise i-frame'i yok sayıp direkt vurur (Sürekli temas hasarı)."""
-        if amount <= 0 or self.hp <= 0: return
-        if self.is_invulnerable: return
-        if self.dash_active_timer > 0: return # Dash sırasında dokunulmazlık
-        if not force and self.i_frame_timer > 0: return
+    def get_movement_speed(self):
+        """Normal hareket 720px/s tavan; yavaşlatma tavandan sonra uygulanır."""
+        slow = max(0.20, getattr(self, "slow_mult", 1.0))
+        speed = self.stats["speed"] * self.speed_mod / slow
+        if getattr(self, "_adrenaline_timer", 0) > 0:
+            speed *= 1.3
+        if getattr(self, "_gladiator_timer", 0) > 0:
+            speed *= 1.3
+        speed *= 1.0 + 0.04 * getattr(self, "_ks_stacks", 0)
+        speed = min(12.0, max(0.0, speed)) * slow
+        if self.dash_active_timer > 0:
+            speed *= 3.5
+        return speed
+
+    def take_damage(self, amount, force=False, is_self_damage=False, is_reflected=False, is_dot=False):
+        """Vuruş veya sürekli hasar; gerçek HP+ES kaybını döndürür."""
+        if amount <= 0 or self.hp <= 0: return 0.0
+        if self.is_invulnerable: return 0.0
+        if not is_dot and self.dash_active_timer > 0: return 0.0
+        if not is_dot and not force and self.i_frame_timer > 0: return 0.0
+        hp_before = self.hp
+        shield_before = self.energy_shield
         
         # --- DODGE (Kaçınma) ---
-        # Kullanım noktası clamp'i: recalc dışı geçici buff'lar bile %60'ı aşamaz (F2)
-        if not is_self_damage and random.random() < min(0.60, self.stats.get("dodgeChance", 0)):
-            # Sürekli hasarda (Tick damage) dodge şansını biraz azaltabiliriz veya aynı bırakabiliriz
+        # Recalc dışı geçici buff'lar da %50 kaçınma tavanına uyar.
+        if not is_self_damage and not is_dot and random.random() < min(0.50, max(0.0, self.stats.get("dodgeChance", 0))):
             # Görev takibi: track_quest bellekteki meta cache'ini günceller,
             # disk yazımı yalnızca kristal kazanıldığında olur (P4). Yoğun
             # dalgada saniyede onlarca dodge tetiklense de I/O yapmaz.
@@ -1736,7 +1734,7 @@ class Player:
                 vfx.dodge(game, self.x, self.y)
                 game.add_event("damage_text", self.x, self.y - 46,
                                value="SIYIRDI", color=(190, 220, 255), timer=0.5)
-            return
+            return 0.0
             
         # --- ARMOR (Zırh) ---
         if not is_self_damage:
@@ -1751,9 +1749,12 @@ class Player:
                 
             # Payda clamp'i: negatif zırhta sıfıra bölme / negatif hasar (can
             # kazanma) oluşuyordu (C3)
-            final_dmg = amount * (100.0 / max(1.0, 100.0 + armor)) * getattr(self, "damage_taken_mult", 1.0)
+            # %75 azaltma tavanı; negatif zırh en fazla 4x hasar.
+            armor_mult = max(0.25, 100.0 / (100.0 + max(-75.0, armor)))
+            # Ateş/zehir gibi sürekli etkiler fiziksel zırhı kullanmaz.
+            final_dmg = amount * (1.0 if is_dot else armor_mult) * getattr(self, "damage_taken_mult", 1.0)
             final_dmg = max(0.0, final_dmg)
-            if final_dmg > 0:
+            if final_dmg > 0 and not is_dot:
                 audio.play('player_hurt')
         else:
             final_dmg = amount
@@ -1761,6 +1762,7 @@ class Player:
         if not is_self_damage:
             self.es_timer = max(1.0, 5.0 - self.stats.get("esDelayReduction", 0))
             
+        shield_damage = min(shield_before, final_dmg)
         if final_dmg > 0:
             if self.energy_shield > 0:
                 shield_broke = False
@@ -1818,7 +1820,7 @@ class Player:
             
             # Ayna Kalkan (Reflection Aura)
             refl = self.stats.get("reflectionAura", 0)
-            if refl > 0 and final_dmg > 0 and not is_self_damage and not is_reflected:
+            if refl > 0 and final_dmg > 0 and not is_self_damage and not is_reflected and not is_dot:
                 if hasattr(self, 'game') and self.game:
                     reflect_dmg = final_dmg * refl
                     for e in self.game.iter_enemies_near(self.x, self.y, 400):
@@ -1829,30 +1831,32 @@ class Player:
             # Dikenler (Demir Kale sinerjisi / SET_TANK 4pc / affix) — sabit
             # yansıma hasarı; stat tanımlıydı ama hiçbir yerde okunmuyordu (P3)
             thorns = self.stats.get("thorns", 0)
-            if thorns > 0 and final_dmg > 0 and not is_self_damage and not is_reflected:
+            if thorns > 0 and final_dmg > 0 and not is_self_damage and not is_reflected and not is_dot:
                 if hasattr(self, 'game') and self.game:
                     for e in self.game.iter_enemies_near(self.x, self.y, 120):
                         if not e.dead and not getattr(e, 'is_trap', False):
                             e.take_damage(thorns, self.game, from_player=True, is_reflected=True)
 
             if final_dmg > 0:
-                self.hp -= final_dmg
+                self.hp = max(0.0, self.hp - final_dmg)
 
         # Kan Paktı: hasar alınca XP (kart bayrağı okunmuyordu, P3)
         xp_on_hit = getattr(self, "xp_on_hit_bonus", 0)
-        if xp_on_hit > 0 and not is_self_damage and final_dmg > 0:
+        if xp_on_hit > 0 and not is_self_damage and not is_dot and final_dmg > 0:
             self.gain_xp(xp_on_hit)
 
+        actual_damage = min(hp_before, final_dmg) + shield_damage
         if hasattr(self, 'game') and hasattr(self.game, 'stats'):
-            self.game.stats['total_damage_taken'] += final_dmg
+            self.game.stats['total_damage_taken'] += actual_damage
         
         # Hasar alınınca can çalma kilitlenmesi kaldırıldı (Kullanıcı İsteği)
         # if not is_self_damage:
         #     self.lifesteal_cooldown_timer = 3.0
         
         # Sadece normal (büyük) vuruşlarda i-frame ver
-        if not force:
-            self.i_frame_timer = 0.5 # 0.5 saniye dokunulmazlık
+        if not force and not is_dot and actual_damage > 0:
+            self.i_frame_timer = 0.5
+        return actual_damage
         
 
     def draw(self, screen, camera_x, camera_y):
