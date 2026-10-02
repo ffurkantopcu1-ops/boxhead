@@ -30,6 +30,7 @@ class BossProjectile:
         self.color = color
         self.lifetime = lifetime
         self.active = True
+        self.boss_owner_id = None
         self.status_effect = status_effect
         self.speed = math.hypot(vx, vy)
         self.behavior = None
@@ -42,6 +43,7 @@ class BossProjectile:
 
     def update(self, dt, game):
         if not self.active: return
+        previous_x, previous_y = self.x, self.y
         self.x += self.vx * dt * 60
         self.y += self.vy * dt * 60
         self.lifetime -= dt * 60
@@ -65,13 +67,14 @@ class BossProjectile:
                     game.projectile_pool.spawn(self.x, self.y, vx, vy, damage=self.damage//2, color=self.color, lifetime=200)
                 return
         p = game.players[game.local_player_id]
-        dist_sq = (self.x - p.x)**2 + (self.y - p.y)**2
-        if dist_sq < (self.radius + p.radius)**2:
+        from entities.projectile import segment_hit_fraction
+        if segment_hit_fraction(previous_x,previous_y,self.x,self.y,p.x,p.y,self.radius+p.radius) is not None:
             self.on_hit_player(p, game)
 
     def on_hit_player(self, player, game):
-        player.take_damage(self.damage)
-        if self.status_effect:
+        player.last_attacker_type = "boss"
+        dealt = player.take_damage(self.damage)
+        if self.status_effect and (dealt is None or dealt > 0):
             from logic.status_effects import apply_burn, apply_slow, apply_silence, apply_stun
             if self.status_effect == "burn": apply_burn(player.effect_manager)
             elif self.status_effect == "slow": apply_slow(player.effect_manager)

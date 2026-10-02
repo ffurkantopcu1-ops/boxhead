@@ -37,8 +37,9 @@ def build(class_id, level, points, tier, route, stress=False):
     p = Player("p1", 1000, 1000, class_id)
     p.level = level
     p.skill_points = points
-    preferred = [f"{class_id}_main_{i}" for i in range(1, 6)]
-    preferred += [f"{class_id}_notable_core"]
+    prefix = "early1" if route == "defense" else ("early2" if route == "utility" else "main")
+    preferred = [f"{class_id}_{prefix}_{i}" for i in range(1, 6)]
+    preferred += [f"{class_id}_notable_core" if prefix=="main" else f"{class_id}_{prefix}_notable"]
     branches = (1, 2) if route == "defense" else (2, 1)
     for branch in branches:
         preferred += [f"{class_id}_path{branch}_{i}" for i in range(1, 6)]

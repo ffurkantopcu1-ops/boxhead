@@ -261,6 +261,91 @@ PENALTIES = {
     "ninja_keystone_2": {"armor": -20},
 }
 
+
+# Each class offers three distinct five-point commitments from its first point.
+EARLY_ROUTES = {
+ "warrior": [("Düellocu", [{"physDmgFlat":3},{"attack_speed_bonus":.05},{"critChance":.025},{"physDmgMult":.06},{"armorPen":3}]),
+             ("Demir Muhafız", [{"armor":5},{"max_hp":15},{"regen":.5},{"max_hp_pct":4},{"armor":7}]),
+             ("Cephe Kırıcı", [{"meleeRangeFlat":12},{"aoe_bonus":.06},{"speed":.2},{"lifesteal":.015},{"meleeRangeFlat":15}])],
+ "ninja": [("Suikast", [{"critChance":.03},{"physDmgFlat":2},{"critDmg":.10},{"bossDmgMult":.06},{"attack_speed_bonus":.05}]),
+           ("Gölge Adımı", [{"dodgeChance":.025},{"speed":.25},{"max_hp":12},{"dodgeChance":.025},{"regen":.4}]),
+           ("Akıcı Bıçak", [{"attack_speed_bonus":.05},{"meleeRangeFlat":10},{"killComboDmg":.01},{"speed":.2},{"physDmgMult":.05}])],
+ "sniper": [("Tek Atış", [{"physDmgFlat":3},{"critChance":.03},{"armorPen":3},{"bossDmgMult":.06},{"critDmg":.1}]),
+            ("Gezgin Avcı", [{"speed":.25},{"dodgeChance":.025},{"max_hp":15},{"regen":.4},{"speed":.2}]),
+            ("Çapraz Ateş", [{"bullet_speed":.5},{"pierce":1},{"attack_speed_bonus":.04},{"bounce":1},{"dmgMult":.04}])],
+ "sorcerer": [("Element Akışı", [{"fireDmgFlat":3,"frostDmgFlat":3},{"elementDmgMult":.05},{"critChance":.025},{"elementDmgMult":.06},{"attack_speed_bonus":.04}]),
+              ("Astral Siper", [{"maxEnergyShield":20},{"esRegen":3},{"max_hp":12},{"maxEnergyShield":25},{"esRegen":4}]),
+              ("Büyü Dokuma", [{"dotDmgMult":.05},{"aoe_bonus":.05},{"speed":.2},{"cooldownReduction":.04},{"pierce":1}])],
+ "alchemist": [("Aşındırıcı", [{"poisonDps":3},{"dotDmgMult":.06},{"poisonDps":3},{"dotDmgMult":.06},{"dmgMult":.04}]),
+               ("Simyasal Siper", [{"maxEnergyShield":18},{"regen":.5},{"max_hp":15},{"dodgeChance":.025},{"maxEnergyShield":20}]),
+               ("Dağıtıcı", [{"aoe_bonus":.06},{"speed":.2},{"attack_speed_bonus":.04},{"aoe_bonus":.06},{"cooldownReduction":.04}])],
+ "bomber": [("Yıkım", [{"dmgMult":.05},{"fireDmgMult":.05},{"physDmgFlat":3},{"critChance":.025},{"dmgMult":.05}]),
+            ("Siperci", [{"armor":5},{"max_hp":15},{"regen":.5},{"max_hp_pct":4},{"armor":7}]),
+            ("Saha Kontrolü", [{"aoe_bonus":.06},{"cooldownReduction":.04},{"speed":.2},{"aoe_bonus":.06},{"attack_speed_bonus":.04}])],
+ "bloodwalker": [("Kızıl Hasat", [{"physDmgFlat":3},{"physDmgMult":.05},{"critChance":.025},{"lowHpExec":.025},{"physDmgMult":.06}]),
+                 ("Kan Sığınağı", [{"max_hp":15},{"lifesteal":.015},{"regen":.5},{"max_hp_pct":4},{"armor":5}]),
+                 ("Kan Akışı", [{"meleeRangeFlat":12},{"attack_speed_bonus":.04},{"speed":.2},{"lifesteal":.015},{"aoe_bonus":.06}])],
+ "engineer": [("Alev Ustası", [{"fireDmgFlat":3},{"dmgMult":.04},{"fireDmgMult":.05},{"attack_speed_bonus":.04},{"aoe_bonus":.05}]),
+              ("Tahkimat", [{"turretMaxHp":20},{"armor":5},{"max_hp":15},{"turretMaxHp":25},{"regen":.5}]),
+              ("Otomasyon", [{"turretDmg":.05},{"turretRate":.05},{"turretRange":25},{"cooldownReduction":.04},{"turretDmg":.06}])],
+ "beastmaster": [("Sürü Pençesi", [{"minionDamage":.05},{"minionPhysDmgFlat":2},{"minionCrit":.03},{"minionDamage":.06},{"minionRate":.05}]),
+                 ("Sürü Sığınağı", [{"minionMaxHp":.08},{"max_hp":15},{"minionArmor":5},{"regen":.5},{"minionMaxHp":.10}]),
+                 ("Av Komutası", [{"minionRate":.05},{"minionRange":.08},{"speed":.2},{"minionPierce":1},{"cooldownReduction":.04}])]
+}
+STAT_LABEL.update({"minionPhysDmgFlat":lambda v:f"{_sg(v)}{_flat(v)} Minyon Fiziksel Hasarı",
+                   "minionCrit":lambda v:f"{_sg(v)}{_pct(v)} Minyon Kritik Şansı"})
+STAT_CAT.update({"minionPhysDmgFlat":"minion","minionCrit":"minion"})
+
+def open_initial_routes(nodes):
+    by_id={n["id"]:n for n in nodes}
+    for i,cls in enumerate(CLASSES):
+        angle=i*2*math.pi/len(CLASSES)
+        ux,uy=math.cos(angle),math.sin(angle)
+        vx,vy=-uy,ux
+        def pos(radius,lateral=0):
+            return [round(3000+ux*radius+vx*lateral),round(3000+uy*radius+vy*lateral)]
+        by_id["start_"+cls]["pos"]=pos(500)
+        mastery=by_id[cls+"_notable_core"]
+        mastery["pos"]=pos(1500)
+        for lane,(name,values) in enumerate(EARLY_ROUTES[cls]):
+            previous="start_"+cls
+            for j,stats in enumerate(values,1):
+                nid=f"{cls}_main_{j}" if lane==0 else f"{cls}_early{lane}_{j}"
+                lateral=(0 if lane==0 else (-1 if lane==1 else 1))*(75+j*25)
+                node={"id":nid,"name":name+f" {j}","desc":desc_of(stats),"arm":cls,
+                      "type":"minor","cat":cat_of(stats),"stats":dict(stats),
+                      "pos":pos(500+j*160,lateral),"connects":[previous],"route":name}
+                if lane==0:
+                    by_id[nid].update(node)
+                else:
+                    nodes.append(node)
+                    by_id[nid]=node
+                previous=nid
+            if lane:
+                nid=f"{cls}_early{lane}_notable"
+                stats=({"armor":8,"max_hp":15} if lane==1 else {"speed":.2,"cooldownReduction":.04})
+                node={"id":nid,"name":name+" Ustalığı","desc":desc_of(stats),"arm":cls,
+                      "type":"notable","cat":cat_of(stats),"stats":stats,
+                      "pos":pos(1450,-260 if lane==1 else 260),
+                      "connects":[previous,f"{cls}_path{lane}_1"],"route":name}
+                nodes.append(node)
+                by_id[nid]=node
+        # A route can pivot after three spent points, without skipping depth.
+        for lane in (1,2):
+            by_id[f"{cls}_early{lane}_3"]["connects"].append(f"{cls}_main_3")
+        for branch in (1,2):
+            sign=-1 if branch==1 else 1
+            for j in range(1,6):
+                by_id[f"{cls}_path{branch}_{j}"]["pos"]=pos(1500+j*145,sign*(80+j*40))
+            by_id[f"{cls}_keystone_{branch}"]["pos"]=pos(2370,sign*320)
+    # Same shared-bridge investment as before, between the mastery junctions.
+    for i,cls in enumerate(CLASSES):
+        nxt=CLASSES[(i+1)%len(CLASSES)]
+        for j in range(1,5):
+            a=(i+j/5)*2*math.pi/len(CLASSES)
+            by_id[f"bridge_{cls}_{nxt}_{j}"]["pos"]=[round(3000+math.cos(a)*1500),round(3000+math.sin(a)*1500)]
+    return nodes
+
 def generate():
     nodes = []
     by_id = {}
@@ -325,7 +410,7 @@ def generate():
                    radial(.24, 1200 - j * 140), prev)
     add("core_fallback", "Evrensel Merkez", "core", "start", {},
         (3000, 3000), "shared_trade_3")
-    return nodes
+    return open_initial_routes(nodes)
 
 if __name__ == "__main__":
     out = generate()

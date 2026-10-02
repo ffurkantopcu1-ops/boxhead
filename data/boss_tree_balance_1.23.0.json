@@ -1,0 +1,3007 @@
+{
+  "version": "1.23.0",
+  "assumptions": "Boss 60s at 25% HP; damage reception mocked to preserve stationary probe. Early level6 5SP T4; primary attacks only, pets/turrets excluded.",
+  "boss_cadence": [
+    {
+      "fps": 30,
+      "seconds": 60,
+      "phase": 3,
+      "attacks": 17,
+      "peak_projectiles": 7,
+      "recovery_seconds": 36.867
+    },
+    {
+      "fps": 60,
+      "seconds": 60,
+      "phase": 3,
+      "attacks": 17,
+      "peak_projectiles": 7,
+      "recovery_seconds": 36.883
+    },
+    {
+      "fps": 144,
+      "seconds": 60,
+      "phase": 3,
+      "attacks": 17,
+      "peak_projectiles": 7,
+      "recovery_seconds": 36.889
+    }
+  ],
+  "path_costs": [
+    {
+      "class": "warrior",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "ninja",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "sniper",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "alchemist",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "bomber",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "sorcerer",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "bloodwalker",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "engineer",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    },
+    {
+      "class": "beastmaster",
+      "initial_choices": 3,
+      "own_keystone_steps": 12,
+      "nearest_foreign_keystone_steps": 17
+    }
+  ],
+  "early_builds": [
+    {
+      "class": "warrior",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "start_warrior",
+        "warrior_main_1",
+        "warrior_main_2",
+        "warrior_main_3",
+        "warrior_main_4",
+        "warrior_main_5"
+      ],
+      "primary_dps": 130.13,
+      "hp": 120.0,
+      "armor": 0,
+      "es": 0,
+      "speed": 6.0,
+      "tree_stats": {
+        "armorPen": 3,
+        "physDmgMult": 0.06,
+        "critChance": 0.025,
+        "attack_speed_bonus": 0.05,
+        "physDmgFlat": 3
+      }
+    },
+    {
+      "class": "warrior",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "start_warrior",
+        "warrior_early1_1",
+        "warrior_early1_2",
+        "warrior_early1_3",
+        "warrior_early1_4",
+        "warrior_early1_5"
+      ],
+      "primary_dps": 108.0,
+      "hp": 143.52,
+      "armor": 12,
+      "es": 0,
+      "speed": 6.0,
+      "tree_stats": {
+        "armor": 12,
+        "regen": 0.5,
+        "max_hp": 15,
+        "max_hp_pct": 4
+      }
+    },
+    {
+      "class": "warrior",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "start_warrior",
+        "warrior_early2_1",
+        "warrior_early2_2",
+        "warrior_early2_3",
+        "warrior_early2_4",
+        "warrior_early2_5"
+      ],
+      "primary_dps": 108.0,
+      "hp": 120.0,
+      "armor": 0,
+      "es": 0,
+      "speed": 6.2,
+      "tree_stats": {
+        "meleeRangeFlat": 27,
+        "aoe_bonus": 0.06,
+        "lifesteal": 0.015,
+        "speed": 0.2
+      }
+    },
+    {
+      "class": "ninja",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "ninja_main_1",
+        "ninja_main_2",
+        "ninja_main_3",
+        "ninja_main_4",
+        "ninja_main_5",
+        "start_ninja"
+      ],
+      "primary_dps": 90.19,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 7.2,
+      "tree_stats": {
+        "attack_speed_bonus": 0.05,
+        "physDmgFlat": 2,
+        "bossDmgMult": 0.06,
+        "critDmg": 0.1,
+        "critChance": 0.03
+      }
+    },
+    {
+      "class": "ninja",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "ninja_early1_1",
+        "ninja_early1_2",
+        "ninja_early1_3",
+        "ninja_early1_4",
+        "ninja_early1_5",
+        "start_ninja"
+      ],
+      "primary_dps": 81.0,
+      "hp": 112,
+      "armor": 0,
+      "es": 0,
+      "speed": 7.45,
+      "tree_stats": {
+        "regen": 0.4,
+        "dodgeChance": 0.05,
+        "max_hp": 12,
+        "speed": 0.25
+      }
+    },
+    {
+      "class": "ninja",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "ninja_early2_1",
+        "ninja_early2_2",
+        "ninja_early2_3",
+        "ninja_early2_4",
+        "ninja_early2_5",
+        "start_ninja"
+      ],
+      "primary_dps": 87.89,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 7.4,
+      "tree_stats": {
+        "killComboDmg": 0.01,
+        "meleeRangeFlat": 10,
+        "speed": 0.2,
+        "physDmgMult": 0.05,
+        "attack_speed_bonus": 0.05
+      }
+    },
+    {
+      "class": "sniper",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "sniper_main_1",
+        "sniper_main_2",
+        "sniper_main_3",
+        "sniper_main_4",
+        "sniper_main_5",
+        "start_sniper"
+      ],
+      "primary_dps": 69.93,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 4.8,
+      "tree_stats": {
+        "armorPen": 3,
+        "critDmg": 0.1,
+        "critChance": 0.03,
+        "bossDmgMult": 0.06,
+        "physDmgFlat": 3
+      }
+    },
+    {
+      "class": "sniper",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "sniper_early1_1",
+        "sniper_early1_2",
+        "sniper_early1_3",
+        "sniper_early1_4",
+        "sniper_early1_5",
+        "start_sniper"
+      ],
+      "primary_dps": 59.4,
+      "hp": 115,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.25,
+      "tree_stats": {
+        "max_hp": 15,
+        "regen": 0.4,
+        "dodgeChance": 0.025,
+        "speed": 0.45
+      }
+    },
+    {
+      "class": "sniper",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "sniper_early2_1",
+        "sniper_early2_2",
+        "sniper_early2_3",
+        "sniper_early2_4",
+        "sniper_early2_5",
+        "start_sniper"
+      ],
+      "primary_dps": 63.76,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 4.8,
+      "tree_stats": {
+        "attack_speed_bonus": 0.04,
+        "dmgMult": 0.04,
+        "pierce": 1,
+        "bullet_speed": 0.5,
+        "bounce": 1
+      }
+    },
+    {
+      "class": "alchemist",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "alchemist_main_1",
+        "alchemist_main_2",
+        "alchemist_main_3",
+        "alchemist_main_4",
+        "alchemist_main_5",
+        "start_alchemist"
+      ],
+      "primary_dps": 135.83,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.0,
+      "tree_stats": {
+        "dmgMult": 0.04,
+        "poisonDps": 6,
+        "dotDmgMult": 0.12
+      }
+    },
+    {
+      "class": "alchemist",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "alchemist_early1_1",
+        "alchemist_early1_2",
+        "alchemist_early1_3",
+        "alchemist_early1_4",
+        "alchemist_early1_5",
+        "start_alchemist"
+      ],
+      "primary_dps": 90.88,
+      "hp": 115,
+      "armor": 0,
+      "es": 38,
+      "speed": 5.0,
+      "tree_stats": {
+        "maxEnergyShield": 38,
+        "dodgeChance": 0.025,
+        "max_hp": 15,
+        "regen": 0.5
+      }
+    },
+    {
+      "class": "alchemist",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "alchemist_early2_1",
+        "alchemist_early2_2",
+        "alchemist_early2_3",
+        "alchemist_early2_4",
+        "alchemist_early2_5",
+        "start_alchemist"
+      ],
+      "primary_dps": 90.88,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.2,
+      "tree_stats": {
+        "aoe_bonus": 0.12,
+        "cooldownReduction": 0.04,
+        "speed": 0.2,
+        "attack_speed_bonus": 0.04
+      }
+    },
+    {
+      "class": "bomber",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "bomber_main_1",
+        "bomber_main_2",
+        "bomber_main_3",
+        "bomber_main_4",
+        "bomber_main_5",
+        "start_bomber"
+      ],
+      "primary_dps": 86.13,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 4.4,
+      "tree_stats": {
+        "critChance": 0.025,
+        "dmgMult": 0.1,
+        "fireDmgMult": 0.05,
+        "physDmgFlat": 3
+      }
+    },
+    {
+      "class": "bomber",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "bomber_early1_1",
+        "bomber_early1_2",
+        "bomber_early1_3",
+        "bomber_early1_4",
+        "bomber_early1_5",
+        "start_bomber"
+      ],
+      "primary_dps": 58.32,
+      "hp": 119.60000000000001,
+      "armor": 12,
+      "es": 0,
+      "speed": 4.4,
+      "tree_stats": {
+        "armor": 12,
+        "max_hp_pct": 4,
+        "regen": 0.5,
+        "max_hp": 15
+      }
+    },
+    {
+      "class": "bomber",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "bomber_early2_1",
+        "bomber_early2_2",
+        "bomber_early2_3",
+        "bomber_early2_4",
+        "bomber_early2_5",
+        "start_bomber"
+      ],
+      "primary_dps": 71.28,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 4.6000000000000005,
+      "tree_stats": {
+        "cooldownReduction": 0.04,
+        "speed": 0.2,
+        "aoe_bonus": 0.12,
+        "attack_speed_bonus": 0.04
+      }
+    },
+    {
+      "class": "sorcerer",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "sorcerer_main_1",
+        "sorcerer_main_2",
+        "sorcerer_main_3",
+        "sorcerer_main_4",
+        "sorcerer_main_5",
+        "start_sorcerer"
+      ],
+      "primary_dps": 157.94,
+      "hp": 70.0,
+      "armor": 0,
+      "es": 0,
+      "speed": 4.8,
+      "tree_stats": {
+        "critChance": 0.025,
+        "attack_speed_bonus": 0.04,
+        "elementDmgMult": 0.11,
+        "fireDmgFlat": 3,
+        "frostDmgFlat": 3
+      }
+    },
+    {
+      "class": "sorcerer",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "sorcerer_early1_1",
+        "sorcerer_early1_2",
+        "sorcerer_early1_3",
+        "sorcerer_early1_4",
+        "sorcerer_early1_5",
+        "start_sorcerer"
+      ],
+      "primary_dps": 143.77,
+      "hp": 78.39999999999999,
+      "armor": 0,
+      "es": 45,
+      "speed": 4.8,
+      "tree_stats": {
+        "esRegen": 7,
+        "maxEnergyShield": 45,
+        "max_hp": 12
+      }
+    },
+    {
+      "class": "sorcerer",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "sorcerer_early2_1",
+        "sorcerer_early2_2",
+        "sorcerer_early2_3",
+        "sorcerer_early2_4",
+        "sorcerer_early2_5",
+        "start_sorcerer"
+      ],
+      "primary_dps": 148.43,
+      "hp": 70.0,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.0,
+      "tree_stats": {
+        "pierce": 1,
+        "aoe_bonus": 0.05,
+        "speed": 0.2,
+        "dotDmgMult": 0.05,
+        "cooldownReduction": 0.04
+      }
+    },
+    {
+      "class": "bloodwalker",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "bloodwalker_main_1",
+        "bloodwalker_main_2",
+        "bloodwalker_main_3",
+        "bloodwalker_main_4",
+        "bloodwalker_main_5",
+        "start_bloodwalker"
+      ],
+      "primary_dps": 125.87,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.5,
+      "tree_stats": {
+        "lowHpExec": 0.025,
+        "critChance": 0.025,
+        "physDmgMult": 0.11,
+        "physDmgFlat": 3
+      }
+    },
+    {
+      "class": "bloodwalker",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "bloodwalker_early1_1",
+        "bloodwalker_early1_2",
+        "bloodwalker_early1_3",
+        "bloodwalker_early1_4",
+        "bloodwalker_early1_5",
+        "start_bloodwalker"
+      ],
+      "primary_dps": 100.8,
+      "hp": 119.60000000000001,
+      "armor": 5,
+      "es": 0,
+      "speed": 5.5,
+      "tree_stats": {
+        "max_hp_pct": 4,
+        "regen": 0.5,
+        "lifesteal": 0.015,
+        "max_hp": 15,
+        "armor": 5
+      }
+    },
+    {
+      "class": "bloodwalker",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "bloodwalker_early2_1",
+        "bloodwalker_early2_2",
+        "bloodwalker_early2_3",
+        "bloodwalker_early2_4",
+        "bloodwalker_early2_5",
+        "start_bloodwalker"
+      ],
+      "primary_dps": 104.16,
+      "hp": 100,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.7,
+      "tree_stats": {
+        "attack_speed_bonus": 0.04,
+        "lifesteal": 0.015,
+        "meleeRangeFlat": 12,
+        "speed": 0.2,
+        "aoe_bonus": 0.06
+      }
+    },
+    {
+      "class": "engineer",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "engineer_main_1",
+        "engineer_main_2",
+        "engineer_main_3",
+        "engineer_main_4",
+        "engineer_main_5",
+        "start_engineer"
+      ],
+      "primary_dps": 55.53,
+      "hp": 100,
+      "armor": 10,
+      "es": 0,
+      "speed": 5.0,
+      "tree_stats": {
+        "aoe_bonus": 0.05,
+        "fireDmgFlat": 3,
+        "attack_speed_bonus": 0.04,
+        "dmgMult": 0.04,
+        "fireDmgMult": 0.05
+      }
+    },
+    {
+      "class": "engineer",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "engineer_early1_1",
+        "engineer_early1_2",
+        "engineer_early1_3",
+        "engineer_early1_4",
+        "engineer_early1_5",
+        "start_engineer"
+      ],
+      "primary_dps": 39.2,
+      "hp": 115,
+      "armor": 15,
+      "es": 0,
+      "speed": 5.0,
+      "tree_stats": {
+        "max_hp": 15,
+        "armor": 5,
+        "regen": 0.5,
+        "turretMaxHp": 45
+      }
+    },
+    {
+      "class": "engineer",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "engineer_early2_1",
+        "engineer_early2_2",
+        "engineer_early2_3",
+        "engineer_early2_4",
+        "engineer_early2_5",
+        "start_engineer"
+      ],
+      "primary_dps": 39.2,
+      "hp": 100,
+      "armor": 10,
+      "es": 0,
+      "speed": 5.0,
+      "tree_stats": {
+        "cooldownReduction": 0.04,
+        "turretRate": 0.05,
+        "turretDmg": 0.11,
+        "turretRange": 25
+      }
+    },
+    {
+      "class": "beastmaster",
+      "route": "offense",
+      "points": 5,
+      "nodes": [
+        "beastmaster_main_1",
+        "beastmaster_main_2",
+        "beastmaster_main_3",
+        "beastmaster_main_4",
+        "beastmaster_main_5",
+        "start_beastmaster"
+      ],
+      "primary_dps": 14.5,
+      "hp": 110.00000000000001,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.5,
+      "tree_stats": {
+        "minionDamage": 0.11,
+        "minionRate": 0.05,
+        "minionPhysDmgFlat": 2,
+        "minionCrit": 0.03
+      }
+    },
+    {
+      "class": "beastmaster",
+      "route": "defense",
+      "points": 5,
+      "nodes": [
+        "beastmaster_early1_1",
+        "beastmaster_early1_2",
+        "beastmaster_early1_3",
+        "beastmaster_early1_4",
+        "beastmaster_early1_5",
+        "start_beastmaster"
+      ],
+      "primary_dps": 14.5,
+      "hp": 126.50000000000001,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.5,
+      "tree_stats": {
+        "minionMaxHp": 0.18,
+        "max_hp": 15,
+        "regen": 0.5,
+        "minionArmor": 5
+      }
+    },
+    {
+      "class": "beastmaster",
+      "route": "utility",
+      "points": 5,
+      "nodes": [
+        "beastmaster_early2_1",
+        "beastmaster_early2_2",
+        "beastmaster_early2_3",
+        "beastmaster_early2_4",
+        "beastmaster_early2_5",
+        "start_beastmaster"
+      ],
+      "primary_dps": 14.5,
+      "hp": 110.00000000000001,
+      "armor": 0,
+      "es": 0,
+      "speed": 5.7,
+      "tree_stats": {
+        "speed": 0.2,
+        "minionPierce": 1,
+        "minionRate": 0.05,
+        "minionRange": 0.08,
+        "cooldownReduction": 0.04
+      }
+    }
+  ],
+  "late_builds": {
+    "assumptions": {
+      "difficulty": "Normal",
+      "seconds": 20,
+      "attack_target": "stationary normal enemy at 70px; actual hit/projectile/cloud/DoT paths",
+      "investment": "equal SP, Normal gear/evolution; separate late stress stage adds seeded Rare affixes, four class cards, five ascendancy points; no summons/active skills",
+      "survival": "six immortal stationary attackers up to30s; seed922; contact+regen; leech and self-damage costs fed at measured average rates (optimistic)",
+      "limitations": "engineer flame weapon measured without turrets; beastmaster DPS not measured; no player positioning, kill drops, boss telegraphs; not a global balance guarantee"
+    },
+    "rows": [
+      {
+        "class": "warrior",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 120.0,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 360.0,
+        "primary_dps": 108.0,
+        "six_target_total_dps": 657.0,
+        "normal_kill_s": 1.94,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "warrior",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 120.0,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 360.0,
+        "primary_dps": 108.0,
+        "six_target_total_dps": 657.0,
+        "normal_kill_s": 1.94,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.23,
+        "movement_px_s": 432.0,
+        "primary_dps": 81.0,
+        "six_target_total_dps": 486.0,
+        "normal_kill_s": 2.59,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.23,
+        "movement_px_s": 432.0,
+        "primary_dps": 81.0,
+        "six_target_total_dps": 486.0,
+        "normal_kill_s": 2.59,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 288.0,
+        "primary_dps": 68.85,
+        "six_target_total_dps": 210.6,
+        "normal_kill_s": 3.05,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 288.0,
+        "primary_dps": 68.85,
+        "six_target_total_dps": 210.6,
+        "normal_kill_s": 3.05,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 94.84,
+        "six_target_total_dps": 569.03,
+        "normal_kill_s": 2.21,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 94.84,
+        "six_target_total_dps": 569.03,
+        "normal_kill_s": 2.21,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 264.0,
+        "primary_dps": 61.56,
+        "six_target_total_dps": 369.36,
+        "normal_kill_s": 3.41,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 264.0,
+        "primary_dps": 61.56,
+        "six_target_total_dps": 369.36,
+        "normal_kill_s": 3.41,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 70.0,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 288.0,
+        "primary_dps": 158.43,
+        "six_target_total_dps": 256.68,
+        "normal_kill_s": 1.33,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 70.0,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 288.0,
+        "primary_dps": 158.43,
+        "six_target_total_dps": 256.68,
+        "normal_kill_s": 1.33,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 100.8,
+        "six_target_total_dps": 604.8,
+        "normal_kill_s": 2.08,
+        "leech_generated_s": 34.31,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 100.8,
+        "six_target_total_dps": 604.8,
+        "normal_kill_s": 2.08,
+        "leech_generated_s": 34.31,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 10,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 40.6,
+        "six_target_total_dps": 203.0,
+        "normal_kill_s": 5.17,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 100,
+        "es": 0,
+        "armor": 10,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 40.6,
+        "six_target_total_dps": 203.0,
+        "normal_kill_s": 5.17,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "defense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 110.0,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 14.5,
+        "six_target_total_dps": 14.5,
+        "normal_kill_s": 14.48,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "offense",
+        "wave": 1,
+        "stress": false,
+        "cards": [],
+        "points": 0,
+        "allocated_points": 0,
+        "tier": 4,
+        "hp": 110.0,
+        "es": 0,
+        "armor": 0,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 14.5,
+        "six_target_total_dps": 14.5,
+        "normal_kill_s": 14.48,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "warrior",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 538.2,
+        "es": 0,
+        "armor": 250,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 638.4,
+        "six_target_total_dps": 3883.6,
+        "normal_kill_s": 0.78,
+        "leech_generated_s": 146.83,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 7.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 28.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "warrior",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 346.32,
+        "es": 0,
+        "armor": 190,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 1113.84,
+        "six_target_total_dps": 6789.12,
+        "normal_kill_s": 0.45,
+        "leech_generated_s": 207.79,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 5.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 260.95,
+        "es": 0,
+        "armor": 98,
+        "dodge": 0.5,
+        "movement_px_s": 537.35,
+        "primary_dps": 736.14,
+        "six_target_total_dps": 3873.7,
+        "normal_kill_s": 0.68,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 221.0,
+        "es": 0,
+        "armor": 90,
+        "dodge": 0.5,
+        "movement_px_s": 522.94,
+        "primary_dps": 862.58,
+        "six_target_total_dps": 5605.55,
+        "normal_kill_s": 0.58,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 280,
+        "es": 0,
+        "armor": 88,
+        "dodge": 0.175,
+        "movement_px_s": 351.0,
+        "primary_dps": 736.31,
+        "six_target_total_dps": 4217.31,
+        "normal_kill_s": 0.68,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 260,
+        "es": 0,
+        "armor": 80,
+        "dodge": 0.05,
+        "movement_px_s": 336.0,
+        "primary_dps": 1388.11,
+        "six_target_total_dps": 8860.36,
+        "normal_kill_s": 0.36,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 210.0,
+        "es": 228.0,
+        "armor": 93,
+        "dodge": 0.355,
+        "movement_px_s": 408.0,
+        "primary_dps": 554.61,
+        "six_target_total_dps": 3327.64,
+        "normal_kill_s": 0.9,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 225.0,
+        "es": 190.0,
+        "armor": 85,
+        "dodge": 0.33,
+        "movement_px_s": 408.0,
+        "primary_dps": 263.7,
+        "six_target_total_dps": 1582.22,
+        "normal_kill_s": 1.9,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 332.8,
+        "es": 0,
+        "armor": 130,
+        "dodge": 0.05,
+        "movement_px_s": 288.0,
+        "primary_dps": 562.83,
+        "six_target_total_dps": 3377.01,
+        "normal_kill_s": 0.89,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 212.5,
+        "es": 0,
+        "armor": 115,
+        "dodge": 0.05,
+        "movement_px_s": 264.0,
+        "primary_dps": 585.18,
+        "six_target_total_dps": 3511.08,
+        "normal_kill_s": 0.85,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 182.66,
+        "es": 315,
+        "armor": 118,
+        "dodge": 0.05,
+        "movement_px_s": 288.0,
+        "primary_dps": 392.07,
+        "six_target_total_dps": 1975.0,
+        "normal_kill_s": 1.28,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 154.7,
+        "es": 270,
+        "armor": 110,
+        "dodge": 0.05,
+        "movement_px_s": 288.0,
+        "primary_dps": 688.15,
+        "six_target_total_dps": 3610.47,
+        "normal_kill_s": 0.73,
+        "leech_generated_s": 1.45,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 371.8,
+        "es": 0,
+        "armor": 123,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 916.19,
+        "six_target_total_dps": 6098.39,
+        "normal_kill_s": 0.55,
+        "leech_generated_s": 215.64,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 6.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 430.9,
+        "es": 0,
+        "armor": 110,
+        "dodge": 0.05,
+        "movement_px_s": 330.0,
+        "primary_dps": 807.91,
+        "six_target_total_dps": 5453.41,
+        "normal_kill_s": 0.62,
+        "leech_generated_s": 249.92,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 7.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 310,
+        "es": 0,
+        "armor": 163,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 230.23,
+        "six_target_total_dps": 1365.63,
+        "normal_kill_s": 2.17,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 280,
+        "es": 0,
+        "armor": 150,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 280.11,
+        "six_target_total_dps": 1400.54,
+        "normal_kill_s": 1.79,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "defense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 385.0,
+        "es": 0,
+        "armor": 118,
+        "dodge": 0.05,
+        "movement_px_s": 399.0,
+        "primary_dps": null,
+        "six_target_total_dps": null,
+        "normal_kill_s": null,
+        "leech_generated_s": null,
+        "self_cost_s": 0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "offense",
+        "wave": 20,
+        "stress": false,
+        "cards": [],
+        "points": 19,
+        "allocated_points": 19,
+        "tier": 2,
+        "hp": 374.0,
+        "es": 0,
+        "armor": 110,
+        "dodge": 0.05,
+        "movement_px_s": 411.0,
+        "primary_dps": null,
+        "six_target_total_dps": null,
+        "normal_kill_s": null,
+        "leech_generated_s": null,
+        "self_cost_s": 0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "warrior",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 1142.1,
+        "es": 0,
+        "armor": 401,
+        "dodge": 0.215,
+        "movement_px_s": 458.37,
+        "primary_dps": 1058.25,
+        "six_target_total_dps": 6977.66,
+        "normal_kill_s": 1.61,
+        "leech_generated_s": 281.95,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 6.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 14.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "warrior",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 826.56,
+        "es": 0,
+        "armor": 333,
+        "dodge": 0.13,
+        "movement_px_s": 411.0,
+        "primary_dps": 2460.83,
+        "six_target_total_dps": 16197.0,
+        "normal_kill_s": 0.69,
+        "leech_generated_s": 578.59,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 6.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 843.73,
+        "es": 0,
+        "armor": 241,
+        "dodge": 0.5,
+        "movement_px_s": 539.03,
+        "primary_dps": 1611.83,
+        "six_target_total_dps": 8994.4,
+        "normal_kill_s": 1.06,
+        "leech_generated_s": 553.63,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 7.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 15.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 778.4,
+        "es": 0,
+        "armor": 233,
+        "dodge": 0.5,
+        "movement_px_s": 526.36,
+        "primary_dps": 2029.36,
+        "six_target_total_dps": 12275.52,
+        "normal_kill_s": 0.84,
+        "leech_generated_s": 660.98,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 6.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 13.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 565,
+        "es": 15,
+        "armor": 256,
+        "dodge": 0.175,
+        "movement_px_s": 384.0,
+        "primary_dps": 1773.27,
+        "six_target_total_dps": 9789.02,
+        "normal_kill_s": 0.96,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 594.0,
+        "es": 15,
+        "armor": 230,
+        "dodge": 0.13,
+        "movement_px_s": 402.0,
+        "primary_dps": 5743.75,
+        "six_target_total_dps": 34825.95,
+        "normal_kill_s": 0.3,
+        "leech_generated_s": 356.81,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 446.35,
+        "es": 363.0,
+        "armor": 231,
+        "dodge": 0.355,
+        "movement_px_s": 432.0,
+        "primary_dps": 1137.38,
+        "six_target_total_dps": 6824.3,
+        "normal_kill_s": 1.5,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 497.7,
+        "es": 243.0,
+        "armor": 243,
+        "dodge": 0.355,
+        "movement_px_s": 444.0,
+        "primary_dps": 589.1,
+        "six_target_total_dps": 3534.57,
+        "normal_kill_s": 2.9,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 569.6,
+        "es": 0,
+        "armor": 268,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 1666.21,
+        "six_target_total_dps": 9997.28,
+        "normal_kill_s": 1.03,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 534.0,
+        "es": 0,
+        "armor": 268,
+        "dodge": 0.05,
+        "movement_px_s": 300.0,
+        "primary_dps": 1374.19,
+        "six_target_total_dps": 8245.16,
+        "normal_kill_s": 1.24,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 361.16,
+        "es": 418.0,
+        "armor": 256,
+        "dodge": 0.185,
+        "movement_px_s": 420.0,
+        "primary_dps": 717.39,
+        "six_target_total_dps": 3734.21,
+        "normal_kill_s": 2.38,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 294.0,
+        "es": 373.0,
+        "armor": 248,
+        "dodge": 0.185,
+        "movement_px_s": 420.0,
+        "primary_dps": 1225.16,
+        "six_target_total_dps": 6603.91,
+        "normal_kill_s": 1.39,
+        "leech_generated_s": 2.46,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 823.2,
+        "es": 0,
+        "armor": 291,
+        "dodge": 0.215,
+        "movement_px_s": 458.37,
+        "primary_dps": 2357.28,
+        "six_target_total_dps": 14314.09,
+        "normal_kill_s": 0.72,
+        "leech_generated_s": 510.38,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 17.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 872.3,
+        "es": 0,
+        "armor": 273,
+        "dodge": 0.13,
+        "movement_px_s": 411.0,
+        "primary_dps": 2376.28,
+        "six_target_total_dps": 14571.05,
+        "normal_kill_s": 0.72,
+        "leech_generated_s": 584.44,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 13.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 650,
+        "es": 0,
+        "armor": 301,
+        "dodge": 0.05,
+        "movement_px_s": 369.0,
+        "primary_dps": 494.45,
+        "six_target_total_dps": 2921.0,
+        "normal_kill_s": 3.46,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 620,
+        "es": 0,
+        "armor": 288,
+        "dodge": 0.05,
+        "movement_px_s": 369.0,
+        "primary_dps": 577.46,
+        "six_target_total_dps": 2887.3,
+        "normal_kill_s": 2.96,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "defense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 812.24,
+        "es": 0,
+        "armor": 268,
+        "dodge": 0.05,
+        "movement_px_s": 447.0,
+        "primary_dps": null,
+        "six_target_total_dps": null,
+        "normal_kill_s": null,
+        "leech_generated_s": null,
+        "self_cost_s": 0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "offense",
+        "wave": 50,
+        "stress": false,
+        "cards": [],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 789.36,
+        "es": 0,
+        "armor": 268,
+        "dodge": 0.05,
+        "movement_px_s": 447.0,
+        "primary_dps": null,
+        "six_target_total_dps": null,
+        "normal_kill_s": null,
+        "leech_generated_s": null,
+        "self_cost_s": 0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "warrior",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "rampage",
+          "chaos_theory",
+          "double_edge",
+          "crit_overload"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 1290.3,
+        "es": 0,
+        "armor": 439.08,
+        "dodge": 0.245,
+        "movement_px_s": 458.37,
+        "primary_dps": 2116.61,
+        "six_target_total_dps": 14398.36,
+        "normal_kill_s": 0.81,
+        "leech_generated_s": 472.4,
+        "self_cost_s": 61.93,
+        "six_contacts_no_attacks": {
+          "survival_s": 7.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 13.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "warrior",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "rampage",
+          "chaos_theory",
+          "double_edge",
+          "crit_overload"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 624.96,
+        "es": 0,
+        "armor": 306.08,
+        "dodge": 0.16,
+        "movement_px_s": 411.0,
+        "primary_dps": 5279.74,
+        "six_target_total_dps": 34760.12,
+        "normal_kill_s": 0.32,
+        "leech_generated_s": 349.98,
+        "self_cost_s": 35.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "thousand_cuts",
+          "chaos_theory",
+          "crit_overload",
+          "assassinate"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 752.68,
+        "es": 0,
+        "armor": 214.08,
+        "dodge": 0.5,
+        "movement_px_s": 540.0,
+        "primary_dps": 4186.43,
+        "six_target_total_dps": 23647.67,
+        "normal_kill_s": 0.41,
+        "leech_generated_s": 847.58,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 5.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 12.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "ninja",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "thousand_cuts",
+          "chaos_theory",
+          "crit_overload",
+          "assassinate"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 694.4,
+        "es": 0,
+        "armor": 206.08,
+        "dodge": 0.5,
+        "movement_px_s": 526.36,
+        "primary_dps": 4501.18,
+        "six_target_total_dps": 26804.35,
+        "normal_kill_s": 0.38,
+        "leech_generated_s": 663.5,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 5.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 10.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "deadeye",
+          "headhunter",
+          "crit_overload",
+          "long_barrel"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 508.5,
+        "es": 15,
+        "armor": 199.08,
+        "dodge": 0.285,
+        "movement_px_s": 354.0,
+        "primary_dps": 2389.24,
+        "six_target_total_dps": 14853.62,
+        "normal_kill_s": 0.72,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sniper",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "deadeye",
+          "headhunter",
+          "crit_overload",
+          "long_barrel"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 539.0,
+        "es": 15,
+        "armor": 173.08,
+        "dodge": 0.16,
+        "movement_px_s": 372.0,
+        "primary_dps": 7269.91,
+        "six_target_total_dps": 43615.6,
+        "normal_kill_s": 0.24,
+        "leech_generated_s": 323.4,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "poison_master",
+          "toxic_blood",
+          "venomous_strike",
+          "corrosion"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 361.6,
+        "es": 363.0,
+        "armor": 244.08,
+        "dodge": 0.385,
+        "movement_px_s": 432.0,
+        "primary_dps": 1569.79,
+        "six_target_total_dps": 9418.76,
+        "normal_kill_s": 1.09,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "alchemist",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "poison_master",
+          "toxic_blood",
+          "venomous_strike",
+          "corrosion"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 403.2,
+        "es": 243.0,
+        "armor": 256.08,
+        "dodge": 0.385,
+        "movement_px_s": 444.0,
+        "primary_dps": 874.13,
+        "six_target_total_dps": 5244.8,
+        "normal_kill_s": 1.96,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "cluster_bomb",
+          "demolition",
+          "napalm",
+          "bomb_barrage"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 473.6,
+        "es": 0,
+        "armor": 281.08,
+        "dodge": 0.08,
+        "movement_px_s": 276.0,
+        "primary_dps": 2734.31,
+        "six_target_total_dps": 16405.89,
+        "normal_kill_s": 0.63,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bomber",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "cluster_bomb",
+          "demolition",
+          "napalm",
+          "bomb_barrage"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 384.0,
+        "es": 0,
+        "armor": 281.08,
+        "dodge": 0.08,
+        "movement_px_s": 276.0,
+        "primary_dps": 1992.43,
+        "six_target_total_dps": 11954.57,
+        "normal_kill_s": 0.86,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 1.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 1.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "arcane_surge",
+          "fire_soul",
+          "void_touch",
+          "crit_overload"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 276.19,
+        "es": 418.0,
+        "armor": 249.08,
+        "dodge": 0.215,
+        "movement_px_s": 393.0,
+        "primary_dps": 1772.11,
+        "six_target_total_dps": 9194.14,
+        "normal_kill_s": 0.96,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "sorcerer",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "arcane_surge",
+          "fire_soul",
+          "void_touch",
+          "crit_overload"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 156.8,
+        "es": 373.0,
+        "armor": 221.08,
+        "dodge": 0.215,
+        "movement_px_s": 393.0,
+        "primary_dps": 3003.69,
+        "six_target_total_dps": 16265.42,
+        "normal_kill_s": 0.57,
+        "leech_generated_s": 6.38,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "chaos_theory",
+          "double_edge",
+          "crit_overload",
+          "blood_fire"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 543.2,
+        "es": 0,
+        "armor": 264.08,
+        "dodge": 0.245,
+        "movement_px_s": 458.37,
+        "primary_dps": 4553.84,
+        "six_target_total_dps": 25854.03,
+        "normal_kill_s": 0.38,
+        "leech_generated_s": 260.74,
+        "self_cost_s": 26.07,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 4.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "bloodwalker",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "chaos_theory",
+          "double_edge",
+          "crit_overload",
+          "blood_fire"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 892.7,
+        "es": 0,
+        "armor": 246.08,
+        "dodge": 0.16,
+        "movement_px_s": 411.0,
+        "primary_dps": 5296.36,
+        "six_target_total_dps": 32537.51,
+        "normal_kill_s": 0.32,
+        "leech_generated_s": 482.06,
+        "self_cost_s": 48.21,
+        "six_contacts_no_attacks": {
+          "survival_s": 4.0,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 7.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "auto_targeting",
+          "overclock",
+          "factory_line",
+          "reinforced_turrets"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 487.5,
+        "es": 0,
+        "armor": 314.08,
+        "dodge": 0.08,
+        "movement_px_s": 309.0,
+        "primary_dps": 485.55,
+        "six_target_total_dps": 2835.95,
+        "normal_kill_s": 3.52,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "engineer",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "auto_targeting",
+          "overclock",
+          "factory_line",
+          "reinforced_turrets"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 527.0,
+        "es": 0,
+        "armor": 301.08,
+        "dodge": 0.08,
+        "movement_px_s": 309.0,
+        "primary_dps": 563.0,
+        "six_target_total_dps": 2815.02,
+        "normal_kill_s": 3.04,
+        "leech_generated_s": 0.0,
+        "self_cost_s": 0.0,
+        "six_contacts_no_attacks": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 2.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "defense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "war_commander",
+          "swarmlord",
+          "alpha_bond",
+          "spirit_link"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 812.24,
+        "es": 0,
+        "armor": 261.08,
+        "dodge": 0.08,
+        "movement_px_s": 447.0,
+        "primary_dps": null,
+        "six_target_total_dps": null,
+        "normal_kill_s": null,
+        "leech_generated_s": null,
+        "self_cost_s": 0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      },
+      {
+        "class": "beastmaster",
+        "route": "offense",
+        "wave": 50,
+        "stress": true,
+        "cards": [
+          "war_commander",
+          "swarmlord",
+          "alpha_bond",
+          "spirit_link"
+        ],
+        "points": 49,
+        "allocated_points": 49,
+        "tier": 1,
+        "hp": 789.36,
+        "es": 0,
+        "armor": 261.08,
+        "dodge": 0.08,
+        "movement_px_s": 447.0,
+        "primary_dps": null,
+        "six_target_total_dps": null,
+        "normal_kill_s": null,
+        "leech_generated_s": null,
+        "self_cost_s": 0,
+        "six_contacts_no_attacks": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        },
+        "six_contacts_with_primary_leech": {
+          "survival_s": 3.5,
+          "alive": false,
+          "remaining_hp_pct": 0.0
+        }
+      }
+    ]
+  }
+}

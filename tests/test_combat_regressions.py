@@ -686,3 +686,150 @@ def test_swept_projectile_preserves_attackable_pillar(combat):
     projectile=Projectile(20,0,0,100,0,10)
     projectile.update(.03,g)
     assert e.hp==999990
+
+@pytest.mark.parametrize("class_id", list(SkillTree.START_BY_CLASS.keys()))
+def test_three_initial_routes_have_distinct_stats_and_five_steps(class_id):
+    if class_id == "core": return
+    start=SkillTree.START_BY_CLASS[class_id]
+    choices=SkillTree.allocatable_nodes({start})
+    assert len(choices)==3
+    assert len({tuple(sorted(SkillTree.BY_ID[n]["stats"].items())) for n in choices})==3
+    for lane in range(3):
+        allocated={start}
+        ids=[f"{class_id}_main_{j}" if lane==0 else f"{class_id}_early{lane}_{j}" for j in range(1,6)]
+        for node in ids:
+            assert SkillTree.is_allocatable(node,allocated)
+            allocated.add(node)
+        destination=class_id+"_notable_core" if lane==0 else f"{class_id}_early{lane}_notable"
+        assert SkillTree.is_allocatable(destination,allocated)
+        assert all(SkillTree.BY_ID[n]["arm"]==class_id for n in allocated)
+
+def make_duel(combat):
+    from entities.boss import AbyssalLord
+    from entities.projectile_pool import ProjectilePool
+    player,_,game=combat()
+    player.x,player.y=2650,2500
+    player.take_damage=Mock(return_value=0)
+    game.projectile_pool=ProjectilePool(100)
+    boss=AbyssalLord(2,2500,2500,game,10)
+    game.enemies=[boss]
+    return player,boss,game
+
+@pytest.mark.parametrize("fps",[30,60,144])
+def test_boss_cadence_and_projectile_ceiling_ignore_fps(combat,fps):
+    p,b,g=make_duel(combat)
+    b.hp=b.max_hp*.25
+    peak=0
+    for _ in range(fps*60):
+        b.update(1/fps,g)
+        g.projectile_pool.update(1/fps,g)
+        peak=max(peak,len(g.projectile_pool.active_objects))
+    assert b.attacks_resolved==17
+    assert peak<=7
+    assert not b.invulnerable
+    assert b.state in ("recover","windup","charge")
+
+@pytest.mark.parametrize("move",["cleave","charge","ring","slam"])
+def test_boss_no_damage_or_projectile_before_warning_finishes(combat,move):
+    p,b,g=make_duel(combat)
+    b.begin_attack(g)
+    b.move=move
+    b.timer=b.MOVES[move][0]
+    b.update(b.timer-.01,g)
+    assert not p.take_damage.called
+    assert not g.projectile_pool.active_objects
+    assert b.state=="windup"
+
+def test_boss_cleave_has_safe_rear_and_recovery(combat):
+    p,b,g=make_duel(combat)
+    b.begin_attack(g)
+    p.x=2350
+    b.update(1,g)
+    p.take_damage.assert_not_called()
+    assert b.state=="recover" and b.timer==pytest.approx(1.8)
+    before=b.hp
+    b.take_damage(100,g,from_player=True)
+    assert b.hp<before
+
+def test_boss_slam_has_safe_melee_interior(combat):
+    p,b,g=make_duel(combat)
+    p.x=2570
+    b.move="slam"
+    b.telegraph_origin=(2500,2500)
+    b.resolve_attack(g)
+    p.take_damage.assert_not_called()
+    p.x=2700
+    b.resolve_attack(g)
+    assert p.take_damage.call_count==1
+
+def test_boss_charge_locks_aim_and_hits_once(combat):
+    p,b,g=make_duel(combat)
+    b.begin_attack(g)
+    b.move="charge"
+    b.resolve_attack(g)
+    for _ in range(60):
+        b.update(.55/60,g)
+    assert p.take_damage.call_count==1
+    assert b.state=="recover"
+    assert b.x==pytest.approx(b.charge_end[0])
+
+def test_boss_ring_leaves_player_corridor_and_clears_on_death(combat):
+    import math
+    p,b,g=make_duel(combat)
+    b.move="ring"
+    b.aim=0
+    b.resolve_attack(g)
+    shots=g.projectile_pool.active_objects
+    assert len(shots)==7
+    assert all(abs(math.atan2(s.vy,s.vx))>math.pi/3 for s in shots)
+    for _ in range(240):
+        g.projectile_pool.update(1/120,g)
+    assert not g.projectile_pool.active_objects
+    p.take_damage.assert_not_called()
+    b.resolve_attack(g)
+    b.take_damage(b.hp*100,g,from_player=True)
+    assert b.dead and not any(s.active for s in b.owned_projectiles)
+
+def test_boss_difficulty_preserves_health_ratio(combat):
+    p,b,g=make_duel(combat)
+    b.hp=b.max_hp*.4
+    b.apply_difficulty("Hard")
+    assert b.hp/b.max_hp==pytest.approx(.4)
+    assert b.boss_dmg_mult==1.5
+
+def test_boss_pool_swept_collision_does_not_skip_player(combat):
+    from entities.projectile_pool import BossProjectile
+    p,_,g=combat()
+    p.x,p.y=100,0
+    p.take_damage=Mock(return_value=5)
+    shot=BossProjectile()
+    shot.reset(0,0,100,0,5,lifetime=120)
+    shot.update(1/30,g)
+    p.take_damage.assert_called_once_with(5)
+    assert not shot.active and p.last_attacker_type=="boss"
+
+def test_avoided_boss_projectile_does_not_apply_burn(combat):
+    from entities.projectile_pool import BossProjectile
+    p,_,g=combat()
+    p.take_damage=Mock(return_value=0)
+    shot=BossProjectile()
+    shot.reset(p.x,p.y,0,0,5,status_effect="burn")
+    shot.update(.01,g)
+    assert not p.effect_manager.effects
+
+def test_early_routes_reach_different_destinations_and_can_pivot():
+    for cls in ("warrior","sniper","engineer","beastmaster","bomber","alchemist","sorcerer","bloodwalker","ninja"):
+        assert f"{cls}_path1_1" in SkillTree.ADJ[f"{cls}_early1_notable"]
+        assert f"{cls}_path2_1" in SkillTree.ADJ[f"{cls}_early2_notable"]
+        for lane in (1,2):
+            assert f"{cls}_main_3" in SkillTree.ADJ[f"{cls}_early{lane}_3"]
+
+def test_dead_boss_does_not_clear_reused_projectile_of_another_boss(combat):
+    p,b,g=make_duel(combat)
+    b.move="ring"
+    b.resolve_attack(g)
+    shot=b.owned_projectiles[0]
+    shot.reset(1,1,1,1,1)
+    shot.boss_owner_id=12345
+    b.clear_projectiles()
+    assert shot.active

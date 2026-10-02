@@ -2737,11 +2737,21 @@ class GameScene(BaseScene):
                 state = "locked"
             self._draw_tree_node(node, (cx, cy), r, state,
                                  matched=nid in self._tree_match)
-            if rect.collidepoint(mouse_pos):
+            if area.collidepoint(mouse_pos) and rect.collidepoint(mouse_pos):
                 hover_node = node
 
         self.screen.set_clip(prev_clip)
 
+        # Route names remain legible when inspecting the selected class.
+        if self._tree_view["scale"] >= self._tree_fit_scale * 2.5:
+            own = getattr(p,"base_class_id",p.class_id)
+            for nid in SkillTree.ADJ.get("start_"+own,()):
+                node=SkillTree.BY_ID[nid]
+                if node.get("route"):
+                    cx,cy=tf(node["pos"])
+                    label=render_fit(node["route"],15,ui_theme.TEXT_COL,175)
+                    if area.collidepoint(cx,cy):
+                        self.screen.blit(label,(cx+20,cy-24))
         if hover_node:
             self._draw_tree_tooltip(hover_node, mouse_pos, allocated, allocatable)
 
