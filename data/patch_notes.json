@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.24.0",
+      "date": "2026-10-03",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "Muhendisi imlece taret kurma ve odak atesiyle yeniden tasarla"
+        ]
+      }
+    },
+    {
       "version": "1.23.0",
       "date": "2026-10-03",
       "categories": {
