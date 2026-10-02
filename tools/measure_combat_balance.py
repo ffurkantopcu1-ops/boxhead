@@ -62,6 +62,8 @@ def build(class_id, level, points, tier, route, stress=False):
             candidates = [x for x in ItemSystem.bases if x["type"] == slot and x.get("tier") == tier]
             if slot == "weapon":
                 candidates = [x for x in candidates if x.get("weaponClass") == class_id]
+                if class_id == "engineer":
+                    candidates = [x for x in candidates if x.get("isFlamethrower")]
             if candidates:
                 item = copy.deepcopy(candidates[0])
                 item.update(rarity="Normal", prefixes=[], suffixes=[])
@@ -107,9 +109,9 @@ def arena(p, wave):
     p.game = game
     return game
 
-def primary_dps(p, wave, seconds=20, target_count=1):
-    if p.class_id in ("engineer", "beastmaster"):
-        return None, None  # Their kit/pets need a separate summon benchmark.
+def primary_dps(p, wave, seconds=20, target_count=1, fps=120):
+    if (p.inv_manager.equipped.get("weapon") or {}).get("isMinion") or (p.inv_manager.equipped.get("weapon") or {}).get("isCommander"):
+        return None, None  # Command/pets need a separate summon benchmark.
     random.seed(731)
     game = arena(p, wave)
     targets = [Enemy(i+1, 1070, 1000 + (i-target_count//2)*8 if target_count>1 else 1000, game, wave_level=wave) for i in range(target_count)]
@@ -140,7 +142,7 @@ def primary_dps(p, wave, seconds=20, target_count=1):
     for enemy in targets:
         enemy.take_damage = wrap(enemy.take_damage)
     while elapsed < seconds - 1e-9:
-        dt = min(1/120, seconds-elapsed)
+        dt = min(1/fps, seconds-elapsed)
         p.hp = p.max_hp * .5  # Sustained mid-life damage potential; report its life cost.
         if elapsed + 1e-9 >= next_shot:
             p.specialization.execute_attack(p, game)
@@ -213,8 +215,39 @@ def measure():
         "attack_target":"stationary normal enemy at 70px; actual hit/projectile/cloud/DoT paths",
         "investment":"equal SP, Normal gear/evolution; separate late stress stage adds seeded Rare affixes, four class cards, five ascendancy points; no summons/active skills",
         "survival":"six immortal stationary attackers up to30s; seed922; contact+regen; leech and self-damage costs fed at measured average rates (optimistic)",
-        "limitations":"not full DPS for engineer/beastmaster; no player positioning, kill drops, boss telegraphs; not a global balance guarantee"},
+        "limitations":"engineer flame weapon measured without turrets; beastmaster DPS not measured; no player positioning, kill drops, boss telegraphs; not a global balance guarantee"},
         "rows":rows}
+
+
+def measure_weapon_swaps():
+    """Same late investment, different legal weapon families; no companion DPS."""
+    pygame.init()
+    pygame.display.set_mode((64,64))
+    families = {}
+    for base in ItemSystem.bases:
+        if base.get("type")!="weapon" or base.get("tier")!=1:
+            continue
+        if base.get("isTurret") or base.get("isMinion") or base.get("isCommander"):
+            continue
+        families.setdefault(base["name"],base)
+    rows=[]
+    for cls in CLASSES:
+        for family,base in families.items():
+            p=build(cls,50,49,1,"offense",stress=True)
+            previous=p.inv_manager.equipped.get("weapon") or {}
+            weapon=copy.deepcopy(base)
+            weapon.update(rarity="Rare",prefixes=copy.deepcopy(previous.get("prefixes",[])),suffixes=copy.deepcopy(previous.get("suffixes",[])))
+            p.inv_manager.equipped["weapon"]=weapon
+            p.inv_manager.recalculate_stats()
+            p.hp=p.max_hp
+            p.energy_shield=p.max_energy_shield
+            dps,leech=primary_dps(p,50)
+            rows.append({"class":cls,"weapon_family":base.get("weaponClass","other"),"weapon":weapon["name"],
+                         "primary_dps":round(dps,2) if dps is not None else None,
+                         "leech_s":round(leech,2) if leech is not None else None,
+                         "self_cost_s":round(getattr(p,"_benchmark_self_cost_s",0),2)})
+    return {"assumptions":"level50,49SP,5ascendancy,4class cards,three Rare items; same weapon affixes per class; primary only, no minions/turrets/active skills", "rows":rows}
+
 
 if __name__ == "__main__":
     import argparse

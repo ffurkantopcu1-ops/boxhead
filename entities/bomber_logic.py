@@ -22,7 +22,7 @@ class Bomber:
     """
 
     AOE_MULT = 1.5          # Mayın yarıçapı çarpanı
-    MINE_DMG_MULT = 1.9     # Mayın beklediği için vuruş başına hasarı yüksektir
+    MINE_DMG_MULT = 6.0     # Mayın beklediği için vuruş başına hasarı yüksektir
     MAX_MINES = 8           # Aynı anda yerde durabilecek mayın sayısı
 
     def __init__(self):
@@ -30,6 +30,8 @@ class Bomber:
 
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
 
         # Yakın dövüş silahı veya silahsız: temel savurma/yumruk
         if not weapon or weapon.get("isMelee"):
@@ -66,6 +68,7 @@ class Bomber:
             mine_dmg_mult *= 1.35
             radius_mult = 1.4
         for p in game.projectiles[before:]:
+            p.dmg *= 1.0 + max(0.0, player.stats.get('physDmgMult', 0))
             p.becomes_mine = True
             p.mine_dmg_mult = mine_dmg_mult
             p.mine_radius_mult = radius_mult
@@ -80,6 +83,8 @@ class Bomber:
             mines[0].detonate(game)
 
     def execute_melee(self, player, game, is_punch=False):
+        if not is_punch:
+            return player.execute_fallback_melee(game, player.inv_manager.equipped.get('weapon'))
         """Silah yoksa/melee silahtayken kısa menzilli patlayıcı savurma."""
         angle = player.facing_angle
         dmg_base = 22 if not is_punch else 5

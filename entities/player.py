@@ -498,21 +498,7 @@ class Player:
             
         # Shooting / Special Attack
         mouse_buttons = pygame.mouse.get_pressed()
-        if (mouse_buttons[0] or self.auto_attack) and not self.is_silenced: # Sol Tık veya Otomatik
-            weapon = self.inv_manager.equipped.get("weapon")
-            if weapon and weapon.get('isCommander'):
-                # Komuta silahı saldırı yapmaz, sadece buff verir.
-                pass
-            else:
-                current_time = pygame.time.get_ticks()
-                if current_time - self.last_shot_time >= self.stats["attack_cooldown"]:
-                    # --- CLASS-BASED ATTACK LOGIC ---
-                    if hasattr(self.specialization, 'execute_attack'):
-                        self.specialization.execute_attack(self, game)
-                    else:
-                        self.shoot(game)
-                    
-                    self.last_shot_time = current_time
+        self.update_attack(dt, game, mouse_buttons[0] or self.auto_attack)
 
         # --- Q TUŞU: Bloodwalker Kan Emme ---
         keys_event = getattr(game.manager.current_scene, '_pending_keys', [])
@@ -846,13 +832,45 @@ class Player:
             dx = e.x - self.x
             dy = e.y - self.y
             if dx * dx + dy * dy <= r * r:
-                e.take_damage(sw, game, from_player=True)
+                e.take_damage(sw, game, from_player=True, is_secondary=True)
         game.add_event("shockwave", self.x, self.y, radius=r,
                        color=(255, 220, 120), timer=0.25)
 
+    def update_attack(self, dt, game, attacking):
+        cooldown = max(0.060,self.stats.get("attack_cooldown",350)/1000.0)
+        elapsed = getattr(self,"_attack_elapsed",cooldown)+max(0.0,dt)
+        weapon = self.inv_manager.equipped.get("weapon") or {}
+        if not attacking or self.is_silenced or weapon.get("isCommander"):
+            self._attack_elapsed = min(cooldown,elapsed)
+            return 0
+        elapsed = min(cooldown*4,elapsed)
+        count = 0
+        while elapsed >= cooldown-1e-9 and self.hp > 0:
+            elapsed = max(0.0,elapsed-cooldown)
+            if hasattr(self.specialization,"execute_attack"):
+                self.specialization.execute_attack(self,game)
+            else:
+                self.shoot(game)
+            self.last_shot_time = pygame.time.get_ticks()
+            count += 1
+        self._attack_elapsed = elapsed
+        return count
+
+    def execute_weapon_override(self, game, weapon):
+        if weapon and weapon.get("isFlamethrower"):
+            if not hasattr(self, "_flamethrower_logic"):
+                self._flamethrower_logic = Engineer()
+            self._flamethrower_logic.execute_flamethrower(self, game, weapon)
+            return True
+        return False
+
     def shoot(self, game, is_bomb=None):
-        # Silah kontrolü
+        # Silah ailesi saldırı mekaniğini belirler; kalıcı sınıfı değiştirmez.
         weapon = self.inv_manager.equipped.get("weapon")
+        if self.execute_weapon_override(game, weapon):
+            return
+        if is_bomb is None:
+            is_bomb = bool(weapon and weapon.get("isBomb"))
         if weapon and weapon.get('isCommander'):
             # Komuta silahı ateş etmez, sadece buff verir.
             return
@@ -878,7 +896,7 @@ class Player:
 
         if not weapon:
             # EĞER SİLAH YOKSA: Yumruk
-            phys_flat = self.stats.get("physDmgFlat", 0)
+            phys_flat = self.stats.get("physDmgFlat", 0) * self.get_added_damage_effectiveness()
             # physDmgMult SADECE fiziksel tarafa uygulanır (yumruk saf fiziksel)
             final_dmg = ((20 + phys_flat) * self.stats.get("dmgMult", 1.0)
                          * self.get_conditional_dmg_mult()
@@ -914,7 +932,7 @@ class Player:
         phys_mult = mult * (1.0 + self.stats.get("physDmgMult", 0))
 
         # Sabit Hasar Bonusunu (Flat) ekle
-        phys_flat = self.stats.get("physDmgFlat", 0)
+        phys_flat = self.stats.get("physDmgFlat", 0) * self.get_added_damage_effectiveness()
         
         # Poison Convert: Fiziksel -> Zehir
         if getattr(self, "poison_convert", False):
@@ -937,7 +955,7 @@ class Player:
                 if self.stats.get("frostDmgMult", 0) > 0.2: p_type = 'frost'
         
         # Çoklu Atış (Multi-shot)
-        count = int(self.stats.get("projectileCount", 1))
+        count = min(6, max(1, int(self.stats.get("projectileCount", 1))))
         
         if is_katana:
             # Katana yakın dövüş: piksel taban + piksel bonus, sonra çarpan (F4)
@@ -946,7 +964,7 @@ class Player:
             # --- KRİTİK VURUŞ ---
             force_crit = getattr(self, '_sorcerer_force_crit', False) or self._consume_phantom_crit()
             is_crit = force_crit or (random.random() < self.stats.get("critChance", 0.05))
-            crit_mult = 2.0 + self.stats.get("critDmg", 0)
+            crit_mult = self.get_critical_multiplier()
             final_dmg = final_dmg_base * crit_mult if is_crit else final_dmg_base
             dot_mult = 1.0 + self.stats.get("dotDmgMult", 0.0)
             
@@ -976,9 +994,9 @@ class Player:
                 else:
                     poison_dps = base_poison * mult * dot_mult * elem_mult
                     if poison_dps > 0: e.apply_dot('poison', poison_dps, 5.0)
-                    fire_dmg = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * dot_mult * fire_mult
+                    fire_dmg = self.get_elemental_base("fireDamage","fireDmgFlat") * mult * dot_mult * fire_mult
                     if fire_dmg > 0: e.apply_dot('fire', fire_dmg, 4.0)
-                    frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * dot_mult * frost_mult
+                    frost_dmg = self.get_elemental_base("frostDamage","frostDmgFlat") * mult * dot_mult * frost_mult
                     if frost_dmg > 0: e.apply_dot('frost', frost_dmg * 0.5, 4.0)
             
             # Görsel
@@ -1013,16 +1031,16 @@ class Player:
             bounce = 0
             pierce = 0
         else:
-            bounce = int(self.stats.get("bounce", 0))
-            pierce = int(self.stats.get("pierce", 0))
+            bounce = min(4, max(0, int(self.stats.get("bounce", 0))))
+            pierce = min(6, max(0, int(self.stats.get("pierce", 0))))
             
             # Sekme Ustası (Ricochet Master)
             if getattr(self, "has_ricochet_master", False):
-                bounce += 1
+                bounce = min(4, bounce + 1)
                 pierce = max(0, pierce - 1)
                 proj_speed *= 0.85
                 
-        count = int(self.stats.get("projectileCount", 1))
+        count = min(6, max(1, int(self.stats.get("projectileCount", 1))))
         # AOE Hesabı (Radius 50 = ~2x Karakter Boyutu)
         aoe = 50 * self.stats.get("aoe", 1.0)
         
@@ -1051,13 +1069,14 @@ class Player:
             # --- KRİTİK VURUŞ ---
             force_crit = getattr(self, '_sorcerer_force_crit', False) or phantom_crit
             is_crit = force_crit or (random.random() < self.stats.get("critChance", 0.05))
-            crit_mult = 2.0 + self.stats.get("critDmg", 0)
-            final_dmg = final_dmg_base * crit_mult if is_crit else final_dmg_base
+            crit_mult = self.get_critical_multiplier()
+            shot_budget = 1.0 / (1.0 + 0.25 * (count - 1))
+            final_dmg = (final_dmg_base * crit_mult if is_crit else final_dmg_base) * shot_budget
 
             # Mermi Tipi Belirleme
             p_type_final = p_type
             sorcerer_elem = getattr(self, '_sorcerer_override_element', None)
-            if sorcerer_elem:
+            if sorcerer_elem and not is_bomb:
                 p_type_final = sorcerer_elem
             elif p_type_final not in ['bomb', 'katana']:
                 if self.stats.get("fireDmgFlat", 0) > 0 or self.stats.get("fireDmgMult", 0) > 0:
@@ -1100,7 +1119,12 @@ class Player:
             # burada UYGULANMAZ; mermi üzerinde p.dot_mult olarak taşınır ve
             # yalnızca DoT tarafında çarpılır.
             p.dot_mult = dot_mult
-            if self.stats.get("omniElement", 0) > 0:
+            p.hit_crit_mult = crit_mult if is_crit else 1.0
+            if is_bomb:
+                p.poison_dps = (base_poison + 15) * mult * elem_mult
+                p.fire_dmg = self.get_elemental_base("fireDamage","fireDmgFlat")*mult*fire_mult
+                p.frost_dmg = self.get_elemental_base("frostDamage","frostDmgFlat")*mult*frost_mult
+            elif self.stats.get("omniElement", 0) > 0:
                 p.fire_dmg  = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0) + 15) * mult * max(1.0, fire_mult)
                 p.frost_dmg = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0) + 15) * mult * max(1.0, frost_mult)
                 p.poison_dps = (base_poison + 15) * mult * elem_mult
@@ -1113,9 +1137,12 @@ class Player:
                     p.poison_dps = (base_poison + 15) * mult * elem_mult
                 else:
                     p.poison_dps = base_poison * mult * elem_mult
-                    p.fire_dmg   = (self.stats.get("fireDamage", 0) + self.stats.get("fireDmgFlat", 0)) * mult * fire_mult
-                    p.frost_dmg  = (self.stats.get("frostDamage", 0) + self.stats.get("frostDmgFlat", 0)) * mult * frost_mult
+                    p.fire_dmg   = self.get_elemental_base("fireDamage","fireDmgFlat") * mult * fire_mult
+                    p.frost_dmg  = self.get_elemental_base("frostDamage","frostDmgFlat") * mult * frost_mult
             
+            p.fire_dmg *= shot_budget
+            p.frost_dmg *= shot_budget
+            p.poison_dps *= shot_budget
             game.projectiles.append(p)
             game.entity_id_counter += 1
             
@@ -1132,9 +1159,9 @@ class Player:
     def execute_fallback_melee(self, game, weapon):
         """Melee silahı varken specialization hatası/eksikliği durumunda temel savurma yapar."""
         base_phys = self.stats.get("physDmg", 20)
-        phys_flat = self.stats.get("physDmgFlat", 0)
+        phys_flat = self.stats.get("physDmgFlat", 0) * self.get_added_damage_effectiveness()
         base_poison = self.stats.get("poisonDps", 0)
-        mult = self.stats.get("dmgMult", 1.0)
+        mult = self.stats.get("dmgMult", 1.0) * self.get_conditional_dmg_mult()
         # physDmgMult yalnızca fiziksel vuruşa; aşağıdaki zehir DoT'u `mult`
         # üzerinden hesaplandığı için ayrı tutulur.
         phys_mult = mult * (1.0 + self.stats.get("physDmgMult", 0))
@@ -1144,7 +1171,8 @@ class Player:
             base_phys = 0
             phys_flat = 0
 
-        final_dmg = (base_phys + phys_flat) * phys_mult
+        is_crit = random.random() < self.stats.get('critChance', 0.05)
+        final_dmg = (base_phys + phys_flat) * phys_mult * (self.get_critical_multiplier() if is_crit else 1.0)
 
         range_val = (100 + self.stats.get("meleeRangeFlat", 0)) * self.stats.get("meleeRangeMult", 1.0)
         angle = self.facing_angle
@@ -1165,8 +1193,8 @@ class Player:
                 if dx * dx + dy * dy < hit_range * hit_range:
                     # Basit Açı Kontrolü (Flail için 360 derece, yani açı sınırı yok)
                     angle_to_e = math.atan2(e.y - self.y, e.x - self.x)
-                    if is_flail or abs(angle_to_e - angle) < 0.6: # Yaklaşık 70 derece
-                        e.take_damage(final_dmg, game, from_player=True)
+                    if is_flail or abs(((angle_to_e - angle + math.pi) % (2*math.pi)) - math.pi) < 0.6: # Yaklaşık 70 derece
+                        e.take_damage(final_dmg, game, is_crit=is_crit, from_player=True)
                         
                         # Knockback Uygula
                         kb_mult = weapon.get("knockbackMult", 0.0) if weapon else 0.0
@@ -1181,8 +1209,16 @@ class Player:
                             e.kb_x = math.cos(angle_to_e) * -pull_force
                             e.kb_y = math.sin(angle_to_e) * -pull_force
                         
+                        fire_mult, frost_mult, elem_mult = self.get_elemental_mults()
+                        dot_mult = 1.0 + self.stats.get("dotDmgMult", 0)
                         if base_poison > 0:
-                            e.apply_dot('poison', base_poison * mult * (1.0 + self.stats.get("dotDmgMult", 0)), 5.0)
+                            e.apply_dot("poison", base_poison * mult * elem_mult * dot_mult, 5.0)
+                        fire = self.get_elemental_base("fireDamage","fireDmgFlat")*mult*fire_mult
+                        frost = self.get_elemental_base("frostDamage","frostDmgFlat")*mult*frost_mult
+                        if fire > 0:
+                            e.apply_dot("fire",fire*.4*dot_mult,3.0)
+                        if frost > 0:
+                            e.apply_dot("frost",frost*.5*dot_mult,3.5)
 
         self.emit_shockwave(game)
 
@@ -1695,6 +1731,27 @@ class Player:
             self.lifesteal_buffer = max(0.0, self.lifesteal_buffer - recovery)
         if self.hp >= self.max_hp:
             self.lifesteal_buffer = 0
+
+    def get_added_damage_effectiveness(self):
+        weapon = self.inv_manager.equipped.get("weapon") or {}
+        base_cd = weapon.get("itemBase",{}).get("attackCooldown",350)
+        return min(1.0,max(0.20,base_cd/350.0))
+
+    def get_elemental_base(self, stat, flat_stat):
+        weapon = self.inv_manager.equipped.get("weapon") or {}
+        base = weapon.get("itemBase",{})
+        total = max(0.0,self.stats.get(stat,0)+self.stats.get(flat_stat,0))
+        local = min(total,max(0.0,base.get(stat,0)+base.get(flat_stat,0)))
+        return local+(total-local)*self.get_added_damage_effectiveness()
+
+    def get_death_explosion_damage(self, enemy_max_hp):
+        weapon_power = sum(max(0.0,self.stats.get(key,0)) for key in
+                           ("physDmg","physDmgFlat","fireDamage","fireDmgFlat","frostDamage","frostDmgFlat","poisonDps"))
+        return min(max(0.0,enemy_max_hp)*0.30, max(1.0,weapon_power)*self.stats.get("dmgMult",1.0)*4.0)
+
+    def get_critical_multiplier(self):
+        """Temel 2x, bonuslarla en fazla 3.5x kritik."""
+        return 2.0 + min(1.5, max(-1.0, self.stats.get("critDmg", 0)))
 
     def get_movement_speed(self):
         """Normal hareket 720px/s tavan; yavaşlatma tavandan sonra uygulanır."""

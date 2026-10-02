@@ -4,8 +4,8 @@
 
 - Warrior, Ninja ve Bloodwalker yakın dövüş fiziksel bonusunu fiziksel vuruşa uygular. DoT bonusu zehir ve yanmaya uygulanır; doğrudan vuruşa eklenmez. Fiziksel bonus elemental DoT'u büyütmez.
 - Boss hasarı bonusu Abyssal Lord, Kristal Ejderha ve Arachne için geçerlidir. Çevresel hasar oyuncunun boss bonusunu kullanmaz.
-- Yansıyan hasar yeni yansıma, vuruş tetikleyicisi veya can çalma üretmez. Kritik/yıldırım gibi tetikleyicilerin genel ikinci hasar sınıflandırması henüz ayrıca yapılmadı.
-- Can çalma, oyuncunun uygun doğrudan vuruşunun düşman zırhı ve kalkanından sonraki hasarından hesaplanır. DoT, yansıma, tuzaklar ve çevresel hasar can çalmaz. Ölümcül vuruşun kalan canı aşan kısmı vuruş hasarı içinde kalır.
+- Yansıyan hasar yeni yansıma, vuruş tetikleyicisi veya can çalma üretmez. Üçüncü aşamada diğer ikincil hasarlar da aynı tetikleme ayrımını kullanır.
+- Can çalma, oyuncunun uygun doğrudan vuruşunun düşman zırhı ve kalkanından sonraki hasarından hesaplanır. DoT, yansıma, tuzaklar ve çevresel hasar can çalmaz. Üçüncü aşamadan itibaren ölümcül vuruşun kalan canı aşan kısmı can çalma veya hasar kaydı üretmez.
 - Uygun çoklu vuruşlar aynı can çalma havuzunu besler. Eski tek hedef / 0,2 saniye kilidi kaldırıldı. Havuz tavanı maksimum canın %20'sidir; dolu can veya ölüm havuzu siler.
 - Başlangıç denge değeri olarak normal sınıflarda can çalma iyileşme hızı saniyede maksimum canın %10'u, Bloodwalker'da %20'sidir. Bunlar Boxhead'e özgü ilk değerlerdir; bütün ARPG'lerde ortak bir standart olduğu iddia edilmez. 30/60/144 FPS testleri aynı iyileşmeyi doğrular.
 - Kalkan tam sıfıra indiğinde de kırılma tetiklenir. Sıfır/negatif hasar kalkanı veya dokunulmazlık süresini değiştirmez.
@@ -30,3 +30,19 @@ tools/measure_combat_balance.py gerçek sınıf saldırısı, mermi, bulut, DoT,
 Tek hedef ve altı yakın hedef ölçülür. Engineer/Beastmaster hasarı boş bırakılır; minyon/taret/aktif yetenek kıyaslaması bu araçta henüz yoktur. Savunma baskısı altı ölümsüz sabit saldırganla ölçülür; leech ve saldırıların can bedeli ölçülen ortalama hızla beslenir. Bu sabit hedef/ortalama modelidir, tam oynanış veya optimum build ispatı değildir. Dalga/seviye/eşya eşleştirmeleri varsayımsal senaryolardır.
 
 Testler 30/60/144 FPS'te temas/diken, ateş, yıldırım, kalkan gecikmesi ve hostile bulut süresini eşit sonuçla doğrular. Ayrıca aynı yatırımlı savaşçıda hasar karşılığında dayanıklılık kaybını ve geç oyun Bloodwalker'ın altı sürekli temasa karşı sınırsız yaşamamasını denetler. Tam ekran manuel oynanış testi yapılmadı.
+
+## Üçüncü aşama — v1.22.0
+
+- Birincil vuruş, ikincil hasar, DoT ve yansıma ayrı sınıflanır. İkincil yıldırım/patlama yeni on-hit zinciri veya can çalma üretmez. Storm Caller tek vuruş eşiğinde de sonlu kalır.
+- Can çalma ve verilen hasar kaydı gerçekleşen can kaybını kullanır; kalan canı aşan bölüm sayılmaz.
+- Kritik temel çarpanı 2; ek kritik bonusu azalan getirili ve en fazla 1,5 olur (toplam 3,5). Saldırı beklemesi en az 60 ms.
+- Ateş sıçraması mermi başına bir kez, yakın dövüşte hedef başına bir kez uygulanır. İkincil ateş miktarı doğrudan ateşin %50'sidir. Bulut DoT çarpanı doğrudan patlamaya taşınmaz.
+- Ek mermilerin ortak hasar bütçesi 1/(1+0,25*(adet-1)); en fazla 6 mermi, 6 delme, 4 sekme. Bumerang dönüş hasarı %60.
+- Hızlı silahların ek hasar etkinliği temel bekleme/350 oranıdır, %20–100 arasında. Silahın kendi elemental tabanı korunur; ek fiziksel/elemental bonus ve sınıf düz hasarı bu etkinlikle ölçeklenir. Hızlı eldiven tabanları da kademelerine göre dengelendi.
+- Alev silahı, bomba ve yakın dövüş aileleri sınıf değişimlerinde gerçek silah davranışını kullanır. Mayın fiziksel/elemental yükünü ve kritiği taşır; hazırlık bedeli karşılığında mayın çarpanı 6.
+- Ölüm patlaması düşman maksimum canının %30'u ile oyuncunun ölçeklenmiş ham hasarının 4 katından küçük olanı kullanır; zincir derinliği 2 kalır.
+- Saldırı sayacı simülasyon zamanını kullanır; boşta bir atıştan fazla birikmez ve tek güncellemede en fazla 4 telafi atışı olur. Mermiler hareket segmenti boyunca çarpışır; hızlı mermiler kareler arasında hedef atlamaz.
+
+### Üçüncü aşama ölçümleri
+
+72 eşit yatırım senaryosu ve 108 sınıf/silah birleşimi data/combat_balance_1.22.0.json içinde saklanır. Engineer alev silahı ölçülür, taret katkısı dahil değildir; Beastmaster çağrıları ve aktif beceriler sonraki pakettedir. Sabit hedef ölçümü hareketli oyun, boss telegraphları veya bütün olası buildler için denge garantisi değildir. 30/60/144 FPS saldırı ve mermi davranışı regresyonlarla denetlenir. Tam ekran manuel oynanış testi yapılmadı.

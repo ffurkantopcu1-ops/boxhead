@@ -39,7 +39,8 @@ class InventoryManager:
         "critChance":     (0.75, 2.0, 1.0),
         "lifesteal":      (0.30, 3.0, 0.50),
         "dodgeChance":    (0.40, 2.0, 0.50),
-        "critDmg":        (2.0,  0.5, 4.0),
+        "critDmg":        (0.75, 1.5, 1.5),
+        "physDmgMult":    (1.0,  0.5, 2.5),
         "dotDmgMult":     (1.0,  0.5, 2.0),
         "elementDmgMult": (1.5,  0.5, 3.0),
         "minionDamage":   (2.0,  0.5, 4.0),
@@ -424,7 +425,7 @@ class InventoryManager:
         if speed_bonus > 1.0:
             excess = speed_bonus - 1.0
             speed_bonus = 1.0 + excess / (1.0 + excess)
-        new_stats["attack_cooldown"] = base_cooldown / (1.0 + max(-0.9, speed_bonus))
+        new_stats["attack_cooldown"] = max(60.0, base_cooldown / (1.0 + max(-0.9, speed_bonus)))
 
         aoe_bonus = new_stats.get("aoe_bonus", 0)
         # Eşyalardaki aoe statını da bonusa ekle

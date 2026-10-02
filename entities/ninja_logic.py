@@ -18,6 +18,8 @@ class Ninja:
         
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
         
         # Ninja: Yakın Dövüş Modu (Menzilliyi Player.py halleder)
         if weapon and not weapon.get("isMelee"):
@@ -27,14 +29,14 @@ class Ninja:
         angle = player.facing_angle
         is_punch = (weapon is None)
         # Denge: Sabit 35 yerine katananın physDmg değeri baz alınır (silahla ölçeklenir)
-        dmg_base = (12 + player.stats.get("physDmg", 0)) if not is_punch else 5
-        phys_flat = player.stats.get("physDmgFlat", 0)
+        dmg_base = (12 * player.get_added_damage_effectiveness() + player.stats.get("physDmg", 0)) if not is_punch else 5
+        phys_flat = player.stats.get("physDmgFlat", 0) * player.get_added_damage_effectiveness()
         dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult() * (1.0 + player.stats.get("physDmgMult", 0))
 
         # Kritik Vuruş (Shadow/Storm evrimlerinin critDmg bonusları artık melee'de işler)
         is_crit = random.random() < player.stats.get("critChance", 0.05)
         if is_crit:
-            dmg *= 2.0 + player.stats.get("critDmg", 0)
+            dmg *= player.get_critical_multiplier()
         
         # Hızlı kılıç savurma (Görsel ve Alan Buffed GDD 62)
         visual_type = "slash"
@@ -67,15 +69,15 @@ class Ninja:
                         # --- Elementel Uygulama (Ninja Yetenek Ağacı Desteği) ---
                         # Ateş/Buz yüzde statları melee'de yok sayılıyordu (F6)
                         fire_mult, frost_mult, elem_mult = player.get_elemental_mults()
-                        fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0) * fire_mult
-                        frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0) * frost_mult
+                        fire_dmg  = player.get_elemental_base("fireDamage","fireDmgFlat") * player.stats.get("dmgMult", 1.0) * fire_mult
+                        frost_dmg = player.get_elemental_base("frostDamage","frostDmgFlat") * player.stats.get("dmgMult", 1.0) * frost_mult
                         p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0) * elem_mult
 
                         if fire_dmg > 0:
                             game.add_event("explosion", e.x, e.y, radius=60, color=(255, 100, 0), timer=0.1)
                             e.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                         if frost_dmg > 0:
-                            e.apply_dot('frost', frost_dmg * 0.5, 3.5)
+                            e.apply_dot('frost', frost_dmg * 0.5 * (1.0 + player.stats.get('dotDmgMult', 0)), 3.5)
                         if p_dps > 0:
                             e.apply_dot('poison', (p_dps) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
 

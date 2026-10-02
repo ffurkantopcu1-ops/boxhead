@@ -29,6 +29,8 @@ class Alchemist:
         
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
         
         # Yakın Dövüş Modu veya SİLAHSIZ (Yumruk)
         if not weapon or weapon.get("isMelee"):
@@ -59,6 +61,8 @@ class Alchemist:
             player.shoot(game)
 
     def execute_melee(self, player, game, is_punch=False):
+        if not is_punch:
+            return player.execute_fallback_melee(game, player.inv_manager.equipped.get('weapon'))
         angle = player.facing_angle
         dmg_base = 20 if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)

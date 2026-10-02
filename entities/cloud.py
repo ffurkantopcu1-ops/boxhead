@@ -82,7 +82,7 @@ def _cloud_surface(color, diameter):
 
 
 class Cloud:
-    def __init__(self, id, x, y, radius, duration, poison_dps=0, fire_dmg=0, frost_dmg=0, is_black_hole=False, is_web=False, is_mine=False, mine_dmg=0, is_hostile=False):
+    def __init__(self, id, x, y, radius, duration, poison_dps=0, fire_dmg=0, frost_dmg=0, is_black_hole=False, is_web=False, is_mine=False, mine_dmg=0, is_hostile=False, is_crit=False):
         self.id = id
         self.x = x
         self.y = y
@@ -98,6 +98,7 @@ class Cloud:
         self.is_web = is_web
         self.is_mine = is_mine
         self.mine_dmg = mine_dmg
+        self.is_crit = is_crit
         # Mayın yerleştirildikten sonra kısa bir kurma süresi bekler.
         self.arm_timer = 0.35 if is_mine else 0.0
 
@@ -151,7 +152,7 @@ class Cloud:
             if not me.dead and not getattr(me, 'is_trap', False):
                 mdx, mdy = me.x - self.x, me.y - self.y
                 if mdx * mdx + mdy * mdy < self.radius * self.radius:
-                    me.take_damage(self.mine_dmg, game, from_player=True)
+                    me.take_damage(self.mine_dmg, game, from_player=True, is_crit=self.is_crit)
 
         # Zincirleme: komşu mayınlar da patlar. Derinlik sınırı, uzun mayın
         # zincirlerinde özyinelemenin yığını taşırmasını engeller.
@@ -191,7 +192,9 @@ class Cloud:
         self.dot_timer -= dt
         apply_dot_now = self.dot_timer <= 0
         if apply_dot_now:
-            self.dot_timer = self.dot_interval
+            self.dot_timer += self.dot_interval
+            if self.dot_timer <= 0:
+                self.dot_timer = self.dot_interval
 
         # Düşmanlara DOT veya Mayın patlaması uygula.
         # Mayın, patlama yarıçapından biraz DAHA GENİŞ bir "cezbetme" menzilinden
@@ -239,7 +242,7 @@ class Cloud:
                                     odx = other.x - e.x
                                     ody = other.y - e.y
                                     if odx * odx + ody * ody < 40 * 40:
-                                        other.take_damage(self.fire_dmg * 0.5, game)
+                                        other.take_damage(self.fire_dmg * 0.5, game, from_player=not self.is_hostile, is_secondary=True)
                     
                     # 3. Buz Etkisi
                     if self.frost_dmg > 0:

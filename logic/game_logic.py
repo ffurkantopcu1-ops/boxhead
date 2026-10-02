@@ -767,7 +767,7 @@ class GameLogic:
                 if depth < 2:
                     self._chain_explosion_depth = depth + 1
                     try:
-                        blast = enemy.max_hp * 0.30
+                        blast = p.get_death_explosion_damage(enemy.max_hp)
                         radius = 150 * p.stats.get("aoe", 1.0)
                         self.add_event("explosion", enemy.x, enemy.y, radius=int(radius),
                                        color=(255, 160, 40), timer=0.35)
@@ -778,7 +778,7 @@ class GameLogic:
                                 continue
                             dx, dy = e.x - enemy.x, e.y - enemy.y
                             if dx * dx + dy * dy <= radius * radius:
-                                e.take_damage(blast, self, from_player=True)
+                                e.take_damage(blast, self, from_player=True, is_secondary=True)
                     finally:
                         self._chain_explosion_depth = depth
             elif evo_p in ('toxic_cloud', 'death_cloud'):

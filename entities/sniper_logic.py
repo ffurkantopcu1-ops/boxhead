@@ -10,6 +10,8 @@ class Sniper:
     """
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
         
         # Eğer elde kılıç yoksa veya SİLAHSIZSA: Yakın dövüş moduna geç
         if not weapon or weapon.get("isMelee"):
@@ -21,6 +23,8 @@ class Sniper:
         player.shoot(game)
 
     def execute_melee(self, player, game, is_punch=False):
+        if not is_punch:
+            return player.execute_fallback_melee(game, player.inv_manager.equipped.get('weapon'))
         # Basit kılıç savurma (Warrior'dan basitleştirildi)
         angle = player.facing_angle
         dmg_base = 25 if not is_punch else 5

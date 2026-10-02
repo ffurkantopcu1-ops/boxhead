@@ -29,10 +29,13 @@ class Engineer:
         fire_mult, _frost_mult, elem_mult = player.get_elemental_mults()
         dmg_mult = player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult()
         # Alev hasarı ateş statlarından okunur; fiziksel taban yok.
-        base_fire = (player.stats.get("fireDamage", 0)
-                     + player.stats.get("fireDmgFlat", 0))
+        base_fire = player.get_elemental_base("fireDamage", "fireDmgFlat")
         tick_dmg = base_fire * dmg_mult * fire_mult
-        burn_dps = tick_dmg * 0.9
+        burn_dps = tick_dmg * 0.9 * (1.0 + player.stats.get('dotDmgMult',0))
+        import random
+        is_crit = random.random() < player.stats.get('critChance',0.05)
+        if is_crit:
+            tick_dmg *= player.get_critical_multiplier()
 
         audio.play('flame')
         vfx.flamethrower(game, player.x, player.y, angle, rng, arc)
@@ -53,7 +56,7 @@ class Engineer:
             if diff > eff_arc / 2:
                 continue
             if tick_dmg > 0:
-                e.take_damage(tick_dmg, game, from_player=True)
+                e.take_damage(tick_dmg, game, is_crit=is_crit, from_player=True)
             # Yanma yığılır: alevin içinde kalmak cezalandırır
             e.apply_dot('fire', burn_dps, 2.0)
             hit_any = True
@@ -62,6 +65,8 @@ class Engineer:
 
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
 
         # Alev silahı: koni taraması (mermi üretmez)
         if weapon and weapon.get("isFlamethrower"):
@@ -72,6 +77,9 @@ class Engineer:
         if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
             player.shoot(game)
             return
+
+        if weapon and weapon.get("isMelee"):
+            return player.execute_fallback_melee(game, weapon)
 
         # Taret artık saldırıya bağlı DEĞİL: R tuşuyla kullanılan bir yetenek
         # (bkz. player.try_place_turret / game_scene R tuşu). Eskiden taret kiti

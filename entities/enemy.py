@@ -1083,7 +1083,7 @@ class Enemy:
             self.effect_manager.add_effect(StatusEffect("Poison", duration, dps=dps, color=(46, 204, 113)))
 
 
-    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False, is_reflected=False):
+    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False, is_reflected=False, is_secondary=False):
         if self.dead: return
         # Negatif/sıfır hasar düşmanı iyileştiriyordu (H8)
         if amount <= 0: return
@@ -1099,8 +1099,8 @@ class Enemy:
         
         # --- ZIRH HESABI ---
         player = game.players[game.local_player_id]
-        p_stats = player.stats
-        triggers_on_hit = from_player and not is_dot and not is_reflected
+        p_stats = player.stats if from_player else {}
+        triggers_on_hit = from_player and not is_dot and not is_reflected and not is_secondary
         
         # Zırh Delme (Armor Pen) - Broken Stat
         armor_pen = p_stats.get("armorPen", 0)
@@ -1111,7 +1111,7 @@ class Enemy:
         final_dmg = amount * damage_reduction
 
         # Impossible Zorlukta Oyuncu Hasarı Nerfi (%50)
-        if game.wave.get("current_diff") == "Impossible":
+        if from_player and game.wave.get("current_diff") == "Impossible":
             final_dmg *= 0.5
             
         # Double Edge (Çift Ağız) - Hasar vurunca kendine de hasar vur (DoT hariç)
@@ -1147,7 +1147,8 @@ class Enemy:
             self.elite_shield -= absorbed
             final_dmg -= absorbed
             
-        self.hp -= final_dmg
+        actual_damage = min(max(0.0, self.hp), final_dmg)
+        self.hp = max(0.0, self.hp - final_dmg)
         triggers_on_hit = triggers_on_hit and final_dmg > 0
         if triggers_on_hit and getattr(player, "self_dmg_on_hit", 0.0) > 0:
             sd = player.max_hp * player.self_dmg_on_hit
@@ -1160,7 +1161,7 @@ class Enemy:
         # tek vuruşta oyuncunun max canının %15'i ile sınırlanır.
         th = getattr(self, 'thorns', 0)
         if th > 0 and triggers_on_hit:
-            reflect = min(final_dmg * th, player.max_hp * 0.15)
+            reflect = min(actual_damage * th, player.max_hp * 0.15)
             if reflect > 0:
                 player.take_damage(reflect, force=True, is_reflected=True)
 
@@ -1185,9 +1186,9 @@ class Enemy:
                                color=(44, 62, 80), timer=0.3)
 
         if hasattr(game, 'record_damage_dealt'):
-            game.record_damage_dealt(final_dmg, is_dot=is_dot)
+            game.record_damage_dealt(actual_damage, is_dot=is_dot)
         elif hasattr(game, 'stats'):
-            game.stats['total_damage_dealt'] += final_dmg
+            game.stats['total_damage_dealt'] += actual_damage
 
         # Görsel Hasar Text (Boş geçmeyelim)
         if not is_dot:
@@ -1195,7 +1196,7 @@ class Enemy:
         
         # --- EXECUTION (İnfazcı) ---
         exec_threshold = p_stats.get("lowHpExec", 0)
-        if from_player and not is_reflected and exec_threshold > 0 and self.hp > 0:
+        if from_player and not is_reflected and not is_secondary and exec_threshold > 0 and self.hp > 0:
             if (self.hp / self.max_hp) < exec_threshold:
                 self.hp = 0
                 game.add_event("damage_text", self.x, self.y - 40, value="EXECUTED!", color=(255, 0, 0), timer=0.8)
@@ -1204,7 +1205,7 @@ class Enemy:
                     game.add_event("explosion", self.x, self.y, radius=120, color=(150, 0, 150), timer=0.5)
                     for e in game.iter_enemies_near(self.x, self.y, 120):
                         if not e.dead and not getattr(e, 'is_trap', False) and e != self:
-                            e.take_damage(self.max_hp * 0.2, game, from_player=True)
+                            e.take_damage(self.max_hp * 0.2, game, from_player=True, is_secondary=True)
 
         # --- STORM CALLER (Fırtına Çağrıcı) ---
         if triggers_on_hit and getattr(player, "lightning_proc_hits", 0) > 0:
@@ -1214,7 +1215,7 @@ class Enemy:
             if player._lightning_hit_count >= player.lightning_proc_hits:
                 player._lightning_hit_count = 0
                 # Yıldırım Hasarı
-                self.take_damage(amount * 2, game, from_player=True)
+                self.take_damage(amount * 2, game, from_player=True, is_secondary=True)
                 game.add_event("explosion", self.x, self.y, radius=40, color=(255, 255, 0), timer=0.2)
                 game.add_event("damage_text", self.x, self.y - 60, value="YILDIRIM!", color=(255, 255, 0), timer=1.0)
                 
@@ -1256,7 +1257,7 @@ class Enemy:
                             dx, dy = e.x - self.x, e.y - self.y
                             if dx * dx + dy * dy > r * r:
                                 continue
-                            e.take_damage(final_dmg * 0.40, game, from_player=True)
+                            e.take_damage(amount * 0.40, game, from_player=True, is_secondary=True)
                             game.add_event("explosion", e.x, e.y, radius=25, color=(120, 200, 255), timer=0.15)
                             hops += 1
                             if hops >= 2:
@@ -1278,7 +1279,7 @@ class Enemy:
             ls_perc = p_stats.get("lifesteal", 0)
             if game.wave.get("current_diff") == "Impossible":
                 ls_perc *= 0.5 # Can çalma etkisi yarıya iner
-            heal = final_dmg * ls_perc + ls_flat
+            heal = actual_damage * ls_perc + ls_flat
 
             # Bütün uygun vuruşlar aynı sınırlı havuzu besler.
             player.lifesteal_buffer = min(player.max_hp * 0.20, player.lifesteal_buffer + heal)

@@ -16,11 +16,16 @@ class Beastmaster:
         
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
         
         # Menzilli / Bomba Kontrolü
         if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
             player.shoot(game)
             return
+
+        if weapon and weapon.get("isMelee"):
+            return player.execute_fallback_melee(game, weapon)
 
         # Beastmaster Özel: Minyon Komutu
         is_punch = (weapon is None)

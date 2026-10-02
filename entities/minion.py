@@ -288,7 +288,7 @@ class Minion:
         crit_chance = self.owner.stats.get("critChance", 0.05) + self.owner.stats.get("minionCrit", 0)
         is_crit = random.random() < crit_chance
         # Krit tabanı oyuncuyla aynı (2.0) olacak şekilde hizalandı
-        final_dmg = final_dmg_base * (2.0 + self.owner.stats.get("critDmg", 0)) if is_crit else final_dmg_base
+        final_dmg = final_dmg_base * (self.owner.get_critical_multiplier()) if is_crit else final_dmg_base
 
         from entities.projectile import Projectile
         angle_to_target = math.atan2(self.target.y - self.y, self.target.x - self.x)

@@ -85,9 +85,9 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Güneş Fırtınası (T1)', 'tier': 1, 'isRanged': True, 'isBoomerang': True, 'weaponClass': 'general', 'icon_id': 'weapon_chakram_sun', 'itemBase': { 'physDmg': 100, 'pierce': 3, 'attackCooldown': 250, 'fireDamage': 40 } },
 
         { 'type': 'weapon', 'name': 'Yırtık Boks Eldiveni (T4)', 'tier': 4, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_torn', 'itemBase': { 'physDmg': 8, 'attackCooldown': 200, 'meleeRange': -15, 'knockbackMult': 2.0 } },
-        { 'type': 'weapon', 'name': 'Deri Boks Eldiveni (T3)', 'tier': 3, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_leather', 'itemBase': { 'physDmg': 18, 'attackCooldown': 150, 'meleeRange': -15, 'knockbackMult': 2.5 } },
-        { 'type': 'weapon', 'name': 'Çelik Yumruk (T2)', 'tier': 2, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_steel', 'itemBase': { 'physDmg': 35, 'attackCooldown': 100, 'meleeRange': -10, 'knockbackMult': 3.5 } },
-        { 'type': 'weapon', 'name': 'Titanium Yumruk (T1)', 'tier': 1, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_titanium', 'itemBase': { 'physDmg': 75, 'attackCooldown': 75, 'meleeRange': -10, 'knockbackMult': 5.0, 'critChance': 0.15 } },
+        { 'type': 'weapon', 'name': 'Deri Boks Eldiveni (T3)', 'tier': 3, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_leather', 'itemBase': { 'physDmg': 12, 'attackCooldown': 150, 'meleeRange': -15, 'knockbackMult': 2.5 } },
+        { 'type': 'weapon', 'name': 'Çelik Yumruk (T2)', 'tier': 2, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_steel', 'itemBase': { 'physDmg': 18, 'attackCooldown': 100, 'meleeRange': -10, 'knockbackMult': 3.5 } },
+        { 'type': 'weapon', 'name': 'Titanium Yumruk (T1)', 'tier': 1, 'isMelee': True, 'weaponClass': 'general', 'icon_id': 'weapon_gauntlet_titanium', 'itemBase': { 'physDmg': 30, 'attackCooldown': 75, 'meleeRange': -10, 'knockbackMult': 5.0, 'critChance': 0.15 } },
 
         { 'type': 'weapon', 'name': 'Paslı Mayın (T4)', 'tier': 4, 'isTrapItem': True, 'weaponClass': 'general', 'icon_id': 'weapon_trap_rusty', 'itemBase': { 'trapDmg': 50, 'trapRadius': 80, 'attackCooldown': 1000 } },
         { 'type': 'weapon', 'name': 'Patlayıcı Tuzak (T3)', 'tier': 3, 'isTrapItem': True, 'weaponClass': 'general', 'icon_id': 'weapon_trap_explosive', 'itemBase': { 'trapDmg': 120, 'trapRadius': 100, 'attackCooldown': 800 } },

@@ -16,6 +16,8 @@ class Warrior:
         
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
         
         # Menzilli veya Bomba ise: Menzilli saldırı yap
         if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
@@ -29,7 +31,7 @@ class Warrior:
         # Hasar ve Görsel Belirleme
         # Denge: Sabit 45 yerine silahın physDmg değeri baz alınır (silahla ölçeklenir)
         is_punch = weapon is None
-        dmg_base = (18 + player.stats.get("physDmg", 0)) if not is_punch else 5
+        dmg_base = (18 * player.get_added_damage_effectiveness() + player.stats.get("physDmg", 0)) if not is_punch else 5
         visual_type = "sweep" if not is_punch else "slash"
         visual_timer = 0.15 if not is_punch else 0.1
         
@@ -39,7 +41,8 @@ class Warrior:
         
         # Hasar Kontrolü
         hit_any = False
-        phys_flat = player.stats.get("physDmgFlat", 0)
+        splash_targets = set()
+        phys_flat = player.stats.get("physDmgFlat", 0) * player.get_added_damage_effectiveness()
         dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult() * (1.0 + player.stats.get("physDmgMult", 0))
         
         for e in game.iter_enemies_near(player.x, player.y, range_val + 160):
@@ -54,7 +57,7 @@ class Warrior:
                     if diff < self.attack_arc / 2:
                         import random
                         is_crit = random.random() < player.stats.get("critChance", 0.05)
-                        crit_mult = 2.0 + player.stats.get("critDmg", 0)
+                        crit_mult = player.get_critical_multiplier()
                         final_dmg = dmg * crit_mult if is_crit else dmg
                         # Ateş/Buz yüzde statları melee'de yok sayılıyordu (F6);
                         # menzilli saldırıyla aynı toplamsal formül kullanılır.
@@ -66,22 +69,23 @@ class Warrior:
                         if p_dps > 0: e.apply_dot('poison', (p_dps) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
 
                         # 2. Buz (Sadece DoT, Yavaşlatma Kaldırıldı v1.0.6.6)
-                        f_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats["dmgMult"] * frost_mult
-                        if f_dmg > 0: e.apply_dot('frost', f_dmg * 0.5, 3.5)
+                        f_dmg = player.get_elemental_base("frostDamage","frostDmgFlat") * player.stats["dmgMult"] * frost_mult
+                        if f_dmg > 0: e.apply_dot('frost', f_dmg * 0.5 * (1.0 + player.stats.get('dotDmgMult', 0)), 3.5)
 
                         # 3. Ateş (Patlama + Yanma)
-                        fire_dmg = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats["dmgMult"] * fire_mult
+                        fire_dmg = player.get_elemental_base("fireDamage","fireDmgFlat") * player.stats["dmgMult"] * fire_mult
                         if fire_dmg > 0:
                             # Vuruş anında mini patlama (AoE Pulse)
                             game.add_event("explosion", e.x, e.y, radius=80, color=(255, 100, 0), timer=0.15)
                             # Yakındaki düşmanlara sıçra (Splash)
                             splash_count = 0
                             for other in game.iter_enemies_near(e.x, e.y, 80):
-                                if not other.dead and not other.is_trap and other != e:
+                                if not other.dead and not other.is_trap and other != e and other.id not in splash_targets:
                                     odx = other.x - e.x
                                     ody = other.y - e.y
                                     if odx * odx + ody * ody < 80 * 80:
-                                        other.take_damage(fire_dmg, game, from_player=True)
+                                        splash_targets.add(other.id)
+                                        other.take_damage(fire_dmg * 0.5, game, from_player=True, is_secondary=True)
                                         other.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                                         splash_count += 1
                                         if splash_count >= 10:

@@ -22,6 +22,8 @@ class Bloodwalker:
     # ---- Melee saldırı (Warrior mantığına benzer) ----
     def execute_attack(self, player, game):
         weapon = player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game, weapon):
+            return
         
         # Menzilli / Bomba Kontrolü
         if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
@@ -31,8 +33,8 @@ class Bloodwalker:
         # Yakın Dövüş Hesapla (Silah yoksa Yumruk)
         is_punch = (weapon is None)
         # Denge: Warrior/Ninja gibi sabit taban + silah physDmg (ham hasarda geri kalmasın)
-        dmg_base = (10 + player.stats.get("physDmg", 0)) if not is_punch else 5
-        phys_flat = player.stats.get("physDmgFlat", 0)
+        dmg_base = (10 * player.get_added_damage_effectiveness() + player.stats.get("physDmg", 0)) if not is_punch else 5
+        phys_flat = player.stats.get("physDmgFlat", 0) * player.get_added_damage_effectiveness()
         range_val = (100 + player.stats.get("meleeRangeFlat", 0)) * player.stats.get("meleeRangeMult", 1.0)
         
         # Görsel Efekt
@@ -41,10 +43,11 @@ class Bloodwalker:
 
         dmg = (dmg_base + phys_flat) * player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult() * (1.0 + player.stats.get("physDmgMult", 0))
         is_crit = random.random() < player.stats.get("critChance", 0.05)
-        final_dmg = dmg * (2.0 + player.stats.get("critDmg", 0)) if is_crit else dmg
+        final_dmg = dmg * (player.get_critical_multiplier()) if is_crit else dmg
         
         angle = player.facing_angle
         hit_any = False
+        splash_targets = set()
         
         # (Aşağıdaki düşman döngüsü devam eder...)
         for e in game.iter_enemies_near(player.x, player.y, range_val + 160):
@@ -65,23 +68,24 @@ class Bloodwalker:
                     # Elementel uygulama (Warrior ile aynı mantık)
                     # Element yüzde statları burada hiç okunmuyordu (F6)
                     fire_mult, frost_mult, elem_mult = player.get_elemental_mults()
-                    fire_dmg  = (player.stats.get("fireDmgFlat", 0) + player.stats.get("fireDamage", 0)) * player.stats.get("dmgMult", 1.0) * fire_mult
-                    frost_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats.get("dmgMult", 1.0) * frost_mult
+                    fire_dmg  = player.get_elemental_base("fireDamage","fireDmgFlat") * player.stats.get("dmgMult", 1.0) * fire_mult
+                    frost_dmg = player.get_elemental_base("frostDamage","frostDmgFlat") * player.stats.get("dmgMult", 1.0) * frost_mult
                     p_dps     = player.stats.get("poisonDps", 0) * player.stats.get("dmgMult", 1.0) * elem_mult
 
                     if fire_dmg > 0:
                         audio.play('melee')
                         game.add_event("explosion", e.x, e.y, radius=70, color=(200, 60, 0), timer=0.12)
                         for other in game.iter_enemies_near(e.x, e.y, 70):
-                            if not other.dead and not other.is_trap and other != e:
+                            if not other.dead and not other.is_trap and other != e and other.id not in splash_targets:
                                 odx = other.x - e.x
                                 ody = other.y - e.y
                                 if odx * odx + ody * ody < 70 * 70:
-                                    other.take_damage(fire_dmg, game, from_player=True)
+                                    splash_targets.add(other.id)
+                                    other.take_damage(fire_dmg * 0.5, game, from_player=True, is_secondary=True)
                                     other.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                         e.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                     if frost_dmg > 0:
-                        e.apply_dot('frost', frost_dmg * 0.5, 3.5)
+                        e.apply_dot('frost', frost_dmg * 0.5 * (1.0 + player.stats.get('dotDmgMult', 0)), 3.5)
                     if p_dps > 0:
                         e.apply_dot('poison', (p_dps) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
 

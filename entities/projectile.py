@@ -11,6 +11,23 @@ import audio
 MINE_LIFETIME = 12.0
 
 
+def segment_hit_fraction(x0, y0, x1, y1, cx, cy, radius):
+    """Hareket parçasının çembere ilk giriş zamanı (0..1), yoksa None."""
+    dx, dy = x1-x0, y1-y0
+    ox, oy = x0-cx, y0-cy
+    c = ox*ox+oy*oy-radius*radius
+    if c <= 0:
+        return 0.0
+    a = dx*dx+dy*dy
+    if a <= 1e-12:
+        return None
+    b = 2*(ox*dx+oy*dy)
+    discriminant = b*b-4*a*c
+    if discriminant < 0:
+        return None
+    entry = (-b-math.sqrt(discriminant))/(2*a)
+    return entry if 0 <= entry <= 1 else None
+
 class Projectile:
     def __init__(self, id, x, y, vx, vy, dmg, bounce=0, pierce=0, p_type='normal', aoe=0, lifetime=180, is_hostile=False, is_crit=False, is_returning=False, bounce_dmg_mult=1.0, throw_range=0):
         self.id = id
@@ -76,12 +93,14 @@ class Projectile:
         # havuzlanmıyor (projectile_pool.py yalnızca BossProjectile'ı havuzlar),
         # yine de her mermide açıkça sıfırlanır.
         self._second_blast = False
+        self._fire_pulse_done = False
         
     def update(self, dt, game):
         # Bumerang Geri Dönme Mantığı
         if self.is_returning and not self.has_returned and self.lifetime <= self.initial_lifetime / 2:
             self.has_returned = True
             if not self.is_hostile:
+                self.dmg *= 0.60
                 p = game.players[game.local_player_id]
                 angle = math.atan2(p.y - self.y, p.x - self.x)
                 speed = math.hypot(self.vx, self.vy)
@@ -99,14 +118,13 @@ class Projectile:
                 self.dead = True
                 return
 
+        previous_x, previous_y = self.x, self.y
         self.x += self.vx * dt * 60
         self.y += self.vy * dt * 60
         self.lifetime -= dt * 60
         
         # Sınır Kontrolü (Memory Leak Önlemi)
-        if self.x < -100 or self.x > 5100 or self.y < -100 or self.y > 5100:
-            self.dead = True
-            return
+        outside_world = self.x < -100 or self.x > 5100 or self.y < -100 or self.y > 5100
         
         # Menzil sonunda yere iniş: bulut tam düştüğü yerde oluşur
         if self.airborne:
@@ -120,6 +138,7 @@ class Projectile:
             if self.type == 'bomb':
                 self.explode(game)
             self.dead = True
+            return
             
         # --- BLACK HOLE LOGIC ---
         if self.type == 'black_hole':
@@ -151,6 +170,8 @@ class Projectile:
         # namludan 20px'te doğduğu için her atışta kendini vuruyordu).
         if self.airborne and not self.is_hostile:
             pass
+        elif self.type == 'black_hole' and not self.is_hostile:
+            pass
         elif not self.is_hostile:
             # --- MANYETİK ALAN SAPTIRMASI (Magnetar) ---
             for e in game.iter_enemies_near(self.x, self.y, 400):
@@ -163,14 +184,26 @@ class Projectile:
                             self.vy += random.uniform(-4, 4)
                             break
 
-            for e in game.iter_enemies_near(self.x, self.y, 160):
-                if not e.dead and e.id not in self.hit_history:
-                    dx = e.x - self.x
-                    dy = e.y - self.y
-                    hit_radius = self.radius + e.radius
-                    if dx * dx + dy * dy < hit_radius * hit_radius:
-                        self.on_hit(e, game)
-                        break
+            end_x, end_y = self.x, self.y
+            span = math.hypot(end_x-previous_x, end_y-previous_y)
+            hits = []
+            for e in game.iter_enemies_near((end_x+previous_x)/2, (end_y+previous_y)/2, span/2+160):
+                if e.dead or e.id in self.hit_history:
+                    continue
+                fraction = segment_hit_fraction(previous_x,previous_y,end_x,end_y,e.x,e.y,self.radius+e.radius)
+                if fraction is not None:
+                    hits.append((fraction,e.id,e))
+            for fraction, _, enemy in sorted(hits, key=lambda entry: (entry[0],entry[1])):
+                if enemy.dead or enemy.id in self.hit_history:
+                    continue
+                self.x = previous_x+(end_x-previous_x)*fraction
+                self.y = previous_y+(end_y-previous_y)*fraction
+                bounce_before = self.bounce
+                self.on_hit(enemy,game)
+                if self.dead or self.bounce < bounce_before:
+                    break
+            else:
+                self.x,self.y=end_x,end_y
         else:
             # Düşman Mermisi (Archer, Venom Spider vb.) Oyuncuya Çarptı mı?
             p = game.players[game.local_player_id]
@@ -187,7 +220,7 @@ class Projectile:
                         self.vy += random.uniform(-2, 2)
                         
             dist = math.hypot(p.x - self.x, p.y - self.y)
-            if dist < (self.radius + p.radius):
+            if segment_hit_fraction(previous_x,previous_y,self.x,self.y,p.x,p.y,self.radius+p.radius) is not None:
                 # Bloodwalker Kan Emme aktifse mermileri emerek HP'ye dönüştür
                 # Kimlik kontrolü class_id ile: class_name evrimde evrim adına döner
                 absorb_active = (getattr(p, 'class_id', '') == "bloodwalker" and
@@ -196,6 +229,9 @@ class Projectile:
                     p.last_attacker_type = getattr(self, "owner_type", "bilinmeyen"); p.take_damage(self.dmg)
                 # absorb_active ise bloodwalker_logic.update() zaten emer
                 self.dead = True
+
+        if outside_world:
+            self.dead = True
 
     def land(self, game):
         """Şişe yere değdi: kırılır ve bulutu bırakır.
@@ -237,7 +273,7 @@ class Projectile:
         if self.fire_dmg > 0:
             enemy.apply_dot('fire', self.fire_dmg * 0.5 * _dm, 4.0)
             # Mini Patlama (AoE Pulse) on hit
-            self.explode(game, small=True)
+            self.explode(game, small=True, impact_target=enemy)
 
         if self.frost_dmg > 0:
             enemy.apply_dot('frost', self.frost_dmg * 0.5 * _dm, 4.0)
@@ -318,11 +354,26 @@ class Projectile:
         else:
             self.dead = True
 
-    def explode(self, game, small=False):
+    def explode(self, game, small=False, impact_target=None):
         # AOE Yerine BULUT (Cloud) Oluştur
         radius = self.aoe if not small else self.aoe * 0.4
 
         from entities.cloud import Cloud
+
+        # Delici/sekebilen mermi tek bir alan darbesi üretir; kalıcı bulut yok.
+        if small:
+            if self._fire_pulse_done:
+                return
+            self._fire_pulse_done = True
+            cx, cy = (impact_target.x, impact_target.y) if impact_target is not None else (self.x,self.y)
+            game.add_event("explosion", cx, cy, radius=radius, color=self.color, timer=0.2)
+            for enemy in game.iter_enemies_near(cx, cy, radius):
+                if enemy.dead or enemy.is_trap:
+                    continue
+                if (enemy.x-cx)**2 + (enemy.y-cy)**2 < radius**2:
+                    enemy.take_damage(self.fire_dmg * 0.5, game, from_player=not self.is_hostile, is_secondary=True)
+                    enemy.apply_dot("fire", self.fire_dmg * 0.4 * getattr(self,"dot_mult",1.0),3.0)
+            return
 
         # --- BOMBACI: patlama yerine tetiklemeli MAYIN ---
         # Anlık hasar vermez; düşman yaklaşana kadar yerde bekler. Hasarı
@@ -332,12 +383,12 @@ class Projectile:
         audio.play('explosion')
         if self.becomes_mine and not small:
             mine_radius = radius * self.mine_radius_mult
-            burst = (self.dmg + self.fire_dmg + self.poison_dps) * self.mine_dmg_mult
+            burst = (self.dmg + (self.fire_dmg + self.frost_dmg) * getattr(self, 'hit_crit_mult', 1.0) + self.poison_dps) * self.mine_dmg_mult
             game.entity_id_counter += 1
             game.clouds.append(Cloud(game.entity_id_counter, self.x, self.y,
                                      radius=mine_radius,
                                      duration=MINE_LIFETIME,
-                                     is_mine=True, mine_dmg=burst))
+                                     is_mine=True, mine_dmg=burst, is_crit=self.is_crit))
             game.add_event("explosion", self.x, self.y, radius=int(mine_radius * 0.3),
                            color=(255, 140, 40), timer=0.12)
             return
@@ -345,9 +396,9 @@ class Projectile:
         new_cloud = Cloud(game.entity_id_counter, self.x, self.y,
                          radius=radius,
                          duration=1.3 * self.cloud_duration_mult,  # Simyacı bunu uzatır
-                         poison_dps=self.poison_dps,
-                         fire_dmg=self.fire_dmg,
-                         frost_dmg=self.frost_dmg)
+                         poison_dps=self.poison_dps * getattr(self, "dot_mult", 1.0),
+                         fire_dmg=self.fire_dmg * getattr(self, "dot_mult", 1.0),
+                         frost_dmg=self.frost_dmg * getattr(self, "dot_mult", 1.0))
         # --- AOE HASAR (Özellikle Ateş Patlaması için) ---
         if self.fire_dmg > 0:
             for e in game.iter_enemies_near(self.x, self.y, radius):
@@ -359,7 +410,7 @@ class Projectile:
                         # Ejder minyonunun alan hasarı da minion_kills sayılır
                         e.last_hit_by_minion = getattr(self, "is_minion_proj", False)
                         try:
-                            e.take_damage(self.fire_dmg, game, from_player=not self.is_hostile)
+                            e.take_damage(self.fire_dmg, game, from_player=not self.is_hostile, is_secondary=True)
                         finally:
                             e.last_hit_by_minion = False
                         # DoT da ekleyelim (Patlamadan etkilenen yanar).
@@ -410,7 +461,7 @@ class Projectile:
                         continue
                     dx, dy = e.x - self.x, e.y - self.y
                     if dx * dx + dy * dy <= r * r:
-                        e.take_damage(self.dmg * 0.5, game, from_player=True)
+                        e.take_damage(self.dmg * 0.5, game, from_player=True, is_secondary=True)
 
     def find_next_target(self, game, current_id):
         next_target = None
