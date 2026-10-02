@@ -553,7 +553,7 @@ class LauncherApp:
         canvas.create_image(vx, vy + T, anchor='nw', image=img['version_box.png'])
         self.version_label = _CanvasText(canvas, canvas.create_text(
             vx + vw // 2, vy + T + 32, text=(
-                f"OYUN      v{get_local_version()}\n"
+                f"OYUN      v{get_local_version(self.install_dir)}\n"
                 f"LAUNCHER  v{LAUNCHER_VERSION}"),
             fill=c['muted'], font=("Consolas", 9, "bold"), justify=tk.CENTER))
 
@@ -765,7 +765,7 @@ class LauncherApp:
         version_box.pack(side=tk.RIGHT, anchor='n', pady=4)
         self.version_label = tk.Label(
             version_box,
-            text=f"OYUN  v{get_local_version()}\nLAUNCHER  v{LAUNCHER_VERSION}",
+            text=f"OYUN  v{get_local_version(self.install_dir)}\nLAUNCHER  v{LAUNCHER_VERSION}",
             font=("Consolas", 9, "bold"), fg=self.colors['muted'],
             bg=self.colors['panel_alt'], justify=tk.LEFT,
         )
@@ -891,7 +891,7 @@ class LauncherApp:
                     return
                 self.release_info = release_info
                 remote_ver = release_info['version']
-                local_ver = get_local_version()
+                local_ver = get_local_version(self.install_dir)
                 min_lv = release_info.get('min_launcher_version', '1.0.0')
 
                 # Launcher KENDİNİ güncelleyemez (güncelleme ZIP'i Launcher.exe
@@ -996,7 +996,7 @@ class LauncherApp:
                     "Güncelleme uygulanıyor", self.colors['gold'],
                     "Kayıt dosyaların korunarak oyun dosyaları yenileniyor.",
                 )
-                perform_update(zip_path, self.install_dir)
+                perform_update(zip_path, self.install_dir, expected_version=info['version'])
                 self._set_status(
                     "Güncelleme tamamlandı", self.colors['green'],
                     "Yeni sürüm hazır. Oyuna başlayabilirsin.",
@@ -1005,7 +1005,7 @@ class LauncherApp:
                 self.root.after(
                     0,
                     lambda: self.version_label.configure(
-                        text=f"OYUN  v{info['version']}\nLAUNCHER  v{LAUNCHER_VERSION}"
+                        text=f"OYUN  v{get_local_version(self.install_dir)}\nLAUNCHER  v{LAUNCHER_VERSION}"
                     ),
                 )
                 success = True
@@ -1035,7 +1035,7 @@ class LauncherApp:
     def _show_update_available(self):
         self._stop_progress(0)
         remote = self.release_info['version']
-        local = get_local_version()
+        local = get_local_version(self.install_dir)
         size = self.release_info.get('size', 0)
         size_text = f" • {size / (1024 * 1024):.1f} MB" if size else ""
         self._set_status(

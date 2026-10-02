@@ -205,5 +205,54 @@ class TestLocalVersion(unittest.TestCase):
                 os.chdir(original_cwd)
 
 
+
+
+class TestInstalledVersionRegression(unittest.TestCase):
+    def test_bom_version_does_not_request_update_again(self):
+        with tempfile.TemporaryDirectory() as install_dir:
+            with open(os.path.join(install_dir, 'version.txt'), 'w', encoding='utf-8-sig') as f:
+                f.write('1.20.0')
+            installed = get_local_version(install_dir)
+            self.assertEqual(installed, '1.20.0')
+            self.assertEqual(compare_versions('1.20.0', installed), 0)
+
+    def test_version_uses_install_folder(self):
+        with tempfile.TemporaryDirectory() as install_dir:
+            with open(os.path.join(install_dir, 'version.txt'), 'w', encoding='utf-8') as f:
+                f.write('1.20.0')
+            self.assertEqual(get_local_version(install_dir), '1.20.0')
+
+    def test_wrong_package_keeps_previous_game(self):
+        with tempfile.TemporaryDirectory() as install_dir:
+            game = os.path.join(install_dir, 'Boxhead.exe')
+            with open(game, 'wb') as f:
+                f.write(b'old game')
+            with open(os.path.join(install_dir, 'version.txt'), 'w') as f:
+                f.write('1.19.0')
+            zp = os.path.join(install_dir, 'update.zip')
+            with zipfile.ZipFile(zp, 'w') as zf:
+                zf.writestr('version.txt', '1.18.0')
+                zf.writestr('Boxhead.exe', b'wrong game')
+            with self.assertRaises(ValueError):
+                perform_update(zp, install_dir, expected_version='1.20.0')
+            with open(game, 'rb') as f:
+                self.assertEqual(f.read(), b'old game')
+            self.assertEqual(get_local_version(install_dir), '1.19.0')
+
+    def test_bom_update_survives_next_launcher_check(self):
+        with tempfile.TemporaryDirectory() as install_dir:
+            saves = os.path.join(install_dir, 'saves')
+            os.mkdir(saves)
+            with open(os.path.join(saves, 'meta.json'), 'w') as f:
+                f.write('saved progress')
+            zp = os.path.join(install_dir, 'update.zip')
+            with zipfile.ZipFile(zp, 'w') as zf:
+                zf.writestr('version.txt', b'\xef\xbb\xbf1.20.0')
+                zf.writestr('Boxhead.exe', b'new game')
+            perform_update(zp, install_dir, expected_version='1.20.0')
+            self.assertEqual(compare_versions('1.20.0', get_local_version(install_dir)), 0)
+            with open(os.path.join(saves, 'meta.json')) as f:
+                self.assertEqual(f.read(), 'saved progress')
+
 if __name__ == '__main__':
     unittest.main()

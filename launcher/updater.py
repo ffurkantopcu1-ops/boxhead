@@ -86,10 +86,11 @@ def _ipv4_first_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
 socket.getaddrinfo = _ipv4_first_getaddrinfo
 
 
-def get_local_version() -> str:
-    """Read local version from version.txt."""
+def get_local_version(install_dir: Optional[str] = None) -> str:
+    """Read the installed version, including Windows UTF-8 BOM files."""
     try:
-        with open(VERSION_FILE, 'r', encoding='utf-8') as f:
+        version_path = os.path.join(install_dir, VERSION_FILE) if install_dir else VERSION_FILE
+        with open(version_path, 'r', encoding='utf-8-sig') as f:
             return f.read().strip()
     except (FileNotFoundError, OSError):
         return '0.0.0'
@@ -281,7 +282,7 @@ def download_file(
         raise
 
 
-def perform_update(zip_path: str, install_dir: str) -> None:
+def perform_update(zip_path: str, install_dir: str, expected_version: Optional[str] = None) -> None:
     """Extract update to staging, backup old installation, apply atomically.
     Rolls back on any error. Never touches saves/ directory.
     """
@@ -301,6 +302,16 @@ def perform_update(zip_path: str, install_dir: str) -> None:
         os.makedirs(staging, exist_ok=True)
         with zipfile.ZipFile(zip_path, 'r') as zf:
             zf.extractall(staging)
+
+        if expected_version is not None:
+            installed_version = get_local_version(staging)
+            if installed_version != expected_version.lstrip('v').strip():
+                raise ValueError(
+                    f'Paket surumu uyusmuyor: {installed_version}; '
+                    f'beklenen: {expected_version}'
+                )
+            if not os.path.isfile(os.path.join(staging, GAME_EXE)):
+                raise ValueError('Guncelleme paketinde Boxhead.exe bulunamadi')
 
         # Backup current files (exclude saves, staging, backup)
         os.makedirs(backup, exist_ok=True)

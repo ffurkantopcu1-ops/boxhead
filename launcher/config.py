@@ -27,4 +27,4 @@ RETRY_DELAY = 0.35
 #   eskisini kullanıyorsa engellenmeden bilgilendirilir.
 MIN_LAUNCHER_VERSION = "1.0.0"
 # 1.1.0: görev çubuğu düğmesi düzeltmesi (v1.13.1) + uygulama ikonu (v1.13.2)
-LAUNCHER_VERSION = "1.1.0"
+LAUNCHER_VERSION = "1.1.1"
