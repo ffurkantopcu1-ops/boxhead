@@ -758,10 +758,10 @@
   {
     "id": "engineer_main_2",
     "name": "Engineer Gelişimi 2",
-    "desc": "+5 Zırh, cooldownReduction 0.04",
+    "desc": "+5 Zırh, +%4 Yetenek Bekleme Azaltma",
     "arm": "engineer",
     "type": "minor",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "armor": 5,
       "cooldownReduction": 0.04
@@ -777,7 +777,7 @@
   {
     "id": "engineer_main_3",
     "name": "Engineer Gelişimi 3",
-    "desc": "cooldownReduction 0.04, +1 Taret Limiti",
+    "desc": "+%4 Yetenek Bekleme Azaltma, +1 Taret Limiti",
     "arm": "engineer",
     "type": "minor",
     "cat": "turret",
@@ -834,7 +834,7 @@
   {
     "id": "engineer_notable_core",
     "name": "⚜️ Engineer Ustalığı",
-    "desc": "+60 Taret Canı, +10 Zırh, cooldownReduction 0.08",
+    "desc": "+60 Taret Canı, +10 Zırh, +%8 Yetenek Bekleme Azaltma",
     "arm": "engineer",
     "type": "notable",
     "cat": "turret",
@@ -874,10 +874,10 @@
   {
     "id": "engineer_path1_2",
     "name": "Engineer Gelişimi 2",
-    "desc": "+5 Zırh, cooldownReduction 0.04",
+    "desc": "+5 Zırh, +%4 Yetenek Bekleme Azaltma",
     "arm": "engineer",
     "type": "minor",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "armor": 5,
       "cooldownReduction": 0.04
@@ -893,7 +893,7 @@
   {
     "id": "engineer_path1_3",
     "name": "Engineer İleri Ustalığı",
-    "desc": "cooldownReduction 0.06, +2 Taret Limiti",
+    "desc": "+%6 Yetenek Bekleme Azaltma, +2 Taret Limiti",
     "arm": "engineer",
     "type": "notable",
     "cat": "turret",
@@ -989,10 +989,10 @@
   {
     "id": "engineer_path2_2",
     "name": "Engineer Gelişimi 2",
-    "desc": "+5 Zırh, cooldownReduction 0.04",
+    "desc": "+5 Zırh, +%4 Yetenek Bekleme Azaltma",
     "arm": "engineer",
     "type": "minor",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "armor": 5,
       "cooldownReduction": 0.04
@@ -1008,7 +1008,7 @@
   {
     "id": "engineer_path2_3",
     "name": "Engineer Gelişimi 3",
-    "desc": "cooldownReduction 0.04, +1 Taret Limiti",
+    "desc": "+%4 Yetenek Bekleme Azaltma, +1 Taret Limiti",
     "arm": "engineer",
     "type": "minor",
     "cat": "turret",
@@ -1065,7 +1065,7 @@
   {
     "id": "engineer_keystone_2",
     "name": "🔩 Çelik Ağ",
-    "desc": "+200 Taret Canı, cooldownReduction 0.2, -%15 Taret Hasarı",
+    "desc": "+200 Taret Canı, +%20 Yetenek Bekleme Azaltma, -%15 Taret Hasarı",
     "arm": "engineer",
     "type": "keystone",
     "cat": "turret",
@@ -1100,7 +1100,7 @@
   {
     "id": "beastmaster_main_1",
     "name": "Beastmaster Gelişimi 1",
-    "desc": "minionMaxHp 0.1, +%5 Minyon Saldırı Hızı",
+    "desc": "+%10 Minyon Canı, +%5 Minyon Saldırı Hızı",
     "arm": "beastmaster",
     "type": "minor",
     "cat": "minion",
@@ -1195,7 +1195,7 @@
   {
     "id": "beastmaster_notable_core",
     "name": "⚜️ Beastmaster Ustalığı",
-    "desc": "minionMaxHp 0.2, +%10 Minyon Saldırı Hızı, +10 Minyon Zırhı",
+    "desc": "+%20 Minyon Canı, +%10 Minyon Saldırı Hızı, +10 Minyon Zırhı",
     "arm": "beastmaster",
     "type": "notable",
     "cat": "minion",
@@ -1216,7 +1216,7 @@
   {
     "id": "beastmaster_path1_1",
     "name": "Beastmaster Gelişimi 1",
-    "desc": "minionMaxHp 0.1, +%5 Minyon Saldırı Hızı",
+    "desc": "+%10 Minyon Canı, +%5 Minyon Saldırı Hızı",
     "arm": "beastmaster",
     "type": "minor",
     "cat": "minion",
@@ -1311,7 +1311,7 @@
   {
     "id": "beastmaster_keystone_1",
     "name": "🐺 Alfa Kurdu",
-    "desc": "+%30 Minyon Hasarı, minionMaxHp 0.3, -%12 Minyon Saldırı Hızı",
+    "desc": "+%30 Minyon Hasarı, +%30 Minyon Canı, -%12 Minyon Saldırı Hızı",
     "arm": "beastmaster",
     "type": "keystone",
     "cat": "minion",
@@ -1331,7 +1331,7 @@
   {
     "id": "beastmaster_path2_1",
     "name": "Beastmaster Gelişimi 1",
-    "desc": "minionMaxHp 0.1, +%5 Minyon Saldırı Hızı",
+    "desc": "+%10 Minyon Canı, +%5 Minyon Saldırı Hızı",
     "arm": "beastmaster",
     "type": "minor",
     "cat": "minion",
@@ -1426,7 +1426,7 @@
   {
     "id": "beastmaster_keystone_2",
     "name": "🦅 Vahşi Sürü",
-    "desc": "minionProjectileCount 2, +%15 Minyon Saldırı Hızı, -%15 Minyon Hasarı",
+    "desc": "+2 Minyon Mermisi, +%15 Minyon Saldırı Hızı, -%15 Minyon Hasarı",
     "arm": "beastmaster",
     "type": "keystone",
     "cat": "minion",
@@ -1461,10 +1461,10 @@
   {
     "id": "bomber_main_1",
     "name": "Bomber Gelişimi 1",
-    "desc": "+%5 Hasar, cooldownReduction 0.05",
+    "desc": "+%5 Hasar, +%5 Yetenek Bekleme Azaltma",
     "arm": "bomber",
     "type": "minor",
-    "cat": "damage",
+    "cat": "utility",
     "stats": {
       "dmgMult": 0.05,
       "cooldownReduction": 0.05
@@ -1480,7 +1480,7 @@
   {
     "id": "bomber_main_2",
     "name": "Bomber Gelişimi 2",
-    "desc": "cooldownReduction 0.05, +20 Toplama Alanı",
+    "desc": "+%5 Yetenek Bekleme Azaltma, +20 Toplama Alanı",
     "arm": "bomber",
     "type": "minor",
     "cat": "utility",
@@ -1518,7 +1518,7 @@
   {
     "id": "bomber_main_4",
     "name": "Bomber Gelişimi 4",
-    "desc": "+%5 Ateş Hasarı, aoe 0.05",
+    "desc": "+%5 Ateş Hasarı, +%5 Alan Etkisi",
     "arm": "bomber",
     "type": "minor",
     "cat": "element",
@@ -1537,10 +1537,10 @@
   {
     "id": "bomber_main_5",
     "name": "Bomber Gelişimi 5",
-    "desc": "aoe 0.05, +%5 Hasar",
+    "desc": "+%5 Alan Etkisi, +%5 Hasar",
     "arm": "bomber",
     "type": "minor",
-    "cat": "damage",
+    "cat": "dot",
     "stats": {
       "aoe": 0.05,
       "dmgMult": 0.05
@@ -1556,7 +1556,7 @@
   {
     "id": "bomber_notable_core",
     "name": "⚜️ Bomber Ustalığı",
-    "desc": "+%10 Hasar, cooldownReduction 0.1, +40 Toplama Alanı",
+    "desc": "+%10 Hasar, +%10 Yetenek Bekleme Azaltma, +40 Toplama Alanı",
     "arm": "bomber",
     "type": "notable",
     "cat": "utility",
@@ -1577,10 +1577,10 @@
   {
     "id": "bomber_path1_1",
     "name": "Bomber Gelişimi 1",
-    "desc": "+%5 Hasar, cooldownReduction 0.05",
+    "desc": "+%5 Hasar, +%5 Yetenek Bekleme Azaltma",
     "arm": "bomber",
     "type": "minor",
-    "cat": "damage",
+    "cat": "utility",
     "stats": {
       "dmgMult": 0.05,
       "cooldownReduction": 0.05
@@ -1596,7 +1596,7 @@
   {
     "id": "bomber_path1_2",
     "name": "Bomber Gelişimi 2",
-    "desc": "cooldownReduction 0.05, +20 Toplama Alanı",
+    "desc": "+%5 Yetenek Bekleme Azaltma, +20 Toplama Alanı",
     "arm": "bomber",
     "type": "minor",
     "cat": "utility",
@@ -1615,7 +1615,7 @@
   {
     "id": "bomber_path1_3",
     "name": "Bomber İleri Ustalığı",
-    "desc": "+30 Toplama Alanı, +%8 Ateş Hasarı",
+    "desc": "+30 Toplama Alanı, +%7.5 Ateş Hasarı",
     "arm": "bomber",
     "type": "notable",
     "cat": "utility",
@@ -1634,7 +1634,7 @@
   {
     "id": "bomber_path1_4",
     "name": "Bomber Gelişimi 4",
-    "desc": "+%5 Ateş Hasarı, aoe 0.05",
+    "desc": "+%5 Ateş Hasarı, +%5 Alan Etkisi",
     "arm": "bomber",
     "type": "minor",
     "cat": "element",
@@ -1653,10 +1653,10 @@
   {
     "id": "bomber_path1_5",
     "name": "Bomber Gelişimi 5",
-    "desc": "aoe 0.05, +%5 Hasar",
+    "desc": "+%5 Alan Etkisi, +%5 Hasar",
     "arm": "bomber",
     "type": "minor",
-    "cat": "damage",
+    "cat": "dot",
     "stats": {
       "aoe": 0.05,
       "dmgMult": 0.05
@@ -1672,7 +1672,7 @@
   {
     "id": "bomber_keystone_1",
     "name": "💣 Patlayıcı Uzmanı",
-    "desc": "aoe 0.4, +%20 Ateş Hasarı, -%12 Saldırı Hızı",
+    "desc": "+%40 Alan Etkisi, +%20 Ateş Hasarı, -%12 Saldırı Hızı",
     "arm": "bomber",
     "type": "keystone",
     "cat": "element",
@@ -1692,10 +1692,10 @@
   {
     "id": "bomber_path2_1",
     "name": "Bomber Gelişimi 1",
-    "desc": "+%5 Hasar, cooldownReduction 0.05",
+    "desc": "+%5 Hasar, +%5 Yetenek Bekleme Azaltma",
     "arm": "bomber",
     "type": "minor",
-    "cat": "damage",
+    "cat": "utility",
     "stats": {
       "dmgMult": 0.05,
       "cooldownReduction": 0.05
@@ -1711,7 +1711,7 @@
   {
     "id": "bomber_path2_2",
     "name": "Bomber Gelişimi 2",
-    "desc": "cooldownReduction 0.05, +20 Toplama Alanı",
+    "desc": "+%5 Yetenek Bekleme Azaltma, +20 Toplama Alanı",
     "arm": "bomber",
     "type": "minor",
     "cat": "utility",
@@ -1749,7 +1749,7 @@
   {
     "id": "bomber_path2_4",
     "name": "Bomber Gelişimi 4",
-    "desc": "+%5 Ateş Hasarı, aoe 0.05",
+    "desc": "+%5 Ateş Hasarı, +%5 Alan Etkisi",
     "arm": "bomber",
     "type": "minor",
     "cat": "element",
@@ -1768,10 +1768,10 @@
   {
     "id": "bomber_path2_5",
     "name": "Bomber Gelişimi 5",
-    "desc": "aoe 0.05, +%5 Hasar",
+    "desc": "+%5 Alan Etkisi, +%5 Hasar",
     "arm": "bomber",
     "type": "minor",
-    "cat": "damage",
+    "cat": "dot",
     "stats": {
       "aoe": 0.05,
       "dmgMult": 0.05
@@ -1787,10 +1787,10 @@
   {
     "id": "bomber_keystone_2",
     "name": "🔥 Zincirleme Reaksiyon",
-    "desc": "+%30 Hasar, cooldownReduction 0.2, Max Can %15 azalır",
+    "desc": "+%30 Hasar, +%20 Yetenek Bekleme Azaltma, Max Can %15 azalır",
     "arm": "bomber",
     "type": "keystone",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "dmgMult": 0.3,
       "cooldownReduction": 0.2,
@@ -1822,10 +1822,10 @@
   {
     "id": "alchemist_main_1",
     "name": "Alchemist Gelişimi 1",
-    "desc": "aoe 0.04, +0.3 Hareket Hızı",
+    "desc": "+%4 Alan Etkisi, +0.3 Hareket Hızı",
     "arm": "alchemist",
     "type": "minor",
-    "cat": "defense",
+    "cat": "dot",
     "stats": {
       "aoe": 0.04,
       "speed": 0.3
@@ -1898,7 +1898,7 @@
   {
     "id": "alchemist_main_5",
     "name": "Alchemist Gelişimi 5",
-    "desc": "+%5 DoT Hasarı, aoe 0.04",
+    "desc": "+%5 DoT Hasarı, +%4 Alan Etkisi",
     "arm": "alchemist",
     "type": "minor",
     "cat": "dot",
@@ -1917,10 +1917,10 @@
   {
     "id": "alchemist_notable_core",
     "name": "⚜️ Alchemist Ustalığı",
-    "desc": "aoe 0.08, +0.6 Hareket Hızı, +%4 Kaçınma",
+    "desc": "+%8 Alan Etkisi, +0.6 Hareket Hızı, +%4 Kaçınma",
     "arm": "alchemist",
     "type": "notable",
-    "cat": "defense",
+    "cat": "dot",
     "stats": {
       "aoe": 0.08,
       "speed": 0.6,
@@ -1938,10 +1938,10 @@
   {
     "id": "alchemist_path1_1",
     "name": "Alchemist Gelişimi 1",
-    "desc": "aoe 0.04, +0.3 Hareket Hızı",
+    "desc": "+%4 Alan Etkisi, +0.3 Hareket Hızı",
     "arm": "alchemist",
     "type": "minor",
-    "cat": "defense",
+    "cat": "dot",
     "stats": {
       "aoe": 0.04,
       "speed": 0.3
@@ -2014,7 +2014,7 @@
   {
     "id": "alchemist_path1_5",
     "name": "Alchemist Gelişimi 5",
-    "desc": "+%5 DoT Hasarı, aoe 0.04",
+    "desc": "+%5 DoT Hasarı, +%4 Alan Etkisi",
     "arm": "alchemist",
     "type": "minor",
     "cat": "dot",
@@ -2033,7 +2033,7 @@
   {
     "id": "alchemist_keystone_1",
     "name": "🧪 Zehir Ustası",
-    "desc": "+%40 DoT Hasarı, aoe 0.15, Max Can %10 azalır",
+    "desc": "+%40 DoT Hasarı, +%15 Alan Etkisi, Max Can %10 azalır",
     "arm": "alchemist",
     "type": "keystone",
     "cat": "dot",
@@ -2053,10 +2053,10 @@
   {
     "id": "alchemist_path2_1",
     "name": "Alchemist Gelişimi 1",
-    "desc": "aoe 0.04, +0.3 Hareket Hızı",
+    "desc": "+%4 Alan Etkisi, +0.3 Hareket Hızı",
     "arm": "alchemist",
     "type": "minor",
-    "cat": "defense",
+    "cat": "dot",
     "stats": {
       "aoe": 0.04,
       "speed": 0.3
@@ -2129,7 +2129,7 @@
   {
     "id": "alchemist_path2_5",
     "name": "Alchemist Gelişimi 5",
-    "desc": "+%5 DoT Hasarı, aoe 0.04",
+    "desc": "+%5 DoT Hasarı, +%4 Alan Etkisi",
     "arm": "alchemist",
     "type": "minor",
     "cat": "dot",
@@ -2203,10 +2203,10 @@
   {
     "id": "sorcerer_main_2",
     "name": "Sorcerer Gelişimi 2",
-    "desc": "+5 ES Yenilenme, cooldownReduction 0.04",
+    "desc": "+5 ES Yenilenme, +%4 Yetenek Bekleme Azaltma",
     "arm": "sorcerer",
     "type": "minor",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "esRegen": 5,
       "cooldownReduction": 0.04
@@ -2222,10 +2222,10 @@
   {
     "id": "sorcerer_main_3",
     "name": "Sorcerer Gelişimi 3",
-    "desc": "cooldownReduction 0.04, +1 Delme",
+    "desc": "+%4 Yetenek Bekleme Azaltma, +1 Delme",
     "arm": "sorcerer",
     "type": "minor",
-    "cat": "damage",
+    "cat": "utility",
     "stats": {
       "cooldownReduction": 0.04,
       "pierce": 1
@@ -2279,10 +2279,10 @@
   {
     "id": "sorcerer_notable_core",
     "name": "⚜️ Sorcerer Ustalığı",
-    "desc": "+60 Enerji Kalkanı, +10 ES Yenilenme, cooldownReduction 0.08",
+    "desc": "+60 Enerji Kalkanı, +10 ES Yenilenme, +%8 Yetenek Bekleme Azaltma",
     "arm": "sorcerer",
     "type": "notable",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "maxEnergyShield": 60,
       "esRegen": 10,
@@ -2319,10 +2319,10 @@
   {
     "id": "sorcerer_path1_2",
     "name": "Sorcerer Gelişimi 2",
-    "desc": "+5 ES Yenilenme, cooldownReduction 0.04",
+    "desc": "+5 ES Yenilenme, +%4 Yetenek Bekleme Azaltma",
     "arm": "sorcerer",
     "type": "minor",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "esRegen": 5,
       "cooldownReduction": 0.04
@@ -2338,10 +2338,10 @@
   {
     "id": "sorcerer_path1_3",
     "name": "Sorcerer İleri Ustalığı",
-    "desc": "cooldownReduction 0.06, +2 Delme",
+    "desc": "+%6 Yetenek Bekleme Azaltma, +2 Delme",
     "arm": "sorcerer",
     "type": "notable",
-    "cat": "damage",
+    "cat": "utility",
     "stats": {
       "cooldownReduction": 0.06,
       "pierce": 1.5
@@ -2434,10 +2434,10 @@
   {
     "id": "sorcerer_path2_2",
     "name": "Sorcerer Gelişimi 2",
-    "desc": "+5 ES Yenilenme, cooldownReduction 0.04",
+    "desc": "+5 ES Yenilenme, +%4 Yetenek Bekleme Azaltma",
     "arm": "sorcerer",
     "type": "minor",
-    "cat": "defense",
+    "cat": "utility",
     "stats": {
       "esRegen": 5,
       "cooldownReduction": 0.04
@@ -2453,10 +2453,10 @@
   {
     "id": "sorcerer_path2_3",
     "name": "Sorcerer Gelişimi 3",
-    "desc": "cooldownReduction 0.04, +1 Delme",
+    "desc": "+%4 Yetenek Bekleme Azaltma, +1 Delme",
     "arm": "sorcerer",
     "type": "minor",
-    "cat": "damage",
+    "cat": "utility",
     "stats": {
       "cooldownReduction": 0.04,
       "pierce": 1
@@ -2583,7 +2583,7 @@
   {
     "id": "bloodwalker_main_3",
     "name": "Bloodwalker Gelişimi 3",
-    "desc": "+%5 Fiziksel Hasar, lowHpExec 0.05",
+    "desc": "+%5 Fiziksel Hasar, %5 canın altında İnfaz",
     "arm": "bloodwalker",
     "type": "minor",
     "cat": "damage",
@@ -2602,7 +2602,7 @@
   {
     "id": "bloodwalker_main_4",
     "name": "Bloodwalker Gelişimi 4",
-    "desc": "lowHpExec 0.05, +%3 Can Çalma",
+    "desc": "%5 canın altında İnfaz, +%3 Can Çalma",
     "arm": "bloodwalker",
     "type": "minor",
     "cat": "defense",
@@ -2699,7 +2699,7 @@
   {
     "id": "bloodwalker_path1_3",
     "name": "Bloodwalker İleri Ustalığı",
-    "desc": "+%8 Fiziksel Hasar, lowHpExec 0.075",
+    "desc": "+%7.5 Fiziksel Hasar, %7.5 canın altında İnfaz",
     "arm": "bloodwalker",
     "type": "notable",
     "cat": "damage",
@@ -2718,7 +2718,7 @@
   {
     "id": "bloodwalker_path1_4",
     "name": "Bloodwalker Gelişimi 4",
-    "desc": "lowHpExec 0.05, +%3 Can Çalma",
+    "desc": "%5 canın altında İnfaz, +%3 Can Çalma",
     "arm": "bloodwalker",
     "type": "minor",
     "cat": "defense",
@@ -2814,7 +2814,7 @@
   {
     "id": "bloodwalker_path2_3",
     "name": "Bloodwalker Gelişimi 3",
-    "desc": "+%5 Fiziksel Hasar, lowHpExec 0.05",
+    "desc": "+%5 Fiziksel Hasar, %5 canın altında İnfaz",
     "arm": "bloodwalker",
     "type": "minor",
     "cat": "damage",
@@ -2833,7 +2833,7 @@
   {
     "id": "bloodwalker_path2_4",
     "name": "Bloodwalker Gelişimi 4",
-    "desc": "lowHpExec 0.05, +%3 Can Çalma",
+    "desc": "%5 canın altında İnfaz, +%3 Can Çalma",
     "arm": "bloodwalker",
     "type": "minor",
     "cat": "defense",
@@ -2871,7 +2871,7 @@
   {
     "id": "bloodwalker_keystone_2",
     "name": "💀 Ölümcül Hasat",
-    "desc": "+%30 Fiziksel Hasar, lowHpExec 0.15, Max Can %15 azalır",
+    "desc": "+%30 Fiziksel Hasar, %15 canın altında İnfaz, Max Can %15 azalır",
     "arm": "bloodwalker",
     "type": "keystone",
     "cat": "defense",
@@ -2963,7 +2963,7 @@
   {
     "id": "ninja_main_4",
     "name": "Ninja Gelişimi 4",
-    "desc": "+%5 Boss Hasarı, killComboDmg 0.02",
+    "desc": "+%5 Boss Hasarı, Kombo başına +%2 Hasar",
     "arm": "ninja",
     "type": "minor",
     "cat": "damage",
@@ -2982,7 +2982,7 @@
   {
     "id": "ninja_main_5",
     "name": "Ninja Gelişimi 5",
-    "desc": "killComboDmg 0.02, +%5 Saldırı Hızı",
+    "desc": "Kombo başına +%2 Hasar, +%5 Saldırı Hızı",
     "arm": "ninja",
     "type": "minor",
     "cat": "damage",
@@ -3060,7 +3060,7 @@
   {
     "id": "ninja_path1_3",
     "name": "Ninja İleri Ustalığı",
-    "desc": "+%6 Kritik Şans, +%8 Boss Hasarı",
+    "desc": "+%6 Kritik Şans, +%7.5 Boss Hasarı",
     "arm": "ninja",
     "type": "notable",
     "cat": "damage",
@@ -3079,7 +3079,7 @@
   {
     "id": "ninja_path1_4",
     "name": "Ninja Gelişimi 4",
-    "desc": "+%5 Boss Hasarı, killComboDmg 0.02",
+    "desc": "+%5 Boss Hasarı, Kombo başına +%2 Hasar",
     "arm": "ninja",
     "type": "minor",
     "cat": "damage",
@@ -3098,7 +3098,7 @@
   {
     "id": "ninja_path1_5",
     "name": "Ninja Gelişimi 5",
-    "desc": "killComboDmg 0.02, +%5 Saldırı Hızı",
+    "desc": "Kombo başına +%2 Hasar, +%5 Saldırı Hızı",
     "arm": "ninja",
     "type": "minor",
     "cat": "damage",
@@ -3194,7 +3194,7 @@
   {
     "id": "ninja_path2_4",
     "name": "Ninja Gelişimi 4",
-    "desc": "+%5 Boss Hasarı, killComboDmg 0.02",
+    "desc": "+%5 Boss Hasarı, Kombo başına +%2 Hasar",
     "arm": "ninja",
     "type": "minor",
     "cat": "damage",
@@ -3213,7 +3213,7 @@
   {
     "id": "ninja_path2_5",
     "name": "Ninja Gelişimi 5",
-    "desc": "killComboDmg 0.02, +%5 Saldırı Hızı",
+    "desc": "Kombo başına +%2 Hasar, +%5 Saldırı Hızı",
     "arm": "ninja",
     "type": "minor",
     "cat": "damage",

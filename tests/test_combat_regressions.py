@@ -235,3 +235,10 @@ def test_void_staff_projectile_draw_does_not_crash():
     surface = pygame.Surface((64, 64))
     projectile = Projectile(1, 32, 32, 1, 0, 10, p_type="black_hole")
     projectile.draw(surface, 0, 0)
+
+def test_all_generated_stats_have_player_facing_labels():
+    import runpy
+    root = Path(__file__).resolve().parents[1]
+    generator = runpy.run_path(str(root / "tools" / "generate_skill_tree.py"))
+    used = {key for node in generator["generate"]() for key in node["stats"]}
+    assert used <= set(generator["STAT_LABEL"])

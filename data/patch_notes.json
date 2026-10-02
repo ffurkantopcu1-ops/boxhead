@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.20.2",
+      "date": "2026-10-02",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "Yeni ağaçtaki bütün stat açıklamaları Türkçe adlarla gösteriliyor; küçük yüzde bonusları sıfıra yuvarlanmıyor."
+        ]
+      }
+    },
+    {
       "version": "1.20.1",
       "date": "2026-10-02",
       "categories": {

@@ -55,7 +55,7 @@ def cat_of(stats):
 # STAT ETİKETLERİ — işaret duyarlı (negatif bedeller de okunabilir yazılır)
 # ----------------------------------------------------------------------
 def _pct(v):
-    return f"%{abs(v) * 100:.0f}"
+    return f"%{abs(v) * 100:g}"
 
 
 def _flat(v, dec=0):
@@ -128,6 +128,18 @@ def desc_of(stats):
 def label_of(stat, val):
     return STAT_LABEL.get(stat, lambda v: f"{stat} {v}")(val)
 
+
+STAT_LABEL.update({
+    "aoe": lambda v: f"{_sg(v)}{_pct(v)} Alan Etkisi",
+    "cooldownReduction": lambda v: f"{_sg(v)}{_pct(v)} Yetenek Bekleme Azaltma",
+    "killComboDmg": lambda v: f"Kombo başına {_sg(v)}{_pct(v)} Hasar",
+    "lowHpExec": lambda v: f"%{abs(v) * 100:g} canın altında İnfaz",
+    "minionMaxHp": lambda v: f"{_sg(v)}{_pct(v)} Minyon Canı",
+    "minionProjectileCount": lambda v: f"{_sg(v)}{_flat(v)} Minyon Mermisi",
+})
+STAT_CAT.update({"aoe": "dot", "cooldownReduction": "utility",
+                 "killComboDmg": "damage", "lowHpExec": "damage",
+                 "minionMaxHp": "minion", "minionProjectileCount": "minion"})
 
 THEMES = {'warrior': {'minor': [('Warrior Gelişimi 1', {'armor': 5, 'physDmgFlat': 10}),
                        ('Warrior Gelişimi 2', {'physDmgFlat': 10, 'lifesteal': 0.02}),
