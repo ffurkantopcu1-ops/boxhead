@@ -46,3 +46,7 @@ Testler 30/60/144 FPS'te temas/diken, ateş, yıldırım, kalkan gecikmesi ve ho
 ### Üçüncü aşama ölçümleri
 
 72 eşit yatırım senaryosu ve 108 sınıf/silah birleşimi data/combat_balance_1.22.0.json içinde saklanır. Engineer alev silahı ölçülür, taret katkısı dahil değildir; Beastmaster çağrıları ve aktif beceriler sonraki pakettedir. Sabit hedef ölçümü hareketli oyun, boss telegraphları veya bütün olası buildler için denge garantisi değildir. 30/60/144 FPS saldırı ve mermi davranışı regresyonlarla denetlenir. Tam ekran manuel oynanış testi yapılmadı.
+
+## Saha Mühendisi — v1.24.0
+
+Taret kurulum, komut, canlı stat, hasar ve kayıt sözleşmesi ENGINEER_DESIGN.md içinde. Gerçek toplam hasar ölçümleri data/engineer_balance_1.24.0.json içinde. Minyon sistemi ayrı paket olarak kalır.

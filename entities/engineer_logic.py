@@ -4,13 +4,7 @@ import vfx
 import audio
 
 class Engineer:
-    """
-    Mühendis (Engineer) - Taret odaklı savunma sınıfı.
-    - +1 taret limiti (toplam 2) ve +10 zırh ile başlar.
-    - 5 saniyede bir taret kurabilir; taret hasarı sahibinin silah gücüyle
-      (physDmg) ve turretDmg/turretRate statlarıyla ölçeklenir.
-    - Taretler düşman saldırısını üstüne çeker (aggro emer).
-    """
+    """Active field engineer: pulse kit, aimed sentries and focus commands."""
     # --- ALEV SİLAHI (Flamethrower) ---
     # Diğer arketiplerden farkı: mermi üretmez, her saldırıda ÖNÜNDEKİ KONİYİ
     # tarar. Atış aralığı çok kısa olduğu için sürekli bir akış hissi verir;
@@ -63,50 +57,42 @@ class Engineer:
 
         return hit_any
 
-    def execute_attack(self, player, game):
-        weapon = player.inv_manager.equipped.get("weapon")
-        if player.execute_weapon_override(game, weapon):
-            return
+    def execute_pulse(self,player,game,weapon):
+        import random
+        from entities.projectile import Projectile
+        mult=player.stats.get("dmgMult",1)*player.get_conditional_dmg_mult()
+        damage=(max(0,player.stats.get("physDmg",10))+player.stats.get("physDmgFlat",0)*player.get_added_damage_effectiveness())
+        damage+=max(0,player.level-1)*.45
+        damage*=mult*(1+player.stats.get("physDmgMult",0))
+        crit=random.random()<player.stats.get("critChance",.05)
+        if crit: damage*=player.get_critical_multiplier()
+        count=max(1,min(4,int(player.stats.get("projectileCount",1))))
+        budget=1/(1+.25*(count-1))
+        fire,frost,_=player.get_elemental_mults()
+        for i in range(count):
+            a=player.facing_angle+(i-(count-1)/2)*.12
+            shot=Projectile(game.entity_id_counter,player.x,player.y,math.cos(a)*11,math.sin(a)*11,
+                            damage*budget,pierce=min(4,max(0,int(player.stats.get("pierce",0)))),
+                            bounce=min(2,max(0,int(player.stats.get("bounce",0)))),is_crit=crit,lifetime=90)
+            shot.color=(130,215,200)
+            shot.fire_dmg=player.get_elemental_base("fireDamage","fireDmgFlat")*mult*fire*budget
+            shot.frost_dmg=player.get_elemental_base("frostDamage","frostDmgFlat")*mult*frost*budget
+            shot.poison_dps=player.stats.get("poisonDps",0)*mult*budget
+            shot.dot_mult=1+player.stats.get("dotDmgMult",0)
+            game.projectiles.append(shot)
+            game.entity_id_counter+=1
+        audio.play("shoot")
 
-        # Alev silahı: koni taraması (mermi üretmez)
-        if weapon and weapon.get("isFlamethrower"):
-            self.execute_flamethrower(player, game, weapon)
-            return
-
-        # Menzilli / Bomba Kontrolü
+    def execute_attack(self,player,game):
+        weapon=player.inv_manager.equipped.get("weapon")
+        if player.execute_weapon_override(game,weapon): return
         if weapon and (weapon.get("isRanged") or weapon.get("isBomb")):
             player.shoot(game)
-            return
+        elif weapon and weapon.get("isMelee"):
+            player.execute_fallback_melee(game,weapon)
+        else:
+            player.shoot(game)
 
-        if weapon and weapon.get("isMelee"):
-            return player.execute_fallback_melee(game, weapon)
-
-        # Taret artık saldırıya bağlı DEĞİL: R tuşuyla kullanılan bir yetenek
-        # (bkz. player.try_place_turret / game_scene R tuşu). Eskiden taret kiti
-        # takılıyken execute_attack koşulsuz return ediyordu, yani Mühendis
-        # bekleme süresi boyunca hiçbir hasar veremiyordu.
-        # Taret kiti bir EKİPMAN: taretleri güçlendirir, silah gibi vurmaz.
-        # Ama saldırıyı ÖLDÜRMEMELİ — koşulsuz return ediyordu ve kiti
-        # kuşanan oyuncu hiç hasar veremiyordu, yani kit bir TUZAK eşyaydı.
-        # Artık zayıf yumrukla dövüşür: güçlü taret / zayıf şahsi hasar
-        # dengesi kurulur.
-        is_turret_kit = bool(weapon and weapon.get("isTurret"))
-
-        # Yakın Dövüş Modu (Silah varsa Keser, yoksa Yumruk)
-        angle = player.facing_angle
-        is_punch = (weapon is None) or is_turret_kit
-        dmg = 25 * player.stats["dmgMult"] * player.get_conditional_dmg_mult() if not is_punch else 5
-        
-        audio.play('melee')
-        
-        game.add_event("slash", player.x, player.y, angle=angle, range=90, arc=1.0, timer=0.1)
-        
-        for e in game.iter_enemies_near(player.x, player.y, 110):
-            dx, dy = e.x - player.x, e.y - player.y
-            if not e.dead and dx * dx + dy * dy < 110 * 110:
-                e.take_damage(dmg, game, from_player=True)
-                vfx.hit(game, e.x, e.y, 'phys')
-        
     def update(self, dt, player, game):
         pass
         

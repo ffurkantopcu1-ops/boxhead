@@ -41,6 +41,8 @@ class InventoryManager:
         "dodgeChance":    (0.40, 2.0, 0.50),
         "critDmg":        (0.75, 1.5, 1.5),
         "physDmgMult":    (1.0,  0.5, 2.5),
+        "turretDmg":      (2.0,  0.8, 4.0),
+        "turretRate":     (1.8,  1.0, 3.0),
         "dotDmgMult":     (1.0,  0.5, 2.0),
         "elementDmgMult": (1.5,  0.5, 3.0),
         "minionDamage":   (2.0,  0.5, 4.0),
@@ -270,6 +272,15 @@ class InventoryManager:
             else:
                 totals[stat] = val
         
+        # Old saved kits keep rarity/affixes; normalize only their old base.
+        for item in list(self.equipped.values()) + list(getattr(self.player,"inventory",[])):
+            if item and item.get("isTurret") and "attackCooldown" not in item.get("itemBase",{}):
+                base=next((b for b in ItemSystem.bases if b.get("isTurret") and (b["name"]==item.get("name") or (item.get("icon_id") and b.get("icon_id")==item["icon_id"]))),None)
+                if base:
+                    normalized=dict(item.get("itemBase",{}))
+                    normalized.update(base["itemBase"])
+                    item["itemBase"]=normalized
+
         # Ekipman Toplamı (Bases + Affixes)
         for slot, item in self.equipped.items():
             if item:
@@ -431,6 +442,10 @@ class InventoryManager:
         # Eşyalardaki aoe statını da bonusa ekle
         aoe_bonus += (new_stats.get("aoe", 1.0) - 1.0)
         new_stats["aoe"] = 1.0 + aoe_bonus # Bu çarpan Projectile'da 100 ile çarpılacak
+
+        new_stats["turretLimit"]=max(1,min(5,int(new_stats.get("turretLimit",1))))
+        new_stats["turretRange"]=max(-300,min(300,new_stats.get("turretRange",0)))
+        new_stats["turretCharges"]=max(0,min(3,int(new_stats.get("turretCharges",0))))
 
         # Melee Range Hesabı (F4)
         # meleeRange/meleeRangeFlat = PİKSEL, meleeRangeMult = ÇARPAN.

@@ -29,7 +29,7 @@ class ClassSelectScene(BaseScene):
             "warrior": ["Dayanıklı yakın dövüşçü.", "Kılıcı öndeki düşmanları biçer.", "+%20 hasar ve +%20 can."],
             "beastmaster": ["Minyonlarını hedefe yönlendirir.", "Küçük Kurt ile başlar.", "Minyon hasarı +%30."],
             "sniper": ["Güvenli mesafeden tek hedef avlar.", "Basit Arbalet ile başlar.", "+1 sekme, +1 delme, +%20 kritik."],
-            "engineer": ["Taretlerle alan tutar, alev silahıyla yakar.", "R tuşuyla taret kurar (2 şarj biriktirir).", "+10 zırh; her şarj 5 sn'de dolar."],
+            "engineer": ["Atış kitiyle savaşır, taretlerle alan tutar.", "R: imlece taret. E: odak ve aşırı yükleme.", "+10 zırh; yakın taretler +%20 hasar."],
             "ninja": ["Hızlı ve kaçınmaya dayalı suikastçı.", "Paslı Katana ile başlar.", "Atılma sonrası ilk vuruş 2 kat."],
             "alchemist": ["Şişesi patlayıp kalıcı zehir bulutu bırakır.", "Zehir Şişesi ile başlar.", "Alanı zehirle, düşmanı içine sür."],
             "sorcerer": ["Ateş, buz ve zehir arasında döner.", "Sihir Asası ile başlar.", "Her 4. saldırı kritik ve 2 kat alanlı."],

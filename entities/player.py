@@ -106,6 +106,9 @@ class Player:
         # Taret yeteneği (Mühendis, R tuşu): şarj sayısı ve dolum sayacı
         self.turret_charges = self.TURRET_BASE_CHARGES
         self.turret_recharge = 0.0
+        self.turret_command_cooldown = 0.0
+        self.turret_command_active = 0.0
+        self.turret_focus_target = None
         self.artifact_timer = 0 # Aktif efekt süresi (Görünmezlik, Kalkan vb.)
         # Süreli stat çarpanları (örn. Kan Ritüeli). recalculate_stats bunları
         # kalıcı statların ÜSTÜNE uygular; böylece araya giren bir yeniden
@@ -249,7 +252,7 @@ class Player:
         "bomber":      "El Bombası Çantası (T4)",
         "sorcerer":    "Sihir Asası (T4)",
         "bloodwalker": "Kan Kılıcı (T4)",
-        "engineer":    "Sızdıran Alev Tabancası (T4)",
+        "engineer":    "Eski Taret Kiti (T4)",
     }
 
     # Ruh Terbiyecisi tek sınıf olarak silahla değil PET ile başlar ve bu pet
@@ -421,6 +424,7 @@ class Player:
             self.artifact_cooldown -= dt
         if self.is_engineer():
             self.update_turret_charges(dt)
+            self.update_turret_command(dt)
             
         if self.artifact_timer > 0:
             self.artifact_timer -= dt
@@ -680,9 +684,10 @@ class Player:
             if self._heal_turret_tick <= 0:
                 self._heal_turret_tick = 1.0
                 mine = [t for t in getattr(game, 'turrets', [])
-                        if getattr(t, 'owner', None) is self and not getattr(t, 'dead', False)]
+                        if getattr(t, 'owner', None) is self and not getattr(t, 'dead', False)
+                        and math.hypot(t.x-self.x,t.y-self.y)<=220]
                 if mine:
-                    self.heal(self.max_hp * 0.005 * len(mine))
+                    self.heal(self.max_hp * 0.005 * min(4,len(mine)))
 
     def get_conditional_dmg_mult(self):
         """Koşullu hasar çarpanları: Berserker Rage kartı ve Şehit (low_hp_rage) evrimi.
@@ -857,6 +862,10 @@ class Player:
         return count
 
     def execute_weapon_override(self, game, weapon):
+        if weapon and weapon.get("isTurret"):
+            if not hasattr(self,"_pulse_logic"): self._pulse_logic=Engineer()
+            self._pulse_logic.execute_pulse(self,game,weapon)
+            return True
         if weapon and weapon.get("isFlamethrower"):
             if not hasattr(self, "_flamethrower_logic"):
                 self._flamethrower_logic = Engineer()
@@ -1236,7 +1245,7 @@ class Player:
 
     def get_turret_max_charges(self):
         """Şarj kapasitesi. turretCharges statı kartlarla artar."""
-        return max(1, self.TURRET_BASE_CHARGES + int(self.stats.get("turretCharges", 0)))
+        return max(1, min(5,self.TURRET_BASE_CHARGES + int(self.stats.get("turretCharges", 0))))
 
     def is_engineer(self):
         return getattr(self, 'base_class_id', getattr(self, 'class_id', '')) == "engineer"
@@ -1259,7 +1268,7 @@ class Player:
 
     def can_place_turret(self):
         """Taret kurulabilir mi? (sınıf + şarj + susturulma)"""
-        if not self.is_engineer():
+        if not self.is_engineer() or self.hp<=0 or self.is_stunned:
             return False
         if getattr(self, 'is_silenced', False):
             return False
@@ -1269,48 +1278,65 @@ class Player:
         """R yeteneği: taret kur. Başarılıysa True döner."""
         if not self.can_place_turret():
             return False
-        self.place_turret(game)
+        if not self.place_turret(game):
+            return False
         self.turret_charges -= 1
         return True
 
+    def update_turret_command(self,dt):
+        self.turret_command_cooldown=max(0,self.turret_command_cooldown-dt)
+        self.turret_command_active=max(0,self.turret_command_active-dt)
+        if self.turret_command_active<=0 or getattr(self.turret_focus_target,"dead",False):
+            self.turret_focus_target=None
+
+    def try_command_turrets(self,game):
+        if not self.is_engineer() or self.hp<=0 or self.is_stunned or self.is_silenced or self.turret_command_cooldown>0:
+            return False
+        active=[t for t in game.turrets if t.owner is self and not t.dead
+                and math.hypot(t.x-self.x,t.y-self.y)<=750]
+        if not active: return False
+        ax=self.aim_x if self.aim_x is not None else self.x+math.cos(self.facing_angle)*200
+        ay=self.aim_y if self.aim_y is not None else self.y+math.sin(self.facing_angle)*200
+        choices=[e for e in game.iter_enemies_near(ax,ay,120) if not e.dead
+                 and (not getattr(e,"is_trap",False) or getattr(e,"is_pillar",False))
+                 and math.hypot(e.x-ax,e.y-ay)<=90+e.radius
+                 and any(math.hypot(e.x-t.x,e.y-t.y)<=t.range+e.radius for t in active)]
+        self.turret_focus_target=min(choices,key=lambda e:(e.x-ax)**2+(e.y-ay)**2,default=None)
+        self.turret_command_active=6.0
+        self.turret_command_cooldown=10.0
+        game.add_event("shockwave",self.x,self.y,radius=110,color=(245,190,85),timer=.35)
+        return True
+
+    def turret_deploy_position(self):
+        ax=self.aim_x if self.aim_x is not None else self.x+math.cos(self.facing_angle)*160
+        ay=self.aim_y if self.aim_y is not None else self.y+math.sin(self.facing_angle)*160
+        dx,dy=ax-self.x,ay-self.y
+        d=math.hypot(dx,dy)
+        if d>280: dx,dy=dx*280/d,dy*280/d
+        return max(35,min(4965,self.x+dx)),max(35,min(4965,self.y+dy))
+
     def place_turret(self, game):
-        limit = int(self.stats.get("turretLimit", 1))
-
-        # Limit kontrolü (En eski tareti sil)
-        if len(game.turrets) >= limit:
-            old = game.turrets.pop(0)
-            # Eskiden sessizce yok oluyordu; oyuncu hangi taretin gittiğini
-            # göremiyordu. Artık sökülme efekti var.
-            game.add_event("fx", old.x, old.y, tex="smoke", size=56, grow=1.1,
-                           color=(150, 150, 160), timer=0.45)
-            vfx.emit(game, old.x, old.y, count=6, color=(170, 170, 180),
-                     speed=(0.8, 2.4), size=(2, 5), life=(0.3, 0.6),
-                     tex="debris", gravity=0.05)
-
         from entities.turret import Turret
-        # SADECE SİLAH SLOTUNDAKİ TARET KİTİNİN STATLARINI AL (Global yetenekleri alma)
-        local_stats = self.inv_manager.get_item_local_stats("weapon")
-        
-        # Aşırı Yükleme kartının bedeli: taretler daha kırılgan
-        _hp_pen = getattr(self, "turret_hp_penalty", 1.0)
-        new_turret = Turret(game.entity_id_counter, self.x, self.y,
-                           hp=self.stats.get("turretMaxHp", 150) * _hp_pen,
-                           dmg_mult=self.stats.get("turretDmg", 1.0),
-                           fire_rate=self.stats.get("turretRate", 1.0),
-                           local_stats=local_stats,
-                           owner=self)
-        game.turrets.append(new_turret)
-        game.entity_id_counter += 1
-        # Kurulum geri bildirimi
-        audio.play('turret')
-        game.add_event("shockwave", self.x, self.y, radius=70,
-                       color=(120, 200, 255), timer=0.3)
-        game.add_event("fx", self.x, self.y, tex="magic", size=64, grow=0.5,
-                       color=(150, 220, 255), timer=0.35, curve="flash")
-        vfx.emit(game, self.x, self.y, count=10, color=(160, 220, 255),
-                 speed=(1.0, 3.0), size=(2, 4), life=(0.25, 0.5), tex="spark")
-        print("Taret Kuruldu!")
-            
+        x,y=self.turret_deploy_position()
+        mine=[t for t in game.turrets if t.owner is self and not t.dead]
+        if any(math.hypot(t.x-x,t.y-y)<55 for t in mine):
+            game.add_event("damage_text",x,y-40,value="TARETLERİ AYIR",color=(240,180,90),timer=.7)
+            return False
+        limit=max(1,min(5,int(self.stats.get("turretLimit",1))))
+        if len(mine)>=limit:
+            oldest=max(mine,key=lambda t:t.age)
+            oldest.dead=True
+            game.add_event("fx",oldest.x,oldest.y,tex="smoke",size=48,color=(140,150,155),timer=.35)
+        turret=Turret(game.entity_id_counter,x,y,owner=self,
+                      hp=self.stats.get("turretMaxHp",150)*getattr(self,"turret_hp_penalty",1),
+                      dmg_mult=self.stats.get("turretDmg",1),fire_rate=self.stats.get("turretRate",1),
+                      local_stats=self.inv_manager.get_item_local_stats("weapon"))
+        game.turrets.append(turret)
+        game.entity_id_counter+=1
+        audio.play("turret")
+        game.add_event("shockwave",x,y,radius=55,color=(120,200,190),timer=.3)
+        return True
+
     def check_minions(self, game):
         # Kuşanılan Pet'e bak
         pet = self.inv_manager.equipped.get("pet")

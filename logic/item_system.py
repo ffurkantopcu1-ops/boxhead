@@ -56,12 +56,12 @@ class ItemSystem:
         { 'type': 'weapon', 'name': 'Ölüm Sickle (T2)', 'tier': 2, 'isMelee': True, 'weaponClass': 'bloodwalker', 'icon_id': 'weapon_death_sickle', 'itemBase': { 'physDmg': 90, 'lifesteal': 0.40, 'meleeRange': 65, 'critChance': 0.15 } },
         { 'type': 'weapon', 'name': 'Ruh Biçen (T1)', 'tier': 1, 'isMelee': True, 'weaponClass': 'bloodwalker', 'icon_id': 'weapon_soul_reaper', 'itemBase': { 'physDmg': 160, 'lifesteal': 0.60, 'meleeRange': 75, 'critChance': 0.25 } },
 
-        { 'type': 'weapon', 'name': 'Eski Taret Kiti (T4)', 'tier': 4, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_old', 'itemBase': { 'turretDmg': 1.1, 'projectileCount': 1 } },
-        { 'type': 'weapon', 'name': 'Gelişmiş Taret Kiti (T3)', 'tier': 3, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_adv', 'itemBase': { 'turretDmg': 1.3, 'projectileCount': 1, 'turretRate': 0.1 } },
-        { 'type': 'weapon', 'name': 'Lazer Taret Kiti (T2)', 'tier': 2, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_laser', 'itemBase': { 'turretDmg': 1.6, 'projectileCount': 2, 'turretRate': 0.2, 'pierce': 1 } },
-        { 'type': 'weapon', 'name': 'Kıyamet Tareti Kiti (T1)', 'tier': 1, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_doom', 'itemBase': { 'turretDmg': 2.2, 'projectileCount': 3, 'turretRate': 0.4, 'pierce': 2, 'bounce': 1 } },
+        { 'type': 'weapon', 'name': 'Eski Taret Kiti (T4)', 'tier': 4, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_old', 'itemBase': { 'physDmg': 10, 'attackCooldown': 400, 'turretDmg': 0.1, 'projectileCount': 0 } },
+        { 'type': 'weapon', 'name': 'Gelişmiş Taret Kiti (T3)', 'tier': 3, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_adv', 'itemBase': { 'physDmg': 20, 'attackCooldown': 400, 'turretDmg': 0.3, 'projectileCount': 0, 'turretRate': 0.1 } },
+        { 'type': 'weapon', 'name': 'Lazer Taret Kiti (T2)', 'tier': 2, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_laser', 'itemBase': { 'physDmg': 38, 'attackCooldown': 400, 'turretDmg': 0.6, 'projectileCount': 1, 'turretRate': 0.2, 'pierce': 1 } },
+        { 'type': 'weapon', 'name': 'Kıyamet Tareti Kiti (T1)', 'tier': 1, 'isTurret': True, 'weaponClass': 'engineer', 'icon_id': 'weapon_turret_kit_doom', 'itemBase': { 'physDmg': 60, 'attackCooldown': 400, 'turretDmg': 1.0, 'projectileCount': 2, 'turretRate': 0.4, 'pierce': 2, 'bounce': 1 } },
 
-        # Mühendis — ALEV SİLAHLARI. Taret kiti bir "ekipman" (elde vurmaz);
+        # Mühendis — ALEV SİLAHLARI. Taret kiti artık atış yapar;
         # alev silahı Mühendis'in doğrudan hasar veren kolu. Mermi üretmez,
         # önündeki koniyi tarar (engineer_logic.execute_flamethrower).
         # Hasar 'fireDamage' üzerinden okunur; asıl hasar yığılan yanmadan

@@ -193,6 +193,9 @@ class SaveManager:
                 "gold": p.gold,
                 "skill_points": p.skill_points,
                 "hp": getattr(p, 'hp', 100),
+                "turret_charges":getattr(p,"turret_charges",2),
+                "turret_recharge":getattr(p,"turret_recharge",0),
+                "turret_command_cooldown":getattr(p,"turret_command_cooldown",0),
                 "energy_shield": getattr(p, 'energy_shield', 0),
                 "class_id": p.class_id,
                 "base_class_id": getattr(p, 'base_class_id', p.class_id),
@@ -223,6 +226,9 @@ class SaveManager:
                 "passive_shield_cd": getattr(p, 'passive_shield_cd', 0),
                 "speed_mod": getattr(p, 'speed_mod', 1.0)
             },
+            "turrets": [{"x":t.x,"y":t.y,"hp_ratio":t.hp/max(1,t.max_hp),
+                         "age":t.age,"boot_remaining":t.boot_remaining,"fire_timer":t.fire_timer}
+                        for t in getattr(logic,"turrets",[]) if t.owner is p and not t.dead],
             "inventory": {
                 "equipped": p.inv_manager.equipped,
                 "bag": p.inventory
@@ -394,6 +400,28 @@ class SaveManager:
         # Recalculate (apply_card can/max_hp'yi değiştirdiği için hp en sona)
         p.inv_manager.recalculate_stats()
         p.hp = min(pd.get("hp", 100), p.max_hp)
+        p.turret_charges=max(0,min(p.get_turret_max_charges(),pd.get("turret_charges",p.get_turret_max_charges())))
+        p.turret_recharge=max(0,min(p.get_turret_cooldown(),pd.get("turret_recharge",0)))
+        p.turret_command_cooldown=max(0,min(10,pd.get("turret_command_cooldown",0)))
+        p.turret_command_active=0
+        p.turret_focus_target=None
+        if p.is_engineer():
+            from entities.turret import Turret
+            logic.turrets=[]
+            for saved in save_data.get("turrets",[])[:int(p.stats.get("turretLimit",1))]:
+                age=max(0,float(saved.get("age",0)))
+                ratio=max(0,min(1,float(saved.get("hp_ratio",1))))
+                if age>=Turret.LIFETIME or ratio<=0: continue
+                t=Turret(logic.entity_id_counter,max(35,min(4965,saved.get("x",p.x))),
+                         max(35,min(4965,saved.get("y",p.y))),owner=p,
+                         hp=p.stats.get("turretMaxHp",150)*getattr(p,"turret_hp_penalty",1))
+                logic.entity_id_counter+=1
+                t.sync_stats()
+                t.hp=t.max_hp*ratio
+                t.age=age
+                t.boot_remaining=max(0,min(.5,saved.get("boot_remaining",0)))
+                t.fire_timer=max(0,min(.55,saved.get("fire_timer",0)))
+                logic.turrets.append(t)
         p.energy_shield = pd.get("energy_shield", 0)
         max_es = getattr(p, 'max_energy_shield', 0)
         if max_es:

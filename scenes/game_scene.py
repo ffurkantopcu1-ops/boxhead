@@ -97,7 +97,7 @@ SKILL_HELP = {
     'turretMaxHp': 'Taretlerin maksimum dayanıklılığını artırır.',
     'turretDmg': 'Taretlerin verdiği tüm hasarı artırır.',
     'turretRate': 'Taretlerin saldırılar arasındaki bekleme süresini azaltır.',
-    'turretLimit': 'Aynı anda kurulabilecek taret sayısını artırır.',
+    'turretLimit': 'Aynı anda kurulabilecek taret sayısını artırır (en fazla 5).',
     'minionCount': 'Aynı anda savaşabilecek minyon sayısını artırır.',
     'minionDamage': 'Tüm minyon saldırılarının hasarını artırır.',
     'minionRate': 'Minyonların daha sık saldırmasını sağlar.',
@@ -551,6 +551,9 @@ class GameScene(BaseScene):
                         p.use_artifact(self.logic)
                         if art_ready:
                             self._cast_fx(p, "artifact")
+                    if event.key == pygame.K_e and not modal_open and p.is_engineer():
+                        if p.try_command_turrets(self.logic):
+                            self.logic.add_event("damage_text",p.x,p.y-70,value="ODAK ATEŞİ!",color=(240,190,90),timer=.8)
                     if event.key == pygame.K_r and not modal_open:
                         self._use_r_ability(p)
                     if event.key == pygame.K_SPACE and not modal_open:
@@ -1066,6 +1069,8 @@ class GameScene(BaseScene):
         for e in self.logic.enemies:
             if visible(e, max(80, e.radius * 4)): e.draw(world_surf, final_cam_x, final_cam_y)
         
+        self.draw_engineer_markers(world_surf,final_cam_x,final_cam_y)
+
         # Partiküller
         # VFX katmanı: parçacıklar ve efektler buraya çizilir, kare sonunda
         # tek seferde toplamalı (additive) basılır. Bkz. vfx.begin_frame.
@@ -1555,6 +1560,24 @@ class GameScene(BaseScene):
         if self.show_stats_panel and self.logic.state == "PLAYING":
             self.draw_live_stats_panel(p)
 
+    def draw_engineer_markers(self,surface,camera_x,camera_y):
+        p=self.logic.players[self.logic.local_player_id]
+        if not p.is_engineer() or self.logic.state!="PLAYING": return
+        target=getattr(p,"turret_focus_target",None)
+        if target and not target.dead and getattr(p,"turret_command_active",0)>0:
+            x,y=int(target.x-camera_x),int(target.y-camera_y)
+            r=int(target.radius+12)
+            col=(245,190,85)
+            for sx in (-1,1):
+                for sy in (-1,1):
+                    pygame.draw.line(surface,col,(x+sx*r,y+sy*r),(x+sx*(r-10),y+sy*r),3)
+                    pygame.draw.line(surface,col,(x+sx*r,y+sy*r),(x+sx*r,y+sy*(r-10)),3)
+        if p.can_place_turret() and not self.show_inventory and not self.show_craft_window:
+            x,y=p.turret_deploy_position()
+            blocked=any(t.owner is p and not t.dead and math.hypot(t.x-x,t.y-y)<55 for t in self.logic.turrets)
+            col=(170,95,80) if blocked else (95,155,140)
+            pygame.draw.circle(surface,col,(int(x-camera_x),int(y-camera_y)),25,2)
+
     def get_abilities(self, p):
         """Oyuncunun kullanabildiği yetenekler: tuş, ad, bekleme durumu.
 
@@ -1594,6 +1617,9 @@ class GameScene(BaseScene):
                 "charges": charges,
                 "max_charges": p.get_turret_max_charges(),
             })
+        if p.is_engineer():
+            abilities.append({"key":"E","name":"Odak Ateşi","color":"ember",
+                              "left":getattr(p,"turret_command_cooldown",0),"total":10.0})
         return abilities
 
     def draw_ability_bar(self, p):
@@ -2526,7 +2552,7 @@ class GameScene(BaseScene):
             "warrior": "Geniş Savuruş — Önündeki konide bulunan tüm düşmanlara aynı saldırıyla vurur.",
             "beastmaster": "Av Emri — Kamçıyla işaretlenen hedefe bütün minyonlar anında odaklanır.",
             "sniper": "Keskin Nişan — +%20 temel kritik şansı, +1 sekme ve +1 delme ile başlar.",
-            "engineer": "Taret Ustası — Taret kiti kullanırken 5 saniyede bir savaş alanına taret kurar.",
+            "engineer": "Saha Mühendisi — R: imlece taret. E: odak ateşi. Yakın taretler +%20 hasar.",
             "ninja": "Arkadan Vuruş — Atılmadan sonraki ilk yakın saldırı 2 kat hasar verir.",
             "alchemist": "Uçucu Karışım — Bomba alanı %40 büyür; yakın saldırılar %30 ihtimalle zehirler.",
             "sorcerer": "Element Döngüsü — Ateş, buz ve zehir arasında döner; her 4. atış kritik ve 2 kat alanlıdır.",

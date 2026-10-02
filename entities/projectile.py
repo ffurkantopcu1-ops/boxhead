@@ -309,7 +309,8 @@ class Projectile:
         _by_minion = getattr(self, "is_minion_proj", False)
         enemy.last_hit_by_minion = _by_minion
         try:
-            enemy.take_damage(self.dmg, game, is_crit=self.is_crit, from_player=not self.is_hostile)
+            enemy.take_damage(self.dmg, game, is_crit=self.is_crit, from_player=not self.is_hostile,
+                              is_secondary=getattr(self,"is_turret_proj",False))
         finally:
             enemy.last_hit_by_minion = False
         self.hit_history.append(enemy.id)

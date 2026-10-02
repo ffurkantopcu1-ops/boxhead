@@ -833,3 +833,230 @@ def test_dead_boss_does_not_clear_reused_projectile_of_another_boss(combat):
     shot.boss_owner_id=12345
     b.clear_projectiles()
     assert shot.active
+
+def sentry_fixture(combat):
+    from entities.turret import Turret
+    p,e,g=combat("engineer")
+    p.x,p.y=1000,1000
+    e.x,e.y=1300,1000
+    g.turrets=[]
+    p.level=1
+    p.stats.update(turretDmg=1,turretRate=1,turretMaxHp=150,turretLimit=2,projectileCount=1,pierce=0,bounce=0,physDmg=10,physDmgFlat=0,dmgMult=1,armor=0)
+    t=Turret(100,1100,1000,owner=p)
+    g.turrets.append(t)
+    return p,e,g,t
+
+@pytest.mark.parametrize("fps",[30,60,144])
+def test_turret_timing_with_boot_is_independent_of_fps(combat,fps):
+    p,e,g,t=sentry_fixture(combat)
+    for _ in range(10*fps): t.update(1/fps,g)
+    assert t.shot_count==17
+    assert t.age==pytest.approx(10)
+
+def test_turret_expiry_does_not_fire_past_lifetime(combat):
+    p,e,g,t=sentry_fixture(combat)
+    t.age=23.9
+    t.boot_remaining=0
+    t.update(1,g)
+    assert t.dead and t.shot_count==0
+
+def test_live_turret_stats_preserve_health_ratio_and_use_pixel_range(combat):
+    p,e,g,t=sentry_fixture(combat)
+    t.hp=75
+    p.stats.update(turretMaxHp=300,turretRange=25,turretDmg=2,turretRate=2)
+    t.sync_stats()
+    assert t.hp==150 and t.range==525 and t.dmg_mult==2 and t.fire_rate==2
+
+def test_turret_keeps_target_until_focus_command(combat):
+    from entities.enemy import Enemy
+    p,e,g,t=sentry_fixture(combat)
+    t.choose_target(g)
+    other=Enemy(3,1120,1000,g)
+    g.enemies.append(other)
+    assert t.choose_target(g) is e
+    p.aim_x,p.aim_y=other.x,other.y
+    assert p.try_command_turrets(g)
+    assert t.choose_target(g) is other
+    assert not p.try_command_turrets(g)
+    p.update_turret_command(10)
+    assert p.turret_command_cooldown==0 and p.turret_focus_target is None
+
+def test_turret_outside_control_radius_cannot_fire(combat):
+    p,e,g,t=sentry_fixture(combat)
+    p.x=-1000
+    t.update(3,g)
+    assert not g.projectiles
+    p.x=1000
+    t.update(.01,g)
+    assert t.shot_count<=1
+
+def test_turret_projectile_never_leechs_or_triggers_player_on_hit(combat):
+    p,e,g,t=sentry_fixture(combat)
+    p.hp=500
+    p.stats["lifesteal"]=.5
+    p.self_dmg_on_hit=.1
+    p.take_damage=Mock()
+    p.lightning_proc_hits=1
+    t.boot_remaining=0
+    t.shoot(g)
+    g.projectiles[0].on_hit(e,g)
+    assert p.lifesteal_buffer==0
+    p.take_damage.assert_not_called()
+    assert g.projectiles[0].is_turret_proj
+
+def test_turret_impossible_penalty_applies_once(combat):
+    p,e,g,t=sentry_fixture(combat)
+    t.boot_remaining=0
+    t.shoot(g)
+    before=e.hp
+    g.projectiles[-1].on_hit(e,g)
+    normal=before-e.hp
+    g.wave["current_diff"]="Impossible"
+    t.shoot(g)
+    before=e.hp
+    g.projectiles[-1].on_hit(e,g)
+    assert before-e.hp==pytest.approx(normal*.5)
+
+@pytest.mark.parametrize("fps",[30,60,144])
+def test_turret_each_contact_attacker_has_own_timer(combat,fps):
+    from entities.enemy import Enemy
+    p,e,g,t=sentry_fixture(combat)
+    t.hp=t.max_hp=100000
+    p.stats["turretMaxHp"]=100000
+    e.x,e.y=t.x,t.y
+    e.dmg=10
+    second=Enemy(4,t.x,t.y,g)
+    second.dmg=10
+    g.enemies.append(second)
+    for _ in range(fps): t.update(1/fps,g)
+    assert t.max_hp-t.hp==pytest.approx(20*100/120)
+
+def test_deploy_uses_cursor_caps_range_and_does_not_spend_charge_on_overlap(combat):
+    p,e,g,t=sentry_fixture(combat)
+    p.aim_x,p.aim_y=3000,1000
+    p.turret_charges=2
+    assert p.try_place_turret(g)
+    placed=g.turrets[-1]
+    assert placed.x==1280 and placed.y==1000
+    assert p.turret_charges==1
+    assert not p.try_place_turret(g)
+    assert p.turret_charges==1
+
+def test_deploy_replaces_only_owners_oldest_turret(combat):
+    from entities.turret import Turret
+    p,e,g,t=sentry_fixture(combat)
+    t.age=10
+    other=Turret(111,1200,1100,owner=Mock())
+    g.turrets.append(other)
+    p.stats["turretLimit"]=1
+    p.aim_x,p.aim_y=1000,1250
+    assert p.try_place_turret(g)
+    assert t.dead and not other.dead
+
+def test_no_command_when_silenced_dead_or_no_turrets(combat):
+    p,e,g,t=sentry_fixture(combat)
+    p.is_silenced=True
+    assert not p.try_command_turrets(g)
+    p.is_silenced=False
+    p.hp=0
+    assert not p.try_command_turrets(g)
+    p.hp=100
+    g.turrets=[]
+    assert not p.try_command_turrets(g)
+
+def test_legacy_saved_kit_is_normalized_without_losing_affixes(combat):
+    p,e,g,t=sentry_fixture(combat)
+    item=p.inv_manager.equipped["weapon"]
+    item["itemBase"]={"turretDmg":1.1,"projectileCount":1,"magicFind":.3}
+    item["prefixes"]=[{"stat":"armor","val":3,"name":"Test"}]
+    p.inv_manager.recalculate_stats()
+    assert item["itemBase"]["physDmg"]==10
+    assert item["itemBase"]["turretDmg"]==.1
+    assert item["itemBase"]["magicFind"]==.3
+    assert item["prefixes"][0]["val"]==3
+    before=dict(p.stats)
+    p.inv_manager.recalculate_stats()
+    assert p.stats==before
+
+def test_engineer_roundtrip_preserves_sentries_and_command_cooldown(combat,tmp_path,monkeypatch):
+    from logic.game_logic import GameLogic
+    from logic.save_manager import SaveManager
+    monkeypatch.setattr(SaveManager,"SAVE_DIR",str(tmp_path))
+    src=GameLogic(None,1024,768,"engineer")
+    p=src.players[src.local_player_id]
+    p.aim_x,p.aim_y=p.x+180,p.y
+    assert p.try_place_turret(src)
+    t=src.turrets[-1]
+    t.age=12
+    t.hp=t.max_hp*.6
+    p.turret_command_cooldown=7
+    p.turret_recharge=2
+    SaveManager.save_game(src,"sentry")
+    dst=GameLogic(None,1024,768,"engineer")
+    SaveManager.load_game(dst,"sentry")
+    q=dst.players[dst.local_player_id]
+    assert q.turret_charges==p.turret_charges
+    assert q.turret_recharge==2 and q.turret_command_cooldown==7
+    assert len(dst.turrets)==1
+    restored=dst.turrets[0]
+    assert restored.age==12
+    assert restored.hp/restored.max_hp==pytest.approx(.6)
+    assert restored.owner is q
+
+def test_engineer_hud_exposes_deploy_and_focus(combat):
+    from scenes.game_scene import GameScene
+    p,e,g,t=sentry_fixture(combat)
+    scene=GameScene.__new__(GameScene)
+    abilities=scene.get_abilities(p)
+    assert any(a["key"]=="R" for a in abilities)
+    assert any(a["key"]=="E" and a["name"]=="Odak Ateşi" for a in abilities)
+
+def test_turret_multiple_barrels_converge_on_single_target(combat):
+    p,e,g,t=sentry_fixture(combat)
+    t.boot_remaining=0
+    t.shoot(g)
+    first=g.projectiles.pop()
+    before=e.hp
+    first.on_hit(e,g)
+    single=before-e.hp
+    p.stats["projectileCount"]=4
+    t.shoot(g)
+    before=e.hp
+    for shot in g.projectiles:
+        for _ in range(100):
+            if shot.dead: break
+            shot.update(1/120,g)
+    assert before-e.hp==pytest.approx(single*4/1.9)
+
+def test_architect_repairs_only_near_owner_and_after_damage_delay(combat):
+    p,e,g,t=sentry_fixture(combat)
+    p.evolution_passive="heal_turret"
+    t.hp=75
+    t.age=5
+    t.update(1,g)
+    assert t.hp==pytest.approx(78.75)
+    t.take_damage(10,g)
+    hp=t.hp
+    t.update(.5,g)
+    assert t.hp==hp
+    p.x=-1000
+    t.update(3,g)
+    assert t.hp==hp
+
+def test_old_engineer_save_without_new_fields_loads_with_ready_charges(combat,tmp_path,monkeypatch):
+    from logic.game_logic import GameLogic
+    from logic.save_manager import SaveManager
+    monkeypatch.setattr(SaveManager,"SAVE_DIR",str(tmp_path))
+    src=GameLogic(None,1024,768,"engineer")
+    SaveManager.save_game(src,"legacy")
+    path=tmp_path/"legacy.json"
+    data=json.loads(path.read_text(encoding="utf-8"))
+    data.pop("turrets")
+    for name in ("turret_charges","turret_recharge","turret_command_cooldown"):
+        data["player"].pop(name)
+    path.write_text(json.dumps(data),encoding="utf-8")
+    dst=GameLogic(None,1024,768,"engineer")
+    SaveManager.load_game(dst,"legacy")
+    q=dst.players[dst.local_player_id]
+    assert q.turret_charges==q.get_turret_max_charges()
+    assert q.turret_command_cooldown==0

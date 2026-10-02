@@ -64,7 +64,7 @@ def build(class_id, level, points, tier, route, stress=False):
             if slot == "weapon":
                 candidates = [x for x in candidates if x.get("weaponClass") == class_id]
                 if class_id == "engineer":
-                    candidates = [x for x in candidates if x.get("isFlamethrower")]
+                    candidates = [x for x in candidates if x.get("isTurret")]
             if candidates:
                 item = copy.deepcopy(candidates[0])
                 item.update(rarity="Normal", prefixes=[], suffixes=[])
@@ -72,7 +72,10 @@ def build(class_id, level, points, tier, route, stress=False):
     if level >= 20:
         evos = [eid for eid, e in Player.EVOLUTIONS.items() if e["class_base"] == class_id]
         if evos:
-            p.apply_evolution(evos[-1 if route == "defense" else 0])
+            selected=evos[-1 if route == "defense" else 0]
+            if class_id=="engineer":
+                selected="engineer_architect" if route=="defense" else "engineer_electrician"
+            p.apply_evolution(selected)
     if stress:
         random.seed(871)
         system = ItemSystem()
@@ -216,7 +219,7 @@ def measure():
         "attack_target":"stationary normal enemy at 70px; actual hit/projectile/cloud/DoT paths",
         "investment":"equal SP, Normal gear/evolution; separate late stress stage adds seeded Rare affixes, four class cards, five ascendancy points; no summons/active skills",
         "survival":"six immortal stationary attackers up to30s; seed922; contact+regen; leech and self-damage costs fed at measured average rates (optimistic)",
-        "limitations":"engineer flame weapon measured without turrets; beastmaster DPS not measured; no player positioning, kill drops, boss telegraphs; not a global balance guarantee"},
+        "limitations":"engineer primary kit measured without turrets; use measure_engineer_balance for fleet; beastmaster DPS not measured; no player positioning, kill drops, boss telegraphs; not a global balance guarantee"},
         "rows":rows}
 
 
