@@ -1073,7 +1073,7 @@ class Enemy:
             self.effect_manager.add_effect(StatusEffect("Poison", duration, dps=dps, color=(46, 204, 113)))
 
 
-    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False):
+    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False, is_reflected=False):
         if self.dead: return
         # Negatif/sıfır hasar düşmanı iyileştiriyordu (H8)
         if amount <= 0: return
@@ -1090,6 +1090,7 @@ class Enemy:
         # --- ZIRH HESABI ---
         player = game.players[game.local_player_id]
         p_stats = player.stats
+        triggers_on_hit = from_player and not is_dot and not is_reflected
         
         # Zırh Delme (Armor Pen) - Broken Stat
         armor_pen = p_stats.get("armorPen", 0)
@@ -1104,12 +1105,9 @@ class Enemy:
             final_dmg *= 0.5
             
         # Double Edge (Çift Ağız) - Hasar vurunca kendine de hasar vur (DoT hariç)
-        if not is_dot and from_player and getattr(player, "self_dmg_on_hit", 0.0) > 0:
-            sd = player.max_hp * player.self_dmg_on_hit
-            player.take_damage(sd, force=True, is_self_damage=True)
         
         # --- BOSS HASAR ÇARPANI (Broken Stat) ---
-        if self.type == "boss":
+        if from_player and self.type in ("boss", "crystal_dragon", "arachne"):
             final_dmg *= (1.0 + p_stats.get("bossDmgMult", 0))
 
         # --- ACIMASIZ (brutal affix'i) ---
@@ -1140,6 +1138,10 @@ class Enemy:
             final_dmg -= absorbed
             
         self.hp -= final_dmg
+        triggers_on_hit = triggers_on_hit and final_dmg > 0
+        if triggers_on_hit and getattr(player, "self_dmg_on_hit", 0.0) > 0:
+            sd = player.max_hp * player.self_dmg_on_hit
+            player.take_damage(sd, force=True, is_self_damage=True)
 
         # --- ELİT 🌵 DİKENLİ (thorny) ---
         # elite_system enemy.thorns bayrağını kuruyordu ama okunmuyordu.
@@ -1147,13 +1149,13 @@ class Enemy:
         # player.take_damage içinde ayrı bağlı). Ölümcül geri tepmeye karşı
         # tek vuruşta oyuncunun max canının %15'i ile sınırlanır.
         th = getattr(self, 'thorns', 0)
-        if th > 0 and from_player and not is_dot:
+        if th > 0 and triggers_on_hit:
             reflect = min(final_dmg * th, player.max_hp * 0.15)
             if reflect > 0:
-                player.take_damage(reflect, force=True)
+                player.take_damage(reflect, force=True, is_reflected=True)
 
         # --- ÇALMA ŞANSI (thiefChance affix'i) ---
-        if from_player and not is_dot and p_stats.get("thiefChance", 0) > 0:
+        if triggers_on_hit and p_stats.get("thiefChance", 0) > 0:
             if random.random() < p_stats.get("thiefChance", 0):
                 base_gold = getattr(self, 'gold_reward', self.xp_reward * 0.5)
                 stolen = int(base_gold * 0.2)
@@ -1163,7 +1165,7 @@ class Enemy:
                                    value=f"+{stolen} G", color=(241, 196, 15), timer=0.6)
 
         # --- SINGULARITY (blackHoleChance, corrupted orb) ---
-        if from_player and not is_dot and p_stats.get("blackHoleChance", 0) > 0:
+        if triggers_on_hit and p_stats.get("blackHoleChance", 0) > 0:
             if random.random() < p_stats.get("blackHoleChance", 0):
                 from entities.cloud import Cloud
                 game.entity_id_counter += 1
@@ -1183,7 +1185,7 @@ class Enemy:
         
         # --- EXECUTION (İnfazcı) ---
         exec_threshold = p_stats.get("lowHpExec", 0)
-        if exec_threshold > 0 and self.hp > 0:
+        if from_player and not is_reflected and exec_threshold > 0 and self.hp > 0:
             if (self.hp / self.max_hp) < exec_threshold:
                 self.hp = 0
                 game.add_event("damage_text", self.x, self.y - 40, value="EXECUTED!", color=(255, 0, 0), timer=0.8)
@@ -1195,7 +1197,7 @@ class Enemy:
                             e.take_damage(self.max_hp * 0.2, game, from_player=True)
 
         # --- STORM CALLER (Fırtına Çağrıcı) ---
-        if from_player and getattr(player, "lightning_proc_hits", 0) > 0 and not is_dot:
+        if triggers_on_hit and getattr(player, "lightning_proc_hits", 0) > 0:
             if not hasattr(player, "_lightning_hit_count"):
                 player._lightning_hit_count = 0
             player._lightning_hit_count += 1
@@ -1213,7 +1215,7 @@ class Enemy:
 
         # --- EVRİM PASİFLERİ (vuruş tetikli) ---
         evo_p = getattr(player, 'evolution_passive', '')
-        if from_player and not is_dot and evo_p and not self.dead:
+        if triggers_on_hit and evo_p and not self.dead:
             if evo_p == 'crit_ignite' and is_crit:
                 self.apply_dot('fire', final_dmg * 0.30, 3.0)
             elif evo_p == 'freeze_on_hit':
@@ -1255,28 +1257,25 @@ class Enemy:
         # --- KRİTİK SERSEMLETME (Kritik Aşırı Yük kartı) ---
         # Kart bayrağı tanımlıydı ama hiçbir yerde okunmuyordu (P3)
         stun_dur = getattr(player, "stun_on_crit", 0)
-        if is_crit and from_player and stun_dur > 0 and not is_dot and not getattr(self, 'is_boss', False):
+        if is_crit and triggers_on_hit and stun_dur > 0 and self.type not in ("boss", "crystal_dragon", "arachne"):
             from logic.status_effects import apply_stun
             apply_stun(self.effect_manager, duration=stun_dur)
 
         # --- LIFESTEAL (Can Çalma) ---
         # lifesteal_bonus (Kan Ateşi kartı) sabit HP katkısıdır (P3)
         ls_flat = getattr(player, "lifesteal_bonus", 0)
-        if (p_stats.get("lifesteal", 0) > 0 or ls_flat > 0) and not is_dot and player.hp < player.max_hp and player.lifesteal_cooldown_timer <= 0:
+        if triggers_on_hit and not self.is_trap and (p_stats.get("lifesteal", 0) > 0 or ls_flat > 0) and player.hp < player.max_hp:
             ls_perc = p_stats.get("lifesteal", 0)
             if game.wave.get("current_diff") == "Impossible":
                 ls_perc *= 0.5 # Can çalma etkisi yarıya iner
             heal = final_dmg * ls_perc + ls_flat
 
-            # Tüm sınıflar havuzda biriktirir (GDD 62) ve en fazla max_hp kadar biriktirebilir.
-            # Bloodwalker'ın eski "anında heal" dalı 10k+ HP/s sonsuz sustain yaratıyordu (F3);
-            # vampir kimliği artık hızlandırılmış havuz boşaltmayla korunur (player.py).
-            player.lifesteal_buffer = min(player.max_hp, player.lifesteal_buffer + heal)
+            # Bütün uygun vuruşlar aynı sınırlı havuzu besler.
+            player.lifesteal_buffer = min(player.max_hp * 0.20, player.lifesteal_buffer + heal)
                 
-            # AYNI ANDA ÇOKLU CAN ÇALMAYI ENGELLE (Sadece 1 hedeften can çalar)
-            player.lifesteal_cooldown_timer = 0.2
+            # Çoklu hedefler aynı havuzu besler; iyileşme hızı player.update_lifesteal'de sınırlıdır.
             
-        if self.hp <= 0:
+        if self.hp <= 0 and not self.dead:
             self.dead = True
             # --- BUZ YÜRÜYÜCÜSÜ Ölüm Bulutu ---
             if self.type == "frost_crawler":

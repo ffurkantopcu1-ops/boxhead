@@ -40,7 +40,7 @@ class Warrior:
         # Hasar Kontrolü
         hit_any = False
         phys_flat = player.stats.get("physDmgFlat", 0)
-        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult()
+        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult() * (1.0 + player.stats.get("physDmgMult", 0))
         
         for e in game.iter_enemies_near(player.x, player.y, range_val + 160):
             if not e.dead and not e.is_trap:
@@ -63,7 +63,7 @@ class Warrior:
                         # --- ELEMENTEL UYGULAMA (NEW!) ---
                         # 1. Zehir
                         p_dps = player.stats.get("poisonDps", 0) * player.stats["dmgMult"] * elem_mult
-                        if p_dps > 0: e.apply_dot('poison', p_dps, 3.0)
+                        if p_dps > 0: e.apply_dot('poison', (p_dps) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
 
                         # 2. Buz (Sadece DoT, Yavaşlatma Kaldırıldı v1.0.6.6)
                         f_dmg = (player.stats.get("frostDmgFlat", 0) + player.stats.get("frostDamage", 0)) * player.stats["dmgMult"] * frost_mult
@@ -82,12 +82,12 @@ class Warrior:
                                     ody = other.y - e.y
                                     if odx * odx + ody * ody < 80 * 80:
                                         other.take_damage(fire_dmg, game, from_player=True)
-                                        other.apply_dot('fire', fire_dmg * 0.4, 3.0)
+                                        other.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                                         splash_count += 1
                                         if splash_count >= 10:
                                             break
                             # Ana hedefe Yanma
-                            e.apply_dot('fire', fire_dmg * 0.4, 3.0)
+                            e.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
 
                         # is_crit AKTARILMALI: kritik hesaplanıyordu ama
                         # take_damage'a verilmiyordu, bu yüzden krite bağlı

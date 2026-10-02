@@ -1,6 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.20.1",
+      "date": "2026-10-02",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "Launcher sürüm dosyasındaki BOM nedeniyle aynı güncellemeyi tekrar istemiyor; yanlış sürümlü paketleri reddediyor.",
+          "Fiziksel ve DoT bonusları üç yakın dövüş sınıfında çalışıyor; boss hasarı bütün boss türlerine uygulanıyor.",
+          "Yansıma/diken hasarı tekrar yansıma döngüsüne girmiyor; kalkan tam sıfırda da kırılıyor.",
+          "Boşluk asası kara delik mermisi çizilirken çökme düzeltildi."
+        ],
+        "⚙️ İyileştirmeler": [
+          "211 düğümlü ağaçta ayrı başlangıçlar, yatırım gerektiren sınıflar arası köprüler ve bedelli keystone seçimleri var.",
+          "Can çalma çoklu uygun vuruşlarla sınırlı bir havuzu besliyor; iyileşme maksimum can ve geçen süreyle ölçekleniyor.",
+          "Launcher 1.1.1 yayımlandı; eski ağaç üreticisi/veri uyuşmazlığı ve güncel olmayan test beklentileri giderildi."
+        ]
+      }
+    },
+    {
       "version": "1.20.0",
       "date": "2026-08-10",
       "categories": {

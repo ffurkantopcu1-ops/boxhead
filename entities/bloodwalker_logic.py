@@ -39,7 +39,7 @@ class Bloodwalker:
         visual = "sweep" if not is_punch else "slash"
         game.add_event(visual, player.x, player.y, angle=player.facing_angle, range=range_val, arc=0.9, timer=0.12)
 
-        dmg = (dmg_base + phys_flat) * player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult()
+        dmg = (dmg_base + phys_flat) * player.stats.get("dmgMult", 1.0) * player.get_conditional_dmg_mult() * (1.0 + player.stats.get("physDmgMult", 0))
         is_crit = random.random() < player.stats.get("critChance", 0.05)
         final_dmg = dmg * (2.0 + player.stats.get("critDmg", 0)) if is_crit else dmg
         
@@ -62,12 +62,6 @@ class Bloodwalker:
                     vfx.hit(game, e.x, e.y, 'phys', is_crit=is_crit)
                     hit_any = True
 
-                    # Lifesteal — her vuruşta %20 can al
-                    if player.hp < player.max_hp and player.lifesteal_cooldown_timer <= 0:
-                        lifesteal = player.stats.get("lifesteal", 0.20)
-                        heal = final_dmg * lifesteal
-                        player.hp = min(player.max_hp, player.hp + heal)
-
                     # Elementel uygulama (Warrior ile aynı mantık)
                     # Element yüzde statları burada hiç okunmuyordu (F6)
                     fire_mult, frost_mult, elem_mult = player.get_elemental_mults()
@@ -84,12 +78,12 @@ class Bloodwalker:
                                 ody = other.y - e.y
                                 if odx * odx + ody * ody < 70 * 70:
                                     other.take_damage(fire_dmg, game, from_player=True)
-                                    other.apply_dot('fire', fire_dmg * 0.4, 3.0)
-                        e.apply_dot('fire', fire_dmg * 0.4, 3.0)
+                                    other.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
+                        e.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                     if frost_dmg > 0:
                         e.apply_dot('frost', frost_dmg * 0.5, 3.5)
                     if p_dps > 0:
-                        e.apply_dot('poison', p_dps, 3.0)
+                        e.apply_dot('poison', (p_dps) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
 
         if hit_any:
             game.trigger_shake(5)

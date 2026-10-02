@@ -50,7 +50,7 @@ class TestData(unittest.TestCase):
     def test_every_start_reaches_a_core_node(self):
         for cls, sid in SkillTree.START_BY_CLASS.items():
             self.assertTrue(
-                any(SkillTree.BY_ID[t]["arm"] == "core" for t in SkillTree.ADJ[sid]),
+                any(SkillTree.BY_ID[t]["arm"] == "core" for t in TestTreeShape._cost_map(sid)),
                 f"{sid} hicbir cekirdek dugumune baglanmiyor")
 
 
@@ -151,7 +151,8 @@ class TestTreeShape(unittest.TestCase):
     def test_keystone_is_a_real_commitment(self):
         # Eskiden dış halkaya varan biri keystone'ları sırayla alıyordu.
         for c in self.CLASSES:
-            cost = self._cost_map(f"start_{c}")[f"{c}_keystone"]
+            dist = self._cost_map(f"start_{c}")
+            cost = min(dist[n["id"]] for n in SkillTree.NODES if n["type"] == "keystone" and n["arm"] == c)
             self.assertGreaterEqual(cost, 12, f"{c} keystone'u çok ucuz ({cost} SP)")
 
     def test_notables_are_not_chainable(self):
@@ -170,10 +171,11 @@ class TestTreeShape(unittest.TestCase):
     def test_foreign_keystone_costs_more_than_own(self):
         for c in self.CLASSES:
             d = self._cost_map(f"start_{c}")
-            own = d[f"{c}_keystone"]
+            own = min(d[n["id"]] for n in SkillTree.NODES if n["type"] == "keystone" and n["arm"] == c)
             for o in self.CLASSES:
                 if o != c:
-                    self.assertGreater(d[f"{o}_keystone"], own,
+                    foreign = min(d[n["id"]] for n in SkillTree.NODES if n["type"] == "keystone" and n["arm"] == o)
+                    self.assertGreater(foreign, own,
                                        f"{c} için {o} keystone'u kendi keystone'undan ucuz")
 
     # Renk tablosunun anahtarları (scenes/game_scene.py -> TREE_CAT_COLORS).

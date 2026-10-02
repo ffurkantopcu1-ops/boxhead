@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Silah 'savaş ailesi' kuralı: aynı aileden silah sınıfı DEĞİŞTİRMEZ, farklı
-aileden silah değiştirir (bkz. InventoryManager.WEAPON_FAMILIES).
+"""Silah değişimi seçilen sınıfı değiştirmez; silah statları yine uygulanır.
 
 Pygame penceresi açmadan çalışır."""
 import os
@@ -58,11 +57,11 @@ class TestWeaponFamily(unittest.TestCase):
         self.assertEqual(resulting_class("sorcerer", "sniper"), "sorcerer")
         self.assertEqual(resulting_class("bomber", "alchemist"), "bomber")
 
-    def test_cross_family_swaps_class(self):
-        # Farklı savaş ailesi: o silahın mekaniği ancak kendi sınıfıyla çalışır
-        self.assertEqual(resulting_class("ninja", "sniper"), "sniper")
-        self.assertEqual(resulting_class("warrior", "engineer"), "engineer")
-        self.assertEqual(resulting_class("beastmaster", "warrior"), "warrior")
+    def test_cross_family_keeps_class(self):
+        # Farklı silah ailesi de başlangıç sınıfını değiştirmez.
+        self.assertEqual(resulting_class("ninja", "sniper"), "ninja")
+        self.assertEqual(resulting_class("warrior", "engineer"), "warrior")
+        self.assertEqual(resulting_class("beastmaster", "warrior"), "beastmaster")
 
     def test_classless_weapon_keeps_base(self):
         self.assertEqual(resulting_class("ninja", "general"), "ninja")

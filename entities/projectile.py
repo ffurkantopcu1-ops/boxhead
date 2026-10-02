@@ -476,7 +476,6 @@ class Projectile:
             pygame.draw.circle(screen, (255, 255, 255), (int(draw_x), int(draw_y)), 2)
         elif self.is_katana:
             # Katana Görseli (X şeklinde hızlı bir effekt)
-            import random
             offset = random.randint(-5, 5)
             pygame.draw.line(screen, (255, 255, 255), (draw_x - 15 + offset, draw_y - 15), (draw_x + 15 + offset, draw_y + 15), 3)
             pygame.draw.line(screen, (255, 255, 255), (draw_x + 15, draw_y - 15 + offset), (draw_x - 15, draw_y + 15 + offset), 3)

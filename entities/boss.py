@@ -428,12 +428,12 @@ class AbyssalLord(Enemy):
         self.x = max(50, min(4950, self.x))
         self.y = max(50, min(4950, self.y))
 
-    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False):
+    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False, is_reflected=False):
         if self.invulnerable:
             game.add_event("damage_text", self.x, self.y - 40, value="IMMUNE!", color=(200, 200, 255), scale=0.8)
             return
         # from_player dusuruluyordu: lifesteal/storm caller/cift agiz boss'ta olu kaliyordu
-        super().take_damage(amount, game, is_crit, is_dot, from_player)
+        super().take_damage(amount, game, is_crit, is_dot, from_player, is_reflected=is_reflected)
 
     def draw(self, screen, camera_x, camera_y):
         draw_x, draw_y = int(self.x - camera_x), int(self.y - camera_y)

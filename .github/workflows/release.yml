@@ -82,6 +82,7 @@ jobs:
           Copy-Item version.txt release_staging/
           New-Item -ItemType Directory -Path release_staging/data -Force
           Copy-Item data/patch_notes.json release_staging/data/
+          Copy-Item data/skill_tree.json release_staging/data/
 
           # Create ZIP
           Compress-Archive -Path release_staging/* -DestinationPath $zipName -Force

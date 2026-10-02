@@ -574,24 +574,8 @@ class Player:
                 regen *= _ev.get("regen_mult", 1.0)
             self.heal(regen * dt)
 
-        # --- CAN ÇALMA GÜNCELLEMELERİ ---
-        if self.lifesteal_cooldown_timer > 0:
-            self.lifesteal_cooldown_timer -= dt
-                
-        # Havuzdan can yenileme (Sadece cooldown yoksa)
-        if self.lifesteal_buffer > 0 and self.lifesteal_cooldown_timer <= 0:
-            # Saniyede 10 HP yenileme (Bloodwalker sınıf kimliği: 3x hızlı boşaltma)
-            heal_rate = 30 if getattr(self, "class_id", "") == "bloodwalker" else 10
-            heal_amount = heal_rate * dt
-            
-            can_heal = min(self.lifesteal_buffer, heal_amount)
-            actual_healed, overheal = self.heal(can_heal)
-            
-            self.lifesteal_buffer -= can_heal
-            if self.hp >= self.max_hp:
-                self.lifesteal_buffer = 0
-        # NOT: else dalında havuzu sıfırlamak yok — take_damage 0.2sn cooldown
-        # kurduğu için havuz bir sonraki karede hep siliniyordu (H1)
+        # Can çalma saniye ve maksimum can üzerinden hesaplanır.
+        self.update_lifesteal(dt)
 
         # --- PASİF KART EFEKTLERİ ---
         # Death Wish: Her saniye HP drain
@@ -1714,8 +1698,24 @@ class Player:
             
         return actual_heal, overheal
 
-    def take_damage(self, amount, force=False, is_self_damage=False):
+    def update_lifesteal(self, dt):
+        """Recover leeched life at a max-life-based rate, independent of FPS."""
+        pool_cap = max(0.0, self.max_hp * 0.20)
+        self.lifesteal_buffer = min(pool_cap, max(0.0, self.lifesteal_buffer))
+        if self.hp <= 0 or self.hp >= self.max_hp:
+            self.lifesteal_buffer = 0
+            return
+        rate = 0.20 if self.class_id == "bloodwalker" else 0.10
+        recovery = min(self.lifesteal_buffer, self.max_hp * rate * max(0.0, dt))
+        if recovery > 0:
+            self.heal(recovery)
+            self.lifesteal_buffer = max(0.0, self.lifesteal_buffer - recovery)
+        if self.hp >= self.max_hp:
+            self.lifesteal_buffer = 0
+
+    def take_damage(self, amount, force=False, is_self_damage=False, is_reflected=False):
         """Hasar alma mantığı. force=True ise i-frame'i yok sayıp direkt vurur (Sürekli temas hasarı)."""
+        if amount <= 0 or self.hp <= 0: return
         if self.is_invulnerable: return
         if self.dash_active_timer > 0: return # Dash sırasında dokunulmazlık
         if not force and self.i_frame_timer > 0: return
@@ -1766,6 +1766,7 @@ class Player:
                 shield_broke = False
                 if self.energy_shield >= final_dmg:
                     self.energy_shield -= final_dmg
+                    shield_broke = self.energy_shield <= 0
                     final_dmg = 0
                 else:
                     final_dmg -= self.energy_shield
@@ -1817,22 +1818,22 @@ class Player:
             
             # Ayna Kalkan (Reflection Aura)
             refl = self.stats.get("reflectionAura", 0)
-            if refl > 0 and final_dmg > 0 and not is_self_damage:
+            if refl > 0 and final_dmg > 0 and not is_self_damage and not is_reflected:
                 if hasattr(self, 'game') and self.game:
                     reflect_dmg = final_dmg * refl
                     for e in self.game.iter_enemies_near(self.x, self.y, 400):
                         if not e.dead and not getattr(e, 'is_trap', False):
-                            e.take_damage(reflect_dmg, self.game, from_player=True)
+                            e.take_damage(reflect_dmg, self.game, from_player=True, is_reflected=True)
                     self.game.add_event("explosion", self.x, self.y, radius=40, color=(200, 200, 255), timer=0.2)
 
             # Dikenler (Demir Kale sinerjisi / SET_TANK 4pc / affix) — sabit
             # yansıma hasarı; stat tanımlıydı ama hiçbir yerde okunmuyordu (P3)
             thorns = self.stats.get("thorns", 0)
-            if thorns > 0 and final_dmg > 0 and not is_self_damage:
+            if thorns > 0 and final_dmg > 0 and not is_self_damage and not is_reflected:
                 if hasattr(self, 'game') and self.game:
                     for e in self.game.iter_enemies_near(self.x, self.y, 120):
                         if not e.dead and not getattr(e, 'is_trap', False):
-                            e.take_damage(thorns, self.game, from_player=True)
+                            e.take_damage(thorns, self.game, from_player=True, is_reflected=True)
 
             if final_dmg > 0:
                 self.hp -= final_dmg

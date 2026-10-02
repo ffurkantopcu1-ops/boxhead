@@ -29,7 +29,7 @@ class Ninja:
         # Denge: Sabit 35 yerine katananın physDmg değeri baz alınır (silahla ölçeklenir)
         dmg_base = (12 + player.stats.get("physDmg", 0)) if not is_punch else 5
         phys_flat = player.stats.get("physDmgFlat", 0)
-        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult()
+        dmg = (dmg_base + phys_flat) * player.stats["dmgMult"] * player.get_conditional_dmg_mult() * (1.0 + player.stats.get("physDmgMult", 0))
 
         # Kritik Vuruş (Shadow/Storm evrimlerinin critDmg bonusları artık melee'de işler)
         is_crit = random.random() < player.stats.get("critChance", 0.05)
@@ -73,11 +73,11 @@ class Ninja:
 
                         if fire_dmg > 0:
                             game.add_event("explosion", e.x, e.y, radius=60, color=(255, 100, 0), timer=0.1)
-                            e.apply_dot('fire', fire_dmg * 0.4, 3.0)
+                            e.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                         if frost_dmg > 0:
                             e.apply_dot('frost', frost_dmg * 0.5, 3.5)
                         if p_dps > 0:
-                            e.apply_dot('poison', p_dps, 3.0)
+                            e.apply_dot('poison', (p_dps) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
 
                         # is_crit aktarımı: krite bağlı mekanikler melee'de de çalışsın
                         e.take_damage(dmg, game, is_crit=is_crit, from_player=True)
