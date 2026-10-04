@@ -52,6 +52,7 @@ class Player:
         from logic.progression import xp_threshold
         self.xp_to_next_level = xp_threshold(1)
         self.gold = 0
+        self.craft_essences = {}
         self.level = 1
         self.skill_points = 0
         self.main_points_earned = 0

@@ -85,6 +85,10 @@ def advanced_recipes(item, player=None):
         return []
     result = [dict(id='salvage',name='Söküm',side='işlem',operation=True,cost=0,
                    desc='Eşyayı parçalar. Kuşanılan eşya sökülemez. Kazanım: '+str(salvage_yield(item))+' işçilik özü.')]
+    from logic.orb_crafting import salvage_families, FAMILIES
+    for family in salvage_families(item):
+        result.append(dict(id='salvage:'+family,name='Sök: '+FAMILIES[family][0]+' özü',side='işlem',operation=True,cost=0,
+                           desc=f'Eşyayı parçalar; {salvage_yield(item)} işçilik özü ve 1 {FAMILIES[family][0]} aile özü kazandırır. Tarif özellikleri aile özü vermez.'))
     for side in ('prefixes','suffixes'):
         for aff in item.get(side,[]):
             if aff.get('fractured'): continue
@@ -122,10 +126,16 @@ def apply_advanced(player,item,operation_id):
     if not owned:return 'Eşya artık sende değil.'
     option=next((r for r in advanced_recipes(item,player) if r['id']==operation_id),None)
     if option is None:return 'İşlem artık uygun değil.'
-    if operation_id=='salvage':
+    if operation_id=='salvage' or operation_id.startswith('salvage:'):
         if any(it is item for it in player.inv_manager.equipped.values()):return 'Söküm için önce eşyayı çantaya çıkar.'
-        player.inventory.remove(item)
+        index=next(i for i,owned_item in enumerate(player.inventory) if owned_item is item)
+        del player.inventory[index]
         player.craft_dust=getattr(player,'craft_dust',0)+salvage_yield(item)
+        if operation_id.startswith('salvage:'):
+            family=operation_id.split(':')[1]
+            stock=dict(getattr(player,'craft_essences',{}))
+            stock[family]=stock.get(family,0)+1
+            player.craft_essences=stock
         return None
     dust=getattr(player,'craft_dust',0)
     if dust<option['cost']:return f"{option['cost']} işçilik özü gerekiyor. Kullanmadığın eşyaları sökebilirsin."

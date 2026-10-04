@@ -405,3 +405,31 @@ def test_workshop_cards_and_actions_do_not_overlap(scene):
             assert layout['panel'].contains(row)
             assert not row.colliderect(layout['preview'])
             assert all(not row.colliderect(other) for other in layout['orb_rows'][i+1:])
+
+
+def test_orb_feedback_and_result_panel_use_actual_success(scene):
+    p=scene.logic.players['p1']
+    orb=next(x.copy() for x in scene.logic.item_system.orbs if x['orb_id']=='tier')
+    p.inventory.append(orb)
+    scene.show_craft_window=True;scene.crafting_target=p.inv_manager.equipped['weapon']
+    scene._selected_craft_orb=orb
+    scene._handle_inventory_mouse(p,scene._craft_layout()['apply'].center)
+    assert scene._craft_feedback['target'] is scene.crafting_target
+    assert any(c['stat']=='rarity' for c in scene._craft_feedback['changes'])
+    scene.draw_craft_window()
+    scene._handle_inventory_mouse(p,scene._craft_result_toggle.center)
+    assert scene._craft_feedback_expanded
+    scene.draw_craft_window()
+    assert scene.craft_orb_use_rects==[]
+    scene._handle_inventory_mouse(p,scene._craft_result_toggle.center)
+    assert not scene._craft_feedback_expanded
+
+
+def test_failed_orb_does_not_create_result_feedback(scene):
+    p=scene.logic.players['p1']
+    orb=next(x.copy() for x in scene.logic.item_system.orbs if x['orb_id']=='scour')
+    p.inventory.append(orb)
+    scene.show_craft_window=True;scene.crafting_target=p.inv_manager.equipped['weapon']
+    scene._selected_craft_orb=orb
+    scene._handle_inventory_mouse(p,scene._craft_layout()['apply'].center)
+    assert not getattr(scene,'_craft_feedback',None)

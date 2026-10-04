@@ -192,6 +192,7 @@ class SaveManager:
                 "xp_to_next_level": getattr(p, 'xp_to_next_level', 100),
                 "gold": p.gold,
                 "craft_dust": getattr(p,"craft_dust",0),
+                "craft_essences": getattr(p,"craft_essences",{}),
                 "life_curve_version": 1,
                 "skill_points": p.skill_points,
                 "skill_tree_version": 2,
@@ -275,6 +276,10 @@ class SaveManager:
         p.xp_to_next_level = pd.get("xp_to_next_level", 100)
         p.gold = pd.get("gold", 0)
         p.craft_dust = max(0,int(pd.get("craft_dust",0)))
+        from logic.orb_crafting import FAMILIES
+        raw_essences = pd.get('craft_essences',{})
+        p.craft_essences = {key:max(0,int(value)) for key,value in raw_essences.items()
+                            if key in FAMILIES and isinstance(value,(int,float))} if isinstance(raw_essences,dict) else {}
         p.skill_points = pd.get("skill_points", 0)
         p.class_id = pd.get("class_id", "warrior")
         p.base_class_id = pd.get("base_class_id", p.class_id)

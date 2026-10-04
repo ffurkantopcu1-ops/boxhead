@@ -243,6 +243,10 @@ class ItemSystem:
     }
 
     orbs = [
+        {'name':'Dönüşüm Orbu','type':'orb','orb_id':'transmute','icon_id':'orb_special','rarity':'Rare','price':1500,
+         'desc':'Seçilen doğal özelliği, seçtiğin aileden farklı bir özelliğe dönüştürür. 1 aile özü tüketir; diğer özellikler korunur.'},
+        {'name':'Tek Taraflı Kaos','type':'orb','orb_id':'side_chaos','icon_id':'orb_corrupted','rarity':'Rare','price':3000,
+         'desc':'Yalnız seçilen tarafın doğal özelliklerini yeniler. Karşı taraf, sabit ve tarif özellikleri korunur.'},
         { 'name': "🟣 Özel Küre (Special)", 'type': 'orb', 'orb_id': 'special_orb', 'icon_id': 'orb_special', 'rarity': 'Unique', 'price': 5000, 
           'desc': 'Rastgele bir özelliği siler ve yerine ultra-nadir BİR KIRIK ÖZELLİK ekler.' },
         { 'name': "🔴 Lanetli Küre (Corrupted)", 'type': 'orb', 'orb_id': 'corrupted_orb', 'icon_id': 'orb_corrupted', 'rarity': 'Unique', 'price': 3000, 
@@ -397,6 +401,8 @@ class ItemSystem:
         return random.choices(tiers, weights=[weights[t] for t in tiers])[0]
 
     def apply_orb(self, item, orb_id):
+        if orb_id in ('transmute','side_chaos'):
+            return 'Bu orb için atölyede hedef veya özellik tarafı seçmelisin.'
         if item.get('type') == 'orb': return "Bir orbu başka orba basamazsın!"
         if item.get('type') == 'essence': return "Özlere (Essence) orb basılamaz!"
         if item.get('is_corrupted'): return "Eşya lanetlenmiş (Corrupted), üzerinde değişiklik yapılamaz!"

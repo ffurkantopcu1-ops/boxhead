@@ -830,8 +830,17 @@ class GameScene(BaseScene):
         if self.show_craft_window:
             # Rect'ler çizimle AYNI kaynaktan (_craft_layout)
             L = self._craft_layout()
+            if getattr(self, '_craft_feedback', {}).get('target') is self.crafting_target and getattr(self, '_craft_result_toggle', L['result_toggle']).collidepoint(pos):
+                self._craft_feedback_expanded = not getattr(self, '_craft_feedback_expanded', False)
+                self._craft_feedback_show = True
+                return
+
+            if ui_workshop.handle_orb_config(self, p, pos):
+                return
 
             if any(L[key].collidepoint(pos) for key in ('orb_mode','recipe_mode','advanced_mode')):
+                self._craft_feedback_expanded = False
+                self._craft_feedback_show = False
                 self._craft_advanced_mode = L['advanced_mode'].collidepoint(pos)
                 self._craft_recipe_mode = not L['orb_mode'].collidepoint(pos)
                 self._selected_recipe = None
@@ -843,19 +852,26 @@ class GameScene(BaseScene):
                 for recipe,rect in getattr(self,'craft_recipe_rects',[]):
                     if rect.collidepoint(pos):
                         self._selected_recipe = recipe
+                        self._craft_feedback_expanded = False
+                        self._craft_feedback_show = False
                         self.craft_error_msg = ''
                         return
                 if L['apply'].collidepoint(pos):
                     selected = getattr(self,'_selected_recipe',None)
                     if selected:
+                        import copy
+                        before = copy.deepcopy(self.crafting_target)
+                        target = self.crafting_target
                         if selected.get('operation'):
                             err = apply_advanced(p,self.crafting_target,selected['id'])
-                            if not err and selected['id']=='salvage':
+                            if not err and selected['id'].startswith('salvage'):
                                 self.show_craft_window=False
                                 self.crafting_target=None
                             self._selected_recipe=None
                         else:
                             err = apply_recipe(p,self.crafting_target,selected['id'],self.logic.wave.get('level',1))
+                        if not err and self.crafting_target is target:
+                            ui_workshop.record_result(self, before, target)
                         self.craft_error_msg = err or ('İşçilik tamamlandı.' if selected.get('operation') else 'Tarif uygulandı. Doğal özellikler korundu.')
                     return
                 page = getattr(self,'_recipe_page',0)
@@ -895,6 +911,9 @@ class GameScene(BaseScene):
                 orb = orbs_in_inv[actual_idx]
                 if use_btn.collidepoint(pos):
                     self._selected_craft_orb = orb
+                    self._orb_config_open = True
+                    self._craft_feedback_expanded = False
+                    self._craft_feedback_show = False
                     self.craft_error_msg = ""
                     return
 
@@ -902,13 +921,24 @@ class GameScene(BaseScene):
                 orb = getattr(self, '_selected_craft_orb', None)
                 if orb is None or not any(it is orb for it in p.inventory):
                     return
-                err = self.logic.item_system.apply_orb(self.crafting_target, orb['orb_id'])
+                import copy
+                before = copy.deepcopy(self.crafting_target)
+                from logic.orb_crafting import CONFIG_ORBS, apply as apply_directed
+                directed = orb['orb_id'] in CONFIG_ORBS
+                if directed:
+                    config = ui_workshop.orb_config(self, orb)
+                    err = apply_directed(p, self.crafting_target, orb, **config)
+                else:
+                    err = self.logic.item_system.apply_orb(self.crafting_target, orb['orb_id'])
                 if err:
                     self.craft_error_msg = err
                 else:
-                    orb['stack'] = orb.get('stack', 1) - 1
-                    if orb['stack'] <= 0:
-                        p.inventory.remove(orb)
+                    ui_workshop.record_result(self, before, self.crafting_target)
+                    if not directed:
+                        orb['stack'] = orb.get('stack', 1) - 1
+                        if orb['stack'] <= 0:
+                            p.inventory.remove(orb)
+                    if not any(it is orb for it in p.inventory):
                         self._selected_craft_orb = None
                     p.inv_manager.recalculate_stats()
                     self.craft_error_msg = "İşlem tamamlandı. Eşyanın özellikleri güncellendi."
@@ -2007,6 +2037,8 @@ class GameScene(BaseScene):
         hovered_item = None
         
         if self.show_craft_window:
+            if getattr(self, "_craft_feedback_expanded", False):
+                return
             # Satır rect'leri çizimle aynı kaynaktan (paneli yeniden türetmiyoruz)
             L = self._craft_layout()
             orbs_in_inv = [x for x in p.inventory if x.get('type') == 'orb']
