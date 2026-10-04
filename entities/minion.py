@@ -1,5 +1,6 @@
 import pygame
 import math
+from logic.progression import base_life
 import random
 import vfx
 
@@ -67,7 +68,7 @@ class Minion:
         # anahtarda toplanıp 100 ile çarpılıyordu (851 -> 85.100 can).
         hp_mult = owner.stats.get("minionMaxHp", 1.0) if owner else 1.0
         hp_flat = owner.stats.get("minionMaxHpFlat", 0) if owner else 0
-        self.max_hp = max(1.0, 100 * hp_mult + hp_flat)
+        self.max_hp = max(1.0, (100 + .5*(base_life(getattr(owner,'level',1))-100)) * hp_mult + hp_flat)
         self.hp = self.max_hp
         self.armor = owner.stats.get("minionArmor", 0) if owner else 0
         
@@ -93,7 +94,7 @@ class Minion:
     def update(self, dt, game):
         if not self.owner: return
         stats = self.owner.stats
-        maximum = max(1.0, 100 * stats.get('minionMaxHp', 1.0) + stats.get('minionMaxHpFlat', 0))
+        maximum = max(1.0, (100 + .5*(base_life(getattr(self.owner,'level',1))-100)) * stats.get('minionMaxHp', 1.0) + stats.get('minionMaxHpFlat', 0))
         if maximum != self.max_hp:
             self.hp = min(maximum, self.hp * maximum / self.max_hp)
             self.max_hp = maximum

@@ -44,6 +44,10 @@ def render(out):
    from logic.crafting import recipes
    sc._selected_recipe=recipes(item)[0]
    sc.draw_craft_window();pygame.image.save(screen,str(out/f'craft_recipe_{w}.png'))
+   sc._craft_advanced_mode=True
+   from logic.crafting import advanced_recipes
+   sc._selected_recipe=advanced_recipes(item,p)[0];p.craft_dust=20
+   sc.draw_craft_window();pygame.image.save(screen,str(out/f'craft_advanced_{w}.png'))
    sc.show_craft_window=False;sc.draw_inventory()
    sc._item_drag={'item':item,'source':None,'start':(0,0),'pos':sc.equip_rows[0].rect.center,'moved':True}
    from ui_workshop import draw_drag

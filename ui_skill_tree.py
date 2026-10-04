@@ -62,3 +62,38 @@ def draw_node(screen,node,center,r,state,matched=False):
         pygame.draw.circle(screen,muted,center,max(2,r-1),1)
     if node['type']=='start' or state=='open':
         pygame.draw.circle(screen,color,center,max(3,r-1),1)
+
+
+def class_guide(scene, rect, player):
+    """A persistent class detail shrine beside the full-screen tree."""
+    from logic.skill_tree import SkillTree
+    from ui_elements import render_fit,wrap_text
+    import ui_theme
+    screen=scene.screen
+    ui_theme.draw_inset_frame(screen,rect,'panel_frame_small.png',fill=(20,17,22),alpha=230,pad=12)
+    def line(label,y,color=(212,189,145),size=17,indent=15):
+        surface=render_fit(label,size,color,rect.width-indent-15)
+        screen.blit(surface,(rect.x+indent,y))
+    cls=player.class_id
+    line(cls.title()+' • SINIF REHBERİ',rect.y+16,size=20)
+    start=SkillTree.BY_ID[SkillTree.START_BY_CLASS[cls]]
+    image=medallion(start.get('icon','reach'),66,'allocated')
+    screen.blit(image,image.get_rect(center=(rect.centerx,rect.y+90)))
+    nodes=[n for n in SkillTree.NODES if n.get('arm')==cls]
+    line(f'{len(nodes)} sınıf düğümü',rect.y+136)
+    y=rect.y+174
+    for stat,label,icon in (('bounce','Sekme','bounce'),('pierce','Delme','pierce'),('projectileCount','Çoklu atış','volley')):
+        count=sum(n.get('stats',{}).get(stat,0)>0 for n in nodes)
+        screen.blit(medallion(icon,34,'open'),(rect.x+17,y))
+        line(f'{label} • {count} düğüm',y+8,size=16,indent=59)
+        y+=49
+    y+=8
+    line('İLK BÜYÜK SEÇİM: 4 SP',y,size=16);y+=30
+    line('MERKEZ ÖZELLİKLERİ',y,size=17);y+=26
+    message='İlk merkez: 19 puan. İkinci merkez: en az 15 ek puan. Merkezler arasında doğrudan yol yok.'
+    for part in wrap_text(scene.font_desc,message,rect.width-32):
+        line(part,y,(178,170,153),15);y+=21
+    if y+58<rect.bottom:
+        y+=18
+        line('Küçük: destek • Büyük: uzmanlık',y,size=14)
+        line('Elmas: güçlü, bedelli özellik',y+23,size=14)

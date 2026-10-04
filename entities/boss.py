@@ -42,7 +42,10 @@ class AbyssalLord(Enemy):
         self.attacks_resolved=0
 
     def attack_damage(self,base):
-        return base*(1+0.04*self.wave_level)*self.boss_dmg_mult
+        from logic.progression import base_life, enemy_damage_growth
+        expected_level = max(1, round(self.wave_level*1.4))
+        growth = math.sqrt(base_life(expected_level)/100) * enemy_damage_growth(self.wave_level)
+        return base*(1+0.04*self.wave_level)*growth*self.boss_dmg_mult
 
     def apply_difficulty(self,diff_name):
         if not hasattr(self,"boss_dmg_mult"): return

@@ -1,5 +1,6 @@
 import random
 import time
+from logic.affix_rules import affix_pool, item_level, best_tier, roll_value
 
 class ItemSystem:
     # ItemRNG.js'den port edildi (31+ Base)
@@ -187,7 +188,7 @@ class ItemSystem:
             {'stat': 'poisonDps', 'name': 'Zehir (DPS)', 'tiers': {1: [10, 15], 2: [6, 9], 3: [2, 5]}},
         ],
         'armor_prefixes': [
-            {'stat': 'maxHp', 'name': 'Maksimum Can', 'tiers': {1: [25, 35], 2: [15, 24], 3: [5, 14]}},
+            {'stat': 'maxHp', 'name': 'Maksimum Can', 'tiers': {1: [120, 180], 2: [40, 70], 3: [12, 24]}},
             {'stat': 'armor', 'name': 'Zırh', 'tiers': {1: [15, 20], 2: [8, 14], 3: [3, 7]}},
             {'stat': 'thorns', 'name': 'Dikenler', 'tiers': {1: [40, 60], 2: [25, 39], 3: [10, 24]}},
             {'stat': 'statusDuration', 'name': 'Etki Süresi', 'tiers': {1: [0.4, 0.6], 2: [0.2, 0.39], 3: [0.1, 0.19]}},
@@ -259,11 +260,11 @@ class ItemSystem:
         { 'name': "💎 Ekleme Orbu (Aug)", 'type': 'orb', 'orb_id': 'aug', 'icon_id': 'orb_chaos', 'rarity': 'Rare', 'price': 2000, 
           'desc': 'Eksik bir Prefix veya Suffix ekler.' },
         { 'name': "💠 Yüce Küre (Exalted)", 'type': 'orb', 'orb_id': 'exalted', 'icon_id': 'orb_chaos', 'rarity': 'Rare', 'price': 3000, 
-          'desc': 'Eşyaya rastgele yüksek seviye (T1-T2) bir özellik ekler.' },
+          'desc': 'Eşya seviyesinin izin verdiği en iyi tier ile rastgele uygun bir özellik ekler.' },
         { 'name': "🌟 İlahi Küre (Divine)", 'type': 'orb', 'orb_id': 'divine', 'icon_id': 'orb_chaos', 'rarity': 'Rare', 'price': 2500, 
           'desc': 'Özelliklerin değerlerini mevcut seviyesi (Tier) içinde yeniden belirler.' },
         { 'name': "🌀 Kaos Küresi (Chaos)", 'type': 'orb', 'orb_id': 'chaos', 'icon_id': 'orb_chaos', 'rarity': 'Rare', 'price': 2000, 
-          'desc': 'Tüm özellikleri rastgele yeniler.' },
+          'desc': 'Sabitlenmiş özellikler korunur; diğer özellikleri rastgele yeniler.' },
         { 'name': "💫 Tier Orbu (Upgrade)", 'type': 'orb', 'orb_id': 'tier', 'icon_id': 'orb_chaos', 'rarity': 'Rare', 'price': 1500, 
           'desc': 'Eşyanın nadirliğini arttırır (Normal -> Magic -> Rare).' },
         { 'name': "✨ Kutsanmış Küre (Blessed)", 'type': 'orb', 'orb_id': 'blessed', 'icon_id': 'orb_chaos', 'rarity': 'Unique', 'price': 2500, 
@@ -318,6 +319,7 @@ class ItemSystem:
             "id": int(time.time() * 1000) + random.randint(0, 1000),
             "name": base["name"],
             "base_name": base["name"],
+            "ilvl": max(1, int(wave_level)),
             "type": base["type"],
             "rarity": rarity,
             "price": 2000 if base.get('type') == 'essence' else price_map.get(rarity, 100),
@@ -350,6 +352,8 @@ class ItemSystem:
 
         num_prefix = random.randint(max(0, limit-1), limit)
         num_suffix = random.randint(max(0, limit-1), limit)
+        if num_prefix + num_suffix == 0:
+            num_prefix = 1
         
         group_key = 'utility'
         if item['type'] == 'weapon': group_key = 'weapon'
@@ -357,40 +361,40 @@ class ItemSystem:
         elif item['type'] == 'pet': group_key = 'pet'
         elif item['type'] == 'amulet': group_key = 'utility'
         
-        av_prefixes = self.affixes.get(f'{group_key}_prefixes', []).copy()
-        av_suffixes = self.affixes.get(f'{group_key}_suffixes', []).copy()
+        av_prefixes = affix_pool(item, 'prefixes', self.affixes)
+        av_suffixes = affix_pool(item, 'suffixes', self.affixes)
 
-        for _ in range(num_prefix):
+        existing = {a['stat'] for a in item['prefixes'] + item['suffixes']}
+        av_prefixes = [a for a in av_prefixes if a['stat'] not in existing]
+        av_suffixes = [a for a in av_suffixes if a['stat'] not in existing]
+        for _ in range(max(0, num_prefix-len(item['prefixes']))):
             if av_prefixes:
                 p = random.choice(av_prefixes)
-                tier = self.roll_tier(item['rarity'])
-                val = random.uniform(p['tiers'][tier][0], p['tiers'][tier][1])
+                tier = self.roll_tier(item['rarity'], item)
+                val = roll_value(p, tier)
                 item['prefixes'].append({
                     "name": f"{p['name']} (T{tier})", "stat": p['stat'], 
-                    "val": round(val, 2), "tier": tier, "label": "P", "base_name": p['name']
+                    "val": val, "tier": tier, "label": "P", "base_name": p['name']
                 })
                 av_prefixes.remove(p)
         
-        for _ in range(num_suffix):
+        for _ in range(max(0, num_suffix-len(item['suffixes']))):
             if av_suffixes:
                 s = random.choice(av_suffixes)
-                tier = self.roll_tier(item['rarity'])
-                val = random.uniform(s['tiers'][tier][0], s['tiers'][tier][1])
+                tier = self.roll_tier(item['rarity'], item)
+                val = roll_value(s, tier)
                 item['suffixes'].append({
                     "name": f"{s['name']} (T{tier})", "stat": s['stat'], 
-                    "val": round(val, 2), "tier": tier, "label": "S", "base_name": s['name']
+                    "val": val, "tier": tier, "label": "S", "base_name": s['name']
                 })
                 av_suffixes.remove(s)
 
-    def roll_tier(self, rarity):
-        if rarity == "Magic": return 3
-        elif rarity == "Rare": return 2 if random.random() < 0.4 else 3
-        elif rarity == "Unique":
-            r = random.random()
-            if r < 0.25: return 1
-            if r < 0.70: return 2
-            return 3
-        return 3
+    def roll_tier(self, rarity, item=None):
+        floor = best_tier(item_level(item)) if item is not None else 3
+        tiers = list(range(floor, 4))
+        weights = {3: 65, 2: 28, 1: 7}
+        # Rarity controls slots; even a high-level Magic can roll T1.
+        return random.choices(tiers, weights=[weights[t] for t in tiers])[0]
 
     def apply_orb(self, item, orb_id):
         if item.get('type') == 'orb': return "Bir orbu başka orba basamazsın!"
@@ -407,19 +411,21 @@ class ItemSystem:
         elif item['type'] == 'amulet': group_key = 'utility'
 
         if orb_id == 'scour':
-            all_affixes = item['prefixes'] + item['suffixes']
+            all_affixes = [a for a in item['prefixes'] + item['suffixes'] if not a.get('fractured')]
             if not all_affixes: return "Eşyada silinecek özellik yok!"
             target = random.choice(all_affixes)
             if target in item['prefixes']: item['prefixes'].remove(target)
             else: item['suffixes'].remove(target)
 
         elif orb_id == 'p_scour':
-            if not item['prefixes']: return "Eşyada prefix yok!"
-            item['prefixes'].pop(random.randint(0, len(item['prefixes'])-1))
+            targets = [a for a in item['prefixes'] if not a.get('fractured')]
+            if not targets: return 'Silinebilecek prefix yok!'
+            item['prefixes'].remove(random.choice(targets))
 
         elif orb_id == 's_scour':
-            if not item['suffixes']: return "Eşyada suffix yok!"
-            item['suffixes'].pop(random.randint(0, len(item['suffixes'])-1))
+            targets = [a for a in item['suffixes'] if not a.get('fractured')]
+            if not targets: return 'Silinebilecek suffix yok!'
+            item['suffixes'].remove(random.choice(targets))
 
         elif orb_id in ['p_add', 's_add', 'aug', 'exalted']:
             limit = r_limit.get(item['rarity'], 0)
@@ -437,19 +443,19 @@ class ItemSystem:
             
             existing = [x['stat'] for x in item['prefixes'] + item['suffixes']]
             if choice == 'p':
-                av = [x for x in self.affixes.get(f'{group_key}_prefixes', []) if x['stat'] not in existing]
+                av = [x for x in affix_pool(item, 'prefixes', self.affixes) if x['stat'] not in existing]
                 if not av: return "Eklenecek uygun özellik kalmadı!"
                 p = random.choice(av)
-                tier = 1 if orb_id == 'exalted' else self.roll_tier(item['rarity'])
-                val = random.uniform(p['tiers'][tier][0], p['tiers'][tier][1])
-                item['prefixes'].append({"name": f"{p['name']} (T{tier})", "stat": p['stat'], "val": round(val, 2), "tier": tier, "label": "P", "base_name": p['name']})
+                tier = best_tier(item_level(item)) if orb_id == 'exalted' else self.roll_tier(item['rarity'], item)
+                val = roll_value(p, tier)
+                item['prefixes'].append({"name": f"{p['name']} (T{tier})", "stat": p['stat'], "val": val, "tier": tier, "label": "P", "base_name": p['name']})
             else:
-                av = [x for x in self.affixes.get(f'{group_key}_suffixes', []) if x['stat'] not in existing]
+                av = [x for x in affix_pool(item, 'suffixes', self.affixes) if x['stat'] not in existing]
                 if not av: return "Eklenecek uygun özellik kalmadı!"
                 s = random.choice(av)
-                tier = 1 if orb_id == 'exalted' else self.roll_tier(item['rarity'])
-                val = random.uniform(s['tiers'][tier][0], s['tiers'][tier][1])
-                item['suffixes'].append({"name": f"{s['name']} (T{tier})", "stat": s['stat'], "val": round(val, 2), "tier": tier, "label": "S", "base_name": s['name']})
+                tier = best_tier(item_level(item)) if orb_id == 'exalted' else self.roll_tier(item['rarity'], item)
+                val = roll_value(s, tier)
+                item['suffixes'].append({"name": f"{s['name']} (T{tier})", "stat": s['stat'], "val": val, "tier": tier, "label": "S", "base_name": s['name']})
 
         elif orb_id == 'divine':
             for aff in item['prefixes'] + item['suffixes']:
@@ -457,14 +463,14 @@ class ItemSystem:
                 match = next((x for x in pool if x['stat'] == aff['stat']), None)
                 # "Kırık" affixler tier 0 ile geliyor ve tiers sözlüğünde yok;
                 # doğrudan indekslemek KeyError: 0 yaratıyordu (C6)
-                if match and aff.get('tier') in match['tiers']:
+                if match and aff.get('tier') in match['tiers'] and not aff.get('fractured'):
                     tier = aff['tier']
-                    aff['val'] = round(random.uniform(match['tiers'][tier][0], match['tiers'][tier][1]), 2)
+                    aff['val'] = roll_value(match,tier)
 
         elif orb_id == 'chaos':
             if item['rarity'] == 'Normal': return "Normal eşyaya Kaos basılamaz!"
-            item['prefixes'] = []
-            item['suffixes'] = []
+            item['prefixes'] = [a for a in item['prefixes'] if a.get('fractured')]
+            item['suffixes'] = [a for a in item['suffixes'] if a.get('fractured')]
             self.apply_affixes(item)
 
         elif orb_id == 'tier':
@@ -479,12 +485,12 @@ class ItemSystem:
                 pool = self.affixes.get(f'{group_key}_prefixes', []) + self.affixes.get(f'{group_key}_suffixes', [])
                 match = next((x for x in pool if x['stat'] == aff['stat']), None)
                 # tier 0 ("kırık" affix) tiers sözlüğünde yok -> KeyError (C6)
-                if match and aff.get('tier') in match['tiers']:
+                if match and aff.get('tier') in match['tiers'] and not aff.get('fractured'):
                     tier = aff['tier']
                     aff['val'] = round(match['tiers'][tier][1], 2)
 
         elif orb_id == 'special_orb':
-            all_affixes = item['prefixes'] + item['suffixes']
+            all_affixes = [a for a in item['prefixes'] + item['suffixes'] if not a.get('fractured')]
             if all_affixes:
                 target = random.choice(all_affixes)
                 if target in item['prefixes']: item['prefixes'].remove(target)
@@ -499,7 +505,7 @@ class ItemSystem:
                 b = random.choice(self.affixes['broken'])
                 item['suffixes'].append({"name": f"Lanetli {b['name']}", "stat": b['stat'], "val": round(random.uniform(b['val'][0], b['val'][1]), 2), "tier": 0, "label": "S", "base_name": b['name']})
             else:
-                all_affixes = item['prefixes'] + item['suffixes']
+                all_affixes = [a for a in item['prefixes'] + item['suffixes'] if not a.get('fractured')]
                 if all_affixes:
                     target = random.choice(all_affixes)
                     if target in item['prefixes']: item['prefixes'].remove(target)

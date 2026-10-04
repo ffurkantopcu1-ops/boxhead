@@ -762,6 +762,7 @@ class Player:
         # seviye 20'de seçilir; sonraki seviyeler alt-sınıf ağacını besler).
         if self.level >= 20:
             self.ascendancy_points += 1
+        self.inv_manager.recalculate_stats()
         self.hp = self.max_hp # Can tazele
         self.level_up_timer = 2.0 # 2 saniye ekranda yazı kalsın
         # Seviye atlamanın tek göstergesi bir yazıydı; artık görsel patlama var

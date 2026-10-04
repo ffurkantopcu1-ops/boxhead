@@ -41,7 +41,8 @@ class Enemy:
         # Step-based Wave Scaling (Her 10 wave'de bir boss sonrası zorlaşır)
         # Denge: 1.35 basamağı tek dalgada +%38 sıçrama yaratıyordu; 1.25'e yumuşatıldı
         step_level = (wave_level - 1) // 10
-        wave_scale = (1.25 ** step_level) * (1.0 + wave_level * 0.05)
+        from logic.progression import enemy_wave_scale, enemy_damage_growth
+        wave_scale = enemy_wave_scale(wave_level)
         
         self.max_hp = 200 * wave_scale
         self.hp = self.max_hp
@@ -407,6 +408,7 @@ class Enemy:
             self.has_dodged = False # İlk vuruş dodge
             self.escape_timer = 10.0 # Kaçış süresi
 
+        self.dmg *= enemy_damage_growth(wave_level)
         self.base_max_hp = self.max_hp
         self.base_dmg = self.dmg
         self.base_speed = self.speed

@@ -15,3 +15,6 @@ Doğrulama: 339 test + 79 alt test geçti. Topoloji ölçümünde 44 birim altı
 Kaynak değişiklikleri yayımlanmadı, masaüstü kurulumu güncellenmedi. Sürüm dosyası, paketleme dosyaları ve gerçek kayıtlar korunmuştur.
 
 Ağaç verisi tools/generate_skill_tree.py ile tools/tree_clusters.py üzerinden üretilir; JSON elle değiştirilmez. tools/inspect_new_tree.py puan yollarını, tools/render_new_tree.py gerçek arayüzü, tools/measure_early_runs.py erken koşuları doğrular.
+
+
+v1.26.0 kaynak hazırlığı: Tam ekran harita büyütüldü. Sağdaki sınıf rehberi gerçek düğüm ve sekme/delme/çoklu atış adetlerini, yatırım eşiklerini gösterir. Bağlantılar ve merkez puan bedelleri korunur. Görsel kabul kullanıcı değerlendirmesine bağlıdır.

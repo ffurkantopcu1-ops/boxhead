@@ -191,6 +191,8 @@ class SaveManager:
                 "xp": getattr(p, 'xp', 0),
                 "xp_to_next_level": getattr(p, 'xp_to_next_level', 100),
                 "gold": p.gold,
+                "craft_dust": getattr(p,"craft_dust",0),
+                "life_curve_version": 1,
                 "skill_points": p.skill_points,
                 "skill_tree_version": 2,
                 "main_points_earned": getattr(p, 'main_points_earned', 0),
@@ -272,6 +274,7 @@ class SaveManager:
         p.xp = pd.get("xp", 0)
         p.xp_to_next_level = pd.get("xp_to_next_level", 100)
         p.gold = pd.get("gold", 0)
+        p.craft_dust = max(0,int(pd.get("craft_dust",0)))
         p.skill_points = pd.get("skill_points", 0)
         p.class_id = pd.get("class_id", "warrior")
         p.base_class_id = pd.get("base_class_id", p.class_id)
@@ -398,8 +401,18 @@ class SaveManager:
         p.speed_mod = pd.get("speed_mod", 1.0)
 
         # Recalculate (apply_card can/max_hp'yi değiştirdiği için hp en sona)
+        saved_hp = pd.get('hp',100)
+        legacy_max = None
+        if not pd.get('life_curve_version'):
+            restored_level = p.level
+            p.level = 1
+            p.inv_manager.recalculate_stats()
+            legacy_max = p.max_hp
+            p.level = restored_level
         p.inv_manager.recalculate_stats()
-        p.hp = min(pd.get("hp", 100), p.max_hp)
+        if legacy_max:
+            saved_hp = max(0,min(1,saved_hp/max(1,legacy_max))) * p.max_hp
+        p.hp = min(saved_hp, p.max_hp)
         p.turret_charges=max(0,min(p.get_turret_max_charges(),pd.get("turret_charges",p.get_turret_max_charges())))
         p.turret_recharge=max(0,min(p.get_turret_cooldown(),pd.get("turret_recharge",0)))
         p.turret_command_cooldown=max(0,min(10,pd.get("turret_command_cooldown",0)))

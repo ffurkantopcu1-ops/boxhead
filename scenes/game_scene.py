@@ -35,12 +35,19 @@ ITEM_STAT_LABEL = {
     "hpRegen": "Can Yenilenmesi", "combatRegen": "Savaşta Yenilenme", "physDmgMult": "Fiziksel Hasar",
     "statusDuration": "Etki Süresi", "brutal": "Acımasız", "spreadAngle": "Yayılım Açısı",
     "thorns": "Diken Hasarı", "orbHealMult": "Şifa Küresi",
+    "shockwave": "Şok Dalgası", "orbitDrones": "Yörünge Dronu", "thiefChance": "Altın Çalma",
+    "toxicAura": "Zehir Aurası", "minionMaxHp": "Minyon Canı", "minionArmor": "Minyon Zırhı",
+    "minionRate": "Minyon Hızı", "minionRange": "Minyon Menzili", "minionPierce": "Minyon Delme",
+    "minionBounce": "Minyon Sekme", "minionProjectileCount": "Minyon Mermisi",
+    "killSpeedBoost": "Öldürmede Hız", "magnetRadius": "Toplama Menzili",
+
 }
 _PCT_STATS = {"elementDmgMult", "fireDmgMult", "frostDmgMult", "dmgMult", "aoe", "lifesteal",
               "critChance", "critDmg", "dodgeChance", "attack_speed_bonus", "attack_speed_mult",
               "magicFind", "goldGain", "xpGain", "turretDmg", "turretRate", "minionDamage",
               "armorPen", "dotDmgMult", "cooldownReduction", "fireRate", "bossDmgMult",
-              "meleeRangeMult", "physDmgMult", "brutal", "statusDuration", "orbHealMult"}
+              "meleeRangeMult", "physDmgMult", "brutal", "statusDuration", "orbHealMult",
+              "minionMaxHp", "minionRange", "minionRate", "thiefChance"}
 _LOWER_BETTER = {"attackCooldown"}   # düşük = daha iyi (kıyasta yön ters)
 _EQUIP_SLOTS = {"weapon", "helmet", "chest", "amulet", "pet", "artifact"}
 
@@ -824,12 +831,15 @@ class GameScene(BaseScene):
             # Rect'ler çizimle AYNI kaynaktan (_craft_layout)
             L = self._craft_layout()
 
-            if L['orb_mode'].collidepoint(pos) or L['recipe_mode'].collidepoint(pos):
-                self._craft_recipe_mode = L['recipe_mode'].collidepoint(pos)
+            if any(L[key].collidepoint(pos) for key in ('orb_mode','recipe_mode','advanced_mode')):
+                self._craft_advanced_mode = L['advanced_mode'].collidepoint(pos)
+                self._craft_recipe_mode = not L['orb_mode'].collidepoint(pos)
+                self._selected_recipe = None
+                self._recipe_page = 0
                 self.craft_error_msg = ''
                 return
             if getattr(self,'_craft_recipe_mode',False):
-                from logic.crafting import recipes, apply_recipe
+                from logic.crafting import recipes, apply_recipe, advanced_recipes, apply_advanced
                 for recipe,rect in getattr(self,'craft_recipe_rects',[]):
                     if rect.collidepoint(pos):
                         self._selected_recipe = recipe
@@ -838,15 +848,22 @@ class GameScene(BaseScene):
                 if L['apply'].collidepoint(pos):
                     selected = getattr(self,'_selected_recipe',None)
                     if selected:
-                        err = apply_recipe(p,self.crafting_target,selected['id'],self.logic.wave.get('level',1))
-                        self.craft_error_msg = err or 'Tarif uygulandı. Doğal özellikler korundu.'
+                        if selected.get('operation'):
+                            err = apply_advanced(p,self.crafting_target,selected['id'])
+                            if not err and selected['id']=='salvage':
+                                self.show_craft_window=False
+                                self.crafting_target=None
+                            self._selected_recipe=None
+                        else:
+                            err = apply_recipe(p,self.crafting_target,selected['id'],self.logic.wave.get('level',1))
+                        self.craft_error_msg = err or ('İşçilik tamamlandı.' if selected.get('operation') else 'Tarif uygulandı. Doğal özellikler korundu.')
                     return
                 page = getattr(self,'_recipe_page',0)
                 if L['orb_prev'].collidepoint(pos):
                     self._recipe_page=max(0,page-1)
                     return
                 if L['orb_next'].collidepoint(pos):
-                    maximum=max(0,(len(recipes(self.crafting_target))-1)//self.ORB_ROWS_PER_PAGE)
+                    maximum=max(0,(len(advanced_recipes(self.crafting_target,p) if getattr(self,'_craft_advanced_mode',False) else recipes(self.crafting_target))-1)//self.ORB_ROWS_PER_PAGE)
                     self._recipe_page=min(maximum,page+1)
                     return
 
@@ -2171,11 +2188,12 @@ class GameScene(BaseScene):
         import ui_theme
         from ui_elements import wrap_text
         lines = []
+        from logic.affix_rules import item_level
         i_rarity = item.get('rarity', 'Normal')
         color = ui_theme.rarity_color(i_rarity)
 
         lines.append((render_fit(item['name'], 21, color, text_w, bold=True), 0, 'text'))
-        lines.append((render_fit(f"{i_rarity} {item['type'].upper()}", 17,
+        lines.append((render_fit(f"{i_rarity} {item['type'].upper()} • Eşya Sv. {item_level(item)}", 17,
                                  (172, 166, 154), text_w), 0, 'text'))
         lines.append((None, 0, 'rule'))
 
@@ -2188,7 +2206,8 @@ class GameScene(BaseScene):
         for aff in item.get("prefixes", []) + item.get("suffixes", []):
             tier = aff.get('tier', 3)
             a_col = ui_theme.readable(ui_theme.COLORS[tier_keys.get(tier, "night")])
-            label = f"+{_fmt_stat_val(aff['stat'], aff['val'])} {ITEM_STAT_LABEL.get(aff['stat'], aff['stat'])}  (T{tier})"
+            marker = 'SABİT • ' if aff.get('fractured') else ('TARİF • ' if aff.get('crafted') else '')
+            label = f"{marker}+{_fmt_stat_val(aff['stat'], aff['val'])} {ITEM_STAT_LABEL.get(aff['stat'], aff['stat'])}  (T{tier})"
             lines.append((render_fit(label, 17, a_col, text_w), 0, 'text'))
 
         # --- KUŞANILANLA KIYAS (bag'daki eşyayı slottaki eşyayla karşılaştır) ---
@@ -2587,7 +2606,7 @@ class GameScene(BaseScene):
             panel = self._inventory_panel_rect()
         self.screen.blit(ui_skill_tree.background(panel.size), panel)
         title=render_fit('BOXHEAD — ANA YETENEK AĞACI',24,ui_theme.TEXT_COL,panel.width-160,bold=True)
-        self.screen.blit(title,title.get_rect(midtop=(panel.centerx,panel.y+36)))
+        self.screen.blit(title,title.get_rect(midtop=(panel.centerx,panel.y+16)))
         inner_top = panel.y + 52
         mouse_pos = pygame.mouse.get_pos()
 
@@ -2637,7 +2656,11 @@ class GameScene(BaseScene):
 
         # Ağaç çizim alanı (başlığın altı). Çizim buraya kırpılır.
         area = pygame.Rect(panel.x + 28, inner_top + 68,
-                           panel.width - 56, panel.height - 190)
+                           panel.width - 56, panel.height - 160)
+        guide = None
+        if self._tree_fullscreen and panel.width >= 1100:
+            guide = pygame.Rect(area.right-270,area.y,270,area.height)
+            area.width -= 286
         self._tree_area = area
         tf = self._skill_tree_transform(area)
         allocated = SkillTree._ensure_set(p)
@@ -2707,6 +2730,8 @@ class GameScene(BaseScene):
                     label=render_fit(node['name'],14,ui_theme.TEXT_COL,150)
                     self.screen.blit(label,label.get_rect(midtop=(cx,cy+self._tree_node_radius('notable')+5)))
         self.screen.set_clip(prev_clip)
+        if guide is not None:
+            ui_skill_tree.class_guide(self,guide,p)
 
         if hover_node:
             self._draw_tree_tooltip(hover_node, mouse_pos, allocated, allocatable)
@@ -2722,7 +2747,7 @@ class GameScene(BaseScene):
         minx, miny, maxx, maxy = self._tree_bbox
         bw = max(1, maxx - minx)
         bh = max(1, maxy - miny)
-        pad = 48
+        pad = 28
         fit = min((area.width - 2 * pad) / bw, (area.height - 2 * pad) / bh)
         self._tree_fit_scale = fit
         if not self._tree_view:
@@ -3144,7 +3169,7 @@ class GameScene(BaseScene):
             delta = evo_data.get("max_hp_delta", 0)
             if delta != 0:
                 col = moss if delta > 0 else blood
-                dtxt = render_fit(f"{'+' if delta > 0 else ''}{delta} Max HP", 18, col, c.width)
+                dtxt = render_fit(f"{'+' if delta > 0 else ''}{delta}% Seviye Canı", 18, col, c.width)
                 self.screen.blit(dtxt, (c.x, y_stat))
                 y_stat += 26
 

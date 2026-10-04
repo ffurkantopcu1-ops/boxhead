@@ -1070,3 +1070,19 @@ def test_flat_armor_penetration_preserves_percentage_units(combat, flat, ratio, 
     before = enemy.hp
     enemy.take_damage(100, game, from_player=True)
     assert before - enemy.hp == pytest.approx(100 * 100 / (100 + remaining))
+
+
+def test_late_boss_still_threatens_scaled_life_builds(combat):
+    from tools.measure_combat_balance import build
+    from entities.boss import AbyssalLord
+    player,enemy,game=combat()
+    boss=AbyssalLord(2,70,0,game,50)
+    for route in ('offense','defense'):
+        p=build('warrior',50,49,1,route)
+        p.stats['dodgeChance']=0
+        before=p.hp
+        p.take_damage(boss.attack_damage(boss.MOVES['slam'][2]),force=True)
+        fraction=(before-p.hp)/p.max_hp
+        assert .04<fraction<.3
+    early=AbyssalLord(3,70,0,game,10)
+    assert early.attack_damage(22)<100

@@ -113,7 +113,8 @@ class InventoryManager:
             is_protected = (
                 item.get('setTag') is not None or 
                 item.get('type') == 'orb' or 
-                item.get('type') == 'artifact'
+                item.get('type') == 'artifact' or
+                any(a.get('fractured') for g in ('prefixes','suffixes') for a in item.get(g,[]))
             )
             
             if is_protected:
@@ -212,9 +213,10 @@ class InventoryManager:
         # 🟢 STEP 1: CLASS-SPECIFIC BASE STATS (tek kaynak: CLASS_BASES)
         class_bases = self.CLASS_BASES
 
+        from logic.progression import base_life
         # Genel Varsayılanlar
         base_stats = {
-            "speed": 4.8, "max_hp": 100, "dmgMult": 1.0, "armor": 0, "regen": 0.5,
+            "speed": 4.8, "max_hp": base_life(getattr(self.player,'level',1)), "dmgMult": 1.0, "armor": 0, "regen": 0.5,
             "magicFind": 1.0, "attack_cooldown": 350, "dodgeChance": 0.05,
             "lifesteal": 0, "combatRegen": 0, "critChance": 0.05, "pierce": 0,
             "bounce": 0, "aoe": 1.0, "projectileCount": 1,
@@ -227,7 +229,7 @@ class InventoryManager:
             # taban 1.0 bonussuz oyuncuya 2x veriyordu (H7). magicFind gerçek
             # çarpan olarak kullanıldığı için 1.0 kalır.
             "xpGain": 0.0, "goldGain": 0.0, "magnetRadius": 50,
-            "turretMaxHp": 150, "turretDmg": 1.0, "turretRate": 1.0, "turretLimit": 1,
+            "turretMaxHp": 150 + .6 * (base_life(getattr(self.player,'level',1))-100), "turretDmg": 1.0, "turretRate": 1.0, "turretLimit": 1,
             # R yeteneğinin şarj kapasitesine EKLENEN bonus (taban 2, bkz.
             # Player.TURRET_BASE_CHARGES). Taret kartlarıyla artar.
             "turretCharges": 0,
@@ -256,6 +258,12 @@ class InventoryManager:
         
         # 🟡 STEP 2: SUM ITEM BASE AND AFFIXES
         totals = base_stats.copy()
+        # Old saves store the original flat evolution delta in permanent stats.
+        # Add only the level-dependent remainder: repeated recalculation cannot
+        # compound it, and unrelated permanent life bonuses stay intact.
+        evolution = getattr(self.player,'EVOLUTIONS',{}).get(getattr(self.player,'evolution',None),{})
+        totals['max_hp'] += evolution.get('max_hp_delta',0) * (base_stats['max_hp']/100 - 1)
+
         
         # 🧪 ESSENCE BONUSES (Kalıcı Base Stat Artışları) - tavanlı (S9)
         essence_caps = getattr(self.player, 'ESSENCE_CAPS', {})

@@ -104,7 +104,7 @@ def craft_layout(scene):
     orbs = [pygame.Rect(lx, top+i*rh, side, rh-4) for i in range(scene.ORB_ROWS_PER_PAGE)]
     markets = [pygame.Rect(rx, top+i*mh, side, mh-5) for i in range(scene.MARKET_ROWS_PER_PAGE)]
     item = pygame.Rect(lx+side+16, top, mid, bottom-top)
-    return dict(orb_mode=pygame.Rect(lx,inner.y+28,side//2-4,23), recipe_mode=pygame.Rect(lx+side//2+4,inner.y+28,side//2-4,23), panel=panel, inner=inner, item=item,
+    return dict(orb_mode=pygame.Rect(lx,inner.y+28,side//3-4,23), recipe_mode=pygame.Rect(lx+side//3+2,inner.y+28,side//3-4,23), advanced_mode=pygame.Rect(lx+2*side//3+4,inner.y+28,side//3-4,23), panel=panel, inner=inner, item=item,
                 close=pygame.Rect(inner.right-40, inner.y-4, 40, 36),
                 orb_rows=orbs, orb_use=[pygame.Rect(r.right-72,r.y+3,64,r.height-6) for r in orbs],
                 mkt_rows=markets, mkt_buy=[pygame.Rect(r.right-70,r.y+8,62,r.height-16) for r in markets],
@@ -128,12 +128,14 @@ def draw_craft(scene):
         return
     p = scene.logic.players[scene.logic.local_player_id]
     text(scene,'ATÖLYE • Eşya → İşlem → Uygula',pygame.Rect(L['inner'].x,L['inner'].y,L['inner'].width-60,30),24)
-    from logic.crafting import recipes, recipe_cost, recipe_tier
+    from logic.crafting import recipes, recipe_cost, recipe_tier, advanced_recipes
+    from logic.affix_rules import bench_value, item_level
     recipe_mode = getattr(scene,'_craft_recipe_mode',False)
     plate(scene,L['orb_mode'],'ORBLAR','night')
     plate(scene,L['recipe_mode'],'TARİFLER','gold')
+    plate(scene,L['advanced_mode'],'İŞÇİLİK','arcane')
     owned = [it for it in p.inventory if it.get('type') == 'orb']
-    options = recipes(item) if recipe_mode else owned
+    options = (advanced_recipes(item,p) if getattr(scene,'_craft_advanced_mode',False) else recipes(item)) if recipe_mode else owned
     page = getattr(scene,'_recipe_page',0) if recipe_mode else scene.orb_inv_page
     chosen = getattr(scene,'_selected_recipe',None) if recipe_mode else getattr(scene,'_selected_craft_orb',None)
     if not recipe_mode and chosen is not None and not any(it is chosen for it in owned):
@@ -146,7 +148,7 @@ def draw_craft(scene):
         option=options[idx]; btn=L['orb_use'][i]
         selected=chosen is not None and ((chosen.get('id')==option.get('id')) if recipe_mode else chosen is option)
         ui_theme.draw_plate(scene.screen,r,'hover' if selected else 'normal')
-        label=(option['name']+' · '+('P' if option['side']=='prefixes' else 'S')) if recipe_mode else f"{option['name'].split(' (')[0]} ×{option.get('stack',1)}"
+        label=(option['name']+' · '+('İŞ' if option.get('operation') else ('P' if option['side']=='prefixes' else 'S'))) if recipe_mode else f"{option['name'].split(' (')[0]} ×{option.get('stack',1)}"
         text(scene,label,pygame.Rect(r.x+16,r.y+8,btn.left-r.x-26,24),16,'steel')
         plate(scene,btn,'SEÇ','moss')
         if recipe_mode: scene.craft_recipe_rects.append((option,btn))
@@ -169,7 +171,7 @@ def draw_craft(scene):
         lines.append((f"{ITEM_STAT_LABEL.get(stat,stat)}: {_fmt_stat_val(stat,val)}",'steel'))
     for group,title in (('prefixes','P'),('suffixes','S')):
         for a in item.get(group,[]):
-            lines.append((f"{'Tarif' if a.get('crafted') else title} · T{a.get('tier',3)}  {_fmt_stat_val(a['stat'],a['val'])} {ITEM_STAT_LABEL.get(a['stat'],a['stat'])}",'moss'))
+            lines.append((f"{'Sabit' if a.get('fractured') else ('Tarif' if a.get('crafted') else title)} · T{a.get('tier',3)}  {_fmt_stat_val(a['stat'],a['val'])} {ITEM_STAT_LABEL.get(a['stat'],a['stat'])}",'moss'))
     desc_top=c.bottom-76
     y=c.y+117
     prev=scene.screen.get_clip();scene.screen.set_clip(pygame.Rect(c.x,y,c.width,max(0,desc_top-y-8)))
@@ -179,11 +181,10 @@ def draw_craft(scene):
     scene.screen.set_clip(prev)
     if recipe_mode:
         if chosen:
-            tier=recipe_tier(scene.logic.wave.get('level',1))
-            lo,hi=chosen['tiers'][tier]
-            value=round((lo+hi)/2,2)
-            desc=f"Kesin sonuç: {_fmt_stat_val(chosen['stat'],value)} {ITEM_STAT_LABEL.get(chosen['stat'],chosen['stat'])}. Tek tarif özelliğini değiştirir; doğal özellikler korunur."
-        else: desc='Bir özellik seç. Eşya başına tek tarif özelliği; doğal özellikler korunur.'
+            tier=recipe_tier(scene.logic.wave.get('level',1),item)
+            value=bench_value(chosen,tier) if not chosen.get('operation') else 0
+            desc=chosen['desc'] if chosen.get('operation') else f"Kesin sonuç: {_fmt_stat_val(chosen['stat'],value)} {ITEM_STAT_LABEL.get(chosen['stat'],chosen['stat'])}. Tek tarif özelliğini değiştirir; doğal özellikler korunur."
+        else: desc='Söküm, hedefli çıkarma, geliştirme, sabitleme veya aktarım seç. Seçmek kaynak harcamaz.' if getattr(scene,'_craft_advanced_mode',False) else 'Bir özellik seç. Eşya başına tek tarif özelliği; doğal özellikler korunur.'
     else:
         desc=chosen.get('desc','') if chosen else 'Soldan bir işlem seç. Seçmek orbu tüketmez.' 
     if item.get('is_corrupted'): desc='Mühürlü eşya: değiştirilemez.'
@@ -191,7 +192,9 @@ def draw_craft(scene):
     for j,line in enumerate(wrap_text(font,desc,c.width)[:3]):
         scene.screen.blit(font.render(line,True,ui_theme.TEXT_COL),(c.x,desc_top+j*20))
     plate(scene,L['take_back'],'ÇANTAYA DÖN','night')
-    plate(scene,L['apply'],f"UYGULA • {recipe_cost(scene.logic.wave.get('level',1))} G" if recipe_mode else 'UYGULA • 1 ORB','moss',chosen is not None and not item.get('is_corrupted'))
+    cost_label = ('SÖK • EŞYAYI PARÇALA' if chosen['id']=='salvage' else f"UYGULA • {chosen['cost']} ÖZ") if recipe_mode and chosen and chosen.get('operation') else (f"UYGULA • {recipe_cost(scene.logic.wave.get('level',1),item)} G" if recipe_mode else 'UYGULA • 1 ORB')
+    text(scene,f"Eşya Sv. {item_level(item)} • İşçilik özü: {getattr(p,'craft_dust',0)}",pygame.Rect(L['inner'].right-360,L['inner'].y+2,310,22),16,'moss')
+    plate(scene,L['apply'],cost_label,'moss',chosen is not None and not item.get('is_corrupted'))
     market=scene.logic.orb_market
     for i,r in enumerate(L['mkt_rows']):
         idx=scene.orb_market_page*scene.MARKET_ROWS_PER_PAGE+i

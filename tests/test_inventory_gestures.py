@@ -173,6 +173,7 @@ def test_recipe_progression_has_explicit_tiers_and_prices(scene,wave,tier,cost):
     p = scene.logic.players['p1']
     p.gold = 2000
     item = p.inv_manager.equipped['weapon']
+    item['ilvl'] = wave
     assert recipe_cost(wave) == cost
     assert apply_recipe(p,item,'prefixes:dmgMult',wave) is None
     assert item['prefixes'][0]['tier'] == tier
@@ -237,3 +238,145 @@ def test_dropdown_filters_search_and_clear_share_the_visible_inventory(scene):
     assert scene._filtered_inventory(p)==[]
     assert ui_gothic_tabs.filter_click(scene,scene.inv_clear_rect.center)
     assert scene._filtered_inventory(p)==[sword,helm]
+
+
+def test_loot_tiers_follow_item_level_and_magic_has_a_modifier():
+    from logic.item_system import ItemSystem
+    from logic.affix_rules import best_tier
+    system=ItemSystem()
+    for level in (1,9,10,19,20,50):
+        for _ in range(30):
+            item=dict(type='weapon',rarity='Magic',ilvl=level,isMelee=True,prefixes=[],suffixes=[])
+            system.apply_affixes(item)
+            affixes=item['prefixes']+item['suffixes']
+            assert affixes
+            assert all(a['tier']>=best_tier(level) for a in affixes)
+            assert not any(a['stat'] in ('projectileCount','bounce','spreadAngle','minionCount') for a in affixes)
+
+
+def test_integer_modifiers_never_roll_fractional_counts():
+    from logic.affix_rules import roll_value,bench_value,COUNT_STATS
+    from logic.item_system import ItemSystem
+    for pool in ItemSystem.affixes.values():
+        for aff in pool:
+            if aff.get('stat') in COUNT_STATS:
+                for tier in aff['tiers']:
+                    assert isinstance(roll_value(aff,tier),int)
+                    assert isinstance(bench_value(aff,tier),int)
+
+
+def test_advanced_craft_cost_failure_and_fracture_survives_chaos(scene):
+    from logic.crafting import apply_advanced
+    from logic.item_system import ItemSystem
+    p=scene.logic.players['p1'];item=p.inv_manager.equipped['weapon']
+    item.update(ilvl=20,rarity='Rare',prefixes=[dict(stat='dmgMult',val=.1,tier=3,name='Hasar',base_name='Hasar')],suffixes=[])
+    before=copy.deepcopy(item)
+    assert apply_advanced(p,item,'upgrade:prefixes:dmgMult')
+    assert item==before
+    p.craft_dust=20
+    assert apply_advanced(p,item,'upgrade:prefixes:dmgMult') is None
+    assert item['prefixes'][0]['tier']==2 and p.craft_dust==15
+    assert apply_advanced(p,item,'fracture:prefixes:dmgMult') is None
+    fixed=copy.deepcopy(item['prefixes'][0])
+    assert p.craft_dust==3
+    for _ in range(20):
+        ItemSystem().apply_orb(item,'chaos')
+        assert fixed in item['prefixes']
+        assert sum(a['stat']=='dmgMult' for a in item['prefixes'])==1
+        assert len(item['prefixes'])<=2 and len(item['suffixes'])<=2
+    assert apply_advanced(p,item,'remove:prefixes:dmgMult')
+
+
+def test_salvage_uses_identity_and_cannot_destroy_equipped_item(scene):
+    from logic.crafting import apply_advanced,salvage_yield
+    p=scene.logic.players['p1'];item=p.inv_manager.equipped['weapon']
+    assert apply_advanced(p,item,'salvage')
+    clone=copy.deepcopy(item);p.inventory.append(clone)
+    assert apply_advanced(p,clone,'salvage') is None
+    assert p.inv_manager.equipped['weapon'] is item
+    assert not any(it is clone for it in p.inventory)
+    assert p.craft_dust==salvage_yield(clone)
+    before=p.craft_dust
+    assert apply_advanced(p,clone,'salvage')
+    assert p.craft_dust==before
+
+
+def test_high_wave_cannot_put_high_tier_on_old_low_level_base(scene):
+    p=scene.logic.players['p1'];p.gold=2000
+    item=p.inv_manager.equipped['weapon'];item['ilvl']=1
+    assert apply_recipe(p,item,'prefixes:dmgMult',30) is None
+    assert item['prefixes'][0]['tier']==3
+
+
+def test_craft_dust_and_fixed_modifier_survive_save(scene,tmp_path,monkeypatch):
+    from logic.crafting import apply_advanced
+    p=scene.logic.players['p1'];item=p.inv_manager.equipped['weapon']
+    p.craft_dust=30
+    item.update(rarity='Rare',prefixes=[dict(stat='dmgMult',val=.1,tier=3,name='Hasar')],suffixes=[])
+    assert apply_advanced(p,item,'fracture:prefixes:dmgMult') is None
+    monkeypatch.setattr(SaveManager,'SAVE_DIR',str(tmp_path))
+    SaveManager.save_game(scene.logic,'craft')
+    p.craft_dust=0
+    SaveManager.load_game(scene.logic,'craft')
+    p=scene.logic.players['p1']
+    assert p.craft_dust==18
+    assert p.inv_manager.equipped['weapon']['prefixes'][0]['fractured']
+
+
+def test_transfer_moves_only_chosen_modifier_and_rejects_low_level_target(scene):
+    from logic.crafting import advanced_recipes,apply_advanced
+    p=scene.logic.players['p1'];target=p.inv_manager.equipped['weapon']
+    target.update(rarity='Rare',ilvl=20)
+    donor=copy.deepcopy(target)
+    donor.update(name='Kaynak',prefixes=[dict(stat='fireDamage',val=30,tier=1,name='Ateş')],suffixes=[dict(stat='critChance',val=.04,tier=3,name='Kritik')])
+    p.inventory.append(donor);p.craft_dust=6
+    option=next(r for r in advanced_recipes(target,p) if r['id'].startswith('transfer:') and r['id'].endswith(':fireDamage'))
+    target['ilvl']=1
+    assert apply_advanced(p,target,option['id'])
+    assert p.craft_dust==6 and donor['prefixes']
+    target['ilvl']=20
+    assert apply_advanced(p,target,option['id']) is None
+    assert not donor['prefixes'] and len(donor['suffixes'])==1
+    assert target['prefixes'][0]['val']==30 and p.craft_dust==0
+    assert target['prefixes'][0] is not donor['suffixes'][0]
+
+
+def test_level_life_growth_is_idempotent_and_free_level_heals_new_max(scene):
+    from logic.progression import base_life
+    p=scene.logic.players['p1'];p.level=30
+    p.inv_manager.recalculate_stats()
+    before=p.max_hp
+    for _ in range(5):p.inv_manager.recalculate_stats()
+    assert p.max_hp==before and p.max_hp>=base_life(30)
+    p.grant_free_level()
+    assert p.hp==p.max_hp and p.max_hp>before
+
+
+def test_old_save_preserves_life_ratio_after_curve_migration(scene,tmp_path,monkeypatch):
+    import json
+    p=scene.logic.players['p1'];p.level=20
+    monkeypatch.setattr(SaveManager,'SAVE_DIR',str(tmp_path))
+    SaveManager.save_game(scene.logic,'old_life')
+    path=tmp_path/'old_life.json';data=json.loads(path.read_text(encoding='utf-8'))
+    data['player'].pop('life_curve_version');data['player']['hp']=50
+    path.write_text(json.dumps(data),encoding='utf-8')
+    SaveManager.load_game(scene.logic,'old_life')
+    p=scene.logic.players['p1']
+    assert p.hp/p.max_hp==pytest.approx(.5)
+    SaveManager.save_game(scene.logic,'old_life')
+    before=p.hp
+    SaveManager.load_game(scene.logic,'old_life')
+    assert p.hp==before
+
+
+def test_advanced_ui_selection_does_not_spend_and_apply_salvages(scene):
+    p=scene.logic.players['p1'];item=copy.deepcopy(p.inv_manager.equipped['weapon'])
+    p.inventory.append(item);scene.crafting_target=item;scene.show_craft_window=True
+    scene._handle_inventory_mouse(p,scene._craft_layout()['advanced_mode'].center)
+    scene.draw_craft_window()
+    option,rect=next((r,rect) for r,rect in scene.craft_recipe_rects if r['id']=='salvage')
+    scene._handle_inventory_mouse(p,rect.center)
+    assert any(it is item for it in p.inventory) and getattr(p,'craft_dust',0)==0
+    scene._handle_inventory_mouse(p,scene._craft_layout()['apply'].center)
+    assert not any(it is item for it in p.inventory)
+    assert p.craft_dust>0 and not scene.show_craft_window

@@ -19,3 +19,19 @@ def grant_main_points(player):
     player.main_points_earned = max(previous, target)
     player.skill_points += reward
     return reward
+
+
+def base_life(level):
+    """Life grows with a run; 100 at level 1, 1300 at level 51 before gear."""
+    steps = max(0, min(100,int(level)) - 1)
+    return round(100 + 12 * steps + .24 * steps * steps)
+
+
+def enemy_wave_scale(wave):
+    # Continuous growth avoids the old abrupt increase every tenth wave.
+    wave = max(1,int(wave))
+    return 1.25 ** ((wave-1)/10) * (1 + wave*.05)
+
+
+def enemy_damage_growth(wave):
+    return 1 + .035 * max(0,int(wave)-1)
