@@ -1,11 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.26.4",
+      "date": "2026-10-05",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "Demirci atölyesi yenilendi, tarif maliyetleri ve merkez erişim yolları düzenlendi"
+        ]
+      }
+    },
+    {
       "version": "1.26.3",
       "date": "2026-10-04",
       "categories": {
         "🐞 Hata Düzeltmeleri": [
           "Yetenek yolları, arena haritası, son düşman takibi ve hasar dirençleri düzeltildi"
+        ],
+        "📦 Diğer": [
+          "1.26.3 sürüm notlarını oluştur"
         ]
       }
     },
