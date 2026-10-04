@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.26.2",
+      "date": "2026-10-04",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "Gerçek pencere açılışını düzelt ve bellek temizleme sırasında menüyü doğrula"
+        ]
+      }
+    },
+    {
       "version": "1.26.1",
       "date": "2026-10-04",
       "categories": {
