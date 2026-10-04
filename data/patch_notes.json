@@ -1,11 +1,23 @@
 {
   "versions": [
     {
+      "version": "Yayınlanmamış",
+      "date": "2026-10-05",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "Aile özleri, odaklanmış ekleme, dönüşüm ve tek taraflı Kaos ile orb işçiliği yenilendi"
+        ]
+      }
+    },
+    {
       "version": "1.26.4",
       "date": "2026-10-05",
       "categories": {
         "✨ Yeni Özellikler": [
           "Demirci atölyesi yenilendi, tarif maliyetleri ve merkez erişim yolları düzenlendi"
+        ],
+        "📦 Diğer": [
+          "1.26.4 sürüm notlarını oluştur"
         ]
       }
     },
