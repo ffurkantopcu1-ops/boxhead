@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.26.1",
+      "date": "2026-10-04",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "Sessiz açılış çökmesi için Python 3.12 paketi ve zorunlu EXE açılış kontrolü"
+        ]
+      }
+    },
+    {
       "version": "1.26.0",
       "date": "2026-10-04",
       "categories": {
