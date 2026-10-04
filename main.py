@@ -1,6 +1,24 @@
-import pygame
 import sys
 import os
+
+if '--smoke-test' in sys.argv:
+    os.environ['SDL_VIDEODRIVER'] = 'dummy'
+    os.environ['SDL_AUDIODRIVER'] = 'dummy'
+
+# Windowed executables otherwise lose both tracebacks and native crash stacks.
+_crash_log = None
+try:
+    import faulthandler
+    os.makedirs('logs', exist_ok=True)
+    _crash_log = open(os.path.join('logs','startup.log'),'a',encoding='utf-8',buffering=1)
+    _crash_log.write('\nBoxhead startup — Python '+sys.version+'\n')
+    faulthandler.enable(file=_crash_log,all_threads=True)
+    if sys.stdout is None: sys.stdout = _crash_log
+    if sys.stderr is None: sys.stderr = _crash_log
+except (OSError, RuntimeError):
+    pass
+
+import pygame
 
 # Konsol çıktısını UTF-8'e sabitle. Türkçe Windows'ta varsayılan kod sayfası
 # cp1252/cp857 olduğu için "EVRİM", "kazanıldı" gibi metinler içeren print()
@@ -87,4 +105,8 @@ def main():
     sys.exit()
 
 if __name__ == "__main__":
-    main()
+    if '--smoke-test' in sys.argv:
+        from tools.smoke_game import run
+        run()
+    else:
+        main()

@@ -53,7 +53,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Install dependencies
@@ -63,6 +63,22 @@ jobs:
 
       - name: Build game with PyInstaller
         run: pyinstaller Boxhead.spec --noconfirm
+
+      - name: Smoke test packaged game
+        shell: pwsh
+        run: |
+          $game = Start-Process -FilePath "dist/Boxhead.exe" -ArgumentList "--smoke-test" -WindowStyle Hidden -PassThru
+          if (-not $game.WaitForExit(90000)) {
+            $game.Kill()
+            throw "Packaged game startup timed out"
+          }
+          if ($game.ExitCode -ne 0) {
+            Get-Content logs/startup.log -ErrorAction SilentlyContinue
+            throw "Packaged game exited with code $($game.ExitCode)"
+          }
+          if (-not (Test-Path smoke_result.json)) { throw "Missing startup verification" }
+          $result = Get-Content smoke_result.json -Raw | ConvertFrom-Json
+          if (-not $result.ok) { throw "Packaged startup verification failed" }
 
       - name: Build launcher with PyInstaller
         run: pyinstaller Boxhead_Launcher.spec --noconfirm

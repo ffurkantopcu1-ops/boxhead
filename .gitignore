@@ -57,3 +57,7 @@ assets/references/
 
 # Claude Code local session data
 .claude/
+
+# Packaged/source startup diagnostics
+/logs/
+/smoke_result.json

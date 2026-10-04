@@ -232,3 +232,6 @@ show a warning on first run.
 - **Azure Trusted Signing** (free tier available)
 - **SignPath** (free for open source)
 - **DigiCert** / **Sectigo** (paid)
+
+## v1.26.1 startup hotfix
+Windows reported silent access violations in the v1.26.0 Python 3.13 runtime (0xc0000005). Local Python 3.12 runs pass; build and CI now use Python 3.12. Native runtime version alone does not establish the precise cause. Release must run the built executable with --smoke-test and verify exit code plus smoke_result.json before publishing. This checks menu, class selection, game, seven inventory tabs and workshop with a dummy display and temporary saves. Normal startup writes native/Python error output to logs/startup.log for further diagnosis. Local tests: 371 +79 subtests, syntax and real source startup smoke passed. User saves were not modified.
