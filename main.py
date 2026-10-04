@@ -105,8 +105,8 @@ def main():
     sys.exit()
 
 if __name__ == "__main__":
-    if '--smoke-test' in sys.argv:
+    if '--smoke-test' in sys.argv or '--smoke-test-native' in sys.argv:
         from tools.smoke_game import run
-        run()
+        run(native='--smoke-test-native' in sys.argv)
     else:
         main()

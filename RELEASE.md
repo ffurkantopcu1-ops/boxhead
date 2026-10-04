@@ -235,3 +235,6 @@ show a warning on first run.
 
 ## v1.26.1 startup hotfix
 Windows reported silent access violations in the v1.26.0 Python 3.13 runtime (0xc0000005). Local Python 3.12 runs pass; build and CI now use Python 3.12. Native runtime version alone does not establish the precise cause. Release must run the built executable with --smoke-test and verify exit code plus smoke_result.json before publishing. This checks menu, class selection, game, seven inventory tabs and workshop with a dummy display and temporary saves. Normal startup writes native/Python error output to logs/startup.log for further diagnosis. Local tests: 371 +79 subtests, syntax and real source startup smoke passed. User saves were not modified.
+
+## v1.26.2 — real display startup path
+The v1.26.1 runtime change did not resolve the user crash. Its native log captured access violation during garbage collection in MenuScene._draw_background. Remove temporary pygame._sdl2.Window wrappers from create_display; positioning is already set via SDL_VIDEO_WINDOW_POS before set_mode. Smoke now uses the production create_display path and forces collection during 240 menu frames. --smoke-test-native uses a real Windows window with temporary saves; source test passed on this machine. Packaged native test and user startup must still be verified; this is not proof of the precise native corruption cause.

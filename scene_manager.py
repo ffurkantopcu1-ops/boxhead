@@ -68,23 +68,11 @@ def create_display(mode, logical_w, logical_h):
     if mode == "windowed":
         os.environ["SDL_VIDEO_WINDOW_POS"] = "center"
         screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-        try:
-            import pygame._sdl2 as sdl2
-            win = sdl2.Window.from_display_module()
-            win.position = sdl2.WINDOWPOS_CENTERED
-        except Exception:
-            pass
         return screen
     
     if mode == "borderless":
         os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
         screen = pygame.display.set_mode((desktop_w, desktop_h), pygame.NOFRAME)
-        try:
-            import pygame._sdl2 as sdl2
-            win = sdl2.Window.from_display_module()
-            win.position = (0, 0)
-        except Exception:
-            pass
         return screen
 
     return pygame.display.set_mode((desktop_w, desktop_h), pygame.FULLSCREEN)

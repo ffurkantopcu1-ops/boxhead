@@ -5,22 +5,26 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-def run():
+def run(native=False):
     import pygame
     from scene_manager import SceneManager
     from logic.save_manager import SaveManager
     import scene_manager
     import audio
     pygame.init()
-    screen = pygame.display.set_mode((1280, 720))
+    screen = scene_manager.create_display("windowed" if native else "borderless",1920,1080)
     with tempfile.TemporaryDirectory(prefix='boxhead-smoke-') as directory, \
             patch.object(SaveManager,'SAVE_DIR',directory), \
             patch.object(scene_manager,'SETTINGS_PATH',str(Path(directory)/'settings.json')):
         audio.init(0)
         manager = SceneManager(screen,1920,1080)
-        for _ in range(5):
+        import gc
+        for _ in range(240):
+            pygame.event.pump()
             manager.update(1/60,[])
             manager.draw()
+            gc.collect()
+            pygame.display.flip()
         manager.change_scene('ClassSelect')
         manager.draw()
         manager.start_new_game('sniper')
