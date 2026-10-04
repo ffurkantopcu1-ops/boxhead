@@ -51,6 +51,10 @@ class Enemy:
         
         # Zırh Sistemi (Zırh da her 10 wave'de bir artar)
         self.armor = 5 * step_level
+        self.elemental_resistance = 0.0
+        self.poison_resistance = 0.0
+        self.fire_resistance = 0.0
+        self.frost_resistance = 0.0
         self.xp_reward = 20 * xp_mult
         self.color = (231, 76, 60) # Standart Kırmızı
         
@@ -880,7 +884,7 @@ class Enemy:
             elif self.type == "mimic":
                 if not getattr(self, "is_awake", False):
                     # Uyku halinde (Hareket etmez, oyuncu yaklaşınca uyanır)
-                    if dist < 150: # Aggro range
+                    if dist < 150 or getattr(game, 'wave_cleanup', False):
                         self.is_awake = True
                         self.speed = getattr(self, "base_mimic_speed", 4.0)
                         game.add_event("damage_text", self.x, self.y - 20, value="!!!", color=(255, 50, 50), timer=1.0)
@@ -916,6 +920,9 @@ class Enemy:
 
             # --- WAR TOWER ---
             elif self.type == "war_tower":
+                if getattr(game, 'wave_cleanup', False) and dist > 300 and not getattr(self, 'is_stunned', False):
+                    self.x += math.cos(angle) * 120 * self.speed_mod * dt
+                    self.y += math.sin(angle) * 120 * self.speed_mod * dt
                 self.tower_shoot_timer -= dt
                 if self.tower_shoot_timer <= 0:
                     self.tower_shoot_timer = 1.5
@@ -1121,7 +1128,12 @@ class Enemy:
         effective_armor = max(0, self.armor - max(0, p_stats.get("armorPenFlat", 0))) * (1.0 - min(1.0, armor_pen))
         
         # Hasar Azaltma Formülü: dmg * (100 / (100 + armor))
-        damage_reduction = 100 / (100 + max(0, effective_armor))
+        if damage_type == 'physical':
+            damage_reduction = 100 / (100 + max(0, effective_armor))
+        else:
+            resistance = self.poison_resistance if damage_type == 'poison' else (
+                self.elemental_resistance + getattr(self, damage_type + '_resistance', 0.0))
+            damage_reduction = 1.0 - max(-0.5, min(0.75, resistance))
         final_dmg = amount * damage_reduction
 
         # Impossible Zorlukta Oyuncu Hasarı Nerfi (%50)
@@ -1151,7 +1163,7 @@ class Enemy:
         
         # --- KALKAN KORUMASI (Shieldbearer): Gelen hasar %65 azalır ---
         # Denge: %80 azaltma açı kontrolü olmadan saf HP süngeri yaratıyordu
-        if self.type == "shieldbearer" and not is_dot:
+        if self.type == "shieldbearer" and not is_dot and damage_type == 'physical':
             final_dmg *= 0.35
 
         # --- ELİT ENERJİ KALKANI (🔮 Kalkanlı modifikatörü) ---

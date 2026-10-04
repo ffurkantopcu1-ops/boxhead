@@ -30,7 +30,7 @@ class StatusEffect:
             damage = self.dps * dt
             is_enemy = hasattr(target, 'type') and target.type != 'player' and hasattr(target, 'take_damage')
             if is_enemy:
-                # DoT zırh/kalkan formülünden geçsin diye take_damage üzerinden akar;
+                # Typed DoT uses its resistance, not physical armor.
                 # take_damage ölümde kill_enemy'yi zaten çağırır (çift çağrı olmasın)
                 target.take_damage(damage, game, is_dot=True, from_player=True,
                                    damage_type='fire' if self.name == 'Burn' else 'poison')

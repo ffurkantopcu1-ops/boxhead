@@ -214,7 +214,7 @@ def generate():
         for k,(key,name,minor,notable) in enumerate(CLUSTERS[cls]):
             x,y=locations[k]
             for j in range(7):
-                a=-math.pi/2+j*math.tau/7
+                a=math.pi/2+j*math.tau/7
                 # Repeated theme stats are modest, not repeated major mechanics.
                 stats=minor[j%4]
                 radius=105 if k<3 else 90 if k<6 else 70
@@ -342,9 +342,11 @@ def generate():
         if not placed: raise ValueError('No clear node position: '+node['id'])
     # Match the wide reference composition; the topology stays identical.
     for node in nodes: node['pos'][0]=round(4000+(node['pos'][0]-4000)*1.45)
-    return nodes
+    from tools.tree_layout import arrange
+    return arrange(nodes)
 
 if __name__ == '__main__':
+    nodes = generate()
     with open(OUT,'w',encoding='utf-8') as f:
-        json.dump(generate(),f,ensure_ascii=False,indent=2); f.write('\n')
-    print(f'Yetenek ağacı: {len(generate())} düğüm.')
+        json.dump(nodes,f,ensure_ascii=False,indent=2); f.write('\n')
+    print(f'Yetenek ağacı: {len(nodes)} düğüm.')

@@ -31,8 +31,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3478,
-      2485
+      3481.96,
+      2255.73
     ],
     "connects": [
       "warrior_reach_1"
@@ -52,8 +52,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3597,
-      2445
+      3359,
+      2315
     ],
     "connects": [
       "warrior_reach_2"
@@ -73,8 +73,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3626,
-      2357
+      3330.4,
+      2408.9
     ],
     "connects": [
       "warrior_reach_3"
@@ -94,8 +94,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3545,
-      2285
+      3411.57,
+      2475.98
     ],
     "connects": [
       "warrior_reach_4"
@@ -115,8 +115,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3411,
-      2285
+      3545,
+      2475
     ],
     "connects": [
       "warrior_reach_5",
@@ -137,8 +137,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3330,
-      2357
+      3627.09,
+      2422.35
     ],
     "connects": [
       "warrior_reach_6"
@@ -158,8 +158,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3359,
-      2445
+      3601.68,
+      2322.9
     ],
     "connects": [
       "warrior_reach_0"
@@ -180,8 +180,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3478,
-      2380
+      3457.1,
+      2340.21
     ],
     "connects": [
       "warrior_reach_2",
@@ -201,8 +201,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4000,
-      2485
+      3999.19,
+      2271.07
     ],
     "connects": [
       "warrior_tempo_1"
@@ -222,8 +222,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4119,
-      2445
+      3877.78,
+      2299.2
     ],
     "connects": [
       "warrior_tempo_2"
@@ -243,8 +243,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4148,
-      2357
+      3855.12,
+      2437.43
     ],
     "connects": [
       "warrior_tempo_3"
@@ -264,8 +264,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4067,
-      2285
+      3933,
+      2475
     ],
     "connects": [
       "warrior_tempo_4"
@@ -285,8 +285,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3933,
-      2285
+      4065.07,
+      2474.07
     ],
     "connects": [
       "warrior_tempo_5"
@@ -306,8 +306,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      3852,
-      2357
+      4150.66,
+      2437.78
     ],
     "connects": [
       "warrior_tempo_6"
@@ -327,8 +327,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3881,
-      2445
+      4112.57,
+      2281.92
     ],
     "connects": [
       "warrior_tempo_0"
@@ -349,8 +349,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4000,
-      2380
+      4010.95,
+      2361.85
     ],
     "connects": [
       "warrior_tempo_2",
@@ -371,7 +371,7 @@
     "icon": "shield",
     "pos": [
       4522,
-      2485
+      2275
     ],
     "connects": [
       "warrior_guard_1"
@@ -391,8 +391,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4641,
-      2445
+      4403,
+      2315
     ],
     "connects": [
       "warrior_guard_2"
@@ -412,8 +412,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4670,
-      2357
+      4372.64,
+      2410.62
     ],
     "connects": [
       "warrior_guard_3"
@@ -433,8 +433,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4589,
-      2285
+      4455,
+      2475
     ],
     "connects": [
       "warrior_guard_4"
@@ -454,8 +454,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4455,
-      2285
+      4587.95,
+      2485.8
     ],
     "connects": [
       "warrior_guard_5",
@@ -476,8 +476,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4374,
-      2357
+      4668.2,
+      2397.94
     ],
     "connects": [
       "warrior_guard_6"
@@ -497,8 +497,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4403,
-      2445
+      4638.73,
+      2302.85
     ],
     "connects": [
       "warrior_guard_0"
@@ -519,8 +519,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4522,
-      2380
+      4535.96,
+      2383.1
     ],
     "connects": [
       "warrior_guard_2",
@@ -540,8 +540,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3594,
-      2940
+      3594.97,
+      2702.74
     ],
     "connects": [
       "warrior_impact_1"
@@ -561,8 +561,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3696,
-      2906
+      3483.18,
+      2789.06
     ],
     "connects": [
       "warrior_impact_2"
@@ -582,8 +582,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3722,
-      2830
+      3459.15,
+      2876.42
     ],
     "connects": [
       "warrior_impact_3",
@@ -604,8 +604,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3651,
-      2769
+      3537,
+      2931
     ],
     "connects": [
       "warrior_impact_4"
@@ -625,8 +625,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3537,
-      2769
+      3651,
+      2931
     ],
     "connects": [
       "warrior_impact_5"
@@ -646,8 +646,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3466,
-      2830
+      3739.13,
+      2859.08
     ],
     "connects": [
       "warrior_impact_6"
@@ -667,8 +667,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3492,
-      2906
+      3700.68,
+      2782.12
     ],
     "connects": [
       "warrior_impact_0"
@@ -689,8 +689,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3594,
-      2850
+      3573.85,
+      2789.32
     ],
     "connects": [
       "warrior_impact_2",
@@ -710,8 +710,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      4000,
-      2940
+      3997.74,
+      2712.87
     ],
     "connects": [
       "warrior_sustain_1"
@@ -731,8 +731,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4102,
-      2906
+      3888.26,
+      2738.06
     ],
     "connects": [
       "warrior_sustain_2"
@@ -752,8 +752,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4128,
-      2830
+      3890.6,
+      2871.01
     ],
     "connects": [
       "warrior_sustain_3",
@@ -774,8 +774,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4057,
-      2769
+      3942.13,
+      2946.53
     ],
     "connects": [
       "warrior_sustain_4"
@@ -795,8 +795,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      3943,
-      2769
+      4061.91,
+      2954.97
     ],
     "connects": [
       "warrior_sustain_5"
@@ -816,8 +816,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3872,
-      2830
+      4125.69,
+      2885.34
     ],
     "connects": [
       "warrior_sustain_6"
@@ -837,8 +837,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3898,
-      2906
+      4079.86,
+      2729.39
     ],
     "connects": [
       "warrior_sustain_0"
@@ -859,8 +859,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      4000,
-      2850
+      4011.83,
+      2803.59
     ],
     "connects": [
       "warrior_sustain_2",
@@ -881,7 +881,7 @@
     "icon": "crit",
     "pos": [
       4406,
-      2940
+      2760
     ],
     "connects": [
       "warrior_duelist_1"
@@ -901,8 +901,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4508,
-      2906
+      4302.6,
+      2782.29
     ],
     "connects": [
       "warrior_duelist_2"
@@ -922,8 +922,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4534,
-      2830
+      4278,
+      2870
     ],
     "connects": [
       "warrior_duelist_3"
@@ -943,8 +943,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4463,
-      2769
+      4347.37,
+      2965.79
     ],
     "connects": [
       "warrior_duelist_4"
@@ -964,8 +964,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4349,
-      2769
+      4461.21,
+      2967.19
     ],
     "connects": [
       "warrior_duelist_5"
@@ -985,8 +985,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4278,
-      2830
+      4535.19,
+      2872.98
     ],
     "connects": [
       "warrior_duelist_6"
@@ -1006,8 +1006,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4304,
-      2906
+      4509.14,
+      2809.29
     ],
     "connects": [
       "warrior_duelist_0"
@@ -1028,8 +1028,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4406,
-      2850
+      4413.04,
+      2874.29
     ],
     "connects": [
       "warrior_duelist_2",
@@ -1049,8 +1049,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3812,
-      3420
+      3798.64,
+      3216.49
     ],
     "connects": [
       "warrior_element_1"
@@ -1070,8 +1070,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      3891,
-      3394
+      3701.78,
+      3294.04
     ],
     "connects": [
       "warrior_element_2"
@@ -1091,8 +1091,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      3910,
-      3334
+      3714.5,
+      3370.72
     ],
     "connects": [
       "warrior_element_3"
@@ -1112,8 +1112,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      3855,
-      3287
+      3774.85,
+      3435.48
     ],
     "connects": [
       "warrior_element_4"
@@ -1133,8 +1133,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3768,
-      3287
+      3862.51,
+      3445.52
     ],
     "connects": [
       "warrior_element_5"
@@ -1154,8 +1154,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      3713,
-      3334
+      3933.18,
+      3382.85
     ],
     "connects": [
       "warrior_element_6"
@@ -1175,8 +1175,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      3732,
-      3394
+      3902.08,
+      3311.03
     ],
     "connects": [
       "warrior_element_0"
@@ -1198,8 +1198,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3812,
-      3350
+      3789.31,
+      3305.0
     ],
     "connects": [
       "warrior_element_2",
@@ -1219,8 +1219,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4188,
-      3420
+      4171.71,
+      3252.95
     ],
     "connects": [
       "warrior_stride_1"
@@ -1240,8 +1240,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4268,
-      3394
+      4094.44,
+      3273.78
     ],
     "connects": [
       "warrior_stride_2"
@@ -1261,8 +1261,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4287,
-      3334
+      4075.99,
+      3357.91
     ],
     "connects": [
       "warrior_stride_3"
@@ -1282,8 +1282,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4232,
-      3287
+      4108.41,
+      3418.93
     ],
     "connects": [
       "warrior_stride_4"
@@ -1303,8 +1303,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4145,
-      3287
+      4225.46,
+      3413.09
     ],
     "connects": [
       "warrior_stride_5"
@@ -1324,8 +1324,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4090,
-      3334
+      4313.7,
+      3380.36
     ],
     "connects": [
       "warrior_stride_6"
@@ -1345,8 +1345,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4109,
-      3394
+      4250.48,
+      3268.57
     ],
     "connects": [
       "warrior_stride_0"
@@ -1368,8 +1368,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4188,
-      3350
+      4163.97,
+      3350.02
     ],
     "connects": [
       "warrior_stride_2",
@@ -1389,8 +1389,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3739,
-      2380
+      3736.85,
+      2368.0
     ],
     "connects": [
       "warrior_reach_2",
@@ -1409,8 +1409,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4261,
-      2380
+      4261.42,
+      2387.63
     ],
     "connects": [
       "warrior_tempo_2",
@@ -1449,8 +1449,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4000,
-      2615
+      3992.74,
+      2608.0
     ],
     "connects": [
       "warrior_tempo_4",
@@ -1509,8 +1509,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4297,
-      3100
+      4297.53,
+      3100.43
     ],
     "connects": [
       "warrior_duelist_4",
@@ -1529,8 +1529,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4000,
-      3350
+      4011.65,
+      3332.97
     ],
     "connects": [
       "warrior_element_2",
@@ -1550,8 +1550,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3812,
-      3120
+      3822.94,
+      3118.44
     ],
     "connects": [
       "warrior_element_4"
@@ -1572,8 +1572,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4188,
-      3120
+      4201.6,
+      3116.95
     ],
     "connects": [
       "warrior_stride_4"
@@ -1612,8 +1612,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5012,
-      2608
+      5208.19,
+      2446.15
     ],
     "connects": [
       "ninja_reach_1"
@@ -1633,8 +1633,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5140,
-      2631
+      5072.54,
+      2412.56
     ],
     "connects": [
       "ninja_reach_2"
@@ -1654,8 +1654,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      5246,
-      2576
+      4972.63,
+      2482.81
     ],
     "connects": [
       "ninja_reach_3"
@@ -1675,8 +1675,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5248,
-      2484
+      4971.98,
+      2573.34
     ],
     "connects": [
       "ninja_reach_4"
@@ -1696,8 +1696,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5147,
-      2426
+      5073,
+      2629
     ],
     "connects": [
       "ninja_reach_5",
@@ -1718,8 +1718,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5018,
-      2444
+      5194.14,
+      2627.15
     ],
     "connects": [
       "ninja_reach_6"
@@ -1739,8 +1739,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4958,
-      2525
+      5262.97,
+      2540.91
     ],
     "connects": [
       "ninja_reach_0"
@@ -1761,8 +1761,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5111,
-      2528
+      5125.88,
+      2482.62
     ],
     "connects": [
       "ninja_reach_2",
@@ -1782,8 +1782,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      5412,
-      2839
+      5608.49,
+      2677.36
     ],
     "connects": [
       "ninja_tempo_1"
@@ -1803,8 +1803,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5540,
-      2862
+      5485.02,
+      2639.97
     ],
     "connects": [
       "ninja_tempo_2"
@@ -1824,8 +1824,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5646,
-      2807
+      5360.91,
+      2737.69
     ],
     "connects": [
       "ninja_tempo_3"
@@ -1845,8 +1845,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5649,
-      2716
+      5372.5,
+      2805.41
     ],
     "connects": [
       "ninja_tempo_4"
@@ -1866,8 +1866,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      5547,
-      2657
+      5471.6,
+      2860.07
     ],
     "connects": [
       "ninja_tempo_5"
@@ -1887,8 +1887,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5418,
-      2675
+      5587.87,
+      2873.3
     ],
     "connects": [
       "ninja_tempo_6"
@@ -1908,8 +1908,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5357,
-      2756
+      5671.37,
+      2732.89
     ],
     "connects": [
       "ninja_tempo_0"
@@ -1930,8 +1930,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5509,
-      2759
+      5528.79,
+      2749.27
     ],
     "connects": [
       "ninja_tempo_2",
@@ -1951,8 +1951,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5812,
-      3071
+      6008,
+      2910
     ],
     "connects": [
       "ninja_guard_1"
@@ -1972,8 +1972,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5940,
-      3093
+      5879,
+      2887
     ],
     "connects": [
       "ninja_guard_2"
@@ -1993,8 +1993,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6046,
-      3038
+      5773.27,
+      2944.78
     ],
     "connects": [
       "ninja_guard_3"
@@ -2014,8 +2014,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      6049,
-      2947
+      5770,
+      3034
     ],
     "connects": [
       "ninja_guard_4"
@@ -2035,8 +2035,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5947,
-      2889
+      5871.43,
+      3098.25
     ],
     "connects": [
       "ninja_guard_5",
@@ -2057,8 +2057,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5818,
-      2907
+      6003.08,
+      3070.62
     ],
     "connects": [
       "ninja_guard_6"
@@ -2078,8 +2078,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5757,
-      2988
+      6063.78,
+      2987.45
     ],
     "connects": [
       "ninja_guard_0"
@@ -2100,8 +2100,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5910,
-      2990
+      5911.32,
+      3002.11
     ],
     "connects": [
       "ninja_guard_2",
@@ -2121,8 +2121,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4677,
-      3008
+      4868.48,
+      2837.97
     ],
     "connects": [
       "ninja_crit_1"
@@ -2142,8 +2142,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4787,
-      3027
+      4722.74,
+      2807.6
     ],
     "connects": [
       "ninja_crit_2"
@@ -2163,8 +2163,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4877,
-      2980
+      4635.96,
+      2895.3
     ],
     "connects": [
       "ninja_crit_3",
@@ -2185,8 +2185,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4880,
-      2902
+      4642,
+      2976
     ],
     "connects": [
       "ninja_crit_4"
@@ -2206,8 +2206,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4793,
-      2852
+      4729,
+      3026
     ],
     "connects": [
       "ninja_crit_5"
@@ -2227,8 +2227,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4682,
-      2867
+      4866.06,
+      3008.47
     ],
     "connects": [
       "ninja_crit_6"
@@ -2248,8 +2248,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4631,
-      2937
+      4906.79,
+      2933.13
     ],
     "connects": [
       "ninja_crit_0"
@@ -2270,8 +2270,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4761,
-      2939
+      4780.5,
+      2877.1
     ],
     "connects": [
       "ninja_crit_2",
@@ -2291,8 +2291,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      4987,
-      3188
+      5174.77,
+      3005.83
     ],
     "connects": [
       "ninja_leech_1"
@@ -2312,8 +2312,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      5098,
-      3207
+      5063.88,
+      2975.08
     ],
     "connects": [
       "ninja_leech_2"
@@ -2333,8 +2333,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5188,
-      3160
+      4969.21,
+      3088.1
     ],
     "connects": [
       "ninja_leech_3",
@@ -2355,8 +2355,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5190,
-      3082
+      4948.72,
+      3162.17
     ],
     "connects": [
       "ninja_leech_4"
@@ -2376,8 +2376,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      5103,
-      3032
+      5029.96,
+      3220.7
     ],
     "connects": [
       "ninja_leech_5"
@@ -2397,8 +2397,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4993,
-      3047
+      5135.69,
+      3193.94
     ],
     "connects": [
       "ninja_leech_6"
@@ -2418,8 +2418,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4941,
-      3117
+      5223.04,
+      3056.21
     ],
     "connects": [
       "ninja_leech_0"
@@ -2440,8 +2440,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      5072,
-      3119
+      5113.51,
+      3083.66
     ],
     "connects": [
       "ninja_leech_2",
@@ -2461,8 +2461,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5299,
-      3368
+      5467,
+      3230
     ],
     "connects": [
       "ninja_execution_1"
@@ -2482,8 +2482,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5409,
-      3387
+      5360.97,
+      3201.07
     ],
     "connects": [
       "ninja_execution_2"
@@ -2503,8 +2503,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5499,
-      3340
+      5268.71,
+      3255.59
     ],
     "connects": [
       "ninja_execution_3"
@@ -2524,8 +2524,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      5502,
-      3262
+      5254.16,
+      3351.79
     ],
     "connects": [
       "ninja_execution_4"
@@ -2545,8 +2545,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5415,
-      3212
+      5341.33,
+      3398.94
     ],
     "connects": [
       "ninja_execution_5"
@@ -2566,8 +2566,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5304,
-      3227
+      5440.94,
+      3354.16
     ],
     "connects": [
       "ninja_execution_6"
@@ -2587,8 +2587,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5253,
-      3297
+      5515.06,
+      3297.75
     ],
     "connects": [
       "ninja_execution_0"
@@ -2609,8 +2609,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5383,
-      3299
+      5369.38,
+      3302.19
     ],
     "connects": [
       "ninja_execution_2",
@@ -2630,8 +2630,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4396,
-      3472
+      4548.02,
+      3334.02
     ],
     "connects": [
       "ninja_venom_1"
@@ -2651,8 +2651,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4481,
-      3487
+      4419.14,
+      3302.26
     ],
     "connects": [
       "ninja_venom_2"
@@ -2672,8 +2672,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4552,
-      3450
+      4378.93,
+      3400.12
     ],
     "connects": [
       "ninja_venom_3"
@@ -2693,8 +2693,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4554,
-      3390
+      4373.65,
+      3476.03
     ],
     "connects": [
       "ninja_venom_4"
@@ -2714,8 +2714,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4486,
-      3351
+      4430.48,
+      3514.36
     ],
     "connects": [
       "ninja_venom_5"
@@ -2735,8 +2735,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4400,
-      3363
+      4523.69,
+      3498.03
     ],
     "connects": [
       "ninja_venom_6"
@@ -2756,8 +2756,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4360,
-      3417
+      4560.85,
+      3431.35
     ],
     "connects": [
       "ninja_venom_0"
@@ -2778,8 +2778,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4461,
-      3419
+      4470.13,
+      3375.2
     ],
     "connects": [
       "ninja_venom_2",
@@ -2799,8 +2799,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4684,
-      3639
+      4808.79,
+      3521.3
     ],
     "connects": [
       "ninja_stride_1"
@@ -2820,8 +2820,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4770,
-      3654
+      4734.57,
+      3495.14
     ],
     "connects": [
       "ninja_stride_2"
@@ -2841,8 +2841,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4841,
-      3618
+      4643.09,
+      3541.45
     ],
     "connects": [
       "ninja_stride_3"
@@ -2862,8 +2862,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4842,
-      3557
+      4640.86,
+      3610.86
     ],
     "connects": [
       "ninja_stride_4"
@@ -2883,8 +2883,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4776,
-      3518
+      4771.96,
+      3671.02
     ],
     "connects": [
       "ninja_stride_5"
@@ -2904,8 +2904,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4689,
-      3530
+      4837.13,
+      3639.21
     ],
     "connects": [
       "ninja_stride_6"
@@ -2925,8 +2925,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4648,
-      3584
+      4876.41,
+      3583.02
     ],
     "connects": [
       "ninja_stride_0"
@@ -2947,8 +2947,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4750,
-      3586
+      4733.42,
+      3591.68
     ],
     "connects": [
       "ninja_stride_2",
@@ -2968,8 +2968,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      5309,
-      2643
+      5314.42,
+      2626.87
     ],
     "connects": [
       "ninja_reach_2",
@@ -2988,8 +2988,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5710,
-      2875
+      5705.52,
+      2884.42
     ],
     "connects": [
       "ninja_tempo_2",
@@ -3028,8 +3028,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5290,
-      2939
+      5292.59,
+      2915.72
     ],
     "connects": [
       "ninja_tempo_4",
@@ -3068,8 +3068,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4610,
-      3179
+      4607.92,
+      3177.01
     ],
     "connects": [
       "ninja_crit_4",
@@ -3088,8 +3088,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5067,
-      3442
+      5065.6,
+      3438.04
     ],
     "connects": [
       "ninja_execution_4",
@@ -3108,8 +3108,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4606,
-      3502
+      4602.57,
+      3485.7
     ],
     "connects": [
       "ninja_venom_2",
@@ -3129,8 +3129,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4676,
-      3242
+      4680.87,
+      3246.73
     ],
     "connects": [
       "ninja_venom_4"
@@ -3151,8 +3151,8 @@
     "cat": "defense",
     "icon": "crit",
     "pos": [
-      4964,
-      3409
+      4958.24,
+      3401.37
     ],
     "connects": [
       "ninja_stride_4"
@@ -3191,8 +3191,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6072,
-      3382
+      6372,
+      3346
     ],
     "connects": [
       "bloodwalker_reach_1"
@@ -3212,8 +3212,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6150,
-      3456
+      6304.19,
+      3257.67
     ],
     "connects": [
       "bloodwalker_reach_2"
@@ -3233,8 +3233,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      6282,
-      3461
+      6159.43,
+      3268.37
     ],
     "connects": [
       "bloodwalker_reach_3"
@@ -3254,8 +3254,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6369,
-      3393
+      6076.88,
+      3339.63
     ],
     "connects": [
       "bloodwalker_reach_4"
@@ -3275,8 +3275,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6346,
-      3303
+      6100,
+      3425
     ],
     "connects": [
       "bloodwalker_reach_5",
@@ -3297,8 +3297,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6230,
-      3259
+      6203.67,
+      3473.73
     ],
     "connects": [
       "bloodwalker_reach_6"
@@ -3318,8 +3318,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      6108,
-      3295
+      6330.63,
+      3444.49
     ],
     "connects": [
       "bloodwalker_reach_0"
@@ -3340,8 +3340,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      6223,
-      3364
+      6255.98,
+      3332.48
     ],
     "connects": [
       "bloodwalker_reach_2",
@@ -3361,8 +3361,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      6163,
-      3737
+      6464,
+      3700
     ],
     "connects": [
       "bloodwalker_tempo_1"
@@ -3382,8 +3382,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6240,
-      3811
+      6387,
+      3626
     ],
     "connects": [
       "bloodwalker_tempo_2"
@@ -3403,8 +3403,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6372,
-      3815
+      6236.75,
+      3629.36
     ],
     "connects": [
       "bloodwalker_tempo_3"
@@ -3424,8 +3424,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      6459,
-      3747
+      6166,
+      3690
     ],
     "connects": [
       "bloodwalker_tempo_4"
@@ -3445,8 +3445,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      6437,
-      3657
+      6190.24,
+      3777.57
     ],
     "connects": [
       "bloodwalker_tempo_5"
@@ -3466,8 +3466,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6321,
-      3614
+      6284.34,
+      3832.57
     ],
     "connects": [
       "bloodwalker_tempo_6"
@@ -3487,8 +3487,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6200,
-      3649
+      6441.88,
+      3778.27
     ],
     "connects": [
       "bloodwalker_tempo_0"
@@ -3509,8 +3509,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6313,
-      3719
+      6337.74,
+      3722.35
     ],
     "connects": [
       "bloodwalker_tempo_2",
@@ -3530,8 +3530,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6253,
-      4091
+      6553,
+      4055
     ],
     "connects": [
       "bloodwalker_guard_1"
@@ -3551,8 +3551,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      6332,
-      4165
+      6477,
+      3981
     ],
     "connects": [
       "bloodwalker_guard_2"
@@ -3572,8 +3572,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6464,
-      4170
+      6345,
+      3976
     ],
     "connects": [
       "bloodwalker_guard_3"
@@ -3593,8 +3593,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      6551,
-      4102
+      6258,
+      4045
     ],
     "connects": [
       "bloodwalker_guard_4"
@@ -3614,8 +3614,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6527,
-      4012
+      6280.31,
+      4136.01
     ],
     "connects": [
       "bloodwalker_guard_5",
@@ -3636,8 +3636,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      6411,
-      3968
+      6397,
+      4178
     ],
     "connects": [
       "bloodwalker_guard_6"
@@ -3657,8 +3657,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6290,
-      4004
+      6519,
+      4143
     ],
     "connects": [
       "bloodwalker_guard_0"
@@ -3700,8 +3700,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      5443,
-      3540
+      5712.41,
+      3472.14
     ],
     "connects": [
       "bloodwalker_leech_1"
@@ -3721,8 +3721,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5509,
-      3604
+      5636.97,
+      3439.31
     ],
     "connects": [
       "bloodwalker_leech_2"
@@ -3742,8 +3742,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5623,
-      3607
+      5503.88,
+      3381.55
     ],
     "connects": [
       "bloodwalker_leech_3",
@@ -3764,8 +3764,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      5698,
-      3549
+      5446,
+      3500
     ],
     "connects": [
       "bloodwalker_leech_4"
@@ -3785,8 +3785,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      5678,
-      3472
+      5466,
+      3577
     ],
     "connects": [
       "bloodwalker_leech_5"
@@ -3806,8 +3806,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5578,
-      3435
+      5610.96,
+      3674.59
     ],
     "connects": [
       "bloodwalker_leech_6"
@@ -3827,8 +3827,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5473,
-      3465
+      5761.06,
+      3531.86
     ],
     "connects": [
       "bloodwalker_leech_0"
@@ -3849,8 +3849,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      5572,
-      3525
+      5661.02,
+      3549.29
     ],
     "connects": [
       "bloodwalker_leech_2",
@@ -3870,8 +3870,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      5514,
-      3816
+      5772.43,
+      3778.74
     ],
     "connects": [
       "bloodwalker_crit_1"
@@ -3891,8 +3891,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      5579,
-      3879
+      5726.54,
+      3705.0
     ],
     "connects": [
       "bloodwalker_crit_2"
@@ -3912,8 +3912,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5692,
-      3883
+      5590.58,
+      3759.86
     ],
     "connects": [
       "bloodwalker_crit_3",
@@ -3934,8 +3934,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5768,
-      3825
+      5517,
+      3776
     ],
     "connects": [
       "bloodwalker_crit_4"
@@ -3955,8 +3955,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      5749,
-      3748
+      5531.41,
+      3851.61
     ],
     "connects": [
       "bloodwalker_crit_5"
@@ -3976,8 +3976,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      5649,
-      3710
+      5615.91,
+      3884.46
     ],
     "connects": [
       "bloodwalker_crit_6"
@@ -3997,8 +3997,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5544,
-      3741
+      5764.4,
+      3846.92
     ],
     "connects": [
       "bloodwalker_crit_0"
@@ -4019,8 +4019,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      5643,
-      3800
+      5680.63,
+      3810.2
     ],
     "connects": [
       "bloodwalker_crit_2",
@@ -4040,8 +4040,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5585,
-      4092
+      5842,
+      4060
     ],
     "connects": [
       "bloodwalker_execution_1"
@@ -4061,8 +4061,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5650,
-      4155
+      5778.12,
+      3995.37
     ],
     "connects": [
       "bloodwalker_execution_2"
@@ -4082,8 +4082,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5763,
-      4159
+      5658.07,
+      3975.96
     ],
     "connects": [
       "bloodwalker_execution_3"
@@ -4103,8 +4103,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5839,
-      4100
+      5577.33,
+      4054.72
     ],
     "connects": [
       "bloodwalker_execution_4"
@@ -4124,8 +4124,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5818,
-      4024
+      5597.89,
+      4130.0
     ],
     "connects": [
       "bloodwalker_execution_5"
@@ -4145,8 +4145,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5720,
-      3986
+      5732.37,
+      4133.55
     ],
     "connects": [
       "bloodwalker_execution_6"
@@ -4166,8 +4166,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5615,
-      4016
+      5798.06,
+      4153.12
     ],
     "connects": [
       "bloodwalker_execution_0"
@@ -4188,8 +4188,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5712,
-      4076
+      5680.56,
+      4061.59
     ],
     "connects": [
       "bloodwalker_execution_2",
@@ -4209,8 +4209,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4796,
-      3771
+      5025.41,
+      3727.49
     ],
     "connects": [
       "bloodwalker_venom_1"
@@ -4230,8 +4230,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4847,
-      3821
+      4968.46,
+      3640.84
     ],
     "connects": [
       "bloodwalker_venom_2"
@@ -4251,8 +4251,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      4935,
-      3824
+      4850.04,
+      3706.78
     ],
     "connects": [
       "bloodwalker_venom_3"
@@ -4272,8 +4272,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      4993,
-      3778
+      4767.96,
+      3748.24
     ],
     "connects": [
       "bloodwalker_venom_4"
@@ -4293,8 +4293,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4977,
-      3718
+      4797.28,
+      3810.11
     ],
     "connects": [
       "bloodwalker_venom_5"
@@ -4314,8 +4314,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4900,
-      3689
+      4866.84,
+      3832.51
     ],
     "connects": [
       "bloodwalker_venom_6"
@@ -4335,8 +4335,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      4819,
-      3713
+      4986.88,
+      3807.83
     ],
     "connects": [
       "bloodwalker_venom_0"
@@ -4357,8 +4357,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      4896,
-      3759
+      4937.23,
+      3724.18
     ],
     "connects": [
       "bloodwalker_venom_2",
@@ -4378,8 +4378,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4861,
-      4027
+      5072.28,
+      3991.79
     ],
     "connects": [
       "bloodwalker_stride_1"
@@ -4399,8 +4399,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4912,
-      4077
+      5024.8,
+      3942.23
     ],
     "connects": [
       "bloodwalker_stride_2"
@@ -4420,8 +4420,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5000,
-      4080
+      4901.22,
+      3925.9
     ],
     "connects": [
       "bloodwalker_stride_3"
@@ -4441,8 +4441,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5058,
-      4034
+      4863.4,
+      3997.87
     ],
     "connects": [
       "bloodwalker_stride_4"
@@ -4462,8 +4462,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5044,
-      3974
+      4884.76,
+      4070.01
     ],
     "connects": [
       "bloodwalker_stride_5"
@@ -4483,8 +4483,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4966,
-      3945
+      4982.56,
+      4086.53
     ],
     "connects": [
       "bloodwalker_stride_6"
@@ -4504,8 +4504,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      4884,
-      3969
+      5054.09,
+      4068.64
     ],
     "connects": [
       "bloodwalker_stride_0"
@@ -4526,8 +4526,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4961,
-      4015
+      4951.9,
+      3998.44
     ],
     "connects": [
       "bloodwalker_stride_2",
@@ -4547,8 +4547,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      6268,
-      3541
+      6277.74,
+      3534.83
     ],
     "connects": [
       "bloodwalker_reach_2",
@@ -4567,8 +4567,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      6359,
-      3896
+      6351.96,
+      3898.89
     ],
     "connects": [
       "bloodwalker_tempo_2",
@@ -4607,8 +4607,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5978,
-      3759
+      5976.64,
+      3753.66
     ],
     "connects": [
       "bloodwalker_tempo_4",
@@ -4647,8 +4647,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      5234,
-      3642
+      5235.72,
+      3628.88
     ],
     "connects": [
       "bloodwalker_leech_4",
@@ -4667,8 +4667,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5337,
-      4046
+      5344.09,
+      4058.47
     ],
     "connects": [
       "bloodwalker_execution_4",
@@ -4687,8 +4687,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4928,
-      3887
+      4936.01,
+      3854.13
     ],
     "connects": [
       "bloodwalker_venom_2",
@@ -4709,8 +4709,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      5224,
-      3719
+      5221.81,
+      3724.84
     ],
     "connects": [
       "bloodwalker_venom_4"
@@ -4730,8 +4730,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      5289,
-      3975
+      5288.63,
+      3979.0
     ],
     "connects": [
       "bloodwalker_stride_4"
@@ -4770,8 +4770,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6163,
-      4446
+      6427,
+      4551
     ],
     "connects": [
       "beastmaster_pack_1"
@@ -4791,8 +4791,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6153,
-      4537
+      6437,
+      4460
     ],
     "connects": [
       "beastmaster_pack_2"
@@ -4812,8 +4812,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6250,
-      4599
+      6336.13,
+      4395.37
     ],
     "connects": [
       "beastmaster_pack_3"
@@ -4833,8 +4833,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6381,
-      4585
+      6206.68,
+      4414.95
     ],
     "connects": [
       "beastmaster_pack_4"
@@ -4854,8 +4854,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6448,
-      4506
+      6143.12,
+      4490.55
     ],
     "connects": [
       "beastmaster_pack_5",
@@ -4876,8 +4876,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6398,
-      4421
+      6180.68,
+      4567.26
     ],
     "connects": [
       "beastmaster_pack_6"
@@ -4897,8 +4897,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6272,
-      4394
+      6310.12,
+      4604.43
     ],
     "connects": [
       "beastmaster_pack_0"
@@ -4919,8 +4919,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6295,
-      4498
+      6345.7,
+      4500.93
     ],
     "connects": [
       "beastmaster_pack_2",
@@ -4940,8 +4940,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5902,
-      4758
+      6166,
+      4862
     ],
     "connects": [
       "beastmaster_reach_1"
@@ -4961,8 +4961,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5892,
-      4848
+      6176,
+      4772
     ],
     "connects": [
       "beastmaster_reach_2"
@@ -4982,8 +4982,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5989,
-      4910
+      6063.25,
+      4699.75
     ],
     "connects": [
       "beastmaster_reach_3"
@@ -5003,8 +5003,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      6120,
-      4897
+      5949,
+      4723
     ],
     "connects": [
       "beastmaster_reach_4"
@@ -5024,8 +5024,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6187,
-      4818
+      5883.56,
+      4799.97
     ],
     "connects": [
       "beastmaster_reach_5"
@@ -5045,8 +5045,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6137,
-      4733
+      5912.51,
+      4874.71
     ],
     "connects": [
       "beastmaster_reach_6"
@@ -5066,8 +5066,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6011,
-      4706
+      6073.6,
+      4920.23
     ],
     "connects": [
       "beastmaster_reach_0"
@@ -5088,8 +5088,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6034,
-      4810
+      6048.07,
+      4831.37
     ],
     "connects": [
       "beastmaster_reach_2",
@@ -5109,8 +5109,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5641,
-      5069
+      5905,
+      5174
     ],
     "connects": [
       "beastmaster_guard_1"
@@ -5130,8 +5130,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5631,
-      5160
+      5915,
+      5083
     ],
     "connects": [
       "beastmaster_guard_2"
@@ -5151,8 +5151,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5728,
-      5222
+      5817.78,
+      5020.7
     ],
     "connects": [
       "beastmaster_guard_3"
@@ -5172,8 +5172,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5859,
-      5209
+      5688,
+      5035
     ],
     "connects": [
       "beastmaster_guard_4"
@@ -5193,8 +5193,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5926,
-      5130
+      5622.19,
+      5113.85
     ],
     "connects": [
       "beastmaster_guard_5",
@@ -5215,8 +5215,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5876,
-      5045
+      5670,
+      5199
     ],
     "connects": [
       "beastmaster_guard_6"
@@ -5236,8 +5236,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5750,
-      5018
+      5797,
+      5226
     ],
     "connects": [
       "beastmaster_guard_0"
@@ -5258,8 +5258,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5773,
-      5122
+      5773.73,
+      5123.0
     ],
     "connects": [
       "beastmaster_guard_2",
@@ -5279,8 +5279,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5534,
-      4288
+      5770.37,
+      4374.85
     ],
     "connects": [
       "beastmaster_volley_1"
@@ -5300,8 +5300,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5525,
-      4365
+      5769,
+      4300
     ],
     "connects": [
       "beastmaster_volley_2"
@@ -5321,8 +5321,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5608,
-      4419
+      5704.77,
+      4195.7
     ],
     "connects": [
       "beastmaster_volley_3",
@@ -5343,8 +5343,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5721,
-      4407
+      5573,
+      4258
     ],
     "connects": [
       "beastmaster_volley_4"
@@ -5364,8 +5364,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5778,
-      4339
+      5517,
+      4326
     ],
     "connects": [
       "beastmaster_volley_5"
@@ -5385,8 +5385,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5736,
-      4267
+      5558.79,
+      4435.9
     ],
     "connects": [
       "beastmaster_volley_6"
@@ -5406,8 +5406,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5628,
-      4244
+      5761.41,
+      4454.68
     ],
     "connects": [
       "beastmaster_volley_0"
@@ -5428,8 +5428,8 @@
     "cat": "minion",
     "icon": "pierce",
     "pos": [
-      5647,
-      4333
+      5679.27,
+      4391.49
     ],
     "connects": [
       "beastmaster_volley_2",
@@ -5449,8 +5449,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5331,
-      4530
+      5561.98,
+      4619.51
     ],
     "connects": [
       "beastmaster_bond_1"
@@ -5470,8 +5470,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5322,
-      4608
+      5586.01,
+      4551.57
     ],
     "connects": [
       "beastmaster_bond_2"
@@ -5491,8 +5491,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5405,
-      4661
+      5448.93,
+      4509.62
     ],
     "connects": [
       "beastmaster_bond_3",
@@ -5513,8 +5513,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5518,
-      4649
+      5363.73,
+      4494.89
     ],
     "connects": [
       "beastmaster_bond_4"
@@ -5534,8 +5534,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5575,
-      4582
+      5303.98,
+      4556.36
     ],
     "connects": [
       "beastmaster_bond_5"
@@ -5555,8 +5555,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5533,
-      4509
+      5346.72,
+      4623.71
     ],
     "connects": [
       "beastmaster_bond_6"
@@ -5576,8 +5576,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5425,
-      4486
+      5486.2,
+      4687.11
     ],
     "connects": [
       "beastmaster_bond_0"
@@ -5598,8 +5598,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5444,
-      4575
+      5463.32,
+      4600.17
     ],
     "connects": [
       "beastmaster_bond_2",
@@ -5619,8 +5619,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5128,
-      4772
+      5354,
+      4862
     ],
     "connects": [
       "beastmaster_fang_1"
@@ -5640,8 +5640,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5119,
-      4850
+      5364.71,
+      4785.91
     ],
     "connects": [
       "beastmaster_fang_2"
@@ -5661,8 +5661,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5202,
-      4903
+      5280.19,
+      4738.65
     ],
     "connects": [
       "beastmaster_fang_3"
@@ -5682,8 +5682,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5315,
-      4892
+      5161.53,
+      4738.45
     ],
     "connects": [
       "beastmaster_fang_4"
@@ -5703,8 +5703,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5372,
-      4824
+      5101.64,
+      4801.32
     ],
     "connects": [
       "beastmaster_fang_5"
@@ -5724,8 +5724,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5330,
-      4752
+      5159.79,
+      4875.38
     ],
     "connects": [
       "beastmaster_fang_6"
@@ -5745,8 +5745,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5222,
-      4728
+      5240.39,
+      4898.05
     ],
     "connects": [
       "beastmaster_fang_0"
@@ -5767,8 +5767,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5241,
-      4817
+      5223.94,
+      4810.51
     ],
     "connects": [
       "beastmaster_fang_2",
@@ -5788,8 +5788,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      4822,
-      4177
+      5049.15,
+      4245.88
     ],
     "connects": [
       "beastmaster_element_1"
@@ -5809,8 +5809,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      4816,
-      4238
+      5047.27,
+      4147.47
     ],
     "connects": [
       "beastmaster_element_2"
@@ -5830,8 +5830,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      4880,
-      4279
+      4925.57,
+      4125.18
     ],
     "connects": [
       "beastmaster_element_3"
@@ -5851,8 +5851,8 @@
     "cat": "dot",
     "icon": "minion",
     "pos": [
-      4967,
-      4270
+      4832.54,
+      4146.79
     ],
     "connects": [
       "beastmaster_element_4"
@@ -5872,8 +5872,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5012,
-      4218
+      4777.78,
+      4187.6
     ],
     "connects": [
       "beastmaster_element_5"
@@ -5893,8 +5893,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      4980,
-      4161
+      4821.22,
+      4253.45
     ],
     "connects": [
       "beastmaster_element_6"
@@ -5914,8 +5914,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      4895,
-      4143
+      4910.87,
+      4286.62
     ],
     "connects": [
       "beastmaster_element_0"
@@ -5937,8 +5937,8 @@
     "cat": "minion",
     "icon": "bounce",
     "pos": [
-      4911,
-      4212
+      4975.22,
+      4198.14
     ],
     "connects": [
       "beastmaster_element_2",
@@ -5958,8 +5958,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4634,
-      4403
+      4823.02,
+      4467.72
     ],
     "connects": [
       "beastmaster_whip_1"
@@ -5979,8 +5979,8 @@
     "cat": "damage",
     "icon": "minion",
     "pos": [
-      4628,
-      4463
+      4846.35,
+      4403.71
     ],
     "connects": [
       "beastmaster_whip_2"
@@ -6000,8 +6000,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4692,
-      4504
+      4746.69,
+      4331.73
     ],
     "connects": [
       "beastmaster_whip_3"
@@ -6021,8 +6021,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4779,
-      4495
+      4655.3,
+      4384.18
     ],
     "connects": [
       "beastmaster_whip_4"
@@ -6042,8 +6042,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4824,
-      4443
+      4636.56,
+      4450.8
     ],
     "connects": [
       "beastmaster_whip_5"
@@ -6063,8 +6063,8 @@
     "cat": "damage",
     "icon": "minion",
     "pos": [
-      4792,
-      4386
+      4682.72,
+      4501.15
     ],
     "connects": [
       "beastmaster_whip_6"
@@ -6084,8 +6084,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4706,
-      4368
+      4761.79,
+      4524.55
     ],
     "connects": [
       "beastmaster_whip_0"
@@ -6106,8 +6106,8 @@
     "cat": "minion",
     "icon": "reach",
     "pos": [
-      4722,
-      4438
+      4736.37,
+      4420.91
     ],
     "connects": [
       "beastmaster_whip_2",
@@ -6127,8 +6127,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      6165,
-      4654
+      6172.15,
+      4657.16
     ],
     "connects": [
       "beastmaster_pack_2",
@@ -6147,8 +6147,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5904,
-      4966
+      5900.02,
+      4963.49
     ],
     "connects": [
       "beastmaster_reach_2",
@@ -6187,8 +6187,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5739,
-      4692
+      5742.35,
+      4687.57
     ],
     "connects": [
       "beastmaster_reach_4",
@@ -6227,8 +6227,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5279,
-      4272
+      5279.06,
+      4271.31
     ],
     "connects": [
       "beastmaster_volley_4",
@@ -6247,8 +6247,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4982,
-      4628
+      4973.88,
+      4648.7
     ],
     "connects": [
       "beastmaster_fang_4",
@@ -6267,8 +6267,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4816,
-      4325
+      4819.78,
+      4340.03
     ],
     "connects": [
       "beastmaster_element_2",
@@ -6288,8 +6288,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5199,
-      4327
+      5198.69,
+      4336.39
     ],
     "connects": [
       "beastmaster_element_4"
@@ -6309,8 +6309,8 @@
     "cat": "minion",
     "icon": "minion",
     "pos": [
-      5011,
-      4553
+      5010.37,
+      4559.13
     ],
     "connects": [
       "beastmaster_whip_4"
@@ -6349,8 +6349,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5241,
-      5301
+      5346,
+      5498
     ],
     "connects": [
       "engineer_pierce_1"
@@ -6370,8 +6370,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5150,
-      5366
+      5438.89,
+      5434.46
     ],
     "connects": [
       "engineer_pierce_2"
@@ -6391,8 +6391,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5166,
-      5456
+      5409.6,
+      5309.8
     ],
     "connects": [
       "engineer_pierce_3"
@@ -6412,8 +6412,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      5279,
-      5504
+      5309,
+      5295
     ],
     "connects": [
       "engineer_pierce_4"
@@ -6433,8 +6433,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5404,
-      5472
+      5185,
+      5326
     ],
     "connects": [
       "engineer_pierce_5",
@@ -6455,8 +6455,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5446,
-      5386
+      5134.22,
+      5386.13
     ],
     "connects": [
       "engineer_pierce_6"
@@ -6476,8 +6476,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5373,
-      5310
+      5232.17,
+      5519.26
     ],
     "connects": [
       "engineer_pierce_0"
@@ -6498,8 +6498,8 @@
     "cat": "turret",
     "icon": "pierce",
     "pos": [
-      5293,
-      5399
+      5282.13,
+      5422.62
     ],
     "connects": [
       "engineer_pierce_2",
@@ -6519,8 +6519,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      4751,
-      5424
+      4856,
+      5621
     ],
     "connects": [
       "engineer_flame_1"
@@ -6540,8 +6540,8 @@
     "cat": "dot",
     "icon": "turret",
     "pos": [
-      4660,
-      5489
+      4950.08,
+      5559.72
     ],
     "connects": [
       "engineer_flame_2"
@@ -6561,8 +6561,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4676,
-      5579
+      4920.44,
+      5435.3
     ],
     "connects": [
       "engineer_flame_3"
@@ -6582,8 +6582,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4789,
-      5627
+      4819,
+      5418
     ],
     "connects": [
       "engineer_flame_4"
@@ -6603,8 +6603,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      4912,
-      5596
+      4695,
+      5449
     ],
     "connects": [
       "engineer_flame_5"
@@ -6624,8 +6624,8 @@
     "cat": "dot",
     "icon": "turret",
     "pos": [
-      4954,
-      5509
+      4642.03,
+      5505.67
     ],
     "connects": [
       "engineer_flame_6"
@@ -6645,8 +6645,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4883,
-      5433
+      4739.46,
+      5642.05
     ],
     "connects": [
       "engineer_flame_0"
@@ -6667,8 +6667,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      4803,
-      5522
+      4795.31,
+      5543.76
     ],
     "connects": [
       "engineer_flame_2",
@@ -6688,8 +6688,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4261,
-      5547
+      4365,
+      5744
     ],
     "connects": [
       "engineer_guard_1"
@@ -6709,8 +6709,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4168,
-      5612
+      4457,
+      5679
     ],
     "connects": [
       "engineer_guard_2"
@@ -6730,8 +6730,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4186,
-      5702
+      4440.37,
+      5580.11
     ],
     "connects": [
       "engineer_guard_3"
@@ -6751,8 +6751,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4297,
-      5750
+      4328,
+      5541
     ],
     "connects": [
       "engineer_guard_4"
@@ -6772,8 +6772,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4422,
-      5719
+      4199.32,
+      5562.51
     ],
     "connects": [
       "engineer_guard_5",
@@ -6794,8 +6794,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4464,
-      5632
+      4163.42,
+      5659.36
     ],
     "connects": [
       "engineer_guard_6"
@@ -6815,8 +6815,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4393,
-      5556
+      4237.44,
+      5744.21
     ],
     "connects": [
       "engineer_guard_0"
@@ -6837,8 +6837,8 @@
     "cat": "turret",
     "icon": "shield",
     "pos": [
-      4313,
-      5645
+      4301.58,
+      5648.36
     ],
     "connects": [
       "engineer_guard_2",
@@ -6858,8 +6858,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4908,
-      4900
+      5023.27,
+      5091.18
     ],
     "connects": [
       "engineer_volley_1"
@@ -6879,8 +6879,8 @@
     "cat": "damage",
     "icon": "turret",
     "pos": [
-      4828,
-      4956
+      5076,
+      5014
     ],
     "connects": [
       "engineer_volley_2"
@@ -6900,8 +6900,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4842,
-      5034
+      5123.4,
+      4933.16
     ],
     "connects": [
       "engineer_volley_3",
@@ -6922,8 +6922,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4938,
-      5074
+      4964,
+      4895
     ],
     "connects": [
       "engineer_volley_4"
@@ -6943,8 +6943,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5045,
-      5048
+      4858,
+      4922
     ],
     "connects": [
       "engineer_volley_5"
@@ -6964,8 +6964,8 @@
     "cat": "damage",
     "icon": "turret",
     "pos": [
-      5082,
-      4974
+      4790.65,
+      5031.93
     ],
     "connects": [
       "engineer_volley_6"
@@ -6985,8 +6985,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      5019,
-      4908
+      4921.8,
+      5184.98
     ],
     "connects": [
       "engineer_volley_0"
@@ -7007,8 +7007,8 @@
     "cat": "turret",
     "icon": "volley",
     "pos": [
-      4951,
-      4985
+      4915.38,
+      5092.08
     ],
     "connects": [
       "engineer_volley_2",
@@ -7028,8 +7028,8 @@
     "cat": "utility",
     "icon": "tempo",
     "pos": [
-      4526,
-      4996
+      4634.46,
+      5201.2
     ],
     "connects": [
       "engineer_command_1"
@@ -7049,8 +7049,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4447,
-      5052
+      4718.18,
+      5162.61
     ],
     "connects": [
       "engineer_command_2"
@@ -7070,8 +7070,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4461,
-      5129
+      4655.03,
+      5041.81
     ],
     "connects": [
       "engineer_command_3",
@@ -7092,8 +7092,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4557,
-      5170
+      4581.33,
+      4981.0
     ],
     "connects": [
       "engineer_command_4"
@@ -7113,8 +7113,8 @@
     "cat": "utility",
     "icon": "tempo",
     "pos": [
-      4664,
-      5143
+      4473.41,
+      4997.85
     ],
     "connects": [
       "engineer_command_5"
@@ -7134,8 +7134,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4700,
-      5069
+      4446.71,
+      5077.8
     ],
     "connects": [
       "engineer_command_6"
@@ -7155,8 +7155,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4638,
-      5004
+      4525.92,
+      5213.18
     ],
     "connects": [
       "engineer_command_0"
@@ -7177,8 +7177,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4570,
-      5081
+      4564.97,
+      5132.64
     ],
     "connects": [
       "engineer_command_2",
@@ -7198,8 +7198,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4144,
-      5092
+      4233,
+      5261
     ],
     "connects": [
       "engineer_fleet_1"
@@ -7219,8 +7219,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4065,
-      5148
+      4317.63,
+      5216.88
     ],
     "connects": [
       "engineer_fleet_2"
@@ -7240,8 +7240,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4080,
-      5225
+      4298.94,
+      5130.93
     ],
     "connects": [
       "engineer_fleet_3"
@@ -7261,8 +7261,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4175,
-      5266
+      4195.66,
+      5054.52
     ],
     "connects": [
       "engineer_fleet_4"
@@ -7282,8 +7282,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4283,
-      5239
+      4089.91,
+      5081.16
     ],
     "connects": [
       "engineer_fleet_5"
@@ -7303,8 +7303,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4319,
-      5165
+      4059,
+      5188
     ],
     "connects": [
       "engineer_fleet_6"
@@ -7324,8 +7324,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4257,
-      5100
+      4113.63,
+      5235.52
     ],
     "connects": [
       "engineer_fleet_0"
@@ -7346,8 +7346,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4188,
-      5176
+      4173.01,
+      5154.62
     ],
     "connects": [
       "engineer_fleet_2",
@@ -7367,8 +7367,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4465,
-      4501
+      4568.28,
+      4676.48
     ],
     "connects": [
       "engineer_chain_1"
@@ -7388,8 +7388,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4403,
-      4544
+      4627.36,
+      4590.99
     ],
     "connects": [
       "engineer_chain_2"
@@ -7409,8 +7409,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4415,
-      4604
+      4581.33,
+      4515.06
     ],
     "connects": [
       "engineer_chain_3"
@@ -7430,8 +7430,8 @@
     "cat": "damage",
     "icon": "turret",
     "pos": [
-      4490,
-      4636
+      4488.57,
+      4481.33
     ],
     "connects": [
       "engineer_chain_4"
@@ -7451,8 +7451,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4573,
-      4615
+      4405.98,
+      4484.67
     ],
     "connects": [
       "engineer_chain_5"
@@ -7472,8 +7472,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      4600,
-      4558
+      4373.13,
+      4559.01
     ],
     "connects": [
       "engineer_chain_6"
@@ -7493,8 +7493,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4552,
-      4507
+      4428.61,
+      4615.06
     ],
     "connects": [
       "engineer_chain_0"
@@ -7515,8 +7515,8 @@
     "cat": "turret",
     "icon": "bounce",
     "pos": [
-      4499,
-      4566
+      4538.76,
+      4592.52
     ],
     "connects": [
       "engineer_chain_2",
@@ -7536,8 +7536,8 @@
     "cat": "damage",
     "icon": "turret",
     "pos": [
-      4110,
-      4589
+      4192.56,
+      4727.76
     ],
     "connects": [
       "engineer_pilot_1"
@@ -7557,8 +7557,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      4049,
-      4633
+      4252.54,
+      4695.44
     ],
     "connects": [
       "engineer_pilot_2"
@@ -7578,8 +7578,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4059,
-      4693
+      4252.41,
+      4606.85
     ],
     "connects": [
       "engineer_pilot_3"
@@ -7599,8 +7599,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      4135,
-      4725
+      4190.2,
+      4577.56
     ],
     "connects": [
       "engineer_pilot_4"
@@ -7620,8 +7620,8 @@
     "cat": "damage",
     "icon": "turret",
     "pos": [
-      4218,
-      4704
+      4042.33,
+      4626.02
     ],
     "connects": [
       "engineer_pilot_5"
@@ -7641,8 +7641,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      4246,
-      4647
+      4031.09,
+      4693.52
     ],
     "connects": [
       "engineer_pilot_6"
@@ -7662,8 +7662,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4199,
-      4596
+      4091.37,
+      4742.18
     ],
     "connects": [
       "engineer_pilot_0"
@@ -7684,8 +7684,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      4145,
-      4655
+      4136.81,
+      4653.37
     ],
     "connects": [
       "engineer_pilot_2",
@@ -7705,8 +7705,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      5048,
-      5461
+      5048.59,
+      5459.69
     ],
     "connects": [
       "engineer_pierce_2",
@@ -7725,8 +7725,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      4558,
-      5584
+      4556.16,
+      5578.04
     ],
     "connects": [
       "engineer_flame_2",
@@ -7825,8 +7825,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      4167,
-      4916
+      4146.38,
+      4938.87
     ],
     "connects": [
       "engineer_fleet_4",
@@ -7845,8 +7845,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      4322,
-      4611
+      4323.57,
+      4616.38
     ],
     "connects": [
       "engineer_chain_2",
@@ -7866,8 +7866,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4613,
-      4782
+      4597.86,
+      4792.17
     ],
     "connects": [
       "engineer_chain_4"
@@ -7887,8 +7887,8 @@
     "cat": "turret",
     "icon": "turret",
     "pos": [
-      4260,
-      4871
+      4249.67,
+      4878.52
     ],
     "connects": [
       "engineer_pilot_4"
@@ -7927,8 +7927,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3739,
-      5547
+      3636.82,
+      5761.11
     ],
     "connects": [
       "sniper_chain_1"
@@ -7948,8 +7948,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3607,
-      5556
+      3767,
+      5735
     ],
     "connects": [
       "sniper_chain_2"
@@ -7969,8 +7969,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3536,
-      5632
+      3868.51,
+      5695.02
     ],
     "connects": [
       "sniper_chain_3"
@@ -7990,8 +7990,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3578,
-      5719
+      3796,
+      5572
     ],
     "connects": [
       "sniper_chain_4"
@@ -8011,8 +8011,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3703,
-      5750
+      3672,
+      5541
     ],
     "connects": [
       "sniper_chain_5",
@@ -8033,8 +8033,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3814,
-      5702
+      3560.91,
+      5549.3
     ],
     "connects": [
       "sniper_chain_6"
@@ -8054,8 +8054,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3832,
-      5612
+      3544.78,
+      5733.66
     ],
     "connects": [
       "sniper_chain_0"
@@ -8076,8 +8076,8 @@
     "cat": "damage",
     "icon": "bounce",
     "pos": [
-      3687,
-      5645
+      3606.34,
+      5661.51
     ],
     "connects": [
       "sniper_chain_2",
@@ -8097,8 +8097,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3249,
-      5424
+      3144.34,
+      5625.49
     ],
     "connects": [
       "sniper_pierce_1"
@@ -8118,8 +8118,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3117,
-      5433
+      3275.87,
+      5615.62
     ],
     "connects": [
       "sniper_pierce_2"
@@ -8139,8 +8139,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3046,
-      5509
+      3354.36,
+      5495.2
     ],
     "connects": [
       "sniper_pierce_3"
@@ -8160,8 +8160,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3088,
-      5596
+      3304.61,
+      5448.63
     ],
     "connects": [
       "sniper_pierce_4"
@@ -8181,8 +8181,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3211,
-      5627
+      3182.47,
+      5419.66
     ],
     "connects": [
       "sniper_pierce_5"
@@ -8202,8 +8202,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3324,
-      5579
+      3075.28,
+      5426.02
     ],
     "connects": [
       "sniper_pierce_6"
@@ -8223,8 +8223,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3340,
-      5489
+      3051.87,
+      5601.03
     ],
     "connects": [
       "sniper_pierce_0"
@@ -8245,8 +8245,8 @@
     "cat": "damage",
     "icon": "pierce",
     "pos": [
-      3197,
-      5522
+      3172.36,
+      5529.4
     ],
     "connects": [
       "sniper_pierce_2",
@@ -8266,8 +8266,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2759,
-      5301
+      2654,
+      5498
     ],
     "connects": [
       "sniper_mobility_1"
@@ -8287,8 +8287,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      2627,
-      5310
+      2785,
+      5489
     ],
     "connects": [
       "sniper_mobility_2"
@@ -8308,8 +8308,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2554,
-      5386
+      2859.36,
+      5407.1
     ],
     "connects": [
       "sniper_mobility_3"
@@ -8329,8 +8329,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2596,
-      5472
+      2815,
+      5326
     ],
     "connects": [
       "sniper_mobility_4"
@@ -8350,8 +8350,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2721,
-      5504
+      2693.69,
+      5283.98
     ],
     "connects": [
       "sniper_mobility_5",
@@ -8372,8 +8372,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      2834,
-      5456
+      2577.29,
+      5347.74
     ],
     "connects": [
       "sniper_mobility_6"
@@ -8393,8 +8393,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2850,
-      5366
+      2561.44,
+      5443.21
     ],
     "connects": [
       "sniper_mobility_0"
@@ -8415,8 +8415,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2707,
-      5399
+      2696.52,
+      5389.62
     ],
     "connects": [
       "sniper_mobility_2",
@@ -8436,8 +8436,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3856,
-      5092
+      3750.39,
+      5318.54
     ],
     "connects": [
       "sniper_volley_1"
@@ -8457,8 +8457,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3743,
-      5100
+      3895.24,
+      5283.99
     ],
     "connects": [
       "sniper_volley_2"
@@ -8478,8 +8478,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3681,
-      5165
+      3951.0,
+      5191.6
     ],
     "connects": [
       "sniper_volley_3",
@@ -8500,8 +8500,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3717,
-      5239
+      3904,
+      5114
     ],
     "connects": [
       "sniper_volley_4"
@@ -8521,8 +8521,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3825,
-      5266
+      3798,
+      5087
     ],
     "connects": [
       "sniper_volley_5"
@@ -8542,8 +8542,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3920,
-      5225
+      3674.31,
+      5136.24
     ],
     "connects": [
       "sniper_volley_6"
@@ -8563,8 +8563,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3935,
-      5148
+      3676.63,
+      5223.16
     ],
     "connects": [
       "sniper_volley_0"
@@ -8585,8 +8585,8 @@
     "cat": "damage",
     "icon": "volley",
     "pos": [
-      3812,
-      5176
+      3807.05,
+      5247.19
     ],
     "connects": [
       "sniper_volley_2",
@@ -8606,8 +8606,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3474,
-      4996
+      3365.02,
+      5218.62
     ],
     "connects": [
       "sniper_guard_1"
@@ -8627,8 +8627,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      3362,
-      5004
+      3493.43,
+      5220.18
     ],
     "connects": [
       "sniper_guard_2"
@@ -8648,8 +8648,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3300,
-      5069
+      3541.44,
+      5084.84
     ],
     "connects": [
       "sniper_guard_3",
@@ -8670,8 +8670,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      3336,
-      5143
+      3527.89,
+      5003.24
     ],
     "connects": [
       "sniper_guard_4"
@@ -8691,8 +8691,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3443,
-      5170
+      3432.51,
+      4969.42
     ],
     "connects": [
       "sniper_guard_5"
@@ -8712,8 +8712,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      3539,
-      5129
+      3323.29,
+      5023.01
     ],
     "connects": [
       "sniper_guard_6"
@@ -8733,8 +8733,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3553,
-      5052
+      3300.43,
+      5181.99
     ],
     "connects": [
       "sniper_guard_0"
@@ -8755,8 +8755,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      3430,
-      5081
+      3404.3,
+      5128.26
     ],
     "connects": [
       "sniper_guard_2",
@@ -8776,8 +8776,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3092,
-      4900
+      3003.9,
+      5070.09
     ],
     "connects": [
       "sniper_crit_1"
@@ -8797,8 +8797,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      2981,
-      4908
+      3113.82,
+      5080.21
     ],
     "connects": [
       "sniper_crit_2"
@@ -8818,8 +8818,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2918,
-      4974
+      3176.45,
+      5000.71
     ],
     "connects": [
       "sniper_crit_3"
@@ -8839,8 +8839,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2955,
-      5048
+      3148.16,
+      4900.59
     ],
     "connects": [
       "sniper_crit_4"
@@ -8860,8 +8860,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3062,
-      5074
+      3041.28,
+      4878.26
     ],
     "connects": [
       "sniper_crit_5"
@@ -8881,8 +8881,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3158,
-      5034
+      2955.47,
+      4952.66
     ],
     "connects": [
       "sniper_crit_6"
@@ -8902,8 +8902,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3172,
-      4956
+      2922.77,
+      5026.21
     ],
     "connects": [
       "sniper_crit_0"
@@ -8924,8 +8924,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3049,
-      4985
+      3039.68,
+      4980.7
     ],
     "connects": [
       "sniper_crit_2",
@@ -8945,8 +8945,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3890,
-      4589
+      3806.44,
+      4772.7
     ],
     "connects": [
       "sniper_element_1"
@@ -8966,8 +8966,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      3801,
-      4596
+      3939.19,
+      4740.56
     ],
     "connects": [
       "sniper_element_2"
@@ -8987,8 +8987,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      3754,
-      4647
+      3957.63,
+      4652.2
     ],
     "connects": [
       "sniper_element_3"
@@ -9008,8 +9008,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      3782,
-      4704
+      3920.52,
+      4585.1
     ],
     "connects": [
       "sniper_element_4"
@@ -9029,8 +9029,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3865,
-      4725
+      3845.25,
+      4559.22
     ],
     "connects": [
       "sniper_element_5"
@@ -9050,8 +9050,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      3941,
-      4693
+      3755.05,
+      4598.83
     ],
     "connects": [
       "sniper_element_6"
@@ -9071,8 +9071,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      3951,
-      4633
+      3752.95,
+      4676.06
     ],
     "connects": [
       "sniper_element_0"
@@ -9094,8 +9094,8 @@
     "cat": "element",
     "icon": "bounce",
     "pos": [
-      3855,
-      4655
+      3858.95,
+      4702.06
     ],
     "connects": [
       "sniper_element_2",
@@ -9115,8 +9115,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3535,
-      4501
+      3472.06,
+      4658.96
     ],
     "connects": [
       "sniper_execution_1"
@@ -9136,8 +9136,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3448,
-      4507
+      3541.7,
+      4662.54
     ],
     "connects": [
       "sniper_execution_2"
@@ -9157,8 +9157,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3400,
-      4558
+      3619.15,
+      4592.86
     ],
     "connects": [
       "sniper_execution_3"
@@ -9178,8 +9178,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3427,
-      4615
+      3588.7,
+      4530.76
     ],
     "connects": [
       "sniper_execution_4"
@@ -9199,8 +9199,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3510,
-      4636
+      3451.72,
+      4499.91
     ],
     "connects": [
       "sniper_execution_5"
@@ -9220,8 +9220,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3585,
-      4604
+      3394.17,
+      4537.48
     ],
     "connects": [
       "sniper_execution_6"
@@ -9241,8 +9241,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3597,
-      4544
+      3387.58,
+      4618.05
     ],
     "connects": [
       "sniper_execution_0"
@@ -9263,8 +9263,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3501,
-      4566
+      3506.97,
+      4568.83
     ],
     "connects": [
       "sniper_execution_2",
@@ -9284,8 +9284,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3442,
-      5584
+      3457.15,
+      5550.27
     ],
     "connects": [
       "sniper_chain_2",
@@ -9304,8 +9304,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      2952,
-      5461
+      2954.15,
+      5447.95
     ],
     "connects": [
       "sniper_pierce_2",
@@ -9344,8 +9344,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      3313,
-      5301
+      3323.8,
+      5322.19
     ],
     "connects": [
       "sniper_pierce_4",
@@ -9404,8 +9404,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3275,
-      4776
+      3274.63,
+      4775.41
     ],
     "connects": [
       "sniper_crit_4",
@@ -9424,8 +9424,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3678,
-      4611
+      3692.3,
+      4636.38
     ],
     "connects": [
       "sniper_element_2",
@@ -9445,8 +9445,8 @@
     "cat": "damage",
     "icon": "volley",
     "pos": [
-      3740,
-      4871
+      3734.45,
+      4868.97
     ],
     "connects": [
       "sniper_element_4"
@@ -9467,8 +9467,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3387,
-      4782
+      3386.35,
+      4783.08
     ],
     "connects": [
       "sniper_execution_4"
@@ -9507,8 +9507,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2359,
-      5069
+      2099.42,
+      5184.54
     ],
     "connects": [
       "sorcerer_chain_1"
@@ -9528,8 +9528,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2250,
-      5018
+      2203,
+      5226
     ],
     "connects": [
       "sorcerer_chain_2"
@@ -9549,8 +9549,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2124,
-      5045
+      2347.98,
+      5224.81
     ],
     "connects": [
       "sorcerer_chain_3"
@@ -9570,8 +9570,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2074,
-      5130
+      2379,
+      5114
     ],
     "connects": [
       "sorcerer_chain_4"
@@ -9591,8 +9591,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2141,
-      5209
+      2312,
+      5035
     ],
     "connects": [
       "sorcerer_chain_5",
@@ -9613,8 +9613,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2272,
-      5222
+      2194.81,
+      4983.62
     ],
     "connects": [
       "sorcerer_chain_6"
@@ -9634,8 +9634,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2369,
-      5160
+      2059.52,
+      5128.77
     ],
     "connects": [
       "sorcerer_chain_0"
@@ -9656,8 +9656,8 @@
     "cat": "element",
     "icon": "bounce",
     "pos": [
-      2227,
-      5122
+      2167.79,
+      5093.74
     ],
     "connects": [
       "sorcerer_chain_2",
@@ -9677,8 +9677,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2098,
-      4758
+      1834.21,
+      4863.46
     ],
     "connects": [
       "sorcerer_pierce_1"
@@ -9698,8 +9698,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      1989,
-      4706
+      1942,
+      4914
     ],
     "connects": [
       "sorcerer_pierce_2"
@@ -9719,8 +9719,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      1863,
-      4733
+      2090.19,
+      4864.47
     ],
     "connects": [
       "sorcerer_pierce_3"
@@ -9740,8 +9740,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      1813,
-      4818
+      2118,
+      4802
     ],
     "connects": [
       "sorcerer_pierce_4"
@@ -9761,8 +9761,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      1880,
-      4897
+      2051.57,
+      4726.86
     ],
     "connects": [
       "sorcerer_pierce_5"
@@ -9782,8 +9782,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2011,
-      4910
+      1944.09,
+      4685.9
     ],
     "connects": [
       "sorcerer_pierce_6"
@@ -9803,8 +9803,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      2108,
-      4848
+      1805.57,
+      4800.93
     ],
     "connects": [
       "sorcerer_pierce_0"
@@ -9825,8 +9825,8 @@
     "cat": "element",
     "icon": "pierce",
     "pos": [
-      1966,
-      4810
+      1939.03,
+      4802.91
     ],
     "connects": [
       "sorcerer_pierce_2",
@@ -9846,8 +9846,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      1837,
-      4446
+      1573,
+      4551
     ],
     "connects": [
       "sorcerer_guard_1"
@@ -9867,8 +9867,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      1728,
-      4394
+      1681,
+      4602
     ],
     "connects": [
       "sorcerer_guard_2"
@@ -9888,8 +9888,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1602,
-      4421
+      1808,
+      4575
     ],
     "connects": [
       "sorcerer_guard_3"
@@ -9909,8 +9909,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1552,
-      4506
+      1857,
+      4490
     ],
     "connects": [
       "sorcerer_guard_4"
@@ -9930,8 +9930,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      1619,
-      4585
+      1790.07,
+      4410.78
     ],
     "connects": [
       "sorcerer_guard_5",
@@ -9952,8 +9952,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      1750,
-      4599
+      1659.21,
+      4398.61
     ],
     "connects": [
       "sorcerer_guard_6"
@@ -9973,8 +9973,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1847,
-      4537
+      1561.69,
+      4461.9
     ],
     "connects": [
       "sorcerer_guard_0"
@@ -9995,8 +9995,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      1705,
-      4498
+      1709.96,
+      4490.81
     ],
     "connects": [
       "sorcerer_guard_2",
@@ -10016,8 +10016,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2872,
-      4772
+      2633.79,
+      4920.18
     ],
     "connects": [
       "sorcerer_volley_1"
@@ -10037,8 +10037,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2778,
-      4728
+      2736.94,
+      4930.72
     ],
     "connects": [
       "sorcerer_volley_2"
@@ -10058,8 +10058,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2670,
-      4752
+      2887.38,
+      4945.38
     ],
     "connects": [
       "sorcerer_volley_3",
@@ -10080,8 +10080,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2628,
-      4824
+      2889,
+      4811
     ],
     "connects": [
       "sorcerer_volley_4"
@@ -10101,8 +10101,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2685,
-      4892
+      2833,
+      4743
     ],
     "connects": [
       "sorcerer_volley_5"
@@ -10122,8 +10122,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2798,
-      4903
+      2687.96,
+      4702.43
     ],
     "connects": [
       "sorcerer_volley_6"
@@ -10143,8 +10143,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2881,
-      4850
+      2570.81,
+      4877.53
     ],
     "connects": [
       "sorcerer_volley_0"
@@ -10165,8 +10165,8 @@
     "cat": "dot",
     "icon": "volley",
     "pos": [
-      2759,
-      4817
+      2667.54,
+      4831.92
     ],
     "connects": [
       "sorcerer_volley_2",
@@ -10186,8 +10186,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2669,
-      4530
+      2444.94,
+      4625.05
     ],
     "connects": [
       "sorcerer_frost_1"
@@ -10207,8 +10207,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2575,
-      4486
+      2523.47,
+      4685.4
     ],
     "connects": [
       "sorcerer_frost_2"
@@ -10228,8 +10228,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2467,
-      4509
+      2636.16,
+      4581.42
     ],
     "connects": [
       "sorcerer_frost_3",
@@ -10250,8 +10250,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2425,
-      4582
+      2705.88,
+      4560.33
     ],
     "connects": [
       "sorcerer_frost_4"
@@ -10271,8 +10271,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2482,
-      4649
+      2649.96,
+      4464.34
     ],
     "connects": [
       "sorcerer_frost_5"
@@ -10292,8 +10292,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2595,
-      4661
+      2517.59,
+      4445.91
     ],
     "connects": [
       "sorcerer_frost_6"
@@ -10313,8 +10313,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2678,
-      4608
+      2428.7,
+      4554.64
     ],
     "connects": [
       "sorcerer_frost_0"
@@ -10335,8 +10335,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2556,
-      4575
+      2547.52,
+      4582.81
     ],
     "connects": [
       "sorcerer_frost_2",
@@ -10356,8 +10356,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2466,
-      4288
+      2240,
+      4378
     ],
     "connects": [
       "sorcerer_fire_1"
@@ -10377,8 +10377,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2372,
-      4244
+      2329.22,
+      4427.79
     ],
     "connects": [
       "sorcerer_fire_2"
@@ -10398,8 +10398,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2264,
-      4267
+      2446.32,
+      4391.19
     ],
     "connects": [
       "sorcerer_fire_3"
@@ -10419,8 +10419,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2222,
-      4339
+      2510.46,
+      4303.42
     ],
     "connects": [
       "sorcerer_fire_4"
@@ -10440,8 +10440,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2279,
-      4407
+      2449.48,
+      4240.7
     ],
     "connects": [
       "sorcerer_fire_5"
@@ -10461,8 +10461,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2392,
-      4419
+      2311.48,
+      4277.37
     ],
     "connects": [
       "sorcerer_fire_6"
@@ -10482,8 +10482,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2475,
-      4365
+      2243.11,
+      4279.91
     ],
     "connects": [
       "sorcerer_fire_0"
@@ -10504,8 +10504,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2353,
-      4333
+      2388.78,
+      4320.95
     ],
     "connects": [
       "sorcerer_fire_2",
@@ -10525,8 +10525,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3366,
-      4403
+      3169.48,
+      4502.51
     ],
     "connects": [
       "sorcerer_crit_1"
@@ -10546,8 +10546,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3294,
-      4368
+      3255.43,
+      4568.91
     ],
     "connects": [
       "sorcerer_crit_2"
@@ -10567,8 +10567,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      3208,
-      4386
+      3353.19,
+      4482.18
     ],
     "connects": [
       "sorcerer_crit_3"
@@ -10588,8 +10588,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3176,
-      4443
+      3393.99,
+      4408.58
     ],
     "connects": [
       "sorcerer_crit_4"
@@ -10609,8 +10609,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3221,
-      4495
+      3344.79,
+      4360.87
     ],
     "connects": [
       "sorcerer_crit_5"
@@ -10630,8 +10630,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3308,
-      4504
+      3261.26,
+      4361.59
     ],
     "connects": [
       "sorcerer_crit_6"
@@ -10651,8 +10651,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      3372,
-      4463
+      3177.32,
+      4401.23
     ],
     "connects": [
       "sorcerer_crit_0"
@@ -10673,8 +10673,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3278,
-      4438
+      3254.98,
+      4480.75
     ],
     "connects": [
       "sorcerer_crit_2",
@@ -10694,8 +10694,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3178,
-      4177
+      3003.8,
+      4277.66
     ],
     "connects": [
       "sorcerer_flow_1"
@@ -10715,8 +10715,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3105,
-      4143
+      3061.37,
+      4319.58
     ],
     "connects": [
       "sorcerer_flow_2"
@@ -10736,8 +10736,8 @@
     "cat": "utility",
     "icon": "tempo",
     "pos": [
-      3020,
-      4161
+      3194.46,
+      4284.39
     ],
     "connects": [
       "sorcerer_flow_3"
@@ -10757,8 +10757,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      2988,
-      4218
+      3194.6,
+      4216.02
     ],
     "connects": [
       "sorcerer_flow_4"
@@ -10778,8 +10778,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3033,
-      4270
+      3148.04,
+      4160.78
     ],
     "connects": [
       "sorcerer_flow_5"
@@ -10799,8 +10799,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3120,
-      4279
+      3018.56,
+      4118.72
     ],
     "connects": [
       "sorcerer_flow_6"
@@ -10820,8 +10820,8 @@
     "cat": "utility",
     "icon": "tempo",
     "pos": [
-      3184,
-      4238
+      2967.45,
+      4208.53
     ],
     "connects": [
       "sorcerer_flow_0"
@@ -10842,8 +10842,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3089,
-      4212
+      3110.24,
+      4241.09
     ],
     "connects": [
       "sorcerer_flow_2",
@@ -10863,8 +10863,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2096,
-      4966
+      2120.09,
+      4949.36
     ],
     "connects": [
       "sorcerer_chain_2",
@@ -10883,8 +10883,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      1835,
-      4654
+      1844.44,
+      4644.11
     ],
     "connects": [
       "sorcerer_pierce_2",
@@ -10923,8 +10923,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2261,
-      4692
+      2262.85,
+      4696.73
     ],
     "connects": [
       "sorcerer_pierce_4",
@@ -10963,8 +10963,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3018,
-      4628
+      3025.5,
+      4650.09
     ],
     "connects": [
       "sorcerer_volley_4",
@@ -10983,8 +10983,8 @@
     "cat": "utility",
     "icon": "tempo",
     "pos": [
-      2721,
-      4272
+      2720.13,
+      4263.06
     ],
     "connects": [
       "sorcerer_fire_4",
@@ -11003,8 +11003,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      3184,
-      4325
+      3145.97,
+      4335.59
     ],
     "connects": [
       "sorcerer_crit_2",
@@ -11024,8 +11024,8 @@
     "cat": "element",
     "icon": "bounce",
     "pos": [
-      2989,
-      4553
+      3002.22,
+      4555.92
     ],
     "connects": [
       "sorcerer_crit_4"
@@ -11045,8 +11045,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2801,
-      4327
+      2795.79,
+      4330.53
     ],
     "connects": [
       "sorcerer_flow_4"
@@ -11085,8 +11085,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      1747,
-      4091
+      1447,
+      4055
     ],
     "connects": [
       "alchemist_spread_1"
@@ -11106,8 +11106,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1710,
-      4004
+      1478.99,
+      4144.49
     ],
     "connects": [
       "alchemist_spread_2"
@@ -11127,8 +11127,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1589,
-      3968
+      1607.3,
+      4178.58
     ],
     "connects": [
       "alchemist_spread_3"
@@ -11148,8 +11148,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1473,
-      4012
+      1720.5,
+      4129.3
     ],
     "connects": [
       "alchemist_spread_4"
@@ -11169,8 +11169,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      1449,
-      4102
+      1742,
+      4045
     ],
     "connects": [
       "alchemist_spread_5",
@@ -11191,8 +11191,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1536,
-      4170
+      1666.34,
+      3977.53
     ],
     "connects": [
       "alchemist_spread_6"
@@ -11212,8 +11212,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1668,
-      4165
+      1530.49,
+      3974.82
     ],
     "connects": [
       "alchemist_spread_0"
@@ -11234,8 +11234,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1596,
-      4073
+      1550.59,
+      4091.63
     ],
     "connects": [
       "alchemist_spread_2",
@@ -11255,8 +11255,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      1837,
-      3737
+      1536,
+      3700
     ],
     "connects": [
       "alchemist_tempo_1"
@@ -11276,8 +11276,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      1800,
-      3649
+      1573,
+      3788
     ],
     "connects": [
       "alchemist_tempo_2"
@@ -11297,8 +11297,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1679,
-      3614
+      1710.48,
+      3825.87
     ],
     "connects": [
       "alchemist_tempo_3"
@@ -11318,8 +11318,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      1563,
-      3657
+      1810,
+      3780
     ],
     "connects": [
       "alchemist_tempo_4"
@@ -11339,8 +11339,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      1541,
-      3747
+      1833.6,
+      3691.09
     ],
     "connects": [
       "alchemist_tempo_5"
@@ -11360,8 +11360,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      1628,
-      3815
+      1765.38,
+      3624.49
     ],
     "connects": [
       "alchemist_tempo_6"
@@ -11381,8 +11381,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1760,
-      3811
+      1599.38,
+      3627.53
     ],
     "connects": [
       "alchemist_tempo_0"
@@ -11403,8 +11403,8 @@
     "cat": "dot",
     "icon": "tempo",
     "pos": [
-      1687,
-      3719
+      1665.02,
+      3706.14
     ],
     "connects": [
       "alchemist_tempo_2",
@@ -11424,8 +11424,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      1928,
-      3382
+      1628,
+      3346
     ],
     "connects": [
       "alchemist_guard_1"
@@ -11445,8 +11445,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      1892,
-      3295
+      1663,
+      3434
     ],
     "connects": [
       "alchemist_guard_2"
@@ -11466,8 +11466,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1770,
-      3259
+      1784,
+      3469
     ],
     "connects": [
       "alchemist_guard_3"
@@ -11487,8 +11487,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1654,
-      3303
+      1900,
+      3425
     ],
     "connects": [
       "alchemist_guard_4"
@@ -11508,8 +11508,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      1631,
-      3393
+      1925.31,
+      3339.05
     ],
     "connects": [
       "alchemist_guard_5",
@@ -11530,8 +11530,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      1718,
-      3461
+      1837,
+      3267
     ],
     "connects": [
       "alchemist_guard_6"
@@ -11551,8 +11551,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1850,
-      3456
+      1705,
+      3272
     ],
     "connects": [
       "alchemist_guard_0"
@@ -11594,8 +11594,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2415,
-      4092
+      2151.68,
+      4075.76
     ],
     "connects": [
       "alchemist_volley_1"
@@ -11615,8 +11615,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2385,
-      4016
+      2189,
+      4136
     ],
     "connects": [
       "alchemist_volley_2"
@@ -11636,8 +11636,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2280,
-      3986
+      2302.11,
+      4209.01
     ],
     "connects": [
       "alchemist_volley_3",
@@ -11658,8 +11658,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2182,
-      4024
+      2393,
+      4129
     ],
     "connects": [
       "alchemist_volley_4"
@@ -11679,8 +11679,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2161,
-      4100
+      2412,
+      4052
     ],
     "connects": [
       "alchemist_volley_5"
@@ -11700,8 +11700,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2237,
-      4159
+      2326.11,
+      3933.74
     ],
     "connects": [
       "alchemist_volley_6"
@@ -11721,8 +11721,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2350,
-      4155
+      2135.78,
+      4008.83
     ],
     "connects": [
       "alchemist_volley_0"
@@ -11743,8 +11743,8 @@
     "cat": "dot",
     "icon": "volley",
     "pos": [
-      2288,
-      4076
+      2239.55,
+      4027.4
     ],
     "connects": [
       "alchemist_volley_2",
@@ -11764,8 +11764,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2486,
-      3816
+      2236.06,
+      3780.87
     ],
     "connects": [
       "alchemist_frost_1"
@@ -11785,8 +11785,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2456,
-      3741
+      2251.61,
+      3860.27
     ],
     "connects": [
       "alchemist_frost_2"
@@ -11806,8 +11806,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2351,
-      3710
+      2398.87,
+      3865.2
     ],
     "connects": [
       "alchemist_frost_3",
@@ -11828,8 +11828,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2251,
-      3748
+      2478.2,
+      3858.75
     ],
     "connects": [
       "alchemist_frost_4"
@@ -11849,8 +11849,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2232,
-      3825
+      2505.42,
+      3789.52
     ],
     "connects": [
       "alchemist_frost_5"
@@ -11870,8 +11870,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2308,
-      3883
+      2429.78,
+      3735.94
     ],
     "connects": [
       "alchemist_frost_6"
@@ -11891,8 +11891,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2421,
-      3879
+      2282.09,
+      3721.54
     ],
     "connects": [
       "alchemist_frost_0"
@@ -11913,8 +11913,8 @@
     "cat": "element",
     "icon": "frost",
     "pos": [
-      2357,
-      3800
+      2341.1,
+      3797.8
     ],
     "connects": [
       "alchemist_frost_2",
@@ -11934,8 +11934,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2557,
-      3540
+      2299,
+      3509
     ],
     "connects": [
       "alchemist_venom_1"
@@ -11955,8 +11955,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2527,
-      3465
+      2329.38,
+      3583.99
     ],
     "connects": [
       "alchemist_venom_2"
@@ -11976,8 +11976,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2422,
-      3435
+      2435,
+      3614
     ],
     "connects": [
       "alchemist_venom_3"
@@ -11997,8 +11997,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2322,
-      3472
+      2575.41,
+      3589.75
     ],
     "connects": [
       "alchemist_venom_4"
@@ -12018,8 +12018,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2302,
-      3549
+      2523.28,
+      3491.04
     ],
     "connects": [
       "alchemist_venom_5"
@@ -12039,8 +12039,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2377,
-      3607
+      2476.53,
+      3439.03
     ],
     "connects": [
       "alchemist_venom_6"
@@ -12060,8 +12060,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2491,
-      3604
+      2382.19,
+      3445.75
     ],
     "connects": [
       "alchemist_venom_0"
@@ -12082,8 +12082,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2428,
-      3525
+      2441.26,
+      3525.59
     ],
     "connects": [
       "alchemist_venom_2",
@@ -12103,8 +12103,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3139,
-      4027
+      2909.03,
+      4008.15
     ],
     "connects": [
       "alchemist_fire_1"
@@ -12124,8 +12124,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3116,
-      3969
+      2936.32,
+      4098.19
     ],
     "connects": [
       "alchemist_fire_2"
@@ -12145,8 +12145,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      3034,
-      3945
+      3072.46,
+      4072.96
     ],
     "connects": [
       "alchemist_fire_3"
@@ -12166,8 +12166,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2956,
-      3974
+      3147.15,
+      4048.88
     ],
     "connects": [
       "alchemist_fire_4"
@@ -12187,8 +12187,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2942,
-      4034
+      3171.49,
+      3984.56
     ],
     "connects": [
       "alchemist_fire_5"
@@ -12208,8 +12208,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3000,
-      4080
+      3101.37,
+      3944.89
     ],
     "connects": [
       "alchemist_fire_6"
@@ -12229,8 +12229,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      3088,
-      4077
+      3008.72,
+      3940.35
     ],
     "connects": [
       "alchemist_fire_0"
@@ -12251,8 +12251,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3039,
-      4015
+      2994.35,
+      4031.48
     ],
     "connects": [
       "alchemist_fire_2",
@@ -12272,8 +12272,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3204,
-      3771
+      2998.59,
+      3752.29
     ],
     "connects": [
       "alchemist_recovery_1"
@@ -12293,8 +12293,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3181,
-      3713
+      3013.66,
+      3819.23
     ],
     "connects": [
       "alchemist_recovery_2"
@@ -12314,8 +12314,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      3100,
-      3689
+      3126.93,
+      3872.09
     ],
     "connects": [
       "alchemist_recovery_3"
@@ -12335,8 +12335,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3023,
-      3718
+      3187.76,
+      3779.74
     ],
     "connects": [
       "alchemist_recovery_4"
@@ -12356,8 +12356,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3007,
-      3778
+      3205.04,
+      3712.94
     ],
     "connects": [
       "alchemist_recovery_5"
@@ -12377,8 +12377,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3065,
-      3824
+      3118.86,
+      3678.4
     ],
     "connects": [
       "alchemist_recovery_6"
@@ -12398,8 +12398,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      3153,
-      3821
+      3033.78,
+      3679.78
     ],
     "connects": [
       "alchemist_recovery_0"
@@ -12420,8 +12420,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3104,
-      3759
+      3099.88,
+      3770.93
     ],
     "connects": [
       "alchemist_recovery_2",
@@ -12441,8 +12441,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      1641,
-      3896
+      1633.6,
+      3896.71
     ],
     "connects": [
       "alchemist_spread_2",
@@ -12461,8 +12461,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      1732,
-      3541
+      1736.78,
+      3541.49
     ],
     "connects": [
       "alchemist_tempo_2",
@@ -12501,8 +12501,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2022,
-      3759
+      2020.36,
+      3762.36
     ],
     "connects": [
       "alchemist_tempo_4",
@@ -12541,8 +12541,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2663,
-      4046
+      2659.9,
+      4051.11
     ],
     "connects": [
       "alchemist_volley_4",
@@ -12561,8 +12561,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      2766,
-      3642
+      2762.64,
+      3624.2
     ],
     "connects": [
       "alchemist_venom_4",
@@ -12581,8 +12581,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3072,
-      3887
+      3057.45,
+      3892.25
     ],
     "connects": [
       "alchemist_fire_2",
@@ -12602,8 +12602,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2711,
-      3975
+      2712.84,
+      3960.54
     ],
     "connects": [
       "alchemist_fire_4"
@@ -12623,8 +12623,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2776,
-      3719
+      2777.57,
+      3720.26
     ],
     "connects": [
       "alchemist_recovery_4"
@@ -12663,8 +12663,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2188,
-      3071
+      1987.13,
+      2905.1
     ],
     "connects": [
       "bomber_blast_1"
@@ -12684,8 +12684,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2243,
-      2988
+      1938,
+      2993
     ],
     "connects": [
       "bomber_blast_2"
@@ -12705,8 +12705,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2182,
-      2907
+      2001.22,
+      3077.24
     ],
     "connects": [
       "bomber_blast_3"
@@ -12726,8 +12726,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2053,
-      2889
+      2128,
+      3092
     ],
     "connects": [
       "bomber_blast_4"
@@ -12747,8 +12747,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      1951,
-      2947
+      2230,
+      3034
     ],
     "connects": [
       "bomber_blast_5",
@@ -12769,8 +12769,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      1954,
-      3038
+      2234.35,
+      2956.67
     ],
     "connects": [
       "bomber_blast_6"
@@ -12790,8 +12790,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2060,
-      3093
+      2130.26,
+      2889.59
     ],
     "connects": [
       "bomber_blast_0"
@@ -12812,8 +12812,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2090,
-      2990
+      2049.28,
+      2968.8
     ],
     "connects": [
       "bomber_blast_2",
@@ -12833,8 +12833,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2588,
-      2839
+      2392,
+      2679
     ],
     "connects": [
       "bomber_tempo_1"
@@ -12854,8 +12854,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2643,
-      2756
+      2336.26,
+      2760.32
     ],
     "connects": [
       "bomber_tempo_2"
@@ -12875,8 +12875,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2582,
-      2675
+      2412.1,
+      2862.54
     ],
     "connects": [
       "bomber_tempo_3"
@@ -12896,8 +12896,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2453,
-      2657
+      2528,
+      2861
     ],
     "connects": [
       "bomber_tempo_4"
@@ -12917,8 +12917,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2351,
-      2716
+      2627.3,
+      2802.42
     ],
     "connects": [
       "bomber_tempo_5"
@@ -12938,8 +12938,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2354,
-      2807
+      2640.88,
+      2733.57
     ],
     "connects": [
       "bomber_tempo_6"
@@ -12959,8 +12959,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2460,
-      2862
+      2502.82,
+      2638.52
     ],
     "connects": [
       "bomber_tempo_0"
@@ -12981,8 +12981,8 @@
     "cat": "dot",
     "icon": "tempo",
     "pos": [
-      2491,
-      2759
+      2488.16,
+      2735.34
     ],
     "connects": [
       "bomber_tempo_2",
@@ -13002,8 +13002,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2988,
-      2608
+      2792,
+      2447
     ],
     "connects": [
       "bomber_guard_1"
@@ -13023,8 +13023,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3042,
-      2525
+      2737,
+      2530
     ],
     "connects": [
       "bomber_guard_2"
@@ -13044,8 +13044,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2982,
-      2444
+      2799.35,
+      2614.99
     ],
     "connects": [
       "bomber_guard_3"
@@ -13065,8 +13065,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      2853,
-      2426
+      2927,
+      2629
     ],
     "connects": [
       "bomber_guard_4"
@@ -13086,8 +13086,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2752,
-      2484
+      3030.61,
+      2574.62
     ],
     "connects": [
       "bomber_guard_5",
@@ -13108,8 +13108,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2754,
-      2576
+      3026,
+      2480
     ],
     "connects": [
       "bomber_guard_6"
@@ -13129,8 +13129,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2860,
-      2631
+      2916.58,
+      2421.47
     ],
     "connects": [
       "bomber_guard_0"
@@ -13151,8 +13151,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      2889,
-      2528
+      2894.48,
+      2523.7
     ],
     "connects": [
       "bomber_guard_2",
@@ -13172,8 +13172,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2701,
-      3368
+      2510.3,
+      3211.01
     ],
     "connects": [
       "bomber_volley_1"
@@ -13193,8 +13193,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2747,
-      3297
+      2486,
+      3301
     ],
     "connects": [
       "bomber_volley_2"
@@ -13214,8 +13214,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2696,
-      3227
+      2543.26,
+      3385.69
     ],
     "connects": [
       "bomber_volley_3",
@@ -13236,8 +13236,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2585,
-      3212
+      2650,
+      3386
     ],
     "connects": [
       "bomber_volley_4"
@@ -13257,8 +13257,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      2498,
-      3262
+      2736,
+      3336
     ],
     "connects": [
       "bomber_volley_5"
@@ -13278,8 +13278,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2501,
-      3340
+      2743.37,
+      3243.38
     ],
     "connects": [
       "bomber_volley_6"
@@ -13299,8 +13299,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2591,
-      3387
+      2658.82,
+      3208.88
     ],
     "connects": [
       "bomber_volley_0"
@@ -13321,8 +13321,8 @@
     "cat": "dot",
     "icon": "volley",
     "pos": [
-      2617,
-      3299
+      2576.66,
+      3270.32
     ],
     "connects": [
       "bomber_volley_2",
@@ -13342,8 +13342,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3013,
-      3188
+      2828.88,
+      3036.17
     ],
     "connects": [
       "bomber_fire_1"
@@ -13363,8 +13363,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3059,
-      3117
+      2772.74,
+      3093.78
     ],
     "connects": [
       "bomber_fire_2"
@@ -13384,8 +13384,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      3007,
-      3047
+      2868.86,
+      3186.94
     ],
     "connects": [
       "bomber_fire_3",
@@ -13406,8 +13406,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2897,
-      3032
+      2966.24,
+      3218.75
     ],
     "connects": [
       "bomber_fire_4"
@@ -13427,8 +13427,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2810,
-      3082
+      3056.38,
+      3175.41
     ],
     "connects": [
       "bomber_fire_5"
@@ -13448,8 +13448,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2812,
-      3160
+      3050.95,
+      3089.36
     ],
     "connects": [
       "bomber_fire_6"
@@ -13469,8 +13469,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      2902,
-      3207
+      2917.85,
+      2994.17
     ],
     "connects": [
       "bomber_fire_0"
@@ -13491,8 +13491,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2928,
-      3119
+      2909.19,
+      3083.43
     ],
     "connects": [
       "bomber_fire_2",
@@ -13512,8 +13512,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3323,
-      3008
+      3155,
+      2870
     ],
     "connects": [
       "bomber_siege_1"
@@ -13533,8 +13533,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3369,
-      2937
+      3103.99,
+      2936.1
     ],
     "connects": [
       "bomber_siege_2"
@@ -13554,8 +13554,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3318,
-      2867
+      3160,
+      3011
     ],
     "connects": [
       "bomber_siege_3"
@@ -13575,8 +13575,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3207,
-      2852
+      3286.26,
+      3055.16
     ],
     "connects": [
       "bomber_siege_4"
@@ -13596,8 +13596,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3120,
-      2902
+      3374.54,
+      3007.61
     ],
     "connects": [
       "bomber_siege_5"
@@ -13617,8 +13617,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3123,
-      2980
+      3355,
+      2898
     ],
     "connects": [
       "bomber_siege_6"
@@ -13638,8 +13638,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3213,
-      3027
+      3276.86,
+      2865.75
     ],
     "connects": [
       "bomber_siege_0"
@@ -13660,8 +13660,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3239,
-      2939
+      3252.75,
+      2956.03
     ],
     "connects": [
       "bomber_siege_2",
@@ -13681,8 +13681,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3316,
-      3639
+      3136.96,
+      3498.38
     ],
     "connects": [
       "bomber_crit_1"
@@ -13702,8 +13702,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3352,
-      3584
+      3118.18,
+      3601.25
     ],
     "connects": [
       "bomber_crit_2"
@@ -13723,8 +13723,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3311,
-      3530
+      3181.17,
+      3648.66
     ],
     "connects": [
       "bomber_crit_3"
@@ -13744,8 +13744,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3224,
-      3518
+      3291.23,
+      3659.86
     ],
     "connects": [
       "bomber_crit_4"
@@ -13765,8 +13765,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3158,
-      3557
+      3377.67,
+      3629.95
     ],
     "connects": [
       "bomber_crit_5"
@@ -13786,8 +13786,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3159,
-      3618
+      3360.43,
+      3559.15
     ],
     "connects": [
       "bomber_crit_6"
@@ -13807,8 +13807,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      3230,
-      3654
+      3288.98,
+      3516.81
     ],
     "connects": [
       "bomber_crit_0"
@@ -13829,8 +13829,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3250,
-      3586
+      3198.96,
+      3562.46
     ],
     "connects": [
       "bomber_crit_2",
@@ -13850,8 +13850,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3604,
-      3472
+      3452.05,
+      3347.3
     ],
     "connects": [
       "bomber_mobility_1"
@@ -13871,8 +13871,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      3640,
-      3417
+      3409.3,
+      3400.36
     ],
     "connects": [
       "bomber_mobility_2"
@@ -13892,8 +13892,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3600,
-      3363
+      3465.23,
+      3485.27
     ],
     "connects": [
       "bomber_mobility_3"
@@ -13913,8 +13913,8 @@
     "cat": "utility",
     "icon": "tempo",
     "pos": [
-      3514,
-      3351
+      3557.01,
+      3488.84
     ],
     "connects": [
       "bomber_mobility_4"
@@ -13934,8 +13934,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3446,
-      3390
+      3646.12,
+      3416.96
     ],
     "connects": [
       "bomber_mobility_5"
@@ -13955,8 +13955,8 @@
     "cat": "defense",
     "icon": "reach",
     "pos": [
-      3448,
-      3450
+      3627.12,
+      3351.22
     ],
     "connects": [
       "bomber_mobility_6"
@@ -13976,8 +13976,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3519,
-      3487
+      3529.12,
+      3308.79
     ],
     "connects": [
       "bomber_mobility_0"
@@ -13998,8 +13998,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3539,
-      3419
+      3520.21,
+      3408.79
     ],
     "connects": [
       "bomber_mobility_2",
@@ -14019,8 +14019,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      2290,
-      2875
+      2283.26,
+      2867.72
     ],
     "connects": [
       "bomber_blast_2",
@@ -14039,8 +14039,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2691,
-      2643
+      2694.15,
+      2647.59
     ],
     "connects": [
       "bomber_tempo_2",
@@ -14079,8 +14079,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2710,
-      2939
+      2709.22,
+      2939.47
     ],
     "connects": [
       "bomber_tempo_4",
@@ -14139,8 +14139,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3390,
-      3179
+      3399.52,
+      3170.27
     ],
     "connects": [
       "bomber_siege_4",
@@ -14159,8 +14159,8 @@
     "cat": "utility",
     "icon": "tempo",
     "pos": [
-      3394,
-      3502
+      3388.14,
+      3481.91
     ],
     "connects": [
       "bomber_crit_2",
@@ -14180,8 +14180,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      3036,
-      3409
+      3055.92,
+      3381.63
     ],
     "connects": [
       "bomber_crit_4"
@@ -14201,8 +14201,8 @@
     "cat": "damage",
     "icon": "volley",
     "pos": [
-      3324,
-      3242
+      3326.23,
+      3232.94
     ],
     "connects": [
       "bomber_mobility_4"
@@ -14221,8 +14221,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4177,
-      2884
+      4208.14,
+      2929.34
     ],
     "connects": [
       "warrior_impact_2",
@@ -14241,8 +14241,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4104,
-      3453
+      4051.76,
+      3457.42
     ],
     "connects": [
       "warrior_element_2",
@@ -14261,8 +14261,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4766,
-      2413
+      4690.47,
+      2466.48
     ],
     "connects": [
       "warrior_guard_2"
@@ -14280,8 +14280,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4863,
-      2469
+      4905.98,
+      2536.86
     ],
     "connects": [
       "shared_inner_warrior_1",
@@ -14300,8 +14300,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      5174,
-      3222
+      5167.9,
+      3275.14
     ],
     "connects": [
       "ninja_crit_2",
@@ -14320,8 +14320,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      4603,
-      3639
+      4565.84,
+      3616.53
     ],
     "connects": [
       "ninja_venom_2",
@@ -14340,8 +14340,8 @@
     "cat": "defense",
     "icon": "leech",
     "pos": [
-      6066,
-      3124
+      5965.14,
+      3131.21
     ],
     "connects": [
       "ninja_guard_2"
@@ -14359,8 +14359,8 @@
     "cat": "damage",
     "icon": "tempo",
     "pos": [
-      6088,
-      3209
+      6057.92,
+      3273.29
     ],
     "connects": [
       "shared_inner_ninja_1",
@@ -14379,8 +14379,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5625,
-      3926
+      5582.46,
+      3962.72
     ],
     "connects": [
       "bloodwalker_leech_2",
@@ -14399,8 +14399,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4799,
-      3984
+      4812.26,
+      3951.51
     ],
     "connects": [
       "bloodwalker_venom_2",
@@ -14419,8 +14419,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6400,
-      4245
+      6321,
+      4202
     ],
     "connects": [
       "bloodwalker_guard_2"
@@ -14438,8 +14438,8 @@
     "cat": "minion",
     "icon": "reach",
     "pos": [
-      6336,
-      4319
+      6249.31,
+      4360.7
     ],
     "connects": [
       "shared_inner_bloodwalker_1",
@@ -14459,8 +14459,8 @@
     "cat": "turret",
     "icon": "reach",
     "pos": [
-      5314,
-      4664
+      5254.89,
+      4657.7
     ],
     "connects": [
       "beastmaster_volley_2",
@@ -14480,8 +14480,8 @@
     "cat": "turret",
     "icon": "reach",
     "pos": [
-      4634,
-      4336
+      4668.75,
+      4310.19
     ],
     "connects": [
       "beastmaster_element_2",
@@ -14501,8 +14501,8 @@
     "cat": "turret",
     "icon": "reach",
     "pos": [
-      5610,
-      5251
+      5591.89,
+      5186.85
     ],
     "connects": [
       "beastmaster_guard_2"
@@ -14521,8 +14521,8 @@
     "cat": "turret",
     "icon": "reach",
     "pos": [
-      5492,
-      5281
+      5512.2,
+      5347.58
     ],
     "connects": [
       "shared_inner_beastmaster_1",
@@ -14541,8 +14541,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4389,
-      5091
+      4348.17,
+      5053.08
     ],
     "connects": [
       "engineer_volley_2",
@@ -14561,8 +14561,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4152,
-      4541
+      4236.27,
+      4526.07
     ],
     "connects": [
       "engineer_chain_2",
@@ -14581,8 +14581,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4068,
-      5672
+      4113.71,
+      5607.89
     ],
     "connects": [
       "engineer_guard_2"
@@ -14600,8 +14600,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3949,
-      5642
+      3928.68,
+      5644.32
     ],
     "connects": [
       "shared_inner_engineer_1",
@@ -14620,8 +14620,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3281,
-      5008
+      3267.7,
+      4948.58
     ],
     "connects": [
       "sniper_volley_2",
@@ -14640,8 +14640,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      3678,
-      4555
+      3654.42,
+      4508.71
     ],
     "connects": [
       "sniper_element_2",
@@ -14660,8 +14660,8 @@
     "cat": "damage",
     "icon": "crit",
     "pos": [
-      2492,
-      5311
+      2587.46,
+      5275.62
     ],
     "connects": [
       "sniper_mobility_2"
@@ -14679,8 +14679,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2431,
-      5235
+      2426.68,
+      5205.08
     ],
     "connects": [
       "shared_inner_sniper_1",
@@ -14699,8 +14699,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      2509,
-      4454
+      2582.22,
+      4418.13
     ],
     "connects": [
       "sorcerer_volley_2",
@@ -14719,8 +14719,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      3263,
-      4232
+      3259.59,
+      4237.2
     ],
     "connects": [
       "sorcerer_crit_2",
@@ -14739,8 +14739,8 @@
     "cat": "element",
     "icon": "reach",
     "pos": [
-      1623,
-      4336
+      1713.79,
+      4356.39
     ],
     "connects": [
       "sorcerer_guard_2"
@@ -14758,8 +14758,8 @@
     "cat": "dot",
     "icon": "poison",
     "pos": [
-      1647,
-      4250
+      1705.43,
+      4196.63
     ],
     "connects": [
       "shared_inner_sorcerer_1",
@@ -14778,8 +14778,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      2435,
-      3686
+      2507.77,
+      3684.96
     ],
     "connects": [
       "alchemist_volley_2",
@@ -14798,8 +14798,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      3245,
-      3821
+      3204.99,
+      3864.93
     ],
     "connects": [
       "alchemist_fire_2",
@@ -14818,8 +14818,8 @@
     "cat": "element",
     "icon": "fire",
     "pos": [
-      1867,
-      3204
+      1925.07,
+      3271.0
     ],
     "connects": [
       "alchemist_guard_2"
@@ -14837,8 +14837,8 @@
     "cat": "dot",
     "icon": "reach",
     "pos": [
-      1963,
-      3148
+      2059.18,
+      3134.73
     ],
     "connects": [
       "shared_inner_alchemist_1",
@@ -14857,8 +14857,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      3095,
-      3066
+      3156.95,
+      3085.99
     ],
     "connects": [
       "bomber_volley_2",
@@ -14877,8 +14877,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      3580,
-      3531
+      3526.68,
+      3550.62
     ],
     "connects": [
       "bomber_crit_2",
@@ -14897,8 +14897,8 @@
     "cat": "defense",
     "icon": "shield",
     "pos": [
-      3108,
-      2444
+      3094.53,
+      2513.56
     ],
     "connects": [
       "bomber_guard_2"
@@ -14916,8 +14916,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3233,
-      2445
+      3333.32,
+      2479.6
     ],
     "connects": [
       "shared_inner_bomber_1",
@@ -14936,8 +14936,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3835,
-      2300
+      4069.52,
+      2552.14
     ],
     "connects": [
       "warrior_tempo_4"
@@ -14955,8 +14955,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3919,
-      2516
+      4093.96,
+      2616.16
     ],
     "connects": [
       "oath_path_venom_1"
@@ -14974,8 +14974,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4004,
-      2544
+      4040.29,
+      2658.0
     ],
     "connects": [
       "oath_path_venom_2"
@@ -14993,8 +14993,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3930,
-      2644
+      4147.84,
+      2718.44
     ],
     "connects": [
       "oath_path_venom_3"
@@ -15012,8 +15012,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3984,
-      2717
+      4185.64,
+      2795.48
     ],
     "connects": [
       "oath_path_venom_4"
@@ -15031,8 +15031,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3859,
-      2763
+      4145.5,
+      2962.03
     ],
     "connects": [
       "oath_path_venom_5"
@@ -15050,8 +15050,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3964,
-      2989
+      4019.35,
+      3009.09
     ],
     "connects": [
       "oath_path_venom_6"
@@ -15069,8 +15069,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4054,
-      2992
+      4033.13,
+      3075.75
     ],
     "connects": [
       "oath_path_venom_7"
@@ -15088,8 +15088,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3974,
-      3062
+      4005.12,
+      3138.22
     ],
     "connects": [
       "oath_path_venom_8"
@@ -15107,8 +15107,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3978,
-      3148
+      4058.26,
+      3180.68
     ],
     "connects": [
       "oath_path_venom_9"
@@ -15126,8 +15126,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3983,
-      3235
+      3985.09,
+      3269.83
     ],
     "connects": [
       "oath_path_venom_10"
@@ -15145,8 +15145,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4016,
-      3286
+      3956.01,
+      3469.92
     ],
     "connects": [
       "oath_path_venom_11"
@@ -15164,8 +15164,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3991,
-      3407
+      3900.67,
+      3510.13
     ],
     "connects": [
       "oath_path_venom_12"
@@ -15183,8 +15183,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3955,
-      3466
+      4116.29,
+      3491.55
     ],
     "connects": [
       "oath_path_venom_13"
@@ -15223,8 +15223,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3666,
-      2411
+      3595,
+      2552
     ],
     "connects": [
       "warrior_reach_4"
@@ -15242,8 +15242,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3559,
-      2500
+      3646,
+      2630
     ],
     "connects": [
       "oath_path_flame_1"
@@ -15261,8 +15261,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3590,
-      2555
+      3697,
+      2707
     ],
     "connects": [
       "oath_path_flame_2"
@@ -15280,8 +15280,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3649,
-      2645
+      3772.75,
+      2766.07
     ],
     "connects": [
       "oath_path_flame_3"
@@ -15299,8 +15299,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3738,
-      2735
+      3807.8,
+      2857.91
     ],
     "connects": [
       "oath_path_flame_4"
@@ -15318,8 +15318,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3797,
-      2861
+      3849,
+      2940
     ],
     "connects": [
       "oath_path_flame_5"
@@ -15337,8 +15337,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3827,
-      2936
+      3900,
+      3017
     ],
     "connects": [
       "oath_path_flame_6"
@@ -15356,8 +15356,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3859,
-      3006
+      3949,
+      3194
     ],
     "connects": [
       "oath_path_flame_7"
@@ -15375,8 +15375,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3896,
-      3231
+      3897.68,
+      3242.08
     ],
     "connects": [
       "oath_path_flame_8"
@@ -15394,8 +15394,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4036,
-      3186
+      4121.31,
+      3206.95
     ],
     "connects": [
       "oath_path_flame_9"
@@ -15413,8 +15413,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4081,
-      3237
+      4325.69,
+      3247.85
     ],
     "connects": [
       "oath_path_flame_10"
@@ -15432,8 +15432,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4270,
-      3465
+      4237.12,
+      3484.16
     ],
     "connects": [
       "oath_path_flame_11"
@@ -15451,8 +15451,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4186,
-      3476
+      4305.71,
+      3484.31
     ],
     "connects": [
       "oath_path_flame_12"
@@ -15470,8 +15470,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4220,
-      3536
+      4203.21,
+      3546.01
     ],
     "connects": [
       "oath_path_flame_13"
@@ -15510,8 +15510,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5311,
-      2702
+      5410.51,
+      2926.52
     ],
     "connects": [
       "ninja_tempo_4"
@@ -15529,8 +15529,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5327,
-      2824
+      5351.35,
+      2983.67
     ],
     "connects": [
       "oath_path_single_1"
@@ -15548,8 +15548,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5343,
-      2884
+      5282.28,
+      2984.01
     ],
     "connects": [
       "oath_path_single_2"
@@ -15567,8 +15567,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5304,
-      2994
+      5306.5,
+      3110.35
     ],
     "connects": [
       "oath_path_single_3"
@@ -15586,8 +15586,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5237,
-      3035
+      5255.68,
+      3158.67
     ],
     "connects": [
       "oath_path_single_4"
@@ -15605,8 +15605,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5285,
-      3110
+      5097.15,
+      3268.34
     ],
     "connects": [
       "oath_path_single_5"
@@ -15624,8 +15624,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5028,
-      3238
+      5031,
+      3295
     ],
     "connects": [
       "oath_path_single_6"
@@ -15643,8 +15643,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5032,
-      3296
+      4886,
+      3299
     ],
     "connects": [
       "oath_path_single_7"
@@ -15662,8 +15662,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4851,
-      3321
+      4827.42,
+      3452.37
     ],
     "connects": [
       "oath_path_single_8"
@@ -15681,8 +15681,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4806,
-      3454
+      4921.68,
+      3523.69
     ],
     "connects": [
       "oath_path_single_9"
@@ -15700,8 +15700,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4856,
-      3498
+      4681.04,
+      3438.82
     ],
     "connects": [
       "oath_path_single_10"
@@ -15719,8 +15719,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4693,
-      3466
+      4675.15,
+      3706.11
     ],
     "connects": [
       "oath_path_single_11"
@@ -15738,8 +15738,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4686,
-      3697
+      4597.52,
+      3677.04
     ],
     "connects": [
       "oath_path_single_12"
@@ -15757,8 +15757,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4535,
-      3672
+      4508,
+      3671
     ],
     "connects": [
       "oath_path_single_13"
@@ -15796,8 +15796,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6361,
-      3564
+      6082.95,
+      3805.57
     ],
     "connects": [
       "bloodwalker_tempo_4"
@@ -15815,8 +15815,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      6110,
-      3687
+      6008.59,
+      3817.02
     ],
     "connects": [
       "oath_path_certainty_1"
@@ -15834,8 +15834,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6079,
-      3745
+      5881.87,
+      3811.14
     ],
     "connects": [
       "oath_path_certainty_2"
@@ -15853,8 +15853,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5894,
-      3758
+      5828,
+      3881
     ],
     "connects": [
       "oath_path_certainty_3"
@@ -15872,8 +15872,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5889,
-      3813
+      5733.19,
+      3920.6
     ],
     "connects": [
       "oath_path_certainty_4"
@@ -15891,8 +15891,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5779,
-      3881
+      5528.86,
+      3920.57
     ],
     "connects": [
       "oath_path_certainty_5"
@@ -15910,8 +15910,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5482,
-      3888
+      5451,
+      3883
     ],
     "connects": [
       "oath_path_certainty_6"
@@ -15929,8 +15929,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5433,
-      3840
+      5333,
+      3858
     ],
     "connects": [
       "oath_path_certainty_7"
@@ -15948,8 +15948,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5340,
-      3863
+      5157,
+      3896
     ],
     "connects": [
       "oath_path_certainty_8"
@@ -15967,8 +15967,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5190,
-      3881
+      5133.47,
+      3960.23
     ],
     "connects": [
       "oath_path_certainty_9"
@@ -15986,8 +15986,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5096,
-      3909
+      5069.81,
+      3890.66
     ],
     "connects": [
       "oath_path_certainty_10"
@@ -16005,8 +16005,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5018,
-      3879
+      4783.78,
+      3889.59
     ],
     "connects": [
       "oath_path_certainty_11"
@@ -16024,8 +16024,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4812,
-      3926
+      4769.08,
+      4005.36
     ],
     "connects": [
       "oath_path_certainty_12"
@@ -16043,8 +16043,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4731,
-      3917
+      4730.62,
+      3932.56
     ],
     "connects": [
       "oath_path_certainty_13"
@@ -16083,8 +16083,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6217,
-      4751
+      5784.66,
+      4772.54
     ],
     "connects": [
       "beastmaster_reach_4"
@@ -16102,8 +16102,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5904,
-      4695
+      5699.39,
+      4745.16
     ],
     "connects": [
       "oath_path_giant_1"
@@ -16121,8 +16121,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5826,
-      4731
+      5611,
+      4684
     ],
     "connects": [
       "oath_path_giant_2"
@@ -16140,8 +16140,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5737,
-      4637
+      5540.06,
+      4729.73
     ],
     "connects": [
       "oath_path_giant_3"
@@ -16159,8 +16159,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5663,
-      4615
+      5404.83,
+      4712.11
     ],
     "connects": [
       "oath_path_giant_4"
@@ -16178,8 +16178,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5623,
-      4535
+      5244.45,
+      4590.32
     ],
     "connects": [
       "oath_path_giant_5"
@@ -16197,8 +16197,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5286,
-      4484
+      5244.77,
+      4520.92
     ],
     "connects": [
       "oath_path_giant_6"
@@ -16216,8 +16216,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5241,
-      4536
+      5160,
+      4486
     ],
     "connects": [
       "oath_path_giant_7"
@@ -16235,8 +16235,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5190,
-      4453
+      5098,
+      4447
     ],
     "connects": [
       "oath_path_giant_8"
@@ -16254,8 +16254,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5080,
-      4413
+      4983.42,
+      4411.57
     ],
     "connects": [
       "oath_path_giant_9"
@@ -16273,8 +16273,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4970,
-      4372
+      4902.91,
+      4354.61
     ],
     "connects": [
       "oath_path_giant_10"
@@ -16292,8 +16292,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4889,
-      4367
+      4722.16,
+      4228.43
     ],
     "connects": [
       "oath_path_giant_11"
@@ -16311,8 +16311,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4748,
-      4291
+      4659.08,
+      4201.28
     ],
     "connects": [
       "oath_path_giant_12"
@@ -16330,8 +16330,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4667,
-      4286
+      4587,
+      4326
     ],
     "connects": [
       "oath_path_giant_13"
@@ -16370,8 +16370,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      6480,
-      4567
+      6019.66,
+      4480.49
     ],
     "connects": [
       "beastmaster_pack_4"
@@ -16389,8 +16389,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      6104,
-      4487
+      5898,
+      4473
     ],
     "connects": [
       "oath_path_horizon_1"
@@ -16408,8 +16408,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      6018,
-      4478
+      5821.84,
+      4486.38
     ],
     "connects": [
       "oath_path_horizon_2"
@@ -16427,8 +16427,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5876,
-      4468
+      5695.0,
+      4504.72
     ],
     "connects": [
       "oath_path_horizon_3"
@@ -16446,8 +16446,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5762,
-      4459
+      5514.44,
+      4487.94
     ],
     "connects": [
       "oath_path_horizon_4"
@@ -16465,8 +16465,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5641,
-      4469
+      5408,
+      4439
     ],
     "connects": [
       "oath_path_horizon_5"
@@ -16484,8 +16484,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5476,
-      4440
+      5281.31,
+      4440.01
     ],
     "connects": [
       "oath_path_horizon_6"
@@ -16503,8 +16503,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      5305,
-      4430
+      5015.49,
+      4329.19
     ],
     "connects": [
       "oath_path_horizon_7"
@@ -16522,8 +16522,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      5018,
-      4322
+      4902.56,
+      4442.0
     ],
     "connects": [
       "oath_path_horizon_8"
@@ -16541,8 +16541,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4999,
-      4425
+      4822.42,
+      4556.31
     ],
     "connects": [
       "oath_path_horizon_9"
@@ -16560,8 +16560,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4916,
-      4430
+      4705.93,
+      4590.29
     ],
     "connects": [
       "oath_path_horizon_10"
@@ -16579,8 +16579,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4538,
-      4428
+      4549.75,
+      4400.64
     ],
     "connects": [
       "oath_path_horizon_11"
@@ -16598,8 +16598,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4566,
-      4373
+      4482.51,
+      4413.37
     ],
     "connects": [
       "oath_path_horizon_12"
@@ -16617,8 +16617,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4477,
-      4373
+      4477.2,
+      4345.32
     ],
     "connects": [
       "oath_path_horizon_13"
@@ -16657,8 +16657,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      5019,
-      5549
+      4656.31,
+      5390.28
     ],
     "connects": [
       "engineer_flame_4"
@@ -16676,8 +16676,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4813,
-      5381
+      4607.96,
+      5341.06
     ],
     "connects": [
       "oath_path_army_1"
@@ -16695,8 +16695,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4729,
-      5361
+      4604.11,
+      5272.75
     ],
     "connects": [
       "oath_path_army_2"
@@ -16714,8 +16714,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4610,
-      5282
+      4460.89,
+      5236.1
     ],
     "connects": [
       "oath_path_army_3"
@@ -16733,8 +16733,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4637,
-      5204
+      4420.25,
+      5176.47
     ],
     "connects": [
       "oath_path_army_4"
@@ -16752,8 +16752,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4547,
-      5226
+      4403.54,
+      5008.92
     ],
     "connects": [
       "oath_path_army_5"
@@ -16771,8 +16771,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4442,
-      4995
+      4361.86,
+      4953.93
     ],
     "connects": [
       "oath_path_army_6"
@@ -16790,8 +16790,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4368,
-      4969
+      4441,
+      4900
     ],
     "connects": [
       "oath_path_army_7"
@@ -16809,8 +16809,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4422,
-      4900
+      4264.29,
+      4769.7
     ],
     "connects": [
       "oath_path_army_8"
@@ -16828,8 +16828,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4281,
-      4754
+      4136.98,
+      4797.41
     ],
     "connects": [
       "oath_path_army_9"
@@ -16847,8 +16847,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4304,
-      4692
+      4339.91,
+      4688.33
     ],
     "connects": [
       "oath_path_army_10"
@@ -16866,8 +16866,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4270,
-      4551
+      4045.14,
+      4548.03
     ],
     "connects": [
       "oath_path_army_11"
@@ -16885,8 +16885,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      4038,
-      4561
+      4106.4,
+      4507.81
     ],
     "connects": [
       "oath_path_army_12"
@@ -16904,8 +16904,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      4145,
-      4482
+      3946.83,
+      4517.96
     ],
     "connects": [
       "oath_path_army_13"
@@ -16946,8 +16946,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3388,
-      5543
+      3208.17,
+      5350.57
     ],
     "connects": [
       "sniper_pierce_4"
@@ -16965,8 +16965,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3337,
-      5417
+      3225.58,
+      5284.8
     ],
     "connects": [
       "oath_path_overdrive_1"
@@ -16984,8 +16984,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3281,
-      5369
+      3290.54,
+      5261.84
     ],
     "connects": [
       "oath_path_overdrive_2"
@@ -17003,8 +17003,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3398,
-      5290
+      3232.47,
+      5159.96
     ],
     "connects": [
       "oath_path_overdrive_3"
@@ -17022,8 +17022,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3372,
-      5206
+      3231.92,
+      5090.96
     ],
     "connects": [
       "oath_path_overdrive_4"
@@ -17041,8 +17041,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3260,
-      5122
+      3338.32,
+      4935.77
     ],
     "connects": [
       "oath_path_overdrive_5"
@@ -17060,8 +17060,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3400,
-      4940
+      3420.13,
+      4902.43
     ],
     "connects": [
       "oath_path_overdrive_6"
@@ -17079,8 +17079,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3484,
-      4936
+      3511,
+      4866
     ],
     "connects": [
       "oath_path_overdrive_7"
@@ -17098,8 +17098,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3501,
-      4869
+      3577,
+      4785
     ],
     "connects": [
       "oath_path_overdrive_8"
@@ -17117,8 +17117,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3564,
-      4785
+      3519.96,
+      4728.02
     ],
     "connects": [
       "oath_path_overdrive_9"
@@ -17136,8 +17136,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3566,
-      4701
+      3608.78,
+      4677.15
     ],
     "connects": [
       "oath_path_overdrive_10"
@@ -17155,8 +17155,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3642,
-      4668
+      3743.25,
+      4511.2
     ],
     "connects": [
       "oath_path_overdrive_11"
@@ -17174,8 +17174,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3630,
-      4492
+      3616.05,
+      4451.15
     ],
     "connects": [
       "oath_path_overdrive_12"
@@ -17193,8 +17193,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3739,
-      4478
+      3772.39,
+      4448.66
     ],
     "connects": [
       "oath_path_overdrive_13"
@@ -17235,8 +17235,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      1948,
-      4948
+      2142.65,
+      4673.08
     ],
     "connects": [
       "sorcerer_pierce_4"
@@ -17254,8 +17254,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2179,
-      4805
+      2214.64,
+      4643.58
     ],
     "connects": [
       "oath_path_vampire_1"
@@ -17273,8 +17273,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2228,
-      4760
+      2332.99,
+      4626.33
     ],
     "connects": [
       "oath_path_vampire_2"
@@ -17292,8 +17292,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2332,
-      4719
+      2354.98,
+      4552.85
     ],
     "connects": [
       "oath_path_vampire_3"
@@ -17311,8 +17311,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2418,
-      4687
+      2410.1,
+      4488.53
     ],
     "connects": [
       "oath_path_vampire_4"
@@ -17330,8 +17330,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2517,
-      4702
+      2756.75,
+      4513.96
     ],
     "connects": [
       "oath_path_vampire_5"
@@ -17349,8 +17349,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2769,
-      4576
+      2718.62,
+      4457.56
     ],
     "connects": [
       "oath_path_vampire_6"
@@ -17368,8 +17368,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2750,
-      4517
+      2810,
+      4449
     ],
     "connects": [
       "oath_path_vampire_7"
@@ -17387,8 +17387,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2836,
-      4485
+      2914.24,
+      4422.52
     ],
     "connects": [
       "oath_path_vampire_8"
@@ -17406,8 +17406,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2942,
-      4439
+      2980.13,
+      4405.56
     ],
     "connects": [
       "oath_path_vampire_9"
@@ -17425,8 +17425,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3047,
-      4393
+      3107.28,
+      4392.13
     ],
     "connects": [
       "oath_path_vampire_10"
@@ -17444,8 +17444,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3126,
-      4382
+      3320.51,
+      4296.13
     ],
     "connects": [
       "oath_path_vampire_11"
@@ -17463,8 +17463,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3260,
-      4302
+      3388.55,
+      4307.57
     ],
     "connects": [
       "oath_path_vampire_12"
@@ -17482,8 +17482,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3352,
-      4295
+      3319.78,
+      4204.84
     ],
     "connects": [
       "oath_path_vampire_13"
@@ -17522,8 +17522,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2224,
-      5268
+      2385,
+      4966
     ],
     "connects": [
       "sorcerer_chain_4"
@@ -17541,8 +17541,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2337,
-      5013
+      2456,
+      4897
     ],
     "connects": [
       "oath_path_astral_1"
@@ -17560,8 +17560,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2390,
-      4967
+      2523.21,
+      4826.08
     ],
     "connects": [
       "oath_path_astral_2"
@@ -17579,8 +17579,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2475,
-      4887
+      2575,
+      4749
     ],
     "connects": [
       "oath_path_astral_3"
@@ -17598,8 +17598,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2543,
-      4823
+      2628.78,
+      4667.97
     ],
     "connects": [
       "oath_path_astral_4"
@@ -17617,8 +17617,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2591,
-      4745
+      2744,
+      4621
     ],
     "connects": [
       "oath_path_astral_5"
@@ -17636,8 +17636,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2753,
-      4645
+      2816.0,
+      4549.32
     ],
     "connects": [
       "oath_path_astral_6"
@@ -17655,8 +17655,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2831,
-      4622
+      2831.87,
+      4616.05
     ],
     "connects": [
       "oath_path_astral_7"
@@ -17674,8 +17674,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2750,
-      4458
+      3049.16,
+      4434.27
     ],
     "connects": [
       "oath_path_astral_8"
@@ -17693,8 +17693,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2968,
-      4384
+      2970.55,
+      4338.12
     ],
     "connects": [
       "oath_path_astral_9"
@@ -17712,8 +17712,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3082,
-      4332
+      2899.7,
+      4182.93
     ],
     "connects": [
       "oath_path_astral_10"
@@ -17731,8 +17731,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3265,
-      4157
+      3219.63,
+      4107.86
     ],
     "connects": [
       "oath_path_astral_11"
@@ -17750,8 +17750,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3181,
-      4109
+      3334.14,
+      4137.35
     ],
     "connects": [
       "oath_path_astral_12"
@@ -17769,8 +17769,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3308,
-      4101
+      3272.4,
+      4064.35
     ],
     "connects": [
       "oath_path_astral_13"
@@ -17810,8 +17810,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      1715,
-      3866
+      1943.85,
+      3691.97
     ],
     "connects": [
       "alchemist_tempo_4"
@@ -17829,8 +17829,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      1860,
-      3795
+      2054.21,
+      3700.82
     ],
     "connects": [
       "oath_path_wind_1"
@@ -17848,8 +17848,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      1926,
-      3756
+      2144.47,
+      3721.26
     ],
     "connects": [
       "oath_path_wind_2"
@@ -17867,8 +17867,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2114,
-      3758
+      2227,
+      3665
     ],
     "connects": [
       "oath_path_wind_3"
@@ -17886,8 +17886,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2141,
-      3813
+      2335.23,
+      3666.79
     ],
     "connects": [
       "oath_path_wind_4"
@@ -17905,8 +17905,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2188,
-      3714
+      2550.64,
+      3738.66
     ],
     "connects": [
       "oath_path_wind_5"
@@ -17924,8 +17924,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2530,
-      3767
+      2627,
+      3772
     ],
     "connects": [
       "oath_path_wind_6"
@@ -17943,8 +17943,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2628,
-      3780
+      2678,
+      3820
     ],
     "connects": [
       "oath_path_wind_7"
@@ -17962,8 +17962,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2723,
-      3831
+      2928,
+      3771
     ],
     "connects": [
       "oath_path_wind_8"
@@ -17981,8 +17981,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2912,
-      3792
+      2951.63,
+      3679.54
     ],
     "connects": [
       "oath_path_wind_9"
@@ -18000,8 +18000,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2943,
-      3740
+      2979.27,
+      3878.56
     ],
     "connects": [
       "oath_path_wind_10"
@@ -18019,8 +18019,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2984,
-      3852
+      3277.52,
+      3789.56
     ],
     "connects": [
       "oath_path_wind_11"
@@ -18038,8 +18038,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3276,
-      3742
+      3314.14,
+      3847.42
     ],
     "connects": [
       "oath_path_wind_12"
@@ -18057,8 +18057,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3320,
-      3845
+      3319.67,
+      3722.72
     ],
     "connects": [
       "oath_path_wind_13"
@@ -18098,8 +18098,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2369,
-      2864
+      2702.29,
+      2856.03
     ],
     "connects": [
       "bomber_tempo_4"
@@ -18117,8 +18117,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2554,
-      2897
+      2793.72,
+      2903.46
     ],
     "connects": [
       "oath_path_fortress_1"
@@ -18136,8 +18136,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2649,
-      2900
+      2819.41,
+      2967.5
     ],
     "connects": [
       "oath_path_fortress_2"
@@ -18155,8 +18155,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      2750,
-      2989
+      2933.72,
+      2927.94
     ],
     "connects": [
       "oath_path_fortress_3"
@@ -18174,8 +18174,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      2724,
-      3053
+      3030.32,
+      2995.33
     ],
     "connects": [
       "oath_path_fortress_4"
@@ -18193,8 +18193,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      2962,
-      2997
+      3135.17,
+      3151.37
     ],
     "connects": [
       "oath_path_fortress_5"
@@ -18212,8 +18212,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3120,
-      3171
+      3137.41,
+      3219.81
     ],
     "connects": [
       "oath_path_fortress_6"
@@ -18231,8 +18231,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3082,
-      3224
+      3160.92,
+      3284.1
     ],
     "connects": [
       "oath_path_fortress_7"
@@ -18250,8 +18250,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3158,
-      3268
+      3282.76,
+      3355.35
     ],
     "connects": [
       "oath_path_fortress_8"
@@ -18269,8 +18269,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3255,
-      3349
+      3340.98,
+      3390.68
     ],
     "connects": [
       "oath_path_fortress_9"
@@ -18288,8 +18288,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3337,
-      3391
+      3309.8,
+      3451.83
     ],
     "connects": [
       "oath_path_fortress_10"
@@ -18307,8 +18307,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      3340,
-      3452
+      3458.72,
+      3613.73
     ],
     "connects": [
       "oath_path_fortress_11"
@@ -18326,8 +18326,8 @@
     "cat": "damage",
     "icon": "reach",
     "pos": [
-      3501,
-      3553
+      3617.07,
+      3554.45
     ],
     "connects": [
       "oath_path_fortress_12"
@@ -18345,8 +18345,8 @@
     "cat": "defense",
     "icon": "speed",
     "pos": [
-      3530,
-      3605
+      3526.66,
+      3626.67
     ],
     "connects": [
       "oath_path_fortress_13"
@@ -18387,8 +18387,8 @@
     "cat": "utility",
     "icon": "coin",
     "pos": [
-      4117,
-      4805
+      4098.23,
+      4853.51
     ],
     "connects": [
       "bridge_engineer_sniper_0_1"
@@ -18406,8 +18406,8 @@
     "cat": "utility",
     "icon": "reach",
     "pos": [
-      4365,
-      4750
+      4345.28,
+      4783.35
     ],
     "connects": [
       "shared_trade_0"
@@ -18425,8 +18425,8 @@
     "cat": "utility",
     "icon": "reach",
     "pos": [
-      4420,
-      4800
+      4419.44,
+      4804.2
     ],
     "connects": [
       "shared_trade_1"
@@ -18444,8 +18444,8 @@
     "cat": "utility",
     "icon": "reach",
     "pos": [
-      4471,
-      4852
+      4428.56,
+      4735.8
     ],
     "connects": [
       "shared_trade_2"
@@ -18463,8 +18463,8 @@
     "cat": "defense",
     "icon": "heart",
     "pos": [
-      4560,
-      4897
+      4522,
+      4880
     ],
     "connects": [
       "shared_trade_3"

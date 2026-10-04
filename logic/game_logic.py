@@ -361,6 +361,9 @@ class GameLogic:
 
         # Çağırıcı düşmanlar update sırasında listeye ekleme yapabildiğinden,
         # yeni varlıkları aynı karede zincirleme güncelleme.
+        remaining = sum(not e.dead and not getattr(e, 'is_trap', False)
+                        and not getattr(e, 'is_pillar', False) for e in self.enemies)
+        self.wave_cleanup = self.wave['enemies_to_spawn'] <= 0 and not self._special_wave_active() and 0 < remaining <= 5
         for e in tuple(self.enemies):
             e.update(dt, self)
             

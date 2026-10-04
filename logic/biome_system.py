@@ -173,6 +173,7 @@ class BiomeSystem:
             enemy.hp = enemy.max_hp
         if bonus.get('fire_resist'):
             enemy.fire_resist = True
+            enemy.fire_resistance = 0.25
         if bonus.get('frost_aura'):
             # frost_aura tüketim noktası: entities/enemy.py -> update()
             # (200 piksel içindeki oyuncuyu yavaşlatır). Aynı bayrağı

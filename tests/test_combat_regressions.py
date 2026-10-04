@@ -1086,3 +1086,63 @@ def test_late_boss_still_threatens_scaled_life_builds(combat):
         assert .04<fraction<.3
     early=AbyssalLord(3,70,0,game,10)
     assert early.attack_damage(22)<100
+
+@pytest.mark.parametrize('kind', ['poison','fire','frost','lightning'])
+@pytest.mark.parametrize('dot', [False,True])
+def test_armor_does_not_reduce_nonphysical_damage(combat, kind, dot):
+    player, enemy, game = combat()
+    enemy.armor = 900
+    before = enemy.hp
+    enemy.take_damage(100, game, from_player=True, is_dot=dot, damage_type=kind)
+    assert before-enemy.hp == pytest.approx(100)
+    before = enemy.hp
+    enemy.take_damage(100, game, from_player=True, damage_type='physical')
+    assert before-enemy.hp == pytest.approx(10)
+
+
+def test_resistance_types_are_independent(combat):
+    player, enemy, game = combat()
+    enemy.poison_resistance = .4
+    enemy.elemental_resistance = .2
+    enemy.fire_resistance = .1
+    for kind, expected in [('physical',100),('poison',60),('fire',70),('frost',80)]:
+        before = enemy.hp
+        enemy.take_damage(100, game, from_player=True, damage_type=kind)
+        assert before-enemy.hp == pytest.approx(expected)
+    enemy.poison_resistance = 10
+    before = enemy.hp
+    enemy.take_damage(100,game,from_player=True,is_dot=True,damage_type='poison')
+    assert before-enemy.hp == pytest.approx(25)
+
+
+def test_armored_shieldbearer_does_not_block_poison_or_fire(combat):
+    player, enemy, game = combat()
+    enemy.type='shieldbearer'; enemy.armor=900
+    for kind in ('poison','fire'):
+        before=enemy.hp
+        enemy.take_damage(100,game,from_player=True,damage_type=kind)
+        assert before-enemy.hp == pytest.approx(100)
+
+
+@pytest.mark.parametrize('kind', ['mimic','war_tower'])
+def test_stationary_enemies_approach_during_wave_cleanup(combat, kind):
+    player, _, game = combat()
+    game.wave['level']=8
+    enemy=Enemy(2,1500,0,game,type=kind,wave_level=8)
+    game.enemies=[enemy]
+    game.wave_cleanup=False
+    initial=enemy.x
+    enemy.update(.1,game)
+    assert enemy.x==initial
+    game.wave_cleanup=True
+    enemy.update(.1,game)
+    enemy.update(.1,game)
+    assert enemy.x<initial
+
+
+def test_minimap_player_position_moves_on_fixed_map():
+    from ui_minimap import world_point
+    rect=pygame.Rect(100,100,184,184)
+    assert world_point(rect,0,0,5000)==(100,100)
+    assert world_point(rect,2500,2500,5000)==(192,192)
+    assert world_point(rect,5000,5000,5000)==(284,284)

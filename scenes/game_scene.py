@@ -1520,44 +1520,8 @@ class GameScene(BaseScene):
         self._hud_combo_y = y + 6
 
     def draw_minimap(self, p):
-        """Sağ-alt köşede dairesel gotik mini harita: oyuncu merkezde (altın),
-        düşmanlar kırmızı nokta, iri düşman/boss mor. Ekrana (HUD) çizilir."""
-        R = 92
-        cx, cy = self.width - R - 34, self.height - R - 40
-        # Koyu taş zemin (yarı saydam daire)
-        bg = pygame.Surface((R * 2 + 10, R * 2 + 10), pygame.SRCALPHA)
-        pygame.draw.circle(bg, (16, 13, 18, 232), (R + 5, R + 5), R + 2)
-        self.screen.blit(bg, (cx - R - 5, cy - R - 5))
-
-        # Dünya -> minimap ölçeği (oyuncunun ~1000px çevresini gösterir)
-        world_r = 1000.0
-        scale = R / world_r
-        inner = (R - 6) * (R - 6)
-        for e in self.logic.enemies:
-            if getattr(e, 'dead', False):
-                continue
-            dx = (e.x - p.x) * scale
-            dy = (e.y - p.y) * scale
-            if dx * dx + dy * dy > inner:
-                continue
-            big = getattr(e, 'radius', 12) >= 28
-            col = (178, 78, 224) if big else (231, 76, 60)
-            pygame.draw.circle(self.screen, col, (int(cx + dx), int(cy + dy)), 5 if big else 3)
-
-        # Oyuncu (merkez, altın) + koyu kontur
-        pygame.draw.circle(self.screen, (255, 214, 96), (cx, cy), 5)
-        pygame.draw.circle(self.screen, (20, 16, 14), (cx, cy), 5, 1)
-
-        # Gotik metal çerçeve halkaları
-        pygame.draw.circle(self.screen, (24, 20, 22), (cx, cy), R + 4, 4)   # koyu kontur
-        pygame.draw.circle(self.screen, (122, 126, 134), (cx, cy), R + 1, 3)  # metal
-        pygame.draw.circle(self.screen, (156, 160, 168), (cx, cy), R - 1, 1)  # parlak iç kenar
-
-        # Üstte kurukafa arması
-        crest = get_skull_crest(30)
-        if crest is not None:
-            self.screen.blit(crest, (cx - crest.get_width() // 2,
-                                     cy - R - crest.get_height() // 2 - 2))
+        import ui_minimap
+        ui_minimap.draw(self, p)
 
     def draw_hud(self):
         import ui_theme
@@ -3432,7 +3396,7 @@ class GameScene(BaseScene):
         # büyüyüp panelin altından taşıyordu).
         view = pygame.Rect(inner.x, y, inner.width, inner.bottom - y - 24)
         col_w = (inner.width - 20) // 2
-        card_h = 145
+        card_h = 210
         rows = (len(synergies) + 1) // 2
         self._synergy_max_scroll = max(0, rows * (card_h + 10) - view.height)
 
@@ -3442,18 +3406,31 @@ class GameScene(BaseScene):
 
         for i, syn in enumerate(synergies):
             is_active = syn['id'] in active_synergies
+            owned_parts = [card_names.get(k,k) for k in syn['required_cards'] if k in owned_ids]
+            has_owned = bool(owned_parts)
             x = inner.x + (i % 2) * (col_w + 20)
             cy = view.y + (i // 2) * (card_h + 10) + self.synergy_scroll
             if cy > view.bottom or cy + card_h < view.y:
                 continue  # görünmeyeni çizme
 
             rect = pygame.Rect(x, cy, col_w, card_h)
-            tint_col = ui_theme.COLORS["moss"] if is_active else ui_theme.COLORS["steel"]
+            tint_col = ui_theme.COLORS["moss"] if is_active else (ui_theme.COLORS["gold"] if has_owned else ui_theme.COLORS["steel"])
             c = ui_theme.draw_inset_frame(
                 self.screen, rect, "panel_frame_small.png",
-                fill=(28, 34, 29) if is_active else (26, 23, 30), alpha=244,
-                tint=tuple(int(v * (0.34 if is_active else 0.18)) for v in tint_col),
+                fill=(28, 34, 29) if is_active else ((36, 29, 20) if has_owned else (26, 23, 30)), alpha=244,
+                tint=tuple(int(v * (0.48 if has_owned else 0.18)) for v in tint_col),
                 pad=26)
+
+            owned_label = 'SENDE: ' + ' • '.join(owned_parts) if has_owned else 'Henüz parçası yok'
+            label = render_fit(owned_label,17,gold if has_owned else (128,123,115),c.width-36,bold=has_owned)
+            if has_owned:
+                halo = label.copy().convert_alpha()
+                halo.fill((255,202,93,90),special_flags=pygame.BLEND_RGBA_MULT)
+                for dx,dy in ((-2,0),(2,0),(0,-2),(0,2)):
+                    self.screen.blit(halo,(c.x+18+dx,c.y+dy))
+            self.screen.blit(label,(c.x+18,c.y))
+            c.y += 28
+            c.height -= 28
 
             # Kartın ÜST ve ALT satırları çerçevenin köşe taşları hizasında;
             # bu iki satır yatayda ek pay alır, ortadaki açıklama tam genişlik.
@@ -3465,11 +3442,11 @@ class GameScene(BaseScene):
             ex += 40
             ew -= 40
             status_str = "AKTİF" if is_active else f"{sum(k in owned_ids for k in syn['required_cards'])}/{len(syn['required_cards'])} KART"
-            status_txt = render_fit(status_str, 19, moss if is_active else (140, 134, 124),
-                                    ew // 2, bold=is_active)
+            status_txt = render_fit(status_str, 19, moss if is_active else (gold if has_owned else (140, 134, 124)),
+                                    ew // 2, bold=has_owned)
             self.screen.blit(status_txt, (ex + ew - status_txt.get_width(), c.y))
 
-            name_txt = render_fit(syn['name'], 20, gold if is_active else (196, 190, 178),
+            name_txt = render_fit(syn['name'], 20, gold if has_owned or is_active else (196, 190, 178),
                                   ew - status_txt.get_width() - 12, bold=True)
             self.screen.blit(name_txt, (ex, c.y))
 
