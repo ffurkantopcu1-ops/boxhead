@@ -85,7 +85,7 @@ class Warrior:
                                     ody = other.y - e.y
                                     if odx * odx + ody * ody < 80 * 80:
                                         splash_targets.add(other.id)
-                                        other.take_damage(fire_dmg * 0.5, game, from_player=True, is_secondary=True)
+                                        other.take_damage(fire_dmg * 0.5, game, from_player=True, is_secondary=True, damage_type='fire')
                                         other.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                                         splash_count += 1
                                         if splash_count >= 10:

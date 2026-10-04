@@ -192,6 +192,8 @@ class SaveManager:
                 "xp_to_next_level": getattr(p, 'xp_to_next_level', 100),
                 "gold": p.gold,
                 "skill_points": p.skill_points,
+                "skill_tree_version": 2,
+                "main_points_earned": getattr(p, 'main_points_earned', 0),
                 "hp": getattr(p, 'hp', 100),
                 "turret_charges":getattr(p,"turret_charges",2),
                 "turret_recharge":getattr(p,"turret_recharge",0),
@@ -290,20 +292,7 @@ class SaveManager:
         # sıfırlanır; yoksa recalculate_stats hem ağacı hem eski skili sayar.
         from logic.skill_tree import SkillTree
         if "allocated_nodes" in pd:
-            saved = set(pd.get("allocated_nodes", []))
-            # Ağaç yeniden üretildiğinde (topoloji değişimi) eski düğüm id'leri
-            # kaybolur. Bunlar sessizce atılırsa oyuncu yatırdığı TÜM puanı
-            # kaybeder — resolve_stats bilinmeyen id'yi zaten yok sayıyor.
-            # Bu yüzden geçersiz id başına 1 SP İADE edilir; oyuncu yeni ağaçta
-            # yeniden harcar. (Aynı desen aşağıdaki eski-skill göçünde de var.)
-            stale = {nid for nid in saved if nid not in SkillTree.BY_ID}
-            if stale:
-                refund = sum(1 for nid in stale if not SkillTree.is_start(nid))
-                p.skill_points = getattr(p, "skill_points", 0) + refund
-                print(f"[skill_tree] {len(stale)} eski dugum bulunamadi, "
-                      f"{refund} SP iade edildi")
-            p.allocated_nodes = saved - stale
-            p.allocated_nodes |= set(SkillTree.start_nodes_for(p.base_class_id))
+            SkillTree.restore(p, pd.get("allocated_nodes", []), pd.get("skill_tree_version", 0))
         else:
             refund = 0
             if isinstance(p.skills, list):
@@ -312,6 +301,17 @@ class SaveManager:
                     sk["lvl"] = 0
             p.skill_points = p.skill_points + refund
             p.allocated_nodes = set(SkillTree.start_nodes_for(p.base_class_id))
+
+        from logic.progression import xp_threshold, earned_main_points, MAIN_POINT_CAP
+        p.skill_tree_version = SkillTree.VERSION
+        spent = sum(SkillTree.get_cost(n) for n in p.allocated_nodes)
+        # Migration retains earned investments, then brings old level rewards
+        # up to the current curve once. Saving records the new grant total.
+        previous = pd.get("main_points_earned", min(MAIN_POINT_CAP, p.skill_points + spent))
+        p.main_points_earned = min(MAIN_POINT_CAP, max(previous, earned_main_points(p.level)))
+        p.skill_points += max(0, p.main_points_earned - previous)
+        p.skill_points = min(max(0, p.skill_points), max(0, MAIN_POINT_CAP - spent))
+        p.xp_to_next_level = xp_threshold(p.level)
 
         p.x = pd.get("x", p.x)
         p.y = pd.get("y", p.y)

@@ -118,6 +118,7 @@ class Turret:
         damage/=1+.3*(count-1)
         pierce=max(0,min(4,int(stats.get("pierce",0))))
         bounce=max(0,min(2,int(stats.get("bounce",0))))
+        if stats.get('treeSingleShot', 0): count, pierce, bounce = 1, 0, 0
         from entities.projectile import Projectile
         self.angle=math.atan2(self.target.y-self.y,self.target.x-self.x)
         # Barrels converge on the target; extra barrels share a damage budget.
@@ -129,6 +130,9 @@ class Turret:
             shot=Projectile(game.entity_id_counter,sx,sy,math.cos(a)*10,math.sin(a)*10,
                             max(0,damage),bounce=bounce,pierce=pierce,lifetime=90)
             shot.is_turret_proj=True
+            if stats.get('treeFireOnly', 0):
+                shot.dmg = 0
+                shot.fire_dmg = .25 * (stats.get('fireDamage', 0) + stats.get('fireDmgFlat', 0)) * (1 + stats.get('fireDmgMult', 0)) * network_budget
             shot.color=(115,215,205)
             game.projectiles.append(shot)
             game.entity_id_counter+=1

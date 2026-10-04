@@ -37,13 +37,17 @@ def build(class_id, level, points, tier, route, stress=False):
     p = Player("p1", 1000, 1000, class_id)
     p.level = level
     p.skill_points = points
-    prefix = "early1" if route == "defense" else ("early2" if route == "utility" else "main")
-    preferred = [f"{class_id}_{prefix}_{i}" for i in range(1, 6)]
-    preferred += [f"{class_id}_notable_core" if prefix=="main" else f"{class_id}_{prefix}_notable"]
-    branches = (1, 2) if route == "defense" else (2, 1)
-    for branch in branches:
-        preferred += [f"{class_id}_path{branch}_{i}" for i in range(1, 6)]
-        preferred += [f"{class_id}_keystone_{branch}"]
+    from tools.tree_clusters import CLUSTERS
+    from tools.inspect_new_tree import path_to
+    order=[2,4,0,1,3,5,6,7] if route=='defense' else [0,1,3,5,6,7,2,4]
+    preferred=[]
+    for k in order:
+        target=f'{class_id}_{CLUSTERS[class_id][k][0]}_notable'
+        for nid in path_to('start_'+class_id,target)[1:]:
+            if nid not in preferred: preferred.append(nid)
+    for branch in (1,2):
+        for nid in path_to('start_'+class_id,f'{class_id}_keystone_{branch}')[1:]:
+            if nid not in preferred: preferred.append(nid)
     for _ in range(points):
         choices = SkillTree.allocatable_nodes(p.allocated_nodes)
         choices = [x for x in choices if not SkillTree.is_start(x)]

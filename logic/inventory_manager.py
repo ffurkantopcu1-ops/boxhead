@@ -474,6 +474,25 @@ class InventoryManager:
                 new_stats[dr_stat] = raw
 
         # 💀 Ölüm Anlaşması: max_hp bedeli çarpımsal; additive havuzda Canlılık
+        # Central oaths impose final restrictions; gear cannot buy them back.
+        if new_stats.get('treeFireOnly', 0):
+            new_stats['fireDmgMult'] = new_stats.get('fireDmgMult', 0) + 2.0
+            for key in ('physDmg', 'physDmgFlat', 'frostDamage', 'frostDmgFlat',
+                        'poisonDps', 'minionPhysDmgFlat', 'minionFrostDmgFlat', 'minionPoisonDpsFlat'):
+                new_stats[key] = 0
+        if new_stats.get('treeSingleShot', 0):
+            new_stats['projectileCount'] = new_stats['minionProjectileCount'] = 1
+            for key in ('bounce', 'pierce', 'minionBounce', 'minionPierce'):
+                new_stats[key] = 0
+        if new_stats.get('treeNoCrit', 0):
+            new_stats['critChance'] = new_stats['minionCrit'] = 0
+        if new_stats.get('treeNoRegen', 0):
+            for key in ('regen', 'hpRegen', 'combatRegen'):
+                new_stats[key] = 0
+        if new_stats.get('treeNoArmor', 0): new_stats['armor'] = 0
+        if new_stats.get('treeNoDodge', 0): new_stats['dodgeChance'] = 0
+
+        # 💀 Ölüm Anlaşması: max_hp bedeli çarpımsal; additive havuzda Canlılık
         # skiliyle sulandırılamaz (S5). Kart durumu save'den de otomatik gelir.
         game_ref = getattr(self.player, 'game', None)
         card_sys = getattr(game_ref, 'card_system', None) if game_ref else None

@@ -688,21 +688,20 @@ def test_swept_projectile_preserves_attackable_pillar(combat):
     assert e.hp==999990
 
 @pytest.mark.parametrize("class_id", list(SkillTree.START_BY_CLASS.keys()))
-def test_three_initial_routes_have_distinct_stats_and_five_steps(class_id):
-    if class_id == "core": return
+def test_initial_clusters_offer_three_distinct_support_entries(class_id):
     start=SkillTree.START_BY_CLASS[class_id]
     choices=SkillTree.allocatable_nodes({start})
     assert len(choices)==3
-    assert len({tuple(sorted(SkillTree.BY_ID[n]["stats"].items())) for n in choices})==3
-    for lane in range(3):
-        allocated={start}
-        ids=[f"{class_id}_main_{j}" if lane==0 else f"{class_id}_early{lane}_{j}" for j in range(1,6)]
-        for node in ids:
-            assert SkillTree.is_allocatable(node,allocated)
-            allocated.add(node)
-        destination=class_id+"_notable_core" if lane==0 else f"{class_id}_early{lane}_notable"
-        assert SkillTree.is_allocatable(destination,allocated)
-        assert all(SkillTree.BY_ID[n]["arm"]==class_id for n in allocated)
+    assert len({SkillTree.BY_ID[n]['cluster'] for n in choices})==3
+    for entry in choices:
+        ring=[entry.rsplit('_',1)[0]+'_'+str(j) for j in range(7)]
+        for direction in ((0,1,2),(0,6,5)):
+            allocated={start}
+            for j in direction:
+                assert SkillTree.is_allocatable(ring[j],allocated)
+                allocated.add(ring[j])
+            notable=entry.rsplit('_',1)[0]+'_notable'
+            assert SkillTree.is_allocatable(notable,allocated)
 
 def make_duel(combat):
     from entities.boss import AbyssalLord
@@ -817,12 +816,14 @@ def test_avoided_boss_projectile_does_not_apply_burn(combat):
     shot.update(.01,g)
     assert not p.effect_manager.effects
 
-def test_early_routes_reach_different_destinations_and_can_pivot():
-    for cls in ("warrior","sniper","engineer","beastmaster","bomber","alchemist","sorcerer","bloodwalker","ninja"):
-        assert f"{cls}_path1_1" in SkillTree.ADJ[f"{cls}_early1_notable"]
-        assert f"{cls}_path2_1" in SkillTree.ADJ[f"{cls}_early2_notable"]
-        for lane in (1,2):
-            assert f"{cls}_main_3" in SkillTree.ADJ[f"{cls}_early{lane}_3"]
+def test_clusters_have_independent_cross_paths_and_pivots():
+    for cls in SkillTree.START_BY_CLASS:
+        entry=SkillTree.BY_ID[next(iter(SkillTree.ADJ['start_'+cls]))]
+        ring_ids={n['id'] for n in SkillTree.NODES if n['arm']==cls and n.get('cluster')==entry['cluster']}
+        exits={nb for n in ring_ids for nb in SkillTree.ADJ[n] if nb not in ring_ids and nb!='start_'+cls}
+        assert len(exits)>=2
+        assert not any(SkillTree.BY_ID[n]['type']=='notable' for n in exits)
+
 
 def test_dead_boss_does_not_clear_reused_projectile_of_another_boss(combat):
     p,b,g=make_duel(combat)
@@ -1060,3 +1061,12 @@ def test_old_engineer_save_without_new_fields_loads_with_ready_charges(combat,tm
     q=dst.players[dst.local_player_id]
     assert q.turret_charges==q.get_turret_max_charges()
     assert q.turret_command_cooldown==0
+
+@pytest.mark.parametrize("flat,ratio,remaining", [(2, 0, 98), (2, .2, 78.4), (200, 0, 0)])
+def test_flat_armor_penetration_preserves_percentage_units(combat, flat, ratio, remaining):
+    player, enemy, game = combat()
+    enemy.armor = 100
+    player.stats.update(armorPenFlat=flat, armorPen=ratio, bossDmgMult=0)
+    before = enemy.hp
+    enemy.take_damage(100, game, from_player=True)
+    assert before - enemy.hp == pytest.approx(100 * 100 / (100 + remaining))

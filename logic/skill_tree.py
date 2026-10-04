@@ -38,6 +38,7 @@ def _build_index(nodes):
 
 
 class SkillTree:
+    VERSION = 2
     NODES = load_data('skill_tree')
     BY_ID, ADJ = _build_index(NODES)
 
@@ -93,6 +94,9 @@ class SkillTree:
         yatirmadan ninja koluna atlayamaz (sinif kimligi korunur)."""
         if node_id not in cls.BY_ID or node_id in allocated:
             return False
+        group = cls.BY_ID[node_id].get('exclusive_group')
+        if group and any(cls.BY_ID.get(n, {}).get('exclusive_group') == group for n in allocated):
+            return False
         return any(neigh in allocated for neigh in cls.ADJ.get(node_id, ()))
 
     @classmethod
@@ -109,12 +113,18 @@ class SkillTree:
         if node_id not in cls.BY_ID:
             return False, "Dugum bulunamadi."
         allocated = cls._ensure_set(player)
+        group = cls.BY_ID[node_id].get('exclusive_group')
+        if group and any(cls.BY_ID.get(n, {}).get('exclusive_group') == group for n in allocated):
+            return False, 'Zehir Dönüşümü ve Saf Alev birlikte alınamaz; değiştirmek için iade et.'
         if node_id in allocated:
             return False, "Zaten alinmis."
         if not cls.is_allocatable(node_id, allocated):
             return False, "Once bagli bir dugum al."
 
         cost = cls.get_cost(node_id)
+        from logic.progression import MAIN_POINT_CAP
+        if cost and sum(cls.get_cost(n) for n in allocated) >= MAIN_POINT_CAP:
+            return False, 'Ana ağaç bütçesi 100 puan.'
         if cost > 0 and getattr(player, "skill_points", 0) < cost:
             return False, "Yetersiz Yetenek Puani!"
 
@@ -134,6 +144,22 @@ class SkillTree:
         player.skill_points = getattr(player, "skill_points", 0) + refunded
         cls._sync_player(player)
         return refunded
+
+    @classmethod
+    def restore(cls, player, saved, version):
+        """Versioned, idempotent migration; free roots never become SP."""
+        saved = set(saved)
+        roots = set(cls.START_BY_CLASS.values()) | {'core_fallback'}
+        if version != cls.VERSION:
+            refund = len(saved - roots)
+            player.skill_points += refund
+            player.allocated_nodes = set(cls.start_nodes_for(cls._class_of(player)))
+        else:
+            stale = saved - cls.BY_ID.keys()
+            player.skill_points += len(stale - roots)
+            player.allocated_nodes = saved - stale
+            player.allocated_nodes.update(cls.start_nodes_for(cls._class_of(player)))
+        player.skill_tree_version = cls.VERSION
 
     # ------------------------------------------------------------------
     # Stat cozumleme (recalculate_stats buradan okur)

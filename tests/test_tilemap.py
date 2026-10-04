@@ -109,15 +109,19 @@ class TestRenderContract(unittest.TestCase):
 
 
 class TestSaveRoundTrip(unittest.TestCase):
-    """Gerçek kayıt dosyalarına dokunmaz: kendine ait geçici slotu kullanır
-    ve sonunda siler (bkz. AGENTS.md — saves/ altındaki dosyalar korunur)."""
+    """Oyun ve meta kayıtlarını tamamen geçici bir klasörde tutar."""
 
     SLOT = "__pytest_tilemap_tmp__"
 
-    def tearDown(self):
-        path = os.path.join("saves", f"{self.SLOT}.json")
-        if os.path.exists(path):
-            os.remove(path)
+    def setUp(self):
+        import tempfile
+        from unittest.mock import patch
+        from logic.save_manager import SaveManager
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        save_dir = patch.object(SaveManager, "SAVE_DIR", tmp.name)
+        save_dir.start()
+        self.addCleanup(save_dir.stop)
 
     def _fresh_logic(self):
         from logic.game_logic import GameLogic
@@ -153,7 +157,7 @@ class TestSaveRoundTrip(unittest.TestCase):
         src = self._fresh_logic()
         SaveManager.save_game(src, self.SLOT)
 
-        path = os.path.join("saves", f"{self.SLOT}.json")
+        path = os.path.join(SaveManager.SAVE_DIR, f"{self.SLOT}.json")
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
         data["wave"].pop("map_seed", None)      # map_seed'den önceki kayıt

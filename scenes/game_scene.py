@@ -12,6 +12,9 @@ import random
 import sys
 import vfx
 import tile_renderer
+import ui_skill_tree
+import ui_workshop
+import ui_gothic_tabs
 
 # --- Eşya tooltip: okunur stat etiketleri + kıyaslama ---
 ITEM_STAT_LABEL = {
@@ -26,13 +29,18 @@ ITEM_STAT_LABEL = {
     "regen": "Can Yenileme", "magicFind": "Eşya Bulma", "goldGain": "Altın", "xpGain": "Deneyim",
     "turretDmg": "Taret Hasarı", "turretRate": "Taret Hızı", "turretMaxHp": "Taret Canı",
     "turretLimit": "Taret Limiti", "minionDamage": "Minyon Hasarı", "minionCount": "Minyon Sayısı",
-    "minionMaxHpFlat": "Minyon Canı", "aura_limit": "Aura Limiti", "armorPen": "Zırh Delme",
+    "minionMaxHpFlat": "Minyon Canı", "aura_limit": "Aura Limiti", "armorPen": "Zırh Delme", "armorPenFlat": "Düz Zırh Delme",
     "dotDmgMult": "DoT Hasarı", "cooldownReduction": "Bekleme Azaltma",
+    "fireRate": "Saldırı Hızı", "bossDmgMult": "Boss Hasarı", "meleeRangeMult": "Menzil",
+    "hpRegen": "Can Yenilenmesi", "combatRegen": "Savaşta Yenilenme", "physDmgMult": "Fiziksel Hasar",
+    "statusDuration": "Etki Süresi", "brutal": "Acımasız", "spreadAngle": "Yayılım Açısı",
+    "thorns": "Diken Hasarı", "orbHealMult": "Şifa Küresi",
 }
 _PCT_STATS = {"elementDmgMult", "fireDmgMult", "frostDmgMult", "dmgMult", "aoe", "lifesteal",
               "critChance", "critDmg", "dodgeChance", "attack_speed_bonus", "attack_speed_mult",
               "magicFind", "goldGain", "xpGain", "turretDmg", "turretRate", "minionDamage",
-              "armorPen", "dotDmgMult", "cooldownReduction"}
+              "armorPen", "dotDmgMult", "cooldownReduction", "fireRate", "bossDmgMult",
+              "meleeRangeMult", "physDmgMult", "brutal", "statusDuration", "orbHealMult"}
 _LOWER_BETTER = {"attackCooldown"}   # düşük = daha iyi (kıyasta yön ters)
 _EQUIP_SLOTS = {"weapon", "helmet", "chest", "amulet", "pet", "artifact"}
 
@@ -40,7 +48,7 @@ _EQUIP_SLOTS = {"weapon", "helmet", "chest", "amulet", "pet", "artifact"}
 def _fmt_stat_val(stat, val):
     """Stat değerini okunur biçimle: yüzde statları %N, diğerleri düz sayı."""
     if stat in _PCT_STATS:
-        return f"%{val * 100:.0f}"
+        return f"%{val * 100:g}"
     if isinstance(val, float) and val.is_integer():
         val = int(val)
     return f"{val:g}" if isinstance(val, (int, float)) else str(val)
@@ -231,8 +239,8 @@ class GameScene(BaseScene):
         _tabs = [("ENVANTER", "inventory"), ("KAHRAMAN", "hero"), ("YETENEK", "skills"),
                  ("YÜKSELİŞ", "ascendancy"), ("KERVAN", "market"), ("AURA", "aura"),
                  ("SİNERJİ", "synergy")]
-        _tw, _gap = 138, 6
-        _x0 = self.width // 2 - (len(_tabs) * (_tw + _gap) - _gap) // 2
+        _tw, _gap = min(138, (self.width - 220) // 7 - 6), 6
+        _x0 = 24
         self.tab_buttons = [
             TabButton(_x0 + i * (_tw + _gap), 40, _tw, 50, lbl, tid)
             for i, (lbl, tid) in enumerate(_tabs)
@@ -355,7 +363,7 @@ class GameScene(BaseScene):
             filter_width,
             35,
         )
-        self.hide_orbs = True 
+        self.hide_orbs = False
 
         # Savaş sırasında anlık toplamları açan kompakt HUD kontrolü.
         self.stats_button_rect = pygame.Rect(self.width - 270, 75, 250, 36)
@@ -401,11 +409,48 @@ class GameScene(BaseScene):
         mouse_rclicked = False
 
         for event in events:
+            if self.show_inventory and not self.show_craft_window and self.active_tab=='inventory' and getattr(self,'_inv_search_focus',False) and event.type==pygame.KEYDOWN:
+                query=getattr(self,'_inv_query','')
+                if event.key==pygame.K_BACKSPACE:self._inv_query=query[:-1]
+                elif event.key in (pygame.K_RETURN,pygame.K_ESCAPE):self._inv_search_focus=False
+                elif event.unicode and event.unicode.isprintable():self._inv_query=(query+event.unicode)[:60]
+                self.inventory_page=0
+                continue
+            if self.show_inventory and not self.show_craft_window and event.type == pygame.KEYDOWN:
+                if pygame.K_1 <= event.key <= pygame.K_7 and not (self.active_tab == "skills" and self._tree_search_active):
+                    self.active_tab = self.tab_buttons[event.key-pygame.K_1].tab_id
+                    self._item_drag = None
+                    continue
+            if self.show_inventory and not self.show_craft_window and event.type == pygame.MOUSEWHEEL and self.active_tab == 'aura':
+                from logic.aura_system import AuraManager
+                maximum=max(0,(len(AuraManager().get_all_auras())-1)//4)
+                self.aura_page=max(0,min(maximum,self.aura_page-event.y))
+                continue
+            if self.show_inventory and not self.show_craft_window and event.type == pygame.MOUSEWHEEL:
+                if self.active_tab in ('inventory','market'):
+                    items = self._filtered_inventory(p) if self.active_tab == 'inventory' else (self.logic.market_inventory if self.market_tab == 'items' else self.logic.orb_market)
+                    attr = 'inventory_page' if self.active_tab == 'inventory' else 'market_page'
+                    setattr(self,attr,max(0,min(max(0,(len(items)-1)//12),getattr(self,attr)-event.y)))
+                    self._item_drag = None
+                    continue
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.show_inventory and ui_workshop.start_drag(self, p, event.pos):
+                    continue
                 mouse_clicked = True
+            drag = getattr(self, '_item_drag', None)
+            if drag and event.type == pygame.MOUSEMOTION:
+                drag['pos'] = event.pos
+                if pygame.math.Vector2(event.pos).distance_to(drag['start']) > 7:
+                    drag['moved'] = True
+                continue
+            if drag and event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                ui_workshop.finish_drag(self, p, event.pos)
+                continue
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self._item_drag = None
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 mouse_rclicked = True
 
@@ -779,6 +824,32 @@ class GameScene(BaseScene):
             # Rect'ler çizimle AYNI kaynaktan (_craft_layout)
             L = self._craft_layout()
 
+            if L['orb_mode'].collidepoint(pos) or L['recipe_mode'].collidepoint(pos):
+                self._craft_recipe_mode = L['recipe_mode'].collidepoint(pos)
+                self.craft_error_msg = ''
+                return
+            if getattr(self,'_craft_recipe_mode',False):
+                from logic.crafting import recipes, apply_recipe
+                for recipe,rect in getattr(self,'craft_recipe_rects',[]):
+                    if rect.collidepoint(pos):
+                        self._selected_recipe = recipe
+                        self.craft_error_msg = ''
+                        return
+                if L['apply'].collidepoint(pos):
+                    selected = getattr(self,'_selected_recipe',None)
+                    if selected:
+                        err = apply_recipe(p,self.crafting_target,selected['id'],self.logic.wave.get('level',1))
+                        self.craft_error_msg = err or 'Tarif uygulandı. Doğal özellikler korundu.'
+                    return
+                page = getattr(self,'_recipe_page',0)
+                if L['orb_prev'].collidepoint(pos):
+                    self._recipe_page=max(0,page-1)
+                    return
+                if L['orb_next'].collidepoint(pos):
+                    maximum=max(0,(len(recipes(self.crafting_target))-1)//self.ORB_ROWS_PER_PAGE)
+                    self._recipe_page=min(maximum,page+1)
+                    return
+
             # Kapatma Butonu
             if L["close"].collidepoint(pos):
                 self.show_craft_window = False
@@ -806,18 +877,25 @@ class GameScene(BaseScene):
                     continue
                 orb = orbs_in_inv[actual_idx]
                 if use_btn.collidepoint(pos):
-                    # Orb bas!
-                    err = self.logic.item_system.apply_orb(self.crafting_target, orb['orb_id'])
-                    if err:
-                        self.craft_error_msg = err
-                    else:
-                        # Başarılı: Orbu tüket
-                        orb['stack'] = orb.get('stack', 1) - 1
-                        if orb['stack'] <= 0:
-                            p.inventory.remove(orb)
-                        p.inv_manager.recalculate_stats()
-                        self.logic.add_event("damage_text", p.x, p.y-40, value="Craft Başarılı!", color=(46, 204, 113))
+                    self._selected_craft_orb = orb
+                    self.craft_error_msg = ""
                     return
+
+            if L["apply"].collidepoint(pos):
+                orb = getattr(self, '_selected_craft_orb', None)
+                if orb is None or not any(it is orb for it in p.inventory):
+                    return
+                err = self.logic.item_system.apply_orb(self.crafting_target, orb['orb_id'])
+                if err:
+                    self.craft_error_msg = err
+                else:
+                    orb['stack'] = orb.get('stack', 1) - 1
+                    if orb['stack'] <= 0:
+                        p.inventory.remove(orb)
+                        self._selected_craft_orb = None
+                    p.inv_manager.recalculate_stats()
+                    self.craft_error_msg = "İşlem tamamlandı. Eşyanın özellikleri güncellendi."
+                return
 
             # SAYFALAMA KONTROLLERİ (CRAFT)
             orb_pages = self.ORB_ROWS_PER_PAGE
@@ -856,7 +934,14 @@ class GameScene(BaseScene):
         if self.active_tab == "inventory":
             # Hitbox'lar çizimle aynı kaynaktan konumlansın
             self._apply_inventory_layout()
+            if ui_gothic_tabs.filter_click(self,pos):
+                return
 
+            if self.inv_sort_rect.collidepoint(pos):
+                modes=('loot','rarity','name')
+                self.inv_sort_mode=modes[(modes.index(getattr(self,'inv_sort_mode','loot'))+1)%3]
+                self.inventory_page=0
+                return
             # --- FİLTRE TIKLAMALARI ---
             rarity_count = len(self.rarity_filters)
             for i, rect in enumerate(self.filter_rects):
@@ -940,6 +1025,9 @@ class GameScene(BaseScene):
                         self.show_craft_window = True
                         self.orb_inv_page = 0
                         self.orb_market_page = 0
+                        self._selected_craft_orb = None
+                        self._selected_recipe = None
+                        self._recipe_page = 0
                         self.crafting_target = target_item
                         self.craft_error_msg = ""
                         return
@@ -982,6 +1070,7 @@ class GameScene(BaseScene):
                     return
 
         elif self.active_tab == "market":
+            self._apply_market_layout()
             # Pazar Sekmeleri
             for btn in self.market_tab_btns:
                 if btn.rect.collidepoint(pos):
@@ -1408,7 +1497,7 @@ class GameScene(BaseScene):
         # onu okuyor ama eskiden yalnız "event" varken atanıyordu -> olaysız
         # özel dalgalarda (ör. survival) AttributeError ile ÇÖKÜYORDU.
         self._hud_event_y = y + 14
-        if self.logic.wave.get("event") or self.logic.wave.get("special"):
+        if self.logic.wave.get("special"):
             y += 42
 
         self._hud_combo_y = y + 6
@@ -1479,17 +1568,6 @@ class GameScene(BaseScene):
             ui_theme.draw_plate(self.screen, sp_rect.inflate(48, 16), "hover",
                                 ui_theme.COLORS["arcane"])
             self.screen.blit(sp_txt, sp_rect)
-
-        # Aktif dalga olayı şeridi (dalga boyunca görünür kalır)
-        evt = self.logic.wave.get("event")
-        if evt and not sp:
-            strip_txt = render_fit(evt["desc"], 18,
-                                   ui_theme.readable(ui_theme.COLORS["gold"]),
-                                   self.width // 2, bold=True)
-            strip_rect = strip_txt.get_rect(center=(self.width // 2, self._hud_event_y))
-            ui_theme.draw_plate(self.screen, strip_rect.inflate(48, 16), "normal",
-                                ui_theme.COLORS["gold"])
-            self.screen.blit(strip_txt, strip_rect)
 
         # Dalga başı büyük duyuru banner'ı (ekran ortası, sona doğru söner)
         announce_t = self.logic.wave.get("announce_timer", 0)
@@ -1857,7 +1935,7 @@ class GameScene(BaseScene):
         # İçerik ekran ortasına göre sağa kaymış durumda (kuşanılanlar ~510'da
         # başlar, filtre satırı ~1660'a kadar gider), panel de ona göre.
         import ui_nineslice as n9
-        n9.draw(self.screen, "panel_frame.png", self._inventory_panel_rect())
+        ui_gothic_tabs.hall(self.screen,self._inventory_panel_rect())
 
         p = self.logic.players[self.logic.local_player_id]
         
@@ -1869,13 +1947,9 @@ class GameScene(BaseScene):
         import ui_theme
         # Altın: sekme çubuğunun bittiği yer ile ÇIKIŞ butonu arasına sığdırılır
         # (sabit width-400 konumu son sekmenin üstüne biniyordu).
-        tabs_right = self.tab_buttons[-1].rect.right
-        gold_max_w = max(80, self.exit_btn_rect.left - tabs_right - 40)
-        gold_txt = render_fit(f"ALTIN: {p.gold}", 26,
-                              ui_theme.readable(ui_theme.COLORS["gold"]),
-                              gold_max_w, bold=True)
-        self.screen.blit(gold_txt, (self.exit_btn_rect.left - gold_txt.get_width() - 20,
-                                    self.exit_btn_rect.centery - gold_txt.get_height() // 2))
+        gold_txt = render_fit(f"ALTIN: {p.gold:,}", 18,
+                              ui_theme.readable(ui_theme.COLORS["gold"]), 180, bold=True)
+        self.screen.blit(gold_txt, (36, self.height - 25))
 
         exit_state = "hover" if self.exit_btn_rect.collidepoint(pygame.mouse.get_pos()) else "normal"
         surf, over = ui_theme.render_banner_button(
@@ -1884,6 +1958,8 @@ class GameScene(BaseScene):
         self.screen.blit(surf, (self.exit_btn_rect.centerx - surf.get_width() // 2,
                                 self.exit_btn_rect.y - over))
         
+        shortcut = render_fit('1–7: Sekme seç • ESC: Geri • Envanter / Kervan: tekerlekle sayfa',15,ui_theme.TEXT_COL,self.width-270)
+        self.screen.blit(shortcut,(250,self.height-24))
         # 2. SEKME İÇERİĞİ
         if self.active_tab == "inventory":
             self.draw_inventory_tab(p)
@@ -1937,178 +2013,15 @@ class GameScene(BaseScene):
     MARKET_ROWS_PER_PAGE = 5
 
     def _craft_layout(self):
-        """Craft penceresinin TÜM rect'leri — çizim, tıklama ve tooltip tek kaynak.
-
-        Eskiden panel, kapat butonu ve orb satırları hem çizimde hem tıklama
-        handler'ında ayrı ayrı literal olarak yazılıydı; "AL" butonu iki farklı
-        formülle (rect.right-70 / panel.right-100) hesaplanıyordu.
-        """
-        # panel = içerik alanı; gotik çerçeve draw_panel ile DIŞINA çizilir
-        panel = pygame.Rect(self.width // 2 - 450, self.height // 2 - 300, 900, 600)
-        inner = panel.inflate(-36, -36)
-
-        # Sol sütun geniş: kısa orb satırlarında "SEÇ" butonu plakanın uç
-        # kapaklarına binmesin diye 270px.
-        left_w, right_w = 270, 250
-        left_x = inner.x
-        right_x = inner.right - right_w
-        pager_y = inner.bottom - 36
-
-        orb_rows, orb_use = [], []
-        for i in range(self.ORB_ROWS_PER_PAGE):
-            r = pygame.Rect(left_x, inner.y + 46 + i * 52, left_w, 44)
-            orb_rows.append(r)
-            orb_use.append(pygame.Rect(r.right - 90, r.y + 5, 60, 34))
-
-        # Market satırları sayfalama şeridinin ÜSTÜNDE bitmeli
-        mkt_rows, mkt_buy = [], []
-        for i in range(self.MARKET_ROWS_PER_PAGE):
-            r = pygame.Rect(right_x, inner.y + 76 + i * 80, right_w, 72)
-            mkt_rows.append(r)
-            mkt_buy.append(pygame.Rect(r.right - 62, r.centery - 19, 56, 38))
-
-        item_rect = pygame.Rect(panel.centerx - 140, inner.y + 46, 280, 360)
-        pager_y = inner.bottom - 36
-        return {
-            "panel": panel,
-            "inner": inner,
-            "close": pygame.Rect(inner.right - 40, inner.y, 40, 40),
-            "orb_rows": orb_rows, "orb_use": orb_use,
-            "mkt_rows": mkt_rows, "mkt_buy": mkt_buy,
-            "item": item_rect,
-            "take_back": pygame.Rect(panel.centerx - 75, item_rect.bottom + 12, 150, 40),
-            "orb_prev": pygame.Rect(left_x, pager_y, 110, 34),
-            "orb_next": pygame.Rect(left_x + left_w - 110, pager_y, 110, 34),
-            "mkt_prev": pygame.Rect(right_x, pager_y, 110, 34),
-            "mkt_next": pygame.Rect(right_x + right_w - 110, pager_y, 110, 34),
-        }
+        return ui_workshop.craft_layout(self)
 
     def draw_craft_window(self):
-        import ui_theme
-        self._overlay_surface.fill((0, 0, 0, 220))
-        self.screen.blit(self._overlay_surface, (0, 0))
-
-        L = self._craft_layout()
-        panel = L["panel"]
-        ui_theme.draw_panel(self.screen, panel)
-
-        item = self.crafting_target
-        if not item: return
-
-        p = self.logic.players[self.logic.local_player_id]
-        mouse_pos = pygame.mouse.get_pos()
-        night = ui_theme.readable(ui_theme.COLORS["night"])
-        gold = ui_theme.readable(ui_theme.COLORS["gold"])
-        blood = ui_theme.readable(ui_theme.COLORS["blood"])
-
-        def plate_btn(rect, label, key, enabled=True):
-            hovered = enabled and rect.collidepoint(mouse_pos)
-            ui_theme.draw_plate(self.screen, rect,
-                                "hover" if hovered else ("normal" if enabled else "disabled"),
-                                ui_theme.COLORS[key] if enabled else None)
-            col = ui_theme.TEXT_COL if hovered else (176, 170, 158)
-            txt = render_fit(label, 17, col, rect.width - 30, bold=hovered)
-            self.screen.blit(txt, txt.get_rect(center=rect.center))
-
-        # 1. SOL: ENVANTERDEKİ ORBLAR
-        orbs_in_inv = [x for x in p.inventory if x.get('type') == 'orb']
-        title_l = render_fit(f"ORBLARIN ({self.orb_inv_page + 1})", 22, night, 250, bold=True)
-        self.screen.blit(title_l, (L["inner"].x, L["inner"].y + 6))
-
-        offset_i = self.orb_inv_page * self.ORB_ROWS_PER_PAGE
-        self.craft_orb_use_rects = []
-        for i in range(min(self.ORB_ROWS_PER_PAGE, len(orbs_in_inv) - offset_i)):
-            orb = orbs_in_inv[offset_i + i]
-            rect, use_btn = L["orb_rows"][i], L["orb_use"][i]
-            self.craft_orb_use_rects.append((offset_i + i, use_btn))
-
-            # Kısa satırda buton plakası: panel_frame_small'ın 40px köşe
-            # süsleri 44px'lik satırı boğuyordu.
-            ui_theme.draw_plate(self.screen, rect, "normal")
-            name = orb['name'].split(" (")[0]
-            txt = render_fit(f"{name} x{orb.get('stack', 1)}", 17, ui_theme.TEXT_COL,
-                             use_btn.left - rect.x - 42)
-            self.screen.blit(txt, (rect.x + 30, rect.centery - txt.get_height() // 2))
-            plate_btn(use_btn, "SEÇ", "moss")
-
-        plate_btn(L["orb_prev"], "<< GERİ", "night", self.orb_inv_page > 0)
-        plate_btn(L["orb_next"], "İLERİ >>", "night",
-                  (self.orb_inv_page + 1) * self.ORB_ROWS_PER_PAGE < len(orbs_in_inv))
-
-        # 2. ORTA: HEDEF EŞYA
-        title_c = render_fit("HEDEF EŞYA", 22, gold, 280, bold=True)
-        self.screen.blit(title_c, (panel.centerx - title_c.get_width() // 2, L["inner"].y + 6))
-
-        item_rect = L["item"]
-        color = ui_theme.rarity_color(item.get('rarity', 'Normal'))
-        # pad=32: çerçevenin köşe taşları 40px, metin onların hizasından uzak dursun
-        ic = ui_theme.draw_inset_frame(
-            self.screen, item_rect, "panel_frame_small.png", fill=(20, 17, 24), alpha=248,
-            tint=tuple(int(c * 0.30) for c in color), pad=32)
-
-        name_t = render_fit(item['name'], 21, color, ic.width, bold=True)
-        self.screen.blit(name_t, (ic.x, ic.y))
-        type_t = render_fit(f"{item['rarity']} {item['type'].upper()}", 17,
-                            (172, 166, 154), ic.width)
-        self.screen.blit(type_t, (ic.x, ic.y + name_t.get_height() + 2))
-
-        line_y = ic.y + name_t.get_height() + type_t.get_height() + 8
-        pygame.draw.line(self.screen, ui_theme.METAL_LO, (ic.x, line_y), (ic.right, line_y))
-
-        y_s = line_y + 8
-        for stat, val in item.get('itemBase', {}).items():
-            st_t = render_fit(f"[*] {stat}: {val}", 17, (176, 122, 82), ic.width)
-            self.screen.blit(st_t, (ic.x, y_s))
-            y_s += 23
-
-        # Affix seviye renkleri paletten (T1 altın, T2 yeşil, T3 mavi)
-        tier_keys = {1: "gold", 2: "moss", 3: "night"}
-        for aff in item.get('prefixes', []) + item.get('suffixes', []):
-            tier = aff.get('tier', 3)
-            a_col = ui_theme.readable(ui_theme.COLORS[tier_keys.get(tier, "night")])
-            label = f"[{aff.get('label', '?')} (T{tier})] +{aff['val']} {aff['stat']}"
-            af_t = render_fit(label, 17, a_col, ic.width)
-            self.screen.blit(af_t, (ic.x, y_s))
-            y_s += 23
-
-        plate_btn(L["take_back"], "GERİ AL", "night")
-
-        # 3. SAĞ: ORB MARKET (DÜKKAN)
-        title_r = render_fit(f"ORB MARKET ({self.orb_market_page + 1})", 22, blood, 250, bold=True)
-        self.screen.blit(title_r, (L["mkt_rows"][0].x, L["inner"].y + 6))
-        gold_t = render_fit(f"GOLD: {p.gold}", 20, gold, 250, bold=True)
-        self.screen.blit(gold_t, (L["mkt_rows"][0].x, L["inner"].y + 34))
-
-        market_list = self.logic.orb_market
-        offset_m = self.orb_market_page * self.MARKET_ROWS_PER_PAGE
-        for i in range(min(self.MARKET_ROWS_PER_PAGE, len(market_list) - offset_m)):
-            orb = market_list[offset_m + i]
-            rect, buy_btn = L["mkt_rows"][i], L["mkt_buy"][i]
-            ui_theme.draw_inset_frame(self.screen, rect, "panel_frame_small.png",
-                                      fill=(30, 26, 36), alpha=244, pad=10)
-            text_w = buy_btn.left - rect.x - 20
-            name = orb['name'].split(" (")[0]
-            self.screen.blit(render_fit(name, 17, ui_theme.TEXT_COL, text_w), (rect.x + 10, rect.y + 8))
-            self.screen.blit(render_fit(f"{orb['price']} GOLD", 16, gold, text_w), (rect.x + 10, rect.y + 30))
-            owned = sum(x.get('stack', 1) for x in p.inventory
-                        if x.get('type') == 'orb' and x.get('orb_id') == orb['orb_id'])
-            self.screen.blit(render_fit(f"Sende: {owned}", 15, (176, 170, 158), text_w),
-                             (rect.x + 10, rect.y + 50))
-            plate_btn(buy_btn, "AL", "moss", p.gold >= orb['price'])
-
-        plate_btn(L["mkt_prev"], "<< GERİ", "night", self.orb_market_page > 0)
-        plate_btn(L["mkt_next"], "İLERİ >>", "night",
-                  (self.orb_market_page + 1) * self.MARKET_ROWS_PER_PAGE < len(market_list))
-
-        # Çıkış Butonu
-        plate_btn(L["close"], "X", "ember")
-
-        # Hata Mesajı
-        if self.craft_error_msg:
-            err_t = render_fit(self.craft_error_msg, 21, blood, panel.width - 120, bold=True)
-            self.screen.blit(err_t, (panel.centerx - err_t.get_width() // 2, panel.bottom - 52))
+        ui_workshop.draw_craft(self)
 
     def handle_tooltips(self, p):
+        if getattr(self, "_item_drag", None):
+            ui_workshop.draw_drag(self)
+            return
         m_pos = pygame.mouse.get_pos()
         hovered_item = None
         
@@ -2154,9 +2067,26 @@ class GameScene(BaseScene):
         if hovered_item:
             self.draw_item_tooltip(hovered_item, m_pos, p)
 
+    def _apply_market_layout(self):
+        inner = self._inventory_panel_rect().inflate(-120,-116)
+        top = inner.y
+        for i,btn in enumerate(self.market_tab_btns):
+            btn.rect.update(inner.x+i*170,top,160,38)
+        self.refresh_btn_rect.update(inner.right-190,top,190,38)
+        h = (inner.height-110)//3
+        w = (inner.width-30)//4
+        for i,card in enumerate(self.market_cards):
+            card.rect.update(inner.x+(i%4)*(w+10),top+60+(i//4)*h,w,h-6)
+            card.buy_rect.update(card.rect.right-96,card.rect.bottom-45,78,30)
+        self.mkt_prev_rect.update(inner.x,inner.bottom-32,110,32)
+        self.mkt_next_rect.update(inner.right-110,inner.bottom-32,110,32)
+
     def draw_market_tab(self, p):
+        self._apply_market_layout()
         import ui_theme
         mouse_pos = pygame.mouse.get_pos()
+        heading=ui_theme.render_title("GECE KERVANI",26,ui_theme.readable(ui_theme.COLORS["gold"]))
+        self.screen.blit(heading,heading.get_rect(midtop=(self._inventory_panel_rect().centerx,self._inventory_panel_rect().y+24)))
 
         def plate_btn(rect, label, key):
             hovered = rect.collidepoint(mouse_pos)
@@ -2176,8 +2106,8 @@ class GameScene(BaseScene):
         if self.market_tab == "items":
             wave_level = self.logic.wave.get("level", 1)
             cost = 500 + max(0, (wave_level - 1) * 400)
-            self.refresh_btn_rect.update(self.market_tab_btns[-1].rect.right + 30,
-                                         self.market_tab_btns[-1].rect.y, 190, 40)
+            self.refresh_btn_rect.update(self._inventory_panel_rect().right - 250,
+                                         self.market_tab_btns[-1].rect.y, 190, 38)
             plate_btn(self.refresh_btn_rect, f"YENİLE ({cost} G)", "moss")
 
         # Eşyaları/Orbları Listele
@@ -2201,7 +2131,7 @@ class GameScene(BaseScene):
                 else:
                     owned = sum([1 for x in p.inventory if x.get('name') == item['name']])
                 
-                card.draw(self.screen, self.font_sub, self.font_desc, owned_count=owned)
+                ui_gothic_tabs.market_relic(self,card,item,owned,p)
             else:
                 card.item = None
                 ui_theme.draw_inset_frame(self.screen, card.rect, "panel_frame_small.png",
@@ -2368,12 +2298,20 @@ class GameScene(BaseScene):
                 if self.inv_filter_type == "accessory" and it_type not in ["amulet", "ring"]: continue
                 if self.inv_filter_type == "special" and it_type not in ["artifact", "orb"]: continue
                 if self.inv_filter_type not in ["armor", "accessory", "special"] and it_type != self.inv_filter_type: continue
+            query=getattr(self,"_inv_query","").casefold()
+            if query and query not in it.get("name","").casefold():continue
             out.append(it)
+        mode=getattr(self,'inv_sort_mode','loot')
+        if mode == 'name':
+            out.sort(key=lambda it:it.get('name','').casefold())
+        elif mode == 'rarity':
+            order={'Unique':0,'Rare':1,'Magic':2,'Normal':3}
+            out.sort(key=lambda it:(-1 if it.get('setTag') else order.get(it.get('rarity'),4),it.get('name','')))
         return out
 
     def _inventory_panel_rect(self):
         """Tab menüsünün gotik zemin paneli."""
-        return pygame.Rect(self.width // 2 - 520, 92, 1260, self.height - 150)
+        return pygame.Rect(24, 108, self.width - 48, self.height - 136)
 
     def _apply_inventory_layout(self):
         """Envanter sekmesinin TÜM rect'lerini panelden türetip yazar.
@@ -2384,108 +2322,78 @@ class GameScene(BaseScene):
         filtre şeridi panelin üst çerçevesinin üstüne biniyordu.
         """
         panel = self._inventory_panel_rect()
-        inner_top = panel.y + 52       # gotik çerçevenin iç kenarı
-        inner_bottom = panel.bottom - 52
-
-        # Filtre şeritleri (2 satır) -> başlıklar -> ızgara
-        filt_y = inner_top + 10
-        filt_h = 34
-        self._inv_title_y = filt_y + 2 * (filt_h + 6) + 10
-        grid_y = self._inv_title_y + 36
-
-        pager_h, mass_h = 34, 38
-        pager_y = inner_bottom - pager_h
-        mass_y = pager_y - mass_h - 8
-        grid_h = max(120, mass_y - 10 - grid_y)
-        row_h = max(64, min(86, grid_h // 6))
-
-
-        # Filtre butonları
-        start_x = self.width // 2 + 20
+        inner = panel.inflate(-100, -100)
+        left_w = min(330, int(inner.width * .30))
+        start_x = inner.x + left_w + 24
+        available = inner.right - start_x
+        filt_y, filt_h = inner.y, 30
+        self._inv_title_y = filt_y + 78
+        self._inv_left_x = inner.x
+        grid_y = self._inv_title_y + 32
+        pager_y = inner.bottom - 32
+        mass_y = pager_y - 44
+        grid_h = mass_y - 12 - grid_y
+        row_h = grid_h // 3
         gap = 4
-        available = self.width - start_x - 20
-        fw = min(110, (available - gap * 5) // 6)
+        fw = (available - gap * 5) // 6
         rarity_count = len(self.rarity_filters)
         for i, r in enumerate(self.filter_rects):
-            row = 0 if i < rarity_count else 1
-            col = i if i < rarity_count else i - rarity_count
-            r.update(start_x + col * (fw + gap), filt_y + row * (filt_h + 6),
-                     fw, filt_h)
-        self.orb_toggle_rect.update(start_x + 5 * (fw + gap), filt_y + filt_h + 6,
-                                    fw, filt_h)
-
-        # Kuşanılanlar (sol) ve çanta kartları (sağ)
-        eq_h = min(68, row_h - 6)
-        for i, row in enumerate(self.equip_rows):
-            row.rect.y = grid_y + i * row_h
-            row.rect.height = eq_h
-
-        for i, card in enumerate(self.bp_cards):
-            card.reposition(y=grid_y + (i // 2) * row_h, h=row_h - 6)
-
-        # Toplu satış + sayfalama
-        mass_gap = 6
-        mass_w = min(140, (available - mass_gap * 3) // 4)
-        for i, r in enumerate(self.mass_sell_rects):
-            r.update(start_x + i * (mass_w + mass_gap), mass_y, mass_w, mass_h)
-
-        self.inv_prev_rect.update(start_x, pager_y, 120, pager_h)
-        self.inv_next_rect.update(self.width - 160, pager_y, 120, pager_h)
+            row, col = (0, i) if i < rarity_count else (1, i-rarity_count)
+            r.update(start_x + col*(fw+gap), filt_y+row*36, fw, filt_h)
+        self.orb_toggle_rect.update(start_x+5*(fw+gap),filt_y+36,fw,filt_h)
+        self.inv_sort_rect=pygame.Rect(-1000,-1000,1,1)
+        eq_h = (inner.bottom-110-grid_y)//3-6
+        for i,row in enumerate(self.equip_rows):
+            row.rect.update(inner.x+(i%2)*(left_w//2+3),grid_y+(i//2)*(eq_h+6),left_w//2-3,eq_h)
+        for i,card in enumerate(self.bp_cards):
+            card.reposition(x=start_x+(i%4)*(available//4+2),y=grid_y+(i//4)*row_h,w=available//4-4,h=row_h-5)
+        mass_w=(available-18)//4
+        for i,r in enumerate(self.mass_sell_rects):
+            r.update(start_x+i*(mass_w+6),mass_y,mass_w,36)
+        self.inv_prev_rect.update(start_x,pager_y,110,32)
+        self.inv_next_rect.update(inner.right-110,pager_y,110,32)
+        self.craft_drop_rect=pygame.Rect(inner.x,inner.bottom-74,left_w,66)
+        self.bag_drop_rect=pygame.Rect(start_x,grid_y,available,grid_h)
+        ui_gothic_tabs.filter_layout(self)
 
     def draw_inventory_tab(self, p):
         import ui_theme
         self._apply_inventory_layout()
         acc = ui_theme.readable(ui_theme.COLORS["gold"])
 
+        crest_rect=pygame.Rect(self._inv_left_x,self._inventory_panel_rect().y+48,78,78)
+        ui_gothic_tabs.portrait_shrine(self,p,crest_rect)
+        banner=render_fit(p.class_name,20,acc,230,bold=True)
+        self.screen.blit(banner,(crest_rect.right+12,crest_rect.y+10))
+        level=render_fit(f'SEVİYE {p.level} • EKİPMAN',14,ui_theme.TEXT_COL,230)
+        self.screen.blit(level,(crest_rect.right+12,crest_rect.y+40))
         # Sol Taraf: Kuşanılanlar
-        title_l = render_fit("KUŞANILANLAR (SAĞ TIKLA ÇIKAR)", 24, acc, 420, bold=True)
-        self.screen.blit(title_l, (self.width // 2 - 450, self._inv_title_y))
+        title_l = render_fit("KUŞANILANLAR", 23, acc, 330, bold=True)
+        self.screen.blit(title_l, (self._inv_left_x, self._inv_title_y))
 
         for row in self.equip_rows:
             row.item = p.inv_manager.equipped.get(row.slot_type)
             row.update(row.item)
-            row.draw(self.screen, self.font_sub)
+            ui_gothic_tabs.equipped(self,row,row.item)
 
         # Sağ Taraf: Çanta (Filtreleme, Grid & Sayfalama)
         filtered_inv = self._filtered_inventory(p)
 
-        # FİLTRE BUTONLARI (tema plakası; aktif = hover durumu)
         mouse_pos = pygame.mouse.get_pos()
-
-        def filter_btn(rect, label, is_active, color_key):
-            hovered = rect.collidepoint(mouse_pos)
-            ui_theme.draw_plate(self.screen, rect,
-                                "hover" if (is_active or hovered) else "normal",
-                                ui_theme.COLORS[color_key])
-            col = ui_theme.TEXT_COL if (is_active or hovered) else (170, 164, 152)
-            txt = render_fit(label, 17, col, rect.width - 30, bold=is_active)
-            self.screen.blit(txt, txt.get_rect(center=rect.center))
-
-        for i, rarity in enumerate(self.rarity_filters):
-            filter_btn(self.filter_rects[i], rarity,
-                       self.inv_filter_rarity == rarity, "gold")
-
-        for i, t_filter in enumerate(self.type_filters):
-            filter_btn(self.filter_rects[i + len(self.rarity_filters)], t_filter.upper(),
-                       self.inv_filter_type == t_filter, "night")
-
-        # ORB TOGGLE
-        filter_btn(self.orb_toggle_rect,
-                   "ORB GÖSTER" if self.hide_orbs else "ORB GİZLE",
-                   not self.hide_orbs, "arcane")
+        ui_gothic_tabs.filters(self)
 
         max_pages = max(0, (len(filtered_inv) - 1) // 12)
         self.inventory_page = min(self.inventory_page, max_pages)
 
         page_t = render_fit(f"ÇANTA ({len(filtered_inv)}) - Sayfa {self.inventory_page + 1}",
                             24, acc, 400, bold=True)
-        self.screen.blit(page_t, (self.width // 2 + 20, self._inv_title_y))
+        self.screen.blit(page_t, (self.bag_drop_rect.x, self._inv_title_y))
 
         offset = self.inventory_page * 12
         for i, card in enumerate(self.bp_cards):
             actual_idx = offset + i
             item = filtered_inv[actual_idx] if actual_idx < len(filtered_inv) else None
-            card.draw(self.screen, self.font_sub, item)
+            ui_gothic_tabs.backpack(self,card,item)
 
         # TOPLU SATIŞ BUTONLARI
         for i, btn in enumerate(self.mass_sell_btns):
@@ -2514,6 +2422,12 @@ class GameScene(BaseScene):
             txt = render_fit(label, 17, col, rect.width - 30)
             self.screen.blit(txt, txt.get_rect(center=rect.center))
 
+        ui_workshop.plate(self,self.craft_drop_rect,"ATÖLYE • EŞYAYI BURAYA BIRAK",'arcane')
+        hint=render_fit('Sürükle: kuşan / çıkar • Sağ tık: çıkar',14,ui_theme.TEXT_COL,self.craft_drop_rect.width)
+        self.screen.blit(hint,(self._inv_left_x,self.craft_drop_rect.y-24))
+
+        ui_gothic_tabs.filters(self,popup=True)
+
     # Kahraman sekmesi geometrisi (çizim ve tıklama tek kaynak)
     def _hero_panel_rect(self):
         # Kahraman sekmesi artık BÜYÜK envanter panelini doldurur (eskiden
@@ -2538,14 +2452,17 @@ class GameScene(BaseScene):
 
         # İçerik alanı: büyük gotik çerçevenin (panel_frame.png, 52px inset) içi
         padx, padtop = 74, 62
-        cx0 = panel.x + padx
-        cw = panel.width - 2 * padx
+        shrine_w = min(270,panel.width//4)
+        shrine = pygame.Rect(panel.x+50,panel.y+66,shrine_w,panel.height-160)
+        ui_gothic_tabs.portrait_shrine(self,p,shrine)
+        cx0 = shrine.right + 30
+        cw = panel.right - 55 - cx0
         top = panel.y + padtop
 
         # Başlık: sınıf adı — tema serifi, ortalı
         c_name = getattr(p, 'class_name', 'Bilinmiyor')
-        title = ui_theme.render_title(c_name, 46, ui_theme.COLORS["gold"])
-        self.screen.blit(title, (panel.centerx - title.get_width() // 2, top))
+        title = ui_theme.render_title(c_name, 34, ui_theme.COLORS["gold"])
+        self.screen.blit(title, (cx0 + (cw-title.get_width())//2, top))
         y = top + title.get_height() + 12
 
         passives = {
@@ -2595,7 +2512,7 @@ class GameScene(BaseScene):
         col_gap = 54
         col_w = (cw - col_gap) // 2
         half = (len(stats) + 1) // 2
-        row_h = min(60, max(38, (grid_bottom - grid_top) // half))
+        row_h = min(60, max(26, (grid_bottom - grid_top) // half))
         block_h = row_h * half
         gy0 = grid_top + max(0, (grid_bottom - grid_top - block_h) // 2)
         for i, (label_t, val) in enumerate(stats):
@@ -2668,6 +2585,9 @@ class GameScene(BaseScene):
             self.screen.fill((18, 15, 20))
         else:
             panel = self._inventory_panel_rect()
+        self.screen.blit(ui_skill_tree.background(panel.size), panel)
+        title=render_fit('BOXHEAD — ANA YETENEK AĞACI',24,ui_theme.TEXT_COL,panel.width-160,bold=True)
+        self.screen.blit(title,title.get_rect(midtop=(panel.centerx,panel.y+36)))
         inner_top = panel.y + 52
         mouse_pos = pygame.mouse.get_pos()
 
@@ -2710,14 +2630,14 @@ class GameScene(BaseScene):
             self.screen.blit(found, (sb.right + 10, sb.y + 9))
 
         hint = render_fit(
-            "Sürükle: kaydır  •  Tekerlek: yakınlaştır  •  F: "
+            "Sürükle / tekerlek  •  Home: sınıf  •  O: genel  •  F: "
             + ("panele dön" if self._tree_fullscreen else "tam ekran"),
-            15, (150, 144, 132), panel.width // 3)
+            15, (150, 144, 132), panel.width - 110)
         self.screen.blit(hint, (panel.centerx - hint.get_width() // 2, inner_top + 42))
 
         # Ağaç çizim alanı (başlığın altı). Çizim buraya kırpılır.
         area = pygame.Rect(panel.x + 28, inner_top + 68,
-                           panel.width - 56, panel.height - 126)
+                           panel.width - 56, panel.height - 190)
         self._tree_area = area
         tf = self._skill_tree_transform(area)
         allocated = SkillTree._ensure_set(p)
@@ -2738,7 +2658,8 @@ class GameScene(BaseScene):
                 p2 = tf(SkillTree.BY_ID[m]["pos"])
                 both = nid in allocated and m in allocated
                 col = ui_theme.readable(ui_theme.COLORS["gold"]) if both else (68, 60, 56)
-                pygame.draw.line(self.screen, col, p1, p2, 4 if both else 2)
+                pygame.draw.line(self.screen, (42, 33, 26), p1, p2, 3 if both else 2)
+                pygame.draw.line(self.screen, col if both else (117, 91, 57), p1, p2, 2 if both else 1)
 
         # 2) DÜĞÜMLER — kilitli önce, açık/alınmış en son (tema kuralı: seçili üstte)
         self.tree_node_hit = []
@@ -2754,6 +2675,7 @@ class GameScene(BaseScene):
             cx, cy = tf(node["pos"])
             r = self._tree_node_radius(node["type"])
             rect = pygame.Rect(cx - r, cy - r, 2 * r, 2 * r)
+            if not area.colliderect(rect): continue
             self.tree_node_hit.append((nid, rect))
             if nid in allocated:
                 state = "allocated"
@@ -2766,18 +2688,26 @@ class GameScene(BaseScene):
             if area.collidepoint(mouse_pos) and rect.collidepoint(mouse_pos):
                 hover_node = node
 
+        if self._tree_view['scale']<self._tree_fit_scale*2:
+            cx,cy=tf((4000,4000))
+            crest=get_skull_crest(max(44,int(270*self._tree_view['scale'])))
+            if crest: self.screen.blit(crest,crest.get_rect(center=(cx,cy)))
+        # Region names stay visible in overview; finer cluster labels appear
+        # only when zoomed. The map remains a single freely pannable canvas.
+        for cls, sid in SkillTree.START_BY_CLASS.items():
+            cx,cy=tf(SkillTree.BY_ID[sid]['pos'])
+            label=render_fit(cls.title(),17,ui_skill_tree.CLASS_COLORS.get(cls,(190,170,130)),160)
+            if area.collidepoint(cx,cy):
+                self.screen.blit(label,label.get_rect(midtop=(cx,cy+14)))
+        if self._tree_view['scale'] > self._tree_fit_scale*3:
+            for node in SkillTree.NODES:
+                if node['type']!='notable': continue
+                cx,cy=tf(node['pos'])
+                if area.collidepoint(cx,cy):
+                    label=render_fit(node['name'],14,ui_theme.TEXT_COL,150)
+                    self.screen.blit(label,label.get_rect(midtop=(cx,cy+self._tree_node_radius('notable')+5)))
         self.screen.set_clip(prev_clip)
 
-        # Route names remain legible when inspecting the selected class.
-        if self._tree_view["scale"] >= self._tree_fit_scale * 2.5:
-            own = getattr(p,"base_class_id",p.class_id)
-            for nid in SkillTree.ADJ.get("start_"+own,()):
-                node=SkillTree.BY_ID[nid]
-                if node.get("route"):
-                    cx,cy=tf(node["pos"])
-                    label=render_fit(node["route"],15,ui_theme.TEXT_COL,175)
-                    if area.collidepoint(cx,cy):
-                        self.screen.blit(label,(cx+20,cy-24))
         if hover_node:
             self._draw_tree_tooltip(hover_node, mouse_pos, allocated, allocatable)
 
@@ -2802,7 +2732,7 @@ class GameScene(BaseScene):
                 "oy": area.y + (area.height - bh * fit) / 2 - miny * fit,
             }
         v = self._tree_view
-        v["scale"] = max(fit * 0.7, min(fit * 4.0, v["scale"]))
+        v["scale"] = max(fit * 0.7, min(fit * 10.0, v["scale"]))
 
         def tf(pos):
             return (int(pos[0] * v["scale"] + v["ox"]), int(pos[1] * v["scale"] + v["oy"]))
@@ -2814,7 +2744,7 @@ class GameScene(BaseScene):
         if not v:
             return
         new = max(self._tree_fit_scale * 0.7,
-                  min(self._tree_fit_scale * 4.0, v["scale"] * (1.18 ** wheel_y)))
+                  min(self._tree_fit_scale * 10.0, v["scale"] * (1.18 ** wheel_y)))
         factor = new / v["scale"] if v["scale"] else 1.0
         cx, cy = pos
         v["ox"] = cx - (cx - v["ox"]) * factor
@@ -2864,6 +2794,24 @@ class GameScene(BaseScene):
 
     def _tree_handle_key(self, event):
         """Yetenek ağacı sekmesindeki klavye girdisi. Dönen: olay yutuldu mu."""
+        if not self._tree_search_active and event.key in (pygame.K_HOME, pygame.K_o):
+            self._tree_view = None
+            self._skill_tree_transform(self._tree_area)
+            if event.key == pygame.K_HOME:
+                p=self.logic.players[self.logic.local_player_id]
+                node=SkillTree.BY_ID[SkillTree.start_nodes_for(SkillTree._class_of(p))[0]]
+                scale=self._tree_fit_scale*4
+                near=[]
+                frontier={node['id']}; seen=set(frontier)
+                for _ in range(4):
+                    frontier={nb for n in frontier for nb in SkillTree.ADJ[n] if nb not in seen}
+                    seen.update(frontier)
+                near=[SkillTree.BY_ID[n]['pos'] for n in seen if SkillTree.BY_ID[n]['type']=='notable']
+                center=[sum(v[z] for v in near)/len(near) for z in (0,1)] if near else node['pos']
+                self._tree_view.update(scale=scale,
+                    ox=self._tree_area.centerx-center[0]*scale,
+                    oy=self._tree_area.centery-center[1]*scale)
+            return True
         if event.key == pygame.K_f and not self._tree_search_active:
             self._tree_fullscreen = not self._tree_fullscreen
             self._tree_view = None      # alan değişti -> yeniden fit et
@@ -2888,60 +2836,22 @@ class GameScene(BaseScene):
 
     def _tree_click_node(self, pos, p):
         """Sürükleme değil de gerçek tık ise imlecin altındaki düğümü tahsis et."""
-        for nid, rect in getattr(self, 'tree_node_hit', []):
+        if self._tree_area and not self._tree_area.collidepoint(pos): return
+        for nid, rect in reversed(getattr(self, 'tree_node_hit', [])):
             if rect.collidepoint(pos):
                 ok, msg = SkillTree.allocate(p, nid)
                 color = (241, 196, 15) if ok else (231, 76, 60)
                 self.logic.add_event("damage_text", p.x, p.y - 60, value=msg, color=color)
                 return
 
-    @staticmethod
-    def _tree_node_radius(ntype):
-        return {"keystone": 19, "notable": 16, "start": 15}.get(ntype, 12)
+    def _tree_node_radius(self, ntype):
+        scale=self._tree_view['scale'] if self._tree_view else .15
+        world={'minor':24,'notable':42,'keystone':44,'start':60}.get(ntype,24)
+        minimum=max(3,round({'minor':4,'notable':10,'keystone':12,'start':24}.get(ntype,4)*min(1,self.height/1000)))
+        return max(minimum,min(60,round(world*scale)))
 
     def _draw_tree_node(self, node, center, r, state, matched=False):
-        """Tek düğüm. Renk KATEGORİDEN gelir (ne işe yaradığı), parlaklık
-        DURUMDAN (alınmış / alınabilir / kilitli). `matched` arama sonucudur:
-        eşleşen düğüm kilitli bile olsa belirgin şekilde parlar."""
-        import ui_theme
-        cx, cy = center
-        base = self.TREE_CAT_COLORS.get(node.get("cat", "core"),
-                                        self.TREE_CAT_COLORS["core"])
-        gold = ui_theme.readable(ui_theme.COLORS["gold"])
-        if state == "allocated":
-            fill = tuple(min(255, int(c * 1.15)) for c in base)
-            ring, ring_w = gold, 3
-        elif state == "open":
-            fill = tuple(int(c * 0.55) for c in base)
-            ring, ring_w = gold, 3
-        else:  # locked — kategori rengi korunur ama iyice söner
-            fill = tuple(int(c * 0.24) for c in base)
-            ring, ring_w = (72, 64, 60), 2
-
-        # ARAMA VURGUSU: eşleşen düğümün arkasına nabız gibi bir hale çizilir.
-        # Kilitli düğümlerde de görünür — amaç "bu statı nerede bulurum"a cevap.
-        if matched:
-            pulse = 0.65 + 0.35 * math.sin(time.time() * 5.0)
-            glow_r = int(r + 10 + 4 * pulse)
-            glow = pygame.Surface((glow_r * 2, glow_r * 2), pygame.SRCALPHA)
-            pygame.draw.circle(glow, (*base, int(120 * pulse)), (glow_r, glow_r), glow_r)
-            pygame.draw.circle(glow, (255, 246, 214, int(220 * pulse)),
-                               (glow_r, glow_r), glow_r, 3)
-            self.screen.blit(glow, (cx - glow_r, cy - glow_r))
-
-        pygame.draw.circle(self.screen, (16, 14, 16), (cx, cy), r + 3)   # yuva
-        pygame.draw.circle(self.screen, fill, (cx, cy), r)
-        pygame.draw.circle(self.screen, ring, (cx, cy), r, ring_w)
-
-        icon = self.TREE_CAT_ICON.get(node.get("cat"))
-        if icon:
-            img = ImageLoader.get_item_icon(icon, (int(r * 1.4), int(r * 1.4)))
-            if img:
-                self.screen.blit(img, img.get_rect(center=(cx, cy)))
-        elif node["type"] in ("notable", "keystone") and state != "locked":
-            # İkon yokken notable/keystone'u ayırt eden parlak mücevher noktası
-            hi = tuple(min(255, c + 60) for c in fill)
-            pygame.draw.circle(self.screen, hi, (cx - r // 3, cy - r // 3), max(2, r // 4))
+        ui_skill_tree.draw_node(self.screen,node,center,r,state,matched)
 
     def _draw_tree_tooltip(self, node, mouse_pos, allocated, allocatable):
         import ui_theme
@@ -2956,18 +2866,24 @@ class GameScene(BaseScene):
             status = "🔒 Kilitli — önce bağlı bir düğüm al"
             scol = (170, 120, 120)
 
-        name_s = render_fit(node["name"], 20, ui_theme.readable(ui_theme.COLORS["gold"]), 340, bold=True)
-        desc_s = render_fit(node.get("desc", ""), 16, ui_theme.TEXT_COL, 340)
-        stat_s = render_fit(status, 16, scol, 340)
-        w = max(name_s.get_width(), desc_s.get_width(), stat_s.get_width()) + 32
-        h = 84
-        tx = min(mouse_pos[0] + 18, self.width - w - 10)
-        ty = min(mouse_pos[1] + 18, self.height - h - 10)
-        rect = pygame.Rect(tx, ty, w, h)
-        ui_theme.draw_panel(self.screen, rect, fill=ui_theme.PANEL_BG, alpha=245)
-        self.screen.blit(name_s, (rect.x + 16, rect.y + 10))
-        self.screen.blit(desc_s, (rect.x + 16, rect.y + 36))
-        self.screen.blit(stat_s, (rect.x + 16, rect.y + 60))
+        from ui_elements import wrap_text
+        width=min(410,self.width-32)
+        font=pygame.font.SysFont('Segoe UI',16)
+        lines=wrap_text(font,node.get('desc',''),width-80)
+        if nid.startswith('central_'):
+            lines+=wrap_text(font,'Merkez yemini: diğer yeminlere ayrı yol yatırımı gerekir.',width-80)
+        name_s=render_fit(node['name'],20,ui_theme.readable(ui_theme.COLORS['gold']),width-80,bold=True)
+        height=78+len(lines)*22
+        tx=max(8,min(mouse_pos[0]+18,self.width-width-8))
+        ty=max(8,min(mouse_pos[1]+18,self.height-height-8))
+        rect=pygame.Rect(tx,ty,width,height)
+        ui_theme.draw_inset_frame(self.screen,rect,'panel_frame_small.png',
+                                  fill=ui_theme.PANEL_BG,alpha=250,pad=8)
+        self.screen.blit(name_s,(tx+40,ty+18))
+        for i,line in enumerate(lines):
+            self.screen.blit(font.render(line,True,ui_theme.TEXT_COL),(tx+40,ty+46+i*22))
+        status_s=render_fit(status,16,scol,width-80)
+        self.screen.blit(status_s,(tx+40,ty+height-27))
 
     def reset_skill_tree(self, p):
         """Altın karşılığı tüm ağacı sıfırlar (SP iade edilir). Eski
@@ -2985,6 +2901,8 @@ class GameScene(BaseScene):
         import ui_theme
         from logic.ascendancy import Ascendancy
         panel = self._inventory_panel_rect()
+        title=render_fit('YÜKSELİŞ — SINIF UZMANLIĞI',24,ui_theme.TEXT_COL,panel.width-160,bold=True)
+        self.screen.blit(title,title.get_rect(midtop=(panel.centerx,panel.y+36)))
         inner_top = panel.y + 52
         mouse_pos = pygame.mouse.get_pos()
         gold = ui_theme.readable(ui_theme.COLORS["gold"])
@@ -3018,6 +2936,8 @@ class GameScene(BaseScene):
                         ui_theme.TEXT_COL if rh else (176, 170, 158), self.asc_reset_rect.width - 30)
         self.screen.blit(rt, rt.get_rect(center=self.asc_reset_rect.center))
 
+        shrine=pygame.Rect(panel.x+45,inner_top+100,min(210,panel.width//5),panel.height-240)
+        ui_gothic_tabs.portrait_shrine(self,p,shrine)
         # Mini ağaç: alt-sınıfın düğümlerini panele sığdır (pan/zoom yok)
         area = pygame.Rect(panel.x + 40, inner_top + 64, panel.width - 80, panel.height - 140)
         nodes = Ascendancy.nodes_for(p.evolution)
@@ -3314,7 +3234,7 @@ class GameScene(BaseScene):
         panel = self._inventory_panel_rect()
         inner = pygame.Rect(panel.x + 60, panel.y + 58,
                             panel.width - 120, panel.height - 116)
-        essence = pygame.Rect(inner.x, inner.y, inner.width, 170)
+        essence = pygame.Rect(inner.x, inner.y, inner.width, 130)
         shrine = pygame.Rect(inner.x, essence.bottom + 16,
                              inner.width, inner.bottom - essence.bottom - 16)
         card_w = (shrine.width - 60) // 2
@@ -3351,11 +3271,11 @@ class GameScene(BaseScene):
                 f"Zırh: +{p.essence_stats['armor']}",
                 f"Hız: +{round(p.essence_stats['speed'], 1)}"
             ]
-            col_w = e_content.width // 3
+            col_w = e_content.width // 5
             for i, st in enumerate(stats):
                 txt = render_fit(st, 19, ui_theme.TEXT_COL, col_w - 16)
-                self.screen.blit(txt, (e_content.x + (i % 3) * col_w,
-                                       e_content.y + 38 + (i // 3) * 34))
+                self.screen.blit(txt, (e_content.x + (i % 5) * col_w,
+                                       e_content.y + 38 + (i // 5) * 34))
 
         # 2. AURA SHRINE
         a_content = ui_theme.draw_inset_frame(
@@ -3375,11 +3295,11 @@ class GameScene(BaseScene):
         pager_h = 34
         grid_top = a_content.y + 38
         grid_bottom = a_content.bottom - pager_h - 10
-        card_h = max(70, (grid_bottom - grid_top) // 4 - 10)
+        card_h = max(70, (grid_bottom - grid_top) // 2 - 10)
 
         self.aura_btn_rects = []
-        offset = self.aura_page * 8
-        for i in range(8):
+        offset = self.aura_page * 4
+        for i in range(4):
             idx = offset + i
             if idx >= len(all_auras): break
 
@@ -3392,29 +3312,31 @@ class GameScene(BaseScene):
 
             tint_col = ui_theme.COLORS["moss"] if is_active else (
                 ui_theme.COLORS["night"] if owned else ui_theme.COLORS["steel"])
-            c = ui_theme.draw_inset_frame(
-                self.screen, card_rect, "panel_frame_small.png",
-                fill=(32, 28, 38) if is_active else (26, 23, 31), alpha=244,
-                tint=tuple(int(v * 0.30) for v in tint_col), pad=14)
+            ui_theme.draw_plate(self.screen,card_rect,'hover' if is_active else 'normal',tint_col)
+            c = card_rect.inflate(-36,-24)
 
+            seal=ui_skill_tree.medallion('shield' if any(k in aura.stats for k in ('armor','max_hp')) else ('minion' if any(k.startswith('minion') for k in aura.stats) else 'fire'),38,'allocated' if is_active else 'open')
+            self.screen.blit(seal,(c.x,c.centery-19))
+            c.x += 48
+            c.width -= 48
             # Buton önce konumlanır, metin genişliği ondan türetilir
             btn_w = 104
             btn_rect = pygame.Rect(c.right - btn_w, c.centery - 19, btn_w, 38)
             self.aura_btn_rects.append((idx, btn_rect))
             text_w = max(80, btn_rect.left - c.x - 16)
 
-            name_t = render_fit(aura.name, 21, gold, text_w, bold=True)
+            name_t = render_fit(aura.name, 19, gold, text_w, bold=True)
             self.screen.blit(name_t, (c.x, c.y))
-            self.draw_text_wrapped(aura.description, c.x, c.y + name_t.get_height() + 4,
-                                   text_w, (188, 182, 170), self.font_desc)
+            desc = render_fit(aura.description,17,ui_theme.TEXT_COL,text_w)
+            self.screen.blit(desc,(c.x,c.y+name_t.get_height()+3))
 
             hovered = btn_rect.collidepoint(mouse_pos)
             if owned:
                 key = "moss" if is_active else "night"
-                label = "AKTİF" if is_active else "KUŞAN"
+                label = "ÇIKAR" if is_active else ("DOLU" if len(p.active_auras) >= p.aura_limit else "KUŞAN")
             else:
                 key = "gold"
-                label = f"{aura.cost // 1000}K G"
+                label = f"{aura.cost:,} G"
             ui_theme.draw_plate(self.screen, btn_rect,
                                 "hover" if (hovered or is_active) else "normal",
                                 ui_theme.COLORS[key])
@@ -3440,7 +3362,7 @@ class GameScene(BaseScene):
         self.aura_next_rect = pygame.Rect(a_content.centerx + 8, pager_y, 88, pager_h)
         for rect, label, enabled in (
                 (self.aura_prev_rect, "<< GERİ", self.aura_page > 0),
-                (self.aura_next_rect, "İLERİ >>", (self.aura_page + 1) * 8 < len(all_auras))):
+                (self.aura_next_rect, "İLERİ >>", (self.aura_page + 1) * 4 < len(all_auras))):
             if not enabled:
                 continue
             hovered = rect.collidepoint(mouse_pos)
@@ -3467,6 +3389,9 @@ class GameScene(BaseScene):
         synergies = getattr(self.logic.card_system.synergy_system, 'SYNERGIES', [])
         active_synergies = getattr(self.logic.card_system.synergy_system, 'active_synergies', [])
         active_names = self.logic.card_system.get_active_card_names()
+        owned_ids = set(self.logic.card_system.active_cards)
+        synergies = sorted(synergies,key=lambda syn:(syn['id'] not in active_synergies,
+                           -sum(k in owned_ids for k in syn['required_cards'])/max(1,len(syn['required_cards'])),syn['name']))
 
         cards_title = render_fit(f"Sahip Olduğun Kartlar ({len(active_names)} Adet):",
                                  21, (196, 190, 178), inner.width, bold=True)
@@ -3474,13 +3399,15 @@ class GameScene(BaseScene):
         y += cards_title.get_height() + 4
 
         cards_text = " • ".join(active_names) if active_names else "Henüz kart alınmadı."
-        y = self.draw_text_wrapped(cards_text, inner.x, y, inner.width, moss, self.font_desc) + 12
+        roster = render_fit(cards_text,17,moss,inner.width)
+        self.screen.blit(roster,(inner.x,y))
+        y += 36
 
         # Liste ekrana sığmıyor: kaydırılabilir alan (eskiden ızgara sınırsız
         # büyüyüp panelin altından taşıyordu).
         view = pygame.Rect(inner.x, y, inner.width, inner.bottom - y - 24)
         col_w = (inner.width - 20) // 2
-        card_h = 115
+        card_h = 145
         rows = (len(synergies) + 1) // 2
         self._synergy_max_scroll = max(0, rows * (card_h + 10) - view.height)
 
@@ -3501,30 +3428,34 @@ class GameScene(BaseScene):
                 self.screen, rect, "panel_frame_small.png",
                 fill=(28, 34, 29) if is_active else (26, 23, 30), alpha=244,
                 tint=tuple(int(v * (0.34 if is_active else 0.18)) for v in tint_col),
-                pad=14)
+                pad=26)
 
             # Kartın ÜST ve ALT satırları çerçevenin köşe taşları hizasında;
             # bu iki satır yatayda ek pay alır, ortadaki açıklama tam genişlik.
             edge = 18
             ex, ew = c.x + edge, c.width - edge * 2
 
-            status_str = "AKTİF!" if is_active else "KEŞFEDİLMEDİ"
+            seal=ui_skill_tree.medallion('crit' if is_active else 'coin',30,'allocated' if is_active else 'open')
+            self.screen.blit(seal,(ex,c.y-3))
+            ex += 40
+            ew -= 40
+            status_str = "AKTİF" if is_active else f"{sum(k in owned_ids for k in syn['required_cards'])}/{len(syn['required_cards'])} KART"
             status_txt = render_fit(status_str, 19, moss if is_active else (140, 134, 124),
                                     ew // 2, bold=is_active)
             self.screen.blit(status_txt, (ex + ew - status_txt.get_width(), c.y))
 
-            name_txt = render_fit(syn['name'], 20, gold if is_active else (156, 150, 140),
+            name_txt = render_fit(syn['name'], 20, gold if is_active else (196, 190, 178),
                                   ew - status_txt.get_width() - 12, bold=True)
             self.screen.blit(name_txt, (ex, c.y))
 
             dy = self.draw_text_wrapped(
                 syn['desc'], c.x, c.y + name_txt.get_height() + 4, c.width,
-                (208, 202, 190) if is_active else (132, 127, 118), self.font_desc)
+                (208, 202, 190) if is_active else (178, 173, 164), self.font_desc)
 
-            req_str = "Gereken: " + " + ".join(card_names.get(k, k) for k in syn['required_cards'])
+            req_str = "Eksik: " + " + ".join(card_names.get(k,k) for k in syn['required_cards'] if k not in owned_ids) if not is_active else "Tüm parçalar tamamlandı"
             self.draw_text_wrapped(
                 req_str, ex, min(dy + 2, c.bottom - self.font_desc.get_height()),
-                ew, (172, 166, 154) if is_active else (110, 106, 98),
+                ew, (172, 166, 154) if is_active else (178, 173, 164),
                 self.font_desc)
 
         self.screen.set_clip(prev_clip)
@@ -3591,6 +3522,6 @@ class GameScene(BaseScene):
         next_r = getattr(self, 'aura_next_rect', None)
         if prev_r and prev_r.collidepoint(pos) and self.aura_page > 0:
             self.aura_page -= 1; return True
-        if next_r and next_r.collidepoint(pos) and (self.aura_page + 1) * 8 < len(all_auras):
+        if next_r and next_r.collidepoint(pos) and (self.aura_page + 1) * 4 < len(all_auras):
             self.aura_page += 1; return True
         return False

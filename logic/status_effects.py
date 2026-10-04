@@ -32,7 +32,8 @@ class StatusEffect:
             if is_enemy:
                 # DoT zırh/kalkan formülünden geçsin diye take_damage üzerinden akar;
                 # take_damage ölümde kill_enemy'yi zaten çağırır (çift çağrı olmasın)
-                target.take_damage(damage, game, is_dot=True, from_player=True)
+                target.take_damage(damage, game, is_dot=True, from_player=True,
+                                   damage_type='fire' if self.name == 'Burn' else 'poison')
             elif hasattr(target, 'take_damage'):
                 target.take_damage(damage, force=True, is_dot=True)
             elif hasattr(target, 'hp'):

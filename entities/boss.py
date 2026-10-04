@@ -156,9 +156,9 @@ class AbyssalLord(Enemy):
             if getattr(shot,"boss_owner_id",None)==self.id: shot.active=False
         self.owned_projectiles.clear()
 
-    def take_damage(self,amount,game,is_crit=False,is_dot=False,from_player=False,is_reflected=False,is_secondary=False):
+    def take_damage(self,amount,game,is_crit=False,is_dot=False,from_player=False,is_reflected=False,is_secondary=False,damage_type='physical'):
         # Always attackable; recovery gives a deliberate melee opening.
-        result=super().take_damage(amount,game,is_crit,is_dot,from_player,is_reflected=is_reflected,is_secondary=is_secondary)
+        result=super().take_damage(amount,game,is_crit,is_dot,from_player,is_reflected=is_reflected,is_secondary=is_secondary,damage_type=damage_type)
         if self.dead: self.clear_projectiles()
         return result
 

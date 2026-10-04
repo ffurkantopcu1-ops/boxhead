@@ -88,31 +88,6 @@ class TestDeadKeys(unittest.TestCase):
                if not _consumed(k, self.sources, declared_in=())}
         self.assertFalse(olu, self._rapor(olu, 'data/synergies.json'))
 
-    def test_dalga_olayi_anahtarlari_tuketiliyor(self):
-        """WAVE_EVENTS girdilerinin davranış anahtarları okunmalı.
-
-        `sound_aggro` tam olarak burada yakalanır: sesi olmayan bir oyunda,
-        ses üzerine kurulu, hiç uygulanmamış bir mekanik ilan ediliyordu.
-        """
-        from logic.game_logic import GameLogic
-        keys = set()
-        for event in GameLogic.WAVE_EVENTS:
-            keys.update(event.keys())
-        # game_logic.py anahtarları TANIMLADIĞI dosya; tüketim başka yerde
-        # veya aynı dosyada olabilir, o yüzden tanım satırlarını ayıklıyoruz.
-        olu = set()
-        for key in keys - self.ALLOWED:
-            pattern = re.compile(r'["\']' + re.escape(key) + r'["\']')
-            hits = 0
-            for rel, src in self.sources.items():
-                for line in src.splitlines():
-                    if pattern.search(line) and 'WAVE_EVENTS' not in line \
-                            and not line.strip().startswith('{"id":'):
-                        hits += 1
-            if hits == 0:
-                olu.add(key)
-        self.assertFalse(olu, self._rapor(olu, 'GameLogic.WAVE_EVENTS'))
-
     def test_kart_stat_anahtarlari_tuketiliyor(self):
         path = os.path.join(ROOT, 'data', 'cards.json')
         with open(path, encoding='utf-8') as f:

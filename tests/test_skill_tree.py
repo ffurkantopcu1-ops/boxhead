@@ -44,7 +44,7 @@ class TestData(unittest.TestCase):
         for n in SkillTree.NODES:
             if n.get("type") == "keystone":
                 stats = n.get("stats", {})
-                self.assertTrue(any(v < 0 for v in stats.values()),
+                self.assertTrue(any(v < 0 for v in stats.values()) or n.get("downside"),
                                 f"{n['id']} keystone bedelsiz")
 
     def test_every_start_reaches_a_core_node(self):
@@ -203,7 +203,7 @@ class TestTreeShape(unittest.TestCase):
     def test_keystones_have_a_downside(self):
         for n in SkillTree.NODES:
             if n["type"] == "keystone":
-                self.assertTrue(any(v < 0 for v in n["stats"].values()),
+                self.assertTrue(any(v < 0 for v in n["stats"].values()) or n.get("downside"),
                                 f"{n['name']} bedelsiz keystone")
 
     def test_stale_saved_nodes_are_refunded(self):

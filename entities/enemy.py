@@ -506,20 +506,8 @@ class Enemy:
         # ve sersemletme yalnizca tek bir satirda okunuyordu (H2)
         eff_speed = 0.0 if getattr(self, "is_stunned", False) else self.speed * self.speed_mod
 
-        # "🔇 GÜRÜLTÜ YASAĞI" dalga olayı: ateş etmek düşmanları çeker.
-        # sound_aggro anahtarı tanımlıydı ama HİÇ okunmuyordu; olay yalnızca
-        # afiş gösteriyordu. Artık son 1.5 sn içinde ateş edildiyse düşmanlar
-        # "sesi duyar": daha hızlı gelirler ve görünmezlik onları şaşırtmaz.
-        _ev = game.wave.get("event")
-        _noisy = False
-        if _ev and _ev.get("sound_aggro"):
-            _since = pygame.time.get_ticks() - getattr(p, "last_shot_time", -99999)
-            _noisy = _since < 1500
-            if _noisy:
-                eff_speed *= 1.35
-
         # Görünmezlik Kontrolü
-        if p.is_invisible and not _noisy:
+        if p.is_invisible:
              # Eğer görünmezse rastgele küçük hareketler yap (Wander)
              self.x += random.uniform(-1, 1) * eff_speed * dt * 20
              self.y += random.uniform(-1, 1) * eff_speed * dt * 20
@@ -1027,6 +1015,8 @@ class Enemy:
 
     def update_contact(self, dt, player, in_contact=True):
         """Düşman başına 0.5s vuruş: eski 2*dmg DPS, tek kaçınma/tetikleme."""
+        if self.type == 'kamikaze':
+            return  # Warning is an escape window; explosion is its only hit.
         self.contact_cooldown = getattr(self, "contact_cooldown", 0.5) - max(0.0, dt)
         if not in_contact:
             self.contact_cooldown = max(0.0, self.contact_cooldown)
@@ -1043,6 +1033,7 @@ class Enemy:
         Can çalma İSTENEN hasara değil GERÇEKLEŞEN hasara bağlıdır; böylece
         dodge/i-frame ile boşa giden vuruş düşmanı iyileştirmez.
         """
+        p.last_damage_source = 'explosion' if self.type=='kamikaze' else 'enemy_contact' if force else 'enemy_attack'
         p.last_attacker_type = self.type
         ls = getattr(self, 'elite_lifesteal', 0)
         if ls <= 0:
@@ -1066,6 +1057,8 @@ class Enemy:
 
     def apply_dot(self, eff_type, dps, duration, slow=0.0):
         from logic.status_effects import apply_burn, apply_slow
+        if self._player_stats().get('treeFireOnly', 0) and eff_type not in ('fire', 'burn'):
+            return
         # statusDuration (affix + SET_VENOM 3pc + SET_ALCHEMIST 4pc) ve
         # juggernaut aurasının -0.5 cezası tanımlıydı ama hiç okunmuyordu.
         # Süre negatife düşmesin diye taban 0.1x ile kırpılır.
@@ -1083,7 +1076,7 @@ class Enemy:
             self.effect_manager.add_effect(StatusEffect("Poison", duration, dps=dps, color=(46, 204, 113)))
 
 
-    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False, is_reflected=False, is_secondary=False):
+    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False, is_reflected=False, is_secondary=False, damage_type='physical'):
         if self.dead: return
         # Negatif/sıfır hasar düşmanı iyileştiriyordu (H8)
         if amount <= 0: return
@@ -1100,11 +1093,30 @@ class Enemy:
         # --- ZIRH HESABI ---
         player = game.players[game.local_player_id]
         p_stats = player.stats if from_player else {}
+        if p_stats.get('treeFireOnly', 0) and damage_type != 'fire':
+            return
+        if p_stats.get('treeNoCrit', 0): is_crit = False
+        if from_player and not is_dot and not is_reflected:
+            if p_stats.get('treeSingleShot', 0): amount *= 2
+            converted = amount * min(.5, max(0, p_stats.get('treePoisonConversion', 0)))
+            if converted:
+                from logic.status_effects import StatusEffect
+                # Separate timed packets conserve damage without refreshing
+                # older stacks or converting the resulting DoT a second time.
+                effect = StatusEffect('ConversionPoison', 4.0, dps=converted/4,
+                                      color=(120, 230, 90))
+                effects = self.effect_manager.effects
+                last = effects[-1] if effects else None
+                if last and last.name == 'ConversionPoison' and abs(last.timer-4.0)<1e-9:
+                    last.dps += effect.dps
+                else:
+                    effects.append(effect)
+                amount -= converted
         triggers_on_hit = from_player and not is_dot and not is_reflected and not is_secondary
         
         # Zırh Delme (Armor Pen) - Broken Stat
         armor_pen = p_stats.get("armorPen", 0)
-        effective_armor = self.armor * (1.0 - min(1.0, armor_pen))
+        effective_armor = max(0, self.armor - max(0, p_stats.get("armorPenFlat", 0))) * (1.0 - min(1.0, armor_pen))
         
         # Hasar Azaltma Formülü: dmg * (100 / (100 + armor))
         damage_reduction = 100 / (100 + max(0, effective_armor))

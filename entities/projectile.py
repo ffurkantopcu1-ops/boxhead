@@ -226,7 +226,7 @@ class Projectile:
                 absorb_active = (getattr(p, 'class_id', '') == "bloodwalker" and
                                  getattr(getattr(p, 'specialization', None), 'blood_absorb_active', False))
                 if not absorb_active:
-                    p.last_attacker_type = getattr(self, "owner_type", "bilinmeyen"); p.take_damage(self.dmg)
+                    p.last_damage_source = "projectile"; p.last_attacker_type = getattr(self, "owner_type", "bilinmeyen"); p.take_damage(self.dmg)
                 # absorb_active ise bloodwalker_logic.update() zaten emer
                 self.dead = True
 
@@ -372,7 +372,7 @@ class Projectile:
                 if enemy.dead or enemy.is_trap:
                     continue
                 if (enemy.x-cx)**2 + (enemy.y-cy)**2 < radius**2:
-                    enemy.take_damage(self.fire_dmg * 0.5, game, from_player=not self.is_hostile, is_secondary=True)
+                    enemy.take_damage(self.fire_dmg * 0.5, game, from_player=not self.is_hostile, is_secondary=True, damage_type='fire')
                     enemy.apply_dot("fire", self.fire_dmg * 0.4 * getattr(self,"dot_mult",1.0),3.0)
             return
 
@@ -389,7 +389,9 @@ class Projectile:
             game.clouds.append(Cloud(game.entity_id_counter, self.x, self.y,
                                      radius=mine_radius,
                                      duration=MINE_LIFETIME,
-                                     is_mine=True, mine_dmg=burst, is_crit=self.is_crit))
+                                     is_mine=True, mine_dmg=burst, is_crit=self.is_crit,
+                                     mine_fire_dmg=self.fire_dmg * getattr(self, "hit_crit_mult", 1.0) * self.mine_dmg_mult,
+                                     mine_frost_dmg=self.frost_dmg * getattr(self, "hit_crit_mult", 1.0) * self.mine_dmg_mult))
             game.add_event("explosion", self.x, self.y, radius=int(mine_radius * 0.3),
                            color=(255, 140, 40), timer=0.12)
             return
@@ -411,7 +413,7 @@ class Projectile:
                         # Ejder minyonunun alan hasarı da minion_kills sayılır
                         e.last_hit_by_minion = getattr(self, "is_minion_proj", False)
                         try:
-                            e.take_damage(self.fire_dmg, game, from_player=not self.is_hostile, is_secondary=True)
+                            e.take_damage(self.fire_dmg, game, from_player=not self.is_hostile, is_secondary=True, damage_type='fire')
                         finally:
                             e.last_hit_by_minion = False
                         # DoT da ekleyelim (Patlamadan etkilenen yanar).

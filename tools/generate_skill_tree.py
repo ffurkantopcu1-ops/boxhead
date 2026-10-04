@@ -13,7 +13,7 @@ STAT_CAT = {
     # --- saldırı ---
     "dmgMult": "damage", "physDmgFlat": "damage", "physDmgMult": "damage",
     "critChance": "damage", "critDmg": "damage", "attack_speed_bonus": "damage",
-    "armorPen": "damage", "bossDmgMult": "damage", "bullet_speed": "damage",
+    "armorPenFlat": "damage", "armorPen": "damage", "bossDmgMult": "damage", "bullet_speed": "damage",
     "pierce": "damage", "bounce": "damage", "projectileCount": "damage",
     "meleeRangeFlat": "damage",
     # --- element ---
@@ -97,6 +97,7 @@ STAT_LABEL = {
     "projectileCount":    lambda v: f"{_sg(v)}{_flat(v)} Mermi",
     "bullet_speed":       lambda v: f"{_sg(v)}{_flat(v)} Mermi Hızı",
     "meleeRangeFlat":     lambda v: f"{_sg(v)}{_flat(v)} Menzil",
+    "armorPenFlat":       lambda v: f"{_sg(v)}{_flat(v, 1)} Düz Zırh Delme",
     "armorPen":           lambda v: f"{_sg(v)}{_flat(v, 1)} Zırh Delme",
     "bossDmgMult":        lambda v: f"{_sg(v)}{_pct(v)} Boss Hasarı",
     "turretDmg":          lambda v: f"{_sg(v)}{_pct(v)} Taret Hasarı",
@@ -130,6 +131,13 @@ def label_of(stat, val):
 
 
 STAT_LABEL.update({
+    'treePoisonConversion': lambda v: 'Doğrudan hasarın %50’sini 4 saniyelik zehre dönüştürür',
+    'treeFireOnly': lambda v: '+%200 ateş hasarı; ateş dışı hasar sıfır',
+    'treeSingleShot': lambda v: 'Tek mermi, sekme/delme yok; iki kat doğrudan hasar',
+    'treeNoCrit': lambda v: 'Kritik vuruş kapanır',
+    'treeNoRegen': lambda v: 'Can yenilenmesi kapanır',
+    'treeNoArmor': lambda v: 'Zırh sıfıra kilitlenir',
+    'treeNoDodge': lambda v: 'Kaçınma sıfıra kilitlenir',
     "aoe": lambda v: f"{_sg(v)}{_pct(v)} Alan Etkisi",
     "cooldownReduction": lambda v: f"{_sg(v)}{_pct(v)} Yetenek Bekleme Azaltma",
     "killComboDmg": lambda v: f"Kombo başına {_sg(v)}{_pct(v)} Hasar",
@@ -141,280 +149,202 @@ STAT_CAT.update({"aoe": "dot", "cooldownReduction": "utility",
                  "killComboDmg": "damage", "lowHpExec": "damage",
                  "minionMaxHp": "minion", "minionProjectileCount": "minion"})
 
-THEMES = {'warrior': {'minor': [('Warrior Gelişimi 1', {'armor': 5, 'physDmgFlat': 10}),
-                       ('Warrior Gelişimi 2', {'physDmgFlat': 10, 'lifesteal': 0.02}),
-                       ('Warrior Gelişimi 3', {'lifesteal': 0.02, 'regen': 1.5}),
-                       ('Warrior Gelişimi 4', {'regen': 1.5, 'meleeRangeFlat': 15}),
-                       ('Warrior Gelişimi 5', {'meleeRangeFlat': 15, 'max_hp_pct': 3})],
-             'mastery': ('⚜️ Warrior Ustalığı', {'armor': 10, 'physDmgFlat': 20, 'lifesteal': 0.04}),
-             'keystones': [('🛡️ Yenilmez', {'max_hp_pct': 20, 'armor': 50, 'speed': -0.5}),
-                           ('⚔️ Savaş Tanrısı', {'physDmgMult': 0.2, 'lifesteal': 0.1})]},
- 'sniper': {'minor': [('Sniper Gelişimi 1', {'critChance': 0.03, 'pierce': 1}),
-                      ('Sniper Gelişimi 2', {'pierce': 1, 'bounce': 1}),
-                      ('Sniper Gelişimi 3', {'bounce': 1, 'attack_speed_bonus': 0.04}),
-                      ('Sniper Gelişimi 4', {'attack_speed_bonus': 0.04, 'speed': 0.2}),
-                      ('Sniper Gelişimi 5', {'speed': 0.2, 'dmgMult': 0.05})],
-            'mastery': ('⚜️ Sniper Ustalığı', {'critChance': 0.06, 'pierce': 2, 'bounce': 2}),
-            'keystones': [('🎯 Keskin Nişancı', {'dmgMult': 0.3, 'critChance': 0.15, 'armor': -30}),
-                          ('🦅 Avcı Kuş', {'bounce': 2, 'pierce': 2})]},
- 'engineer': {'minor': [('Engineer Gelişimi 1', {'turretMaxHp': 30, 'armor': 5}),
-                        ('Engineer Gelişimi 2', {'armor': 5, 'cooldownReduction': 0.04}),
-                        ('Engineer Gelişimi 3', {'cooldownReduction': 0.04, 'turretLimit': 1}),
-                        ('Engineer Gelişimi 4', {'turretLimit': 1, 'turretRate': 0.05}),
-                        ('Engineer Gelişimi 5', {'turretRate': 0.05, 'turretDmg': 0.05})],
-              'mastery': ('⚜️ Engineer Ustalığı',
-                          {'turretMaxHp': 60, 'armor': 10, 'cooldownReduction': 0.08}),
-              'keystones': [('⚙️ Makine Mühendisi', {'turretLimit': 2, 'turretDmg': 0.2}),
-                            ('🔩 Çelik Ağ', {'turretMaxHp': 200, 'cooldownReduction': 0.2})]},
- 'beastmaster': {'minor': [('Beastmaster Gelişimi 1', {'minionMaxHp': 0.1, 'minionRate': 0.05}),
-                           ('Beastmaster Gelişimi 2', {'minionRate': 0.05, 'minionArmor': 5}),
-                           ('Beastmaster Gelişimi 3', {'minionArmor': 5, 'speed': 0.3}),
-                           ('Beastmaster Gelişimi 4', {'speed': 0.3, 'max_hp': 20}),
-                           ('Beastmaster Gelişimi 5', {'max_hp': 20, 'minionDamage': 0.05})],
-                 'mastery': ('⚜️ Beastmaster Ustalığı',
-                             {'minionMaxHp': 0.2, 'minionRate': 0.1, 'minionArmor': 10}),
-                 'keystones': [('🐺 Alfa Kurdu', {'minionDamage': 0.3, 'minionMaxHp': 0.3}),
-                               ('🦅 Vahşi Sürü', {'minionProjectileCount': 2, 'minionRate': 0.15})]},
- 'bomber': {'minor': [('Bomber Gelişimi 1', {'dmgMult': 0.05, 'cooldownReduction': 0.05}),
-                      ('Bomber Gelişimi 2', {'cooldownReduction': 0.05, 'magnetRadius': 20}),
-                      ('Bomber Gelişimi 3', {'magnetRadius': 20, 'fireDmgMult': 0.05}),
-                      ('Bomber Gelişimi 4', {'fireDmgMult': 0.05, 'aoe': 0.05}),
-                      ('Bomber Gelişimi 5', {'aoe': 0.05, 'dmgMult': 0.05})],
-            'mastery': ('⚜️ Bomber Ustalığı', {'dmgMult': 0.1, 'cooldownReduction': 0.1, 'magnetRadius': 40}),
-            'keystones': [('💣 Patlayıcı Uzmanı', {'aoe': 0.4, 'fireDmgMult': 0.2}),
-                          ('🔥 Zincirleme Reaksiyon', {'dmgMult': 0.3, 'cooldownReduction': 0.2})]},
- 'alchemist': {'minor': [('Alchemist Gelişimi 1', {'aoe': 0.04, 'speed': 0.3}),
-                         ('Alchemist Gelişimi 2', {'speed': 0.3, 'dodgeChance': 0.02}),
-                         ('Alchemist Gelişimi 3', {'dodgeChance': 0.02, 'maxEnergyShield': 20}),
-                         ('Alchemist Gelişimi 4', {'maxEnergyShield': 20, 'dotDmgMult': 0.05}),
-                         ('Alchemist Gelişimi 5', {'dotDmgMult': 0.05, 'aoe': 0.04})],
-               'mastery': ('⚜️ Alchemist Ustalığı', {'aoe': 0.08, 'speed': 0.6, 'dodgeChance': 0.04}),
-               'keystones': [('🧪 Zehir Ustası', {'dotDmgMult': 0.4, 'aoe': 0.15}),
-                             ('⚗️ Kimyasal Kalkan', {'maxEnergyShield': 100, 'dodgeChance': 0.15})]},
- 'sorcerer': {'minor': [('Sorcerer Gelişimi 1', {'maxEnergyShield': 30, 'esRegen': 5}),
-                        ('Sorcerer Gelişimi 2', {'esRegen': 5, 'cooldownReduction': 0.04}),
-                        ('Sorcerer Gelişimi 3', {'cooldownReduction': 0.04, 'pierce': 1}),
-                        ('Sorcerer Gelişimi 4', {'pierce': 1, 'magicFind': 0.05}),
-                        ('Sorcerer Gelişimi 5', {'magicFind': 0.05, 'elementDmgMult': 0.06})],
-              'mastery': ('⚜️ Sorcerer Ustalığı',
-                          {'maxEnergyShield': 60, 'esRegen': 10, 'cooldownReduction': 0.08}),
-              'keystones': [('🔮 Element Efendisi', {'elementDmgMult': 0.4, 'magicFind': 1.0}),
-                            ('✨ Astral Kalkan', {'maxEnergyShield': 150, 'esRegen': 50})]},
- 'bloodwalker': {'minor': [('Bloodwalker Gelişimi 1', {'max_hp_pct': 4, 'meleeRangeFlat': 15}),
-                           ('Bloodwalker Gelişimi 2', {'meleeRangeFlat': 15, 'physDmgMult': 0.05}),
-                           ('Bloodwalker Gelişimi 3', {'physDmgMult': 0.05, 'lowHpExec': 0.05}),
-                           ('Bloodwalker Gelişimi 4', {'lowHpExec': 0.05, 'lifesteal': 0.03}),
-                           ('Bloodwalker Gelişimi 5', {'lifesteal': 0.03, 'max_hp_pct': 4})],
-                 'mastery': ('⚜️ Bloodwalker Ustalığı',
-                             {'max_hp_pct': 8, 'meleeRangeFlat': 30, 'physDmgMult': 0.1}),
-                 'keystones': [('🩸 Kan Banyosu', {'lifesteal': 0.15, 'max_hp_pct': 30}),
-                               ('💀 Ölümcül Hasat', {'physDmgMult': 0.3, 'lowHpExec': 0.15})]},
- 'ninja': {'minor': [('Ninja Gelişimi 1', {'dodgeChance': 0.03, 'speed': 0.4}),
-                     ('Ninja Gelişimi 2', {'speed': 0.4, 'critChance': 0.04}),
-                     ('Ninja Gelişimi 3', {'critChance': 0.04, 'bossDmgMult': 0.05}),
-                     ('Ninja Gelişimi 4', {'bossDmgMult': 0.05, 'killComboDmg': 0.02}),
-                     ('Ninja Gelişimi 5', {'killComboDmg': 0.02, 'attack_speed_bonus': 0.05})],
-           'mastery': ('⚜️ Ninja Ustalığı', {'dodgeChance': 0.06, 'speed': 0.8, 'critChance': 0.08}),
-           'keystones': [('🥷 Gölgelerin İçinden', {'dodgeChance': 0.2, 'speed': 1.0}),
-                         ('🗡️ Suikastçi', {'bossDmgMult': 0.3, 'critChance': 0.2})]}}
 
-CLASSES = list(THEMES)
-# Crossing a bridge requires four shared nodes after reaching class mastery.
-BRIDGES = [
-    ("Keskin Nişan", [{"physDmgMult": .04}, {"critChance": .02},
-                      {"attack_speed_bonus": .04}, {"max_hp": 20}]),
-    ("Mekanik Odak", [{"dmgMult": .04}, {"speed": .15},
-                      {"maxEnergyShield": 15}, {"critChance": .02}]),
-    ("Komuta Bağı", [{"minionDamage": .04, "turretDmg": .04},
-                     {"minionRange": .10, "turretRange": 20},
-                     {"minionRate": .04, "turretRate": .04},
-                     {"minionPierce": 1, "minionBounce": 1, "turretMaxHp": 25}]),
-    ("Saha Kontrolü", [{"aoe_bonus": .04}, {"dmgMult": .04},
-                       {"max_hp": 20}, {"regen": .4}]),
-    ("Yanıcı Karışım", [{"dotDmgMult": .04}, {"aoe_bonus": .04},
-                        {"fireDmgMult": .04}, {"regen": .4}]),
-    ("Element Akışı", [{"elementDmgMult": .04}, {"dotDmgMult": .04},
-                       {"maxEnergyShield": 15}, {"esRegen": 3}]),
-    ("Kan ve Mana", [{"lifesteal": .01}, {"dmgMult": .04},
-                     {"regen": .4}, {"max_hp": 20}]),
-    ("Kanlı Çeviklik", [{"physDmgMult": .04}, {"attack_speed_bonus": .04},
-                        {"critChance": .02}, {"lifesteal": .01}]),
-    ("Çelik Adımlar", [{"meleeRangeFlat": 10}, {"dodgeChance": .02},
-                       {"physDmgMult": .04}, {"speed": .15}]),
-]
-PENALTIES = {
-    "warrior_keystone_2": {"max_hp_pct": -15},
-    "sniper_keystone_2": {"attack_speed_bonus": -.12},
-    "engineer_keystone_1": {"turretMaxHp": -40},
-    "engineer_keystone_2": {"turretDmg": -.15},
-    "beastmaster_keystone_1": {"minionRate": -.12},
-    "beastmaster_keystone_2": {"minionDamage": -.15},
-    "bomber_keystone_1": {"attack_speed_bonus": -.12},
-    "bomber_keystone_2": {"max_hp_pct": -15},
-    "alchemist_keystone_1": {"max_hp_pct": -10},
-    "alchemist_keystone_2": {"armor": -25, "max_hp_pct": -15},
-    "sorcerer_keystone_1": {"max_hp_pct": -15},
-    "sorcerer_keystone_2": {"elementDmgMult": -.15},
-    "bloodwalker_keystone_1": {"dmgMult": -.15},
-    "bloodwalker_keystone_2": {"max_hp_pct": -15},
-    "ninja_keystone_1": {"max_hp_pct": -15},
-    "ninja_keystone_2": {"armor": -20},
-}
+import sys
+sys.path.insert(0, ROOT)
+from tools.tree_clusters import CLUSTERS, KEYSTONES
 
+CLASSES = ['warrior', 'ninja', 'bloodwalker', 'beastmaster', 'engineer',
+           'sniper', 'sorcerer', 'alchemist', 'bomber']
+TREE_VERSION = 2
+STAT_LABEL.update({
+    'meleeRangeMult': lambda v: f'{_sg(v)}{_pct(v)} Yakın Dövüş Menzili',
+    'minionPhysDmgFlat': lambda v: f'{_sg(v)}{_flat(v)} Minyon Fiziksel Hasarı',
+    'minionCrit': lambda v: f'{_sg(v)}{_pct(v)} Minyon Kritik Şansı',
+    'minionFireDmgFlat': lambda v: f'{_sg(v)}{_flat(v)} Minyon Ateş Hasarı',
+    'minionFrostDmgFlat': lambda v: f'{_sg(v)}{_flat(v)} Minyon Buz Hasarı',
+})
+STAT_CAT.update({k:'minion' for k in ('minionPhysDmgFlat','minionCrit',
+                                    'minionFireDmgFlat','minionFrostDmgFlat')})
 
-# Each class offers three distinct five-point commitments from its first point.
-EARLY_ROUTES = {
- "warrior": [("Düellocu", [{"physDmgFlat":3},{"attack_speed_bonus":.05},{"critChance":.025},{"physDmgMult":.06},{"armorPen":3}]),
-             ("Demir Muhafız", [{"armor":5},{"max_hp":15},{"regen":.5},{"max_hp_pct":4},{"armor":7}]),
-             ("Cephe Kırıcı", [{"meleeRangeFlat":12},{"aoe_bonus":.06},{"speed":.2},{"lifesteal":.015},{"meleeRangeFlat":15}])],
- "ninja": [("Suikast", [{"critChance":.03},{"physDmgFlat":2},{"critDmg":.10},{"bossDmgMult":.06},{"attack_speed_bonus":.05}]),
-           ("Gölge Adımı", [{"dodgeChance":.025},{"speed":.25},{"max_hp":12},{"dodgeChance":.025},{"regen":.4}]),
-           ("Akıcı Bıçak", [{"attack_speed_bonus":.05},{"meleeRangeFlat":10},{"killComboDmg":.01},{"speed":.2},{"physDmgMult":.05}])],
- "sniper": [("Tek Atış", [{"physDmgFlat":3},{"critChance":.03},{"armorPen":3},{"bossDmgMult":.06},{"critDmg":.1}]),
-            ("Gezgin Avcı", [{"speed":.25},{"dodgeChance":.025},{"max_hp":15},{"regen":.4},{"speed":.2}]),
-            ("Çapraz Ateş", [{"bullet_speed":.5},{"pierce":1},{"attack_speed_bonus":.04},{"bounce":1},{"dmgMult":.04}])],
- "sorcerer": [("Element Akışı", [{"fireDmgFlat":3,"frostDmgFlat":3},{"elementDmgMult":.05},{"critChance":.025},{"elementDmgMult":.06},{"attack_speed_bonus":.04}]),
-              ("Astral Siper", [{"maxEnergyShield":20},{"esRegen":3},{"max_hp":12},{"maxEnergyShield":25},{"esRegen":4}]),
-              ("Büyü Dokuma", [{"dotDmgMult":.05},{"aoe_bonus":.05},{"speed":.2},{"cooldownReduction":.04},{"pierce":1}])],
- "alchemist": [("Aşındırıcı", [{"poisonDps":3},{"dotDmgMult":.06},{"poisonDps":3},{"dotDmgMult":.06},{"dmgMult":.04}]),
-               ("Simyasal Siper", [{"maxEnergyShield":18},{"regen":.5},{"max_hp":15},{"dodgeChance":.025},{"maxEnergyShield":20}]),
-               ("Dağıtıcı", [{"aoe_bonus":.06},{"speed":.2},{"attack_speed_bonus":.04},{"aoe_bonus":.06},{"cooldownReduction":.04}])],
- "bomber": [("Yıkım", [{"dmgMult":.05},{"fireDmgMult":.05},{"physDmgFlat":3},{"critChance":.025},{"dmgMult":.05}]),
-            ("Siperci", [{"armor":5},{"max_hp":15},{"regen":.5},{"max_hp_pct":4},{"armor":7}]),
-            ("Saha Kontrolü", [{"aoe_bonus":.06},{"cooldownReduction":.04},{"speed":.2},{"aoe_bonus":.06},{"attack_speed_bonus":.04}])],
- "bloodwalker": [("Kızıl Hasat", [{"physDmgFlat":3},{"physDmgMult":.05},{"critChance":.025},{"lowHpExec":.025},{"physDmgMult":.06}]),
-                 ("Kan Sığınağı", [{"max_hp":15},{"lifesteal":.015},{"regen":.5},{"max_hp_pct":4},{"armor":5}]),
-                 ("Kan Akışı", [{"meleeRangeFlat":12},{"attack_speed_bonus":.04},{"speed":.2},{"lifesteal":.015},{"aoe_bonus":.06}])],
- "engineer": [("Alev Ustası", [{"fireDmgFlat":3},{"dmgMult":.04},{"fireDmgMult":.05},{"attack_speed_bonus":.04},{"aoe_bonus":.05}]),
-              ("Tahkimat", [{"turretMaxHp":20},{"armor":5},{"max_hp":15},{"turretMaxHp":25},{"regen":.5}]),
-              ("Otomasyon", [{"turretDmg":.05},{"turretRate":.05},{"turretRange":25},{"cooldownReduction":.04},{"turretDmg":.06}])],
- "beastmaster": [("Sürü Pençesi", [{"minionDamage":.05},{"minionPhysDmgFlat":2},{"minionCrit":.03},{"minionDamage":.06},{"minionRate":.05}]),
-                 ("Sürü Sığınağı", [{"minionMaxHp":.08},{"max_hp":15},{"minionArmor":5},{"regen":.5},{"minionMaxHp":.10}]),
-                 ("Av Komutası", [{"minionRate":.05},{"minionRange":.08},{"speed":.2},{"minionPierce":1},{"cooldownReduction":.04}])]
-}
-STAT_LABEL.update({"minionPhysDmgFlat":lambda v:f"{_sg(v)}{_flat(v)} Minyon Fiziksel Hasarı",
-                   "minionCrit":lambda v:f"{_sg(v)}{_pct(v)} Minyon Kritik Şansı"})
-STAT_CAT.update({"minionPhysDmgFlat":"minion","minionCrit":"minion"})
-
-def open_initial_routes(nodes):
-    by_id={n["id"]:n for n in nodes}
-    for i,cls in enumerate(CLASSES):
-        angle=i*2*math.pi/len(CLASSES)
-        ux,uy=math.cos(angle),math.sin(angle)
-        vx,vy=-uy,ux
-        def pos(radius,lateral=0):
-            return [round(3000+ux*radius+vx*lateral),round(3000+uy*radius+vy*lateral)]
-        by_id["start_"+cls]["pos"]=pos(500)
-        mastery=by_id[cls+"_notable_core"]
-        mastery["pos"]=pos(1500)
-        for lane,(name,values) in enumerate(EARLY_ROUTES[cls]):
-            previous="start_"+cls
-            for j,stats in enumerate(values,1):
-                nid=f"{cls}_main_{j}" if lane==0 else f"{cls}_early{lane}_{j}"
-                lateral=(0 if lane==0 else (-1 if lane==1 else 1))*(75+j*25)
-                node={"id":nid,"name":name+f" {j}","desc":desc_of(stats),"arm":cls,
-                      "type":"minor","cat":cat_of(stats),"stats":dict(stats),
-                      "pos":pos(500+j*160,lateral),"connects":[previous],"route":name}
-                if lane==0:
-                    by_id[nid].update(node)
-                else:
-                    nodes.append(node)
-                    by_id[nid]=node
-                previous=nid
-            if lane:
-                nid=f"{cls}_early{lane}_notable"
-                stats=({"armor":8,"max_hp":15} if lane==1 else {"speed":.2,"cooldownReduction":.04})
-                node={"id":nid,"name":name+" Ustalığı","desc":desc_of(stats),"arm":cls,
-                      "type":"notable","cat":cat_of(stats),"stats":stats,
-                      "pos":pos(1450,-260 if lane==1 else 260),
-                      "connects":[previous,f"{cls}_path{lane}_1"],"route":name}
-                nodes.append(node)
-                by_id[nid]=node
-        # A route can pivot after three spent points, without skipping depth.
-        for lane in (1,2):
-            by_id[f"{cls}_early{lane}_3"]["connects"].append(f"{cls}_main_3")
-        for branch in (1,2):
-            sign=-1 if branch==1 else 1
-            for j in range(1,6):
-                by_id[f"{cls}_path{branch}_{j}"]["pos"]=pos(1500+j*145,sign*(80+j*40))
-            by_id[f"{cls}_keystone_{branch}"]["pos"]=pos(2370,sign*320)
-    # Same shared-bridge investment as before, between the mastery junctions.
-    for i,cls in enumerate(CLASSES):
-        nxt=CLASSES[(i+1)%len(CLASSES)]
-        for j in range(1,5):
-            a=(i+j/5)*2*math.pi/len(CLASSES)
-            by_id[f"bridge_{cls}_{nxt}_{j}"]["pos"]=[round(3000+math.cos(a)*1500),round(3000+math.sin(a)*1500)]
-    return nodes
+def icon_of(stats, arm='core'):
+    priorities = [('bounce','bounce'),('minionBounce','bounce'),('pierce','pierce'),
+                  ('minionPierce','pierce'),('projectileCount','volley'),
+                  ('minionProjectileCount','volley'),('meleeRangeFlat','reach'),
+                  ('meleeRangeMult','reach'),('lifesteal','leech'),
+                  ('turretLimit','turret'),('minionCount','minion'),
+                  ('fireDmgFlat','fire'),('fireDmgMult','fire'),
+                  ('frostDmgFlat','frost'),('frostDmgMult','frost'),
+                  ('poisonDps','poison'),('dotDmgMult','poison'),
+                  ('speed','speed'),('critChance','crit'),('critDmg','crit'),
+                  ('attack_speed_bonus','tempo'),('cooldownReduction','tempo'),
+                  ('armor','shield'),('maxEnergyShield','shield'),
+                  ('max_hp','heart'),('regen','heart'),('goldGain','coin')]
+    for stat, icon in priorities:
+        if stats.get(stat,0)>0: return icon
+    if arm == 'engineer': return 'turret'
+    if arm == 'beastmaster': return 'minion'
+    return 'reach'
 
 def generate():
-    nodes = []
-    by_id = {}
-    def add(nid, name, arm, typ, stats, pos, previous=None):
-        node = {"id": nid, "name": name, "desc": desc_of(stats), "arm": arm,
-                "type": typ, "cat": cat_of(stats), "stats": dict(stats),
-                "pos": [round(pos[0]), round(pos[1])],
-                "connects": [previous] if previous else []}
-        if typ == "start":
-            node["start"] = True
-        nodes.append(node)
-        by_id[nid] = node
+    nodes, by_id = [], {}
+    def add(nid, name, arm, typ, stats, pos, connects=(), **extra):
+        node = dict(id=nid,name=name,arm=arm,type=typ,stats=dict(stats),
+                    desc=desc_of(stats),cat=cat_of(stats),icon=icon_of(stats,arm),
+                    pos=[round(v) for v in pos],connects=list(connects),**extra)
+        if typ=='start': node['start']=True
+        nodes.append(node); by_id[nid]=node
         return nid
-    def radial(angle, radius):
-        return (3000 + math.cos(angle) * radius, 3000 + math.sin(angle) * radius)
-    for i, cls in enumerate(CLASSES):
-        angle = i * 2 * math.pi / len(CLASSES)
-        theme = THEMES[cls]
-        prev = add("start_" + cls, cls.title() + " Başlangıcı", cls, "start", {},
-                   radial(angle, 300))
-        for j, (name, stats) in enumerate(theme["minor"], 1):
-            prev = add(f"{cls}_main_{j}", name, cls, "minor", stats,
-                       radial(angle, 300 + j * 150), prev)
-        name, stats = theme["mastery"]
-        mastery = add(cls + "_notable_core", name, cls, "notable", stats,
-                      radial(angle, 1200), prev)
-        for branch in (1, 2):
-            prev = mastery
-            branch_angle = angle + (-.4 if branch == 1 else .4)
-            ox, oy = radial(angle, 1200)
-            for j, (name, stats) in enumerate(theme["minor"], 1):
-                # The third node on one branch is an additional notable,
-                # separated from mastery by two travel nodes.
-                typ = "notable" if branch == 1 and j == 3 else "minor"
-                values = {k: round(v * 1.5, 3) for k, v in stats.items()} if typ == "notable" else stats
-                name = cls.title() + " İleri Ustalığı" if typ == "notable" else name
-                prev = add(f"{cls}_path{branch}_{j}", name, cls, typ, values,
-                           (ox + math.cos(branch_angle) * j * 150,
-                            oy + math.sin(branch_angle) * j * 150), prev)
-            name, stats = theme["keystones"][branch - 1]
-            stats = dict(stats)
-            stats.update(PENALTIES.get(f"{cls}_keystone_{branch}", {}))
-            add(f"{cls}_keystone_{branch}", name, cls, "keystone", stats,
-                (ox + math.cos(branch_angle) * 900,
-                 oy + math.sin(branch_angle) * 900), prev)
-    # Shared travel nodes follow an arc between mastery points. No start shortcuts.
-    for i, cls in enumerate(CLASSES):
-        nxt = CLASSES[(i + 1) % len(CLASSES)]
-        name, stats_list = BRIDGES[i]
-        prev = cls + "_notable_core"
-        for j, stats in enumerate(stats_list, 1):
-            angle = (i + j / 5) * 2 * math.pi / len(CLASSES)
-            prev = add(f"bridge_{cls}_{nxt}_{j}", name + f" {j}", "core", "minor",
-                       stats, radial(angle, 1200), prev)
-        by_id[nxt + "_notable_core"]["connects"].append(prev)
-    # Economy is a side investment, available after reaching the shared bridge.
-    prev = "bridge_warrior_sniper_2"
-    for j, stats in enumerate(({"goldGain": .04}, {"shopRarity": .04},
-                               {"magicFind": .08, "magnetRadius": 20}), 1):
-        prev = add(f"shared_trade_{j}", "Gezgin Tüccar " + str(j), "core",
-                   "notable" if j == 3 else "minor", stats,
-                   radial(.24, 1200 - j * 140), prev)
-    add("core_fallback", "Evrensel Merkez", "core", "start", {},
-        (3000, 3000), "shared_trade_3")
-    return open_initial_routes(nodes)
+    def link(a,b): by_id[a]['connects'].append(b)
+    # Three near clusters, three mid clusters, two deep clusters. Every ring
+    # has two equal-cost entry paths and independently useful support nodes.
+    locations=[(-360,120),(0,120),(360,120),(-280,-350),(0,-350),(280,-350),(-130,-850),(130,-850)]
+    edges=[(0,1),(1,2),(0,3),(1,4),(2,5),(3,6),(5,7),(6,7)]
+    def position(cls,x,y):
+        i=CLASSES.index(cls); a=-math.pi/2+i*2*math.pi/9
+        # Local y grows outwards, local x follows the circumference.
+        return (4000+math.cos(a)*(1500+y)-math.sin(a)*x,
+                4000+math.sin(a)*(1500+y)+math.cos(a)*x)
+    def ring(cls,k,j): return f'{cls}_{CLUSTERS[cls][k][0]}_{j}'
+    for cls in CLASSES:
+        start=add('start_'+cls,cls.title()+' Başlangıcı',cls,'start',{},position(cls,0,430))
+        by_id[start]['icon']={'warrior':'reach','ninja':'reach','bloodwalker':'leech',
+            'beastmaster':'minion','engineer':'turret','sniper':'crit',
+            'sorcerer':'frost','alchemist':'poison','bomber':'fire'}[cls]
+        for k,(key,name,minor,notable) in enumerate(CLUSTERS[cls]):
+            x,y=locations[k]
+            for j in range(7):
+                a=-math.pi/2+j*math.tau/7
+                # Repeated theme stats are modest, not repeated major mechanics.
+                stats=minor[j%4]
+                radius=105 if k<3 else 90 if k<6 else 70
+                add(ring(cls,k,j), name+' — '+desc_of(stats),cls,'minor',stats,
+                    position(cls,x+radius*math.cos(a),y+radius*math.sin(a)),
+                    route=name,cluster=key)
+            for j in range(7): link(ring(cls,k,j),ring(cls,k,(j+1)%7))
+            add(f'{cls}_{key}_notable',name,cls,'notable',notable,
+                position(cls,x,y),[ring(cls,k,2),ring(cls,k,5)],cluster=key)
+            if k<3: link(start,ring(cls,k,0))
+        for ei,(a,b) in enumerate(edges):
+            ax,ay=locations[a]; bx,by=locations[b]
+            # Links attach to the far half of early rings, so no notable at 1–2 SP.
+            ja,jb=(4,0) if b//3>a//3 else (2,6)
+            stats=CLUSTERS[cls][b][2][ei%4]
+            add(f'{cls}_cross_{ei}', 'Geçiş — '+desc_of(stats),cls,'minor',stats,
+                position(cls,(ax+bx)/2,(ay+by)/2),[ring(cls,a,ja),ring(cls,b,jb)])
+        for b,(name,stats) in enumerate(KEYSTONES[cls]):
+            k=6+b; x,y=locations[k]
+            add(f'{cls}_keystone_{b+1}',name,cls,'keystone',stats,
+                position(cls,x,y+230),[ring(cls,k,4)],cluster='keystone')
+        # Additional diagonals turn the region into a web rather than separate
+        # rows of circles. Attach to support nodes, never chain major rewards.
+        for a,b,ja,jb in ((0,4,4,0),(2,4,4,0),(3,4,2,6),(4,5,2,6)):
+            link(ring(cls,a,ja),ring(cls,b,jb))
+    shared=[
+        ('Çelik Adımlar',{'meleeRangeFlat':8},{'physDmgMult':.04}),
+        ('Kanlı Çeviklik',{'lifesteal':.01},{'attack_speed_bonus':.04}),
+        ('Yaban Cephesi',{'meleeRangeFlat':8},{'minionDamage':.04}),
+        ('Komuta Bağı',{'minionDamage':.03,'turretDmg':.03},{'minionRate':.04,'turretRate':.04}),
+        ('Balistik',{'physDmgMult':.04},{'bullet_speed':.4}),
+        ('Prizmatik Nişan',{'critChance':.02},{'elementDmgMult':.04}),
+        ('Element Dokuma',{'elementDmgMult':.04},{'dotDmgMult':.04}),
+        ('Yanıcı Karışım',{'fireDmgMult':.04},{'aoe_bonus':.04}),
+        ('Savaş Cephesi',{'armor':4},{'physDmgMult':.04})]
+    # Two independent passages between each neighboring region; neither
+    # uses the central keystones or a mastery chokepoint.
+    for i,cls in enumerate(CLASSES):
+        nxt=CLASSES[(i+1)%9]; name,s1,s2=shared[i]
+        for lane,k in enumerate((3,6)):
+            a=ring(cls,k,2); b=ring(nxt,k,6)
+            p1=by_id[a]['pos']; p2=by_id[b]['pos']; prev=a
+            for j in range(1,2):
+                t=j/2
+                prev=add(f'bridge_{cls}_{nxt}_{lane}_{j}',name, 'core','minor',
+                    s1 if j%2 else s2,
+                    [p1[z]*(1-t)+p2[z]*t for z in (0,1)],[prev])
+            link(prev,b)
+        # A third inner passage fills the gap between the early regions. Its
+        # two useful shared supports provide another way to pivot classes.
+        a=ring(cls,2,2); b=ring(nxt,0,6)
+        p1,p2=by_id[a]['pos'],by_id[b]['pos']; prev=a
+        for j in (1,2):
+            t=j/3
+            prev=add(f'shared_inner_{cls}_{j}',name,'core','minor',s1 if j==1 else s2,
+                     [p1[z]*(1-t)+p2[z]*t for z in (0,1)],[prev])
+        link(prev,b)
+    # Independent dead-end oath paths: no central ring or cheap oath chaining.
+    central=[
+        ('venom','Zehir Dönüşümü',{'treePoisonConversion':.5},'Doğrudan hasarın %50’si azalır; ayrılan hasar 4 saniyelik zehre dönüşür. Dönüşüm zehirden tekrar tetiklenmez.','poison'),
+        ('flame','Saf Alev',{'treeFireOnly':1},'Ateş hasarı +%200. Fiziksel, buz ve zehir hasarı sıfır; ateş dışı DoT ve yavaşlatma uygulanmaz. Taret/minyonları da etkiler. Ateş sağlayan ekipman gerekir.','fire'),
+        ('single','Son Mermi',{'treeSingleShot':1},'Oyuncu ve yardımcıları tek mermi atar; sekme/delme kapanır. Doğrudan vuruş hasarı iki katına çıkar.','crit'),
+        ('certainty','Kesin Darbe',{'treeNoCrit':1,'dmgMult':.8},'Oyuncu/minyon kritik vuramaz. Oyuncu genel hasarı +%80; taretler normal miras kurallarını kullanır.','reach'),
+        ('giant','Devlerin Alanı',{'aoe_bonus':1,'attack_speed_bonus':-.3},'Alan boyutu +%100; oyuncu saldırı hızı -%30. Yakın dövüş erişimini artırmaz.','fire'),
+        ('horizon','Ufuk Kesen',{'meleeRangeMult':.8,'max_hp_pct':-30},'Yakın dövüş menzili +%80; maksimum can -%30. Mermi menzilini artırmaz.','reach'),
+        ('army','Kalabalık Ordu',{'minionCount':2,'turretLimit':2,'minionDamage':-.3,'turretDmg':-.3},'İki ek minyon/taret limiti; her birinin hasarı -%30. Yardımcı varlık sağlayan ekipman gerekir.','minion'),
+        ('overdrive','Kırılgan Devir',{'minionRate':.6,'turretRate':.6,'minionMaxHp':-.4,'turretMaxHp':-80},'Yardımcıların saldırı hızı +%60; minyon canı -%40, taret canı -80.','turret'),
+        ('vampire','Açlığın Yemini',{'lifesteal':.2,'treeNoRegen':1},'Can çalma +%20; doğal ve savaş can yenilenmesi kapanır. İksir ve seviye iyileşmesi korunur.','leech'),
+        ('astral','Astral Kabuk',{'maxEnergyShield':180,'esRegen':12,'max_hp_pct':-50},'+180 enerji kalkanı, +12 kalkan yenilenmesi; maksimum can -%50.','shield'),
+        ('wind','Rüzgârın Bedeli',{'speed':2,'dodgeChance':.15,'treeNoArmor':1},'+2 hareket hızı ve +%15 kaçınma; zırh sıfıra kilitlenir.','speed'),
+        ('fortress','Yürüyen Kale',{'armor':100,'max_hp_pct':25,'speed':-1.2,'treeNoDodge':1},'+100 zırh, +%25 can; hareket hızı -1.2, kaçınma sıfıra kilitlenir.','shield'),
+    ]
+    for i,(key,name,stats,desc,icon) in enumerate(central):
+        a=-math.pi/2+i*math.tau/len(central)
+        cls=CLASSES[min(8,i*9//len(central))]
+        cluster=0 if i and min(8,(i-1)*9//len(central)) == CLASSES.index(cls) else 1
+        prev=ring(cls,cluster,4)
+        origin=by_id[prev]['pos']
+        destination=[4000+420*math.cos(a),4000+420*math.sin(a)]
+        for j in range(1,15):
+            t=j/15
+            stat={'max_hp':8} if j%3==0 else {'dmgMult':.025} if j%3==1 else {'speed':.1}
+            prev=add(f'oath_path_{key}_{j}','Merkez Yolu — '+name,'core','minor',stat,
+                     [origin[z]*(1-t)+destination[z]*t for z in (0,1)],[prev])
+        node=add('central_'+key,name,'core','keystone',stats,destination,[prev],
+                 downside=True)
+        if key in ('venom','flame'): by_id[node]['exclusive_group']='conversion'
+        by_id[node].update(desc=desc,icon=icon)
+    # Economy remains optional off a shared passage, never free at a class start.
+    prev='bridge_engineer_sniper_0_1'
+    for j,stats in enumerate([{'goldGain':.04},{'shopRarity':.04},{'magicFind':.08},
+                              {'magnetRadius':20},{'regen':.4}]):
+        prev=add(f'shared_trade_{j}','Gezgin Tüccar','core','minor',stats,
+                 [4100+j*65,4800],[prev])
+    # Keep hand-laid cluster circles stable; route supports can move slightly
+    # to avoid visually overlapping icons at crossings.
+    movable={n['id'] for n in nodes if n['id'].startswith(('oath_path_','bridge_','shared_trade_','shared_inner_'))}
+    cells={}
+    def put(node):
+        pos=node['pos']; cells.setdefault((pos[0]//100,pos[1]//100),[]).append(node)
+    for node in nodes:
+        if node['id'] not in movable: put(node)
+    for node in nodes:
+        if node['id'] not in movable: continue
+        original=node['pos'][:]
+        placed=False
+        for radius in range(0,521,20):
+            angles=1 if radius==0 else 24
+            for j in range(angles):
+                a=j*math.tau/angles
+                candidate=[round(original[0]+radius*math.cos(a)),round(original[1]+radius*math.sin(a))]
+                gx,gy=candidate[0]//100,candidate[1]//100
+                valid=True
+                for dx in range(-2,3):
+                    for dy in range(-2,3):
+                        for other in cells.get((gx+dx,gy+dy),()):
+                            gap=115 if other['type']=='keystone' else 80 if other['type'] in ('notable','start') else 55
+                            if math.dist(candidate,other['pos'])<gap:
+                                valid=False; break
+                        if not valid: break
+                    if not valid: break
+                if valid:
+                    node['pos']=candidate; put(node); placed=True; break
+            if placed: break
+        if not placed: raise ValueError('No clear node position: '+node['id'])
+    # Match the wide reference composition; the topology stays identical.
+    for node in nodes: node['pos'][0]=round(4000+(node['pos'][0]-4000)*1.45)
+    return nodes
 
-if __name__ == "__main__":
-    out = generate()
-    with open(OUT, "w", encoding="utf-8") as handle:
-        json.dump(out, handle, ensure_ascii=False, indent=2)
-        handle.write("\n")
-    print(f"Yetenek ağacı: {len(out)} düğüm.")
+if __name__ == '__main__':
+    with open(OUT,'w',encoding='utf-8') as f:
+        json.dump(generate(),f,ensure_ascii=False,indent=2); f.write('\n')
+    print(f'Yetenek ağacı: {len(generate())} düğüm.')

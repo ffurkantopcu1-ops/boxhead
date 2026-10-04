@@ -17,6 +17,7 @@ from logic.tilemap import TileMap
 from logic.elite_system import EliteSystem
 from logic.crystal_shop import CrystalShop
 import audio
+from logic.wave_pacing import wave_count, active_cap, spawn_duration
 
 class GameLogic:
     MAX_ACTIVE_ENEMIES = 220
@@ -29,16 +30,6 @@ class GameLogic:
     # (forest/lava/ice/void) ile uyuşmadığı için "ice" dışında hiçbir rengi
     # ekrana ulaşmıyordu; enemy_speed_mult alanı da hiç okunmuyordu.
     # Biyom verisinin tek doğruluk kaynağı artık logic/biome_system.py.
-
-    WAVE_EVENTS = [
-        {"id": "fast_enemies", "desc": "⚡ HIZLI DALGA! Düşmanlar 2x hızlı!", "gold_mult": 1.5, "enemy_speed": 2.0},
-        {"id": "elite_rain",   "desc": "💀 ELİTE YAĞMURU! Herkes elite!", "force_elite": True, "rare_drop": True},
-        {"id": "swarm",        "desc": "🦇 SÜRÜ! 3x düşman sayısı!", "enemy_count_mult": 3},
-        {"id": "no_shooting",  "desc": "🔇 GÜRÜLTÜ YASAĞI! Ateş edersen düşmanlar sesi duyar!", "sound_aggro": True},
-        # invulnerable her zaman False'tu ve hiçbir yerde okunmuyordu — kaldırıldı.
-        # regen_mult eklendi: açıklama "can yenilenmesi 2x" diyordu ama karşılığı yoktu.
-        {"id": "boon",         "desc": "✨ LÜTUF! XP yarıya iner ama can yenilenmesi 2x.", "xp_mult": 0.5, "regen_mult": 2.0}
-    ]
 
     SPECIAL_WAVES = {
         5:  {"type": "kill_race", "duration": 60, "name": "Hızlı Büyüme Yarışı"},
@@ -338,8 +329,7 @@ class GameLogic:
                     if not enemy.dead and not enemy.is_trap
                     and not getattr(enemy, 'is_pillar', False)
                 )
-                _cap = {"Hard": 260, "Very Hard": 320, "Impossible": 400}.get(
-                    self.wave["current_diff"], self.MAX_ACTIVE_ENEMIES)
+                _cap = active_cap(self.wave['level'], self.wave['current_diff'], self.MAX_ACTIVE_ENEMIES)
                 if active_enemy_count >= _cap:
                     self.wave["spawn_timer"] = 0.08
                 else:
@@ -347,9 +337,7 @@ class GameLogic:
                     if spawned is None: spawned = 1
                     self.wave["enemies_to_spawn"] -= spawned
                     # Tüm dalganın belirlenen süre içinde doğması için dinamik interval hesapla
-                    _dur_mult = {"Hard": 0.9, "Very Hard": 0.75, "Impossible": 0.6}.get(
-                        self.wave["current_diff"], 1.0)
-                    wave_duration = (20.0 if self.wave.get("level", 1) <= 5 else 10.0) * _dur_mult
+                    wave_duration = spawn_duration(self.wave['level'], self.wave['current_diff'])
                     interval = wave_duration / max(1, self.wave["total_to_spawn"])
                     self.wave["spawn_timer"] = interval * spawned
 
@@ -471,29 +459,11 @@ class GameLogic:
             self.shake_intensity = intensity * 0.15 # Şiddeti %85 azalttık (Çok hafif bir titreme)
 
     def _apply_global_modifiers(self, enemy):
-        """Uygulanabilirse düşmana biyom, elit modifikatörleri ve wave eventleri ekler."""
+        """Düşmana biyom ve bireysel elit modifikatörleri ekler."""
         if hasattr(self, 'biome_system'):
             self.biome_system.apply_enemy_bonus(enemy, self.wave["level"])
         
-        # Dalga Olayları (Wave Events)
-        if self.wave.get("event"):
-            evt = self.wave["event"]
-            if evt.get("enemy_speed"): enemy.speed *= evt["enemy_speed"]
-            if evt.get("gold_mult"): enemy.gold_reward = getattr(enemy, 'gold_reward', getattr(enemy, 'xp_reward', 20) * 0.5) * evt["gold_mult"]
-            if evt.get("enemy_hp_mult"):
-                enemy.max_hp *= evt["enemy_hp_mult"]
-                enemy.hp = enemy.max_hp
-            if evt.get("force_elite") and not getattr(enemy, 'is_trap', False) and enemy.type not in ["boss", "loot_goblin"]:
-                enemy.type = "elite"
-                enemy.max_hp *= 5
-                enemy.hp = enemy.max_hp
-                enemy.speed *= 0.8
-                enemy.radius *= 1.5
-                enemy.dmg *= 2
-                enemy.color = (192, 57, 43)
-                enemy.xp_reward *= 3
-        
-        # Boss, tuzak veya özel tiplere elit uygulamayalım (eğer event ile elit olmadıysa)
+        # Boss, tuzak veya özel tiplere elit uygulamayalım.
         if getattr(enemy, 'is_trap', False) or enemy.type in ["boss", "loot_goblin"]:
             return
             
@@ -531,6 +501,10 @@ class GameLogic:
         # SWARM BAT: Tek spawn yerine 5-7'li sürü
         if enemy_type == "swarm_bat":
             count = random.randint(5, 8)
+            if self.wave['current_diff'] == 'Normal':
+                live=sum(not e.dead and not e.is_trap and not getattr(e,'is_pillar',False) for e in self.enemies)
+                room=active_cap(wave_lvl,'Normal',self.MAX_ACTIVE_ENEMIES)-live
+                count=min(count,max(0,room),max(1,self.wave.get('enemies_to_spawn',count)))
             for i in range(count):
                 self.entity_id_counter += 1
                 # ex, ey merkezli rastgele dağılım
@@ -996,12 +970,7 @@ class GameLogic:
             # XP Kazanımı (Basamak çarpanıyla senkronize; düşman tipine göre değişir)
             xp_to_give = reward_base * reward_step_mult * r_mod
             if getattr(enemy, "is_nemesis", False): xp_to_give *= 5
-            # "✨ LÜTUF" dalga olayı XP'yi yarıya indirmeyi vaat ediyordu ama
-            # xp_mult hiçbir yerde okunmuyordu: olay tamamen afişten ibaretti.
-            _xp_ev = 1.0
-            if self.wave.get("event"):
-                _xp_ev = self.wave["event"].get("xp_mult", 1.0)
-            p.gain_xp(xp_to_give * (1.0 + p.stats.get("xpGain", 0)) * _xp_ev)
+            p.gain_xp(xp_to_give * (1.0 + p.stats.get("xpGain", 0)))
             
             # --- GÜNLÜK GÖREV TAKİBİ ---
             self.track_quest("kill", 1)
@@ -1065,14 +1034,8 @@ class GameLogic:
                 drop_chance = 1.0 # Boss %100 şans
                 
             if random.random() < drop_chance:
-                # "💀 ELİTE YAĞMURU" dalga olayı rare_drop vaat ediyordu ama
-                # anahtar hiçbir yerde okunmuyordu: olay yalnızca afiş
-                # gösteriyordu. Nadir eşya şansını magicFind üzerinden yükseltir.
-                _mf = p.stats.get("magicFind", 1.0)
-                if self.wave.get("event") and self.wave["event"].get("rare_drop"):
-                    _mf *= 2.5
                 item_data = self.item_system.generate(
-                    mf_value=_mf,
+                    mf_value=p.stats.get("magicFind", 1.0),
                     difficulty=self.wave["current_diff"],
                     wave_level=self.wave["level"],
                     is_boss=(enemy.type == "boss")
@@ -1221,22 +1184,11 @@ class GameLogic:
             if self.wave["special"].get("type") == "boss_rush":
                 self.spawn_enemy("boss")
 
-        # 3. Dalga Olayları (Wave Events) - %40 İhtimal (Özel dalga veya boss dalgası değilse)
+        # Eski kayıtlardan/oturumlardan kalabilecek rastgele dalga olayını temizle.
         self.wave["event"] = None
-        if not self.wave["special"] and self.wave["level"] % 10 != 0:
-            if random.random() < 0.40:
-                self.wave["event"] = random.choice(self.WAVE_EVENTS)
 
-        # Yaratık sayısını 5 kat artır (15 -> 75 taban sayı)
-        # Zorluk düşman SAYISINI artırır (HP yerine yoğunluk = gerçek tehlike);
-        # MAX_WAVE_ENEMIES tavanı (aşağıda) kaçmayı önler.
-        _diff_count = {"Normal": 1.0, "Hard": 1.25, "Very Hard": 1.6, "Impossible": 2.0}
-        count = int((15 + self.wave["level"] * 8) * 5 * 0.85
-                    * _diff_count.get(self.wave["current_diff"], 1.0))
-        if self.wave["event"] and self.wave["event"].get("enemy_count_mult"):
-            count *= self.wave["event"]["enemy_count_mult"]
-        count = min(count, self.MAX_WAVE_ENEMIES)
-            
+        count = wave_count(self.wave['level'], self.wave['current_diff'], self.MAX_WAVE_ENEMIES)
+
         self.wave["enemies_to_spawn"] = count
         self.wave["total_to_spawn"] = count
         self.wave["spawn_timer"] = 1.0
@@ -1256,8 +1208,6 @@ class GameLogic:
             txt = f"🌟 ÖZEL DALGA: {self.wave['special']['name']}! 🌟"
 
         self.wave["announce_lines"] = [txt]
-        if self.wave["event"]:
-            self.wave["announce_lines"].append(self.wave["event"]["desc"])
         self.wave["announce_timer"] = 4.0
 
         # --- BOSS WAVE EVERY 10 ---
@@ -1313,23 +1263,30 @@ class GameLogic:
         wave = self.wave["level"]
         # Wave 1 için daha kolay olan 'swarm_bat' sürüsü daha fazla eklendi.
         # Dash atan 'barrel' ve okçu 'toxic_pit' oranı düşürüldü.
-        pool = ["swarm_bat"] * 8 + ["barrel"] * 2 + ["toxic_pit"] * 2
+        pool = ["swarm_bat"] * 10
+        if wave >= 2: pool += ["barrel"]
+        if wave >= 3: pool += ["toxic_pit"] * 2
 
         if wave >= 2:
             pool += ["swarm_bat"] * 2
             pool += ["frost_crawler"] * 3
         if wave >= 3:
-            pool += ["kamikaze"] * 5
+            pool += ["kamikaze"] * 2
         if wave >= 4:
-            pool += ["shieldbearer"] * 2
-            pool += ["venom_spider"] * 3
-            pool += ["parasite"] * 2
+            pool += ["shieldbearer"]
+            pool += ["venom_spider"]
         if wave >= 5:
+            pool += ["loot_goblin"]
+        normal=self.wave['current_diff']=='Normal'
+        if wave >= (7 if normal else 5):
             pool += ["elite"] * 2
-            pool += ["splitting_slime"] * 3
-            pool += ["loot_goblin"] * 1
             pool += ["fire_shaman"] * 2
+        if wave >= (6 if normal else 5):
+            pool += ["splitting_slime"]
+            pool += ["parasite"]
+        if wave >= (8 if normal else 5):
             pool += ["web_weaver"] * 2
+        if wave >= (9 if normal else 5):
             pool += ["pickpocket_imp"] * 1
         if wave >= 6:
             pool += ["burrowing_worm"] * 3
@@ -1376,8 +1333,7 @@ class GameLogic:
                         yield enemy
 
     def can_spawn_summoned_enemy(self):
-        _cap = {"Hard": 260, "Very Hard": 320, "Impossible": 400}.get(
-            self.wave["current_diff"], self.MAX_ACTIVE_ENEMIES)
+        _cap = active_cap(self.wave['level'],self.wave['current_diff'],self.MAX_ACTIVE_ENEMIES)
         return sum(
             1 for enemy in self.enemies
             if not enemy.dead and not enemy.is_trap

@@ -1,15 +1,17 @@
-# Ana pasif ağaç ve uzmanlık ağacı
+# Yeni ana yetenek ağacı — 4 Ekim 2026
 
-Ana ağaç tools/generate_skill_tree.py tarafından üretilir: 319 düğüm, dokuz ayrı sınıf başlangıcı, üç erken rota, iki üst uzmanlık dalı ve iki keystone. JSON elle değiştirilmez.
+896 bağlı düğüm, dokuz sınıf başlangıcı, ikonlu gotik arayüz, sınıf içi alternatif halkalar ve komşu sınıf ortak yolları uygulanmıştır. İlk büyük seçim 4 SP. Ana bütçe 100 SP; seviye başına 2 SP, seviye 51 itibarıyla üst sınır. Uzmanlık puanları ayrıdır.
 
-Her sınıf ilk puanından itibaren üç farklı düğüm seçebilir. Saldırı rotası mevcut main kimliklerini kullanır; dayanıklılık ve yardımcı mekanik rotaları early1/early2 kimliklerini taşır. Her rota beş küçük düğümden sonra altıncı puanda kendi ustalığına ulaşır. Dayanıklılık ustalığı path1, yardımcı ustalık path2 girişine bağlanır. Üçüncü derinlikte yatay bağlantılar yön değiştirmeyi sağlar; derinliği veya puan bedelini atlatmaz.
+12 merkez özelliği özel çıkmaz yolların sonunda bulunur. Her sınıftan ilk erişim 19 SP, ikinci merkeze minimum ek yatırım 15 SP. Merkezler birbirine bağlı değildir. Zehir dönüşümü ve saf alev birbirini dışlar; diğer birleşimler puan bedeliyle mümkündür.
 
-Saldırı rotasındaki altıncı puan ustalığı ortak köprülerin girişidir. Diğer rotalardan bu kavşağa bağlı dallar üzerinden gidilir. Komşu sınıfa geçmek dört ortak düğüm ve hedef ustalık için toplam 5 ek puan ister. Kendi keystone'una en kısa yol 12, yabancı keystone'a 17 puan olmaya devam eder.
+Merkez özellikleri: doğrudan hasarın yarısını dört saniyelik zehre dönüştürme; +%200 ateş ve diğer hasarları kapatma; tek mermiyle çift hasar; kritik yerine sabit hasar; geniş alan/yavaş saldırı; uzun erişim/düşük can; kalabalık fakat zayıf yardımcılar; hızlı fakat kırılgan yardımcılar; can çalma fakat yenilenmeme; kalkan/düşük can; hızlı kaçınma/zırhsızlık; zırh/can fakat yavaşlık ve kaçınmasızlık. Sayısal denge kullanıcı denemeleriyle değiştirilebilir.
 
-27 erken rota senaryosu ve 72 geç oyun senaryosu tools/measure_boss_tree_balance.py ile gerçek savaş fonksiyonlarından ölçülür. Minyon/taret ve aktif beceri hasarı bu ölçümlere dahil değildir. Başlangıç bonusları saldırı, dayanıklılık ve konumlandırma arasında farklı bütçeler taşır. Keystone bedelleri korunur.
+Eski ağaç tahsisleri sürüm geçişinde iade edilip sınıf başlangıcı yeniden kurulur. Kaydet-yükle tekrarında çift iade engellenmiştir. Gerçek kullanıcı kaydı değiştirilmedi.
 
-Önceki yayımlanan 211 düğümün bütün kimlikleri korunur; kayıtlı tahsisler ve SP kaybolmaz. Ana rota isimleri ve bonusları yeniden dengelenmiştir; eski tahsisler yeni değerleri kullanır. Sınıf kimliği ve başlangıcı silah değişiminde değişmez. Sınıflar arası köprüler iki sınıfta kullanılabilen ortak build temalarını taşır.
+Görsel durum: referans bağlayıcı hedeftir. Mevcut çizim önceki seyrek ara sürümden daha yoğun olsa da referansın birebir son görünümü değildir; uzun bağlantılar, dış boşluklar ve ikon çeşitliliğinde görsel son düzenleme gerekir. Genel görünüm ve 1280/1600 yakın planlar gerçek oyun çizicisiyle üretilmiştir.
 
-Uzmanlık (ascendancy) ayrı ağaç ve puan para birimidir; evrim seçiminden sonra açılır. Tahsisler koşu kaydında saklanır.
+Doğrulama: 339 test + 79 alt test geçti. Topoloji ölçümünde 44 birim altındaki düğüm çakışması yok. Normal/sıfır meta/3 seed/9 sınıf/2 tercih ile 54 otomatik erken koşunun 42 tanesi Wave 5'i geçti. Kontrolcü insan oynanışını temsil etmez; B-W04 açık kalır. Normal erken düşman havuzu, sayı/tempo ve kamikaze uyarısı düzenlendi. Bazı hasar kaynakları ölçümde unknown kalabilir.
 
-Testler ilk üç seçeneği, beş adımın her rotada oynanabilirliğini, farklı ustalık girişlerini, bütün ağacın bağlantısını, keystone bedellerini, kimlikleri ve üreticinin JSON ile eşitliğini doğrular. Gerçek oyun çizicisiyle yakınlaştırılmış ağaç ve tooltip görselleri kontrol edildi.
+Kaynak değişiklikleri yayımlanmadı, masaüstü kurulumu güncellenmedi. Sürüm dosyası, paketleme dosyaları ve gerçek kayıtlar korunmuştur.
+
+Ağaç verisi tools/generate_skill_tree.py ile tools/tree_clusters.py üzerinden üretilir; JSON elle değiştirilmez. tools/inspect_new_tree.py puan yollarını, tools/render_new_tree.py gerçek arayüzü, tools/measure_early_runs.py erken koşuları doğrular.

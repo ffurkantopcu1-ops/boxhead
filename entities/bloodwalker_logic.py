@@ -81,7 +81,7 @@ class Bloodwalker:
                                 ody = other.y - e.y
                                 if odx * odx + ody * ody < 70 * 70:
                                     splash_targets.add(other.id)
-                                    other.take_damage(fire_dmg * 0.5, game, from_player=True, is_secondary=True)
+                                    other.take_damage(fire_dmg * 0.5, game, from_player=True, is_secondary=True, damage_type='fire')
                                     other.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                         e.apply_dot('fire', (fire_dmg * 0.4) * (1.0 + player.stats.get("dotDmgMult", 0)), 3.0)
                     if frost_dmg > 0:

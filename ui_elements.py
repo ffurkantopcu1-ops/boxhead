@@ -450,7 +450,7 @@ class EquippedRow:
 
         if self.item:
             i_rarity = self.item.get('rarity', 'Normal')
-            label = f"[{i_rarity.upper()}] {self.item['name']}"
+            label = f"{slot_map.get(self.slot_type,self.slot_type)} · {self.item['name']}"
             color = ui_theme.rarity_color(i_rarity)
             ui_theme.draw_item_slot(screen, slot_rect, i_rarity, self.is_hovered)
 
@@ -499,16 +499,18 @@ class BackpackItemCard:
         r = self.rect
         slot = max(34, min(46, r.height - 16))
         self.slot_rect = pygame.Rect(r.x + 10, r.centery - slot // 2, slot, slot)
-        bx = self.slot_rect.right + 10
-        avail = max(60, r.right - 10 - bx)
-        btn_w = max(54, (avail - 10) // 3)   # 54: buton plakasının min genişliği
-        btn_h = max(26, min(30, r.height // 2 - 6))
-        by = r.bottom - btn_h - 6
+        bx = r.x + 9
+        avail = r.width - 18
+        btn_w = (avail - 10) // 3
+        btn_h = 25
+        by = r.bottom - btn_h - 5
         self.use_rect = pygame.Rect(bx, by, btn_w, btn_h)
         self.sell_rect = pygame.Rect(bx + btn_w + 5, by, btn_w, btn_h)
         self.craft_rect = pygame.Rect(bx + (btn_w + 5) * 2, by, btn_w, btn_h)
-        self.name_pos = (bx, r.y + 7)
-        self.name_max_w = avail
+        self.name_pos = (self.slot_rect.right + 7, r.y + (20 if r.height >= 90 else 8))
+        self.name_max_w = r.right - self.name_pos[0] - 9
+        self.slot_rect.height = self.slot_rect.width = min(40,max(24,r.height-36))
+        self.slot_rect.y = r.y + 6
 
     def draw(self, screen, font_sub, item):
         import ui_theme
@@ -542,6 +544,15 @@ class BackpackItemCard:
         name_t = render_fit(item['name'], 18, color, self.name_max_w)
         screen.blit(name_t, self.name_pos)
 
+        if self.rect.height >= 105:
+            from scenes.game_scene import ITEM_STAT_LABEL, _fmt_stat_val
+            values = list(item.get('itemBase',{}).items())
+            values += [(a['stat'],a['val']) for a in item.get('prefixes',[])+item.get('suffixes',[])]
+            sy = self.name_pos[1] + 26
+            for stat,val in values[:2]:
+                summary = render_fit(f"{ITEM_STAT_LABEL.get(stat,stat)}: {_fmt_stat_val(stat,val)}",16,ui_theme.TEXT_COL,self.rect.width-40)
+                screen.blit(summary,(self.rect.x+20,sy))
+                sy += 20
         # Buttons (tema: mini banner)
         def mini_btn(rect, label, color, disabled=False):
             surf, overhang = ui_theme.render_banner_button(
@@ -562,8 +573,8 @@ class BackpackItemCard:
         mini_btn(self.sell_rect, f"SAT ({s_price})", ui_theme.COLORS["ember"])
 
         # CRAFT
-        is_equip = item.get('type') in ['weapon', 'helmet', 'chest', 'amulet', 'pet']
-        mini_btn(self.craft_rect, "UP", ui_theme.COLORS["night"], disabled=not is_equip)
+        is_equip = item.get('type') in ['weapon', 'helmet', 'chest', 'amulet', 'pet', 'artifact']
+        mini_btn(self.craft_rect, "CRAFT", ui_theme.COLORS["night"], disabled=not is_equip)
 
         # Set rozeti kartın sağ üstünde (isim şeridiyle çakışmasın)
         if item.get('setTag'):
@@ -603,7 +614,8 @@ class MarketCard:
             alpha=244, tint=tint, pad=10)
 
         # İkon Slotu (SOLA ALINDI)
-        slot_rect = pygame.Rect(self.rect.x + 10, self.rect.y + 12, 55, 55)
+        slot_size = min(50,self.rect.height-12)
+        slot_rect = pygame.Rect(self.rect.x + 10, self.rect.y + 6, slot_size, slot_size)
         ui_theme.draw_item_slot(screen, slot_rect, self.item.get('rarity'), self.is_hovered)
 
         if self.item.get('icon_id'):
@@ -618,15 +630,11 @@ class MarketCard:
         text_x = slot_rect.right + 12
         name_max_w = max(40, self.buy_rect.left - text_x - 12)
         name_txt = render_fit(self.item['name'], 18, color, name_max_w)
-        screen.blit(name_txt, (text_x, self.rect.y + 15))
+        screen.blit(name_txt, (text_x, self.rect.y + (24 if self.rect.height >= 86 else 8)))
 
-        price_txt = render_fit(f"{self.item.get('price', 0)} GOLD", 17,
+        price_txt = render_fit(f"{self.item.get('price', 0)} G" + (f" • Sende {owned_count}" if owned_count else ""), 17,
                                ui_theme.readable(ui_theme.COLORS["gold"]), name_max_w)
-        screen.blit(price_txt, (text_x, self.rect.y + 40))
-
-        if owned_count > 0:
-            o_txt = render_fit(f"Sende: {owned_count}", 16, (186, 180, 168), name_max_w)
-            screen.blit(o_txt, (text_x, self.rect.y + 60))
+        screen.blit(price_txt, (text_x, self.rect.y + (48 if self.rect.height >= 86 else self.rect.height-22)))
 
         # Buy Button (tema: mini banner)
         surf, overhang = ui_theme.render_banner_button(

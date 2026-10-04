@@ -115,7 +115,7 @@ class FakeEnemy:
         self.y = 0
         self.dot_calls = []
 
-    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False):
+    def take_damage(self, amount, game, is_crit=False, is_dot=False, from_player=False, damage_type="physical"):
         self.dot_calls.append((amount, is_dot))
         self.hp -= amount
 

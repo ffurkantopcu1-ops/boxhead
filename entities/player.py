@@ -49,10 +49,13 @@ class Player:
         
         # --- INITIALIZE ALL ATTRIBUTES BEFORE SPECIALIZATION ---
         self.xp = 0
-        self.xp_to_next_level = 100
+        from logic.progression import xp_threshold
+        self.xp_to_next_level = xp_threshold(1)
         self.gold = 0
         self.level = 1
         self.skill_points = 0
+        self.main_points_earned = 0
+        self.skill_tree_version = 2
         self.last_shot_time = 0
         self.inventory = [] # Yerden toplananlar
         self.auto_attack = False
@@ -723,6 +726,7 @@ class Player:
         fire = max(0.0, 1.0 + elem + self.stats.get("fireDmgMult", 0.0))
         frost = max(0.0, 1.0 + elem + self.stats.get("frostDmgMult", 0.0))
         other = max(0.0, 1.0 + elem)
+        if self.stats.get('treeFireOnly', 0): frost = other = 0.0
         return fire, frost, other
 
     def gain_xp(self, amount):
@@ -751,8 +755,9 @@ class Player:
         if hasattr(self, 'game') and hasattr(self.game, 'track_quest'):
             self.game.track_quest("reach_level", self.level)
         # YENİ DENGELEME: Katlanarak değil doğrusal artış (Wave 10 -> L14, Wave 20 -> L30 hedefine uygun)
-        self.xp_to_next_level = 100 + self.level * 250
-        self.skill_points += 1
+        from logic.progression import xp_threshold, grant_main_points
+        self.xp_to_next_level = xp_threshold(self.level)
+        grant_main_points(self)
         # Ascendancy puanı: seviye 20'den itibaren her seviyede +1 (evrim
         # seviye 20'de seçilir; sonraki seviyeler alt-sınıf ağacını besler).
         if self.level >= 20:
@@ -964,7 +969,7 @@ class Player:
                 if self.stats.get("frostDmgMult", 0) > 0.2: p_type = 'frost'
         
         # Çoklu Atış (Multi-shot)
-        count = min(6, max(1, int(self.stats.get("projectileCount", 1))))
+        count = 1 if self.stats.get('treeSingleShot', 0) else min(6, max(1, int(self.stats.get("projectileCount", 1))))
         
         if is_katana:
             # Katana yakın dövüş: piksel taban + piksel bonus, sonra çarpan (F4)
@@ -972,7 +977,7 @@ class Player:
             
             # --- KRİTİK VURUŞ ---
             force_crit = getattr(self, '_sorcerer_force_crit', False) or self._consume_phantom_crit()
-            is_crit = force_crit or (random.random() < self.stats.get("critChance", 0.05))
+            is_crit = not self.stats.get('treeNoCrit', 0) and (force_crit or (random.random() < self.stats.get("critChance", 0.05)))
             crit_mult = self.get_critical_multiplier()
             final_dmg = final_dmg_base * crit_mult if is_crit else final_dmg_base
             dot_mult = 1.0 + self.stats.get("dotDmgMult", 0.0)
@@ -1049,7 +1054,8 @@ class Player:
                 pierce = max(0, pierce - 1)
                 proj_speed *= 0.85
                 
-        count = min(6, max(1, int(self.stats.get("projectileCount", 1))))
+        count = 1 if self.stats.get('treeSingleShot', 0) else min(6, max(1, int(self.stats.get("projectileCount", 1))))
+        if self.stats.get('treeSingleShot', 0): bounce = pierce = 0
         # AOE Hesabı (Radius 50 = ~2x Karakter Boyutu)
         aoe = 50 * self.stats.get("aoe", 1.0)
         
@@ -1077,7 +1083,7 @@ class Player:
             
             # --- KRİTİK VURUŞ ---
             force_crit = getattr(self, '_sorcerer_force_crit', False) or phantom_crit
-            is_crit = force_crit or (random.random() < self.stats.get("critChance", 0.05))
+            is_crit = not self.stats.get('treeNoCrit', 0) and (force_crit or (random.random() < self.stats.get("critChance", 0.05)))
             crit_mult = self.get_critical_multiplier()
             shot_budget = 1.0 / (1.0 + 0.25 * (count - 1))
             final_dmg = (final_dmg_base * crit_mult if is_crit else final_dmg_base) * shot_budget
@@ -1120,7 +1126,7 @@ class Player:
             
             if is_katana:
                 p.is_melee = True
-                p.pierce = 99
+                p.pierce = 0 if self.stats.get('treeSingleShot', 0) else 99
             
             # Elementel Statları Aktar
             # DİKKAT (F1): p.fire_dmg hem DoT'a hem de explode()'un ANLIK alan
@@ -1738,9 +1744,8 @@ class Player:
             regen = max(0.0, self.stats.get("esRegen", 0) + 10.0) * difficulty_mult
             self.energy_shield = min(self.max_energy_shield, self.energy_shield + regen * shield_dt)
         regen = max(0.0, self.stats.get("regen", 0) + self.stats.get("hpRegen", 0) + self.stats.get("combatRegen", 0))
-        event = game.wave.get("event") or {}
         if self.hp < self.max_hp:
-            self.heal(regen * difficulty_mult * event.get("regen_mult", 1.0) * dt)
+            self.heal(regen * difficulty_mult * dt)
         self.update_lifesteal(dt)
 
     def update_lifesteal(self, dt):
@@ -1777,6 +1782,7 @@ class Player:
 
     def get_critical_multiplier(self):
         """Temel 2x, bonuslarla en fazla 3.5x kritik."""
+        if self.stats.get('treeNoCrit', 0): return 1.0
         return 2.0 + min(1.5, max(-1.0, self.stats.get("critDmg", 0)))
 
     def get_movement_speed(self):

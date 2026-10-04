@@ -58,6 +58,7 @@ class Minion:
             
         range_mult = owner.stats.get("minionRange", 1.0) if owner else 1.0
         self.range = base_range * range_mult
+        self.base_range = base_range
         
         self.dead = False
         self.is_recharging = False
@@ -91,6 +92,13 @@ class Minion:
 
     def update(self, dt, game):
         if not self.owner: return
+        stats = self.owner.stats
+        maximum = max(1.0, 100 * stats.get('minionMaxHp', 1.0) + stats.get('minionMaxHpFlat', 0))
+        if maximum != self.max_hp:
+            self.hp = min(maximum, self.hp * maximum / self.max_hp)
+            self.max_hp = maximum
+        self.range = self.base_range * max(.1, stats.get('minionRange', 1.0))
+        self.armor = stats.get('minionArmor', 0)
 
         # Pet İmparatoru evrimi (wind_minions): minyonlar %40 daha hızlı hareket
         # eder ve %30 daha sık saldırır.
@@ -276,6 +284,7 @@ class Minion:
         local_stats = self.owner.inv_manager.get_item_local_stats("weapon") if getattr(self.owner, "inv_manager", None) else {}
         proj_count = int(self.owner.stats.get("minionProjectileCount", 1)) + int(local_stats.get("projectileCount", 0))
         
+        if self.owner.stats.get('treeSingleShot', 0): proj_count = 1
         # Çoklu atış hasar cezası (%15 hasar kaybı per ekstra mermi, min %30)
         penalty = max(0.3, 1.0 - (proj_count - 1) * 0.15)
         final_dmg_base *= penalty
@@ -283,10 +292,11 @@ class Minion:
         bounce = int(self.owner.stats.get("minionBounce", 0)) + int(local_stats.get("bounce", 0))
         pierce = int(self.owner.stats.get("minionPierce", 0)) + int(local_stats.get("pierce", 0))
         
+        if self.owner.stats.get('treeSingleShot', 0): bounce = pierce = 0
         # Kritik Şans
         # minionCrit (Vahşi Bağı kartı + pet itemleri) hiçbir yerde okunmuyordu (P3)
         crit_chance = self.owner.stats.get("critChance", 0.05) + self.owner.stats.get("minionCrit", 0)
-        is_crit = random.random() < crit_chance
+        is_crit = not self.owner.stats.get('treeNoCrit', 0) and random.random() < crit_chance
         # Krit tabanı oyuncuyla aynı (2.0) olacak şekilde hizalandı
         final_dmg = final_dmg_base * (self.owner.get_critical_multiplier()) if is_crit else final_dmg_base
 
@@ -328,6 +338,10 @@ class Minion:
             proj.poison_dps = self.owner.stats.get("minionPoisonDpsFlat", 0) * total_mult
             proj.fire_dmg = self.owner.stats.get("minionFireDmgFlat", 0) * total_mult
             proj.frost_dmg = self.owner.stats.get("minionFrostDmgFlat", 0) * total_mult
+            if self.owner.stats.get('treeFireOnly', 0):
+                proj.dmg = 0
+                proj.poison_dps = proj.frost_dmg = 0
+                proj.fire_dmg *= 1 + self.owner.stats.get('fireDmgMult', 0)
             
             game.projectiles.append(proj)
             game.entity_id_counter += 1
