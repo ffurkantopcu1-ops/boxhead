@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "1.26.0",
+      "date": "2026-10-04",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "Eşya seviyesine bağlı özellikler, seviye canı ve söküm-geliştirme-sabitleme-aktarım işçiliği"
+        ]
+      }
+    },
+    {
       "version": "1.25.0",
       "date": "2026-10-04",
       "categories": {
