@@ -128,10 +128,10 @@ def test_mouse_events_drag_instead_of_activating_card_buttons(scene):
 
 def test_directed_recipe_promotes_normal_and_preserves_natural_rolls(scene):
     p = scene.logic.players['p1']
-    p.gold = 100
+    p.gold = 200
     item = p.inv_manager.equipped['weapon']
     assert apply_recipe(p, item, 'prefixes:dmgMult', 1) is None
-    assert p.gold == 50
+    assert p.gold == 100
     assert item['rarity'] == 'Magic'
     natural = dict(stat='critChance', val=.03, tier=3, name='Kritik', label='S')
     item['suffixes'].append(natural)
@@ -168,7 +168,7 @@ def test_recipe_cannot_overwrite_natural_modifier_or_use_detached_item(scene):
     assert item == before and p.gold == 1000
 
 
-@pytest.mark.parametrize('wave,tier,cost',[(1,3,50),(10,2,300),(20,1,1200)])
+@pytest.mark.parametrize('wave,tier,cost',[(1,3,100),(10,2,100),(20,1,1300)])
 def test_recipe_progression_has_explicit_tiers_and_prices(scene,wave,tier,cost):
     p = scene.logic.players['p1']
     p.gold = 2000
@@ -182,7 +182,7 @@ def test_recipe_progression_has_explicit_tiers_and_prices(scene,wave,tier,cost):
 
 def test_crafted_marker_survives_real_save_load(scene,tmp_path):
     p=scene.logic.players['p1']
-    p.gold=100
+    p.gold=200
     item=p.inv_manager.equipped['weapon']
     assert apply_recipe(p,item,'prefixes:dmgMult',1) is None
     with patch.object(SaveManager,'SAVE_DIR',str(tmp_path)):
@@ -190,7 +190,7 @@ def test_crafted_marker_survives_real_save_load(scene,tmp_path):
         assert SaveManager.load_game(scene.logic,'recipe_roundtrip')
     restored=p.inv_manager.equipped['weapon']
     assert restored['prefixes'][0]['crafted']
-    assert p.gold==50
+    assert p.gold==100
     assert apply_recipe(p,restored,'prefixes:fireDamage',1) is None
     assert len(restored['prefixes'])==1
 
@@ -302,7 +302,7 @@ def test_salvage_uses_identity_and_cannot_destroy_equipped_item(scene):
 
 
 def test_high_wave_cannot_put_high_tier_on_old_low_level_base(scene):
-    p=scene.logic.players['p1'];p.gold=2000
+    p=scene.logic.players['p1'];p.gold=5000
     item=p.inv_manager.equipped['weapon'];item['ilvl']=1
     assert apply_recipe(p,item,'prefixes:dmgMult',30) is None
     assert item['prefixes'][0]['tier']==3
@@ -380,3 +380,28 @@ def test_advanced_ui_selection_does_not_spend_and_apply_salvages(scene):
     scene._handle_inventory_mouse(p,scene._craft_layout()['apply'].center)
     assert not any(it is item for it in p.inventory)
     assert p.craft_dust>0 and not scene.show_craft_window
+
+@pytest.mark.parametrize('wave,cost', [(1,100),(10,100),(11,130),(15,450),(20,1300),(30,4500)])
+def test_bench_cost_scales_with_wave_without_old_item_discount(wave,cost):
+    assert recipe_cost(wave, {'ilvl':1}) == cost
+    assert recipe_cost(wave, {'ilvl':50}) == cost
+
+
+def test_late_bench_price_increments_accelerate():
+    prices=[recipe_cost(w) for w in range(10,31)]
+    increments=[b-a for a,b in zip(prices,prices[1:])]
+    assert all(b>a for a,b in zip(increments,increments[1:]))
+
+
+def test_workshop_cards_and_actions_do_not_overlap(scene):
+    for w,h in ((1280,720),(1600,1000)):
+        scene.width,scene.height=w,h
+        layout=ui_workshop.craft_layout(scene)
+        for key in ('item','preview','apply','take_back','orb_mode','recipe_mode','advanced_mode','close'):
+            assert layout['panel'].contains(layout[key]), key
+        assert not layout['take_back'].colliderect(layout['mkt_rows'][0])
+        assert not layout['apply'].colliderect(layout['preview'])
+        for i,row in enumerate(layout['orb_rows']):
+            assert layout['panel'].contains(row)
+            assert not row.colliderect(layout['preview'])
+            assert all(not row.colliderect(other) for other in layout['orb_rows'][i+1:])

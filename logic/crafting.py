@@ -21,10 +21,12 @@ def recipe_tier(wave, item=None):
 
 
 def recipe_cost(wave, item=None):
-    return {3:50, 2:300, 1:1200}[recipe_tier(wave,item)]
+    # Price follows run progress; low-level items cannot bypass late costs.
+    late = max(0, int(wave) - 10)
+    return 100 + 20 * late + 10 * late * late
 
 
-def apply_recipe(player, item, recipe_id, wave):
+def recipe_error(player, item, recipe_id, wave):
     if item.get('is_corrupted'):
         return 'Mühürlü eşya değiştirilemez.'
     # The target must still be owned; detached UI references never create items.
@@ -33,7 +35,6 @@ def apply_recipe(player, item, recipe_id, wave):
     recipe = next((r for r in recipes(item) if r['id'] == recipe_id), None)
     if recipe is None:
         return 'Bu tarif bu eşya için uygun değil.'
-    crafted = [(side,a) for side in ('prefixes','suffixes') for a in item.get(side,[]) if a.get('crafted')]
     existing = [a for side in ('prefixes','suffixes') for a in item.get(side,[]) if not a.get('crafted')]
     if any(a['stat'] == recipe['stat'] for a in existing):
         return 'Bu özellik zaten var. Başka bir tarif seç.'
@@ -45,6 +46,18 @@ def apply_recipe(player, item, recipe_id, wave):
     cost = recipe_cost(wave,item)
     if player.gold < cost:
         return f'Bu tarif için {cost} altın gerekiyor.'
+    return None
+
+
+def apply_recipe(player, item, recipe_id, wave):
+    error = recipe_error(player, item, recipe_id, wave)
+    if error:
+        return error
+    recipe = next(r for r in recipes(item) if r['id'] == recipe_id)
+    crafted = [(side,a) for side in ('prefixes','suffixes') for a in item.get(side,[]) if a.get('crafted')]
+    rarity = item.get('rarity','Normal')
+    side = recipe['side']
+    cost = recipe_cost(wave,item)
     tier = recipe_tier(wave,item)
     from logic.affix_rules import bench_value
     value = bench_value(recipe,tier)

@@ -1990,7 +1990,7 @@ class GameScene(BaseScene):
         hp_txt = render_fit(hp_str, 17, ui_theme.TEXT_COL, bar_w - 40, bold=True)
         self.screen.blit(hp_txt, hp_txt.get_rect(center=(self.width // 2, y + bar_h // 2)))
 
-    ORB_ROWS_PER_PAGE = 8
+    ORB_ROWS_PER_PAGE = 6
     MARKET_ROWS_PER_PAGE = 5
 
     def _craft_layout(self):
@@ -2633,6 +2633,16 @@ class GameScene(BaseScene):
         prev_clip = self.screen.get_clip()
         self.screen.set_clip(area)
 
+        preview_target = None
+        if area.collidepoint(mouse_pos):
+            for node in SkillTree.NODES:
+                cx, cy = tf(node['pos'])
+                r = self._tree_node_radius(node['type'])
+                if pygame.Rect(cx-r, cy-r, 2*r, 2*r).collidepoint(mouse_pos):
+                    preview_target = node['id']
+        route = SkillTree.path_from_allocated(preview_target, allocated) if preview_target else []
+        route_edges = {tuple(sorted(edge)) for edge in zip(route, route[1:])}
+
         # 1) KENARLAR — her kenar bir kez; sahip olunan iki uç parlar
         drawn = set()
         for nid, neighbors in SkillTree.ADJ.items():
@@ -2644,9 +2654,12 @@ class GameScene(BaseScene):
                 p1 = tf(SkillTree.BY_ID[nid]["pos"])
                 p2 = tf(SkillTree.BY_ID[m]["pos"])
                 both = nid in allocated and m in allocated
+                on_route = key in route_edges
                 col = ui_theme.readable(ui_theme.COLORS["gold"]) if both else (68, 60, 56)
                 pygame.draw.line(self.screen, (42, 33, 26), p1, p2, 3 if both else 2)
                 pygame.draw.line(self.screen, col if both else (117, 91, 57), p1, p2, 2 if both else 1)
+                if on_route:
+                    pygame.draw.line(self.screen, (104, 164, 204), p1, p2, 3)
 
         # 2) DÜĞÜMLER — kilitli önce, açık/alınmış en son (tema kuralı: seçili üstte)
         self.tree_node_hit = []
@@ -2671,7 +2684,7 @@ class GameScene(BaseScene):
             else:
                 state = "locked"
             self._draw_tree_node(node, (cx, cy), r, state,
-                                 matched=nid in self._tree_match)
+                                 matched=nid in self._tree_match or nid in route)
             if area.collidepoint(mouse_pos) and rect.collidepoint(mouse_pos):
                 hover_node = node
 
@@ -2861,8 +2874,11 @@ class GameScene(BaseScene):
         lines=wrap_text(font,node.get('desc',''),width-80)
         if nid.startswith('central_'):
             lines+=wrap_text(font,'Merkez yemini: diğer yeminlere ayrı yol yatırımı gerekir.',width-80)
+        route = SkillTree.path_from_allocated(nid, allocated)
+        if route and nid not in allocated:
+            lines+=wrap_text(font,f'Gerçek bağlantı yolu: {len(route)-1} ek SP. Mavi çizgiyi takip et.',width-80)
         name_s=render_fit(node['name'],20,ui_theme.readable(ui_theme.COLORS['gold']),width-80,bold=True)
-        height=78+len(lines)*22
+        height=98+len(lines)*22
         tx=max(8,min(mouse_pos[0]+18,self.width-width-8))
         ty=max(8,min(mouse_pos[1]+18,self.height-height-8))
         rect=pygame.Rect(tx,ty,width,height)
@@ -2872,7 +2888,7 @@ class GameScene(BaseScene):
         for i,line in enumerate(lines):
             self.screen.blit(font.render(line,True,ui_theme.TEXT_COL),(tx+40,ty+46+i*22))
         status_s=render_fit(status,16,scol,width-80)
-        self.screen.blit(status_s,(tx+40,ty+height-27))
+        self.screen.blit(status_s,(tx+40,ty+height-42))
 
     def reset_skill_tree(self, p):
         """Altın karşılığı tüm ağacı sıfırlar (SP iade edilir). Eski

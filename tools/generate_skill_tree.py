@@ -287,10 +287,18 @@ def generate():
         ('wind','Rüzgârın Bedeli',{'speed':2,'dodgeChance':.15,'treeNoArmor':1},'+2 hareket hızı ve +%15 kaçınma; zırh sıfıra kilitlenir.','speed'),
         ('fortress','Yürüyen Kale',{'armor':100,'max_hp_pct':25,'speed':-1.2,'treeNoDodge':1},'+100 zırh, +%25 can; hareket hızı -1.2, kaçınma sıfıra kilitlenir.','shield'),
     ]
-    for i,(key,name,stats,desc,icon) in enumerate(central):
-        a=-math.pi/2+i*math.tau/len(central)
-        cls=CLASSES[min(8,i*9//len(central))]
-        cluster=0 if i and min(8,(i-1)*9//len(central)) == CLASSES.index(cls) else 1
+    owners = {'venom':'alchemist', 'flame':'bomber', 'single':'sniper',
+              'certainty':'ninja', 'giant':'bomber', 'horizon':'warrior',
+              'army':'engineer', 'overdrive':'engineer', 'vampire':'bloodwalker',
+              'astral':'sorcerer', 'wind':'ninja', 'fortress':'beastmaster'}
+    used = {}
+    for key,name,stats,desc,icon in central:
+        cls = owners[key]
+        cluster = used.get(cls, 0)
+        used[cls] = cluster + 1
+        count = sum(owner == cls for owner in owners.values())
+        offset = (cluster - (count-1)/2) * math.radians(18)
+        a = -math.pi/2 + CLASSES.index(cls)*math.tau/9 + offset
         prev=ring(cls,cluster,4)
         origin=by_id[prev]['pos']
         destination=[4000+420*math.cos(a),4000+420*math.sin(a)]
@@ -302,7 +310,7 @@ def generate():
         node=add('central_'+key,name,'core','keystone',stats,destination,[prev],
                  downside=True)
         if key in ('venom','flame'): by_id[node]['exclusive_group']='conversion'
-        by_id[node].update(desc=desc,icon=icon)
+        by_id[node].update(desc=desc,icon=icon,approach_class=cls)
     # Economy remains optional off a shared passage, never free at a class start.
     prev='bridge_engineer_sniper_0_1'
     for j,stats in enumerate([{'goldGain':.04},{'shopRarity':.04},{'magicFind':.08},

@@ -143,3 +143,19 @@ def test_kamikaze_contact_is_suppressed_during_warning(combat):
     before=p.hp
     e.update_contact(2,p,True)
     assert p.hp==before
+
+@pytest.mark.parametrize('target', ['central_army','central_overdrive'])
+def test_engineer_reaches_turret_oaths_through_own_region(target):
+    route=SkillTree.path_from_allocated(target, {'start_engineer'})
+    assert len(route)-1 == 19
+    assert all(SkillTree.BY_ID[n]['arm'] in ('engineer','core') for n in route)
+    for a,b in zip(route,route[1:]): assert b in SkillTree.ADJ[a]
+    paid=set(route)
+    other='central_overdrive' if target=='central_army' else 'central_army'
+    second=SkillTree.path_from_allocated(other,paid)
+    assert len(second)-1>=15
+
+
+def test_route_preview_honors_exclusive_conversion_choices():
+    assert not SkillTree.path_from_allocated('central_flame',{'start_alchemist','central_venom'})
+    assert SkillTree.path_from_allocated('central_flame',{'start_bomber'})

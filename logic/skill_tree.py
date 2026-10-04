@@ -81,6 +81,32 @@ class SkillTree:
     # Yollama (pathing) kurallari
     # ------------------------------------------------------------------
     @classmethod
+    def path_from_allocated(cls, target, allocated):
+        """Preview the actual shortest selectable route, without spending points."""
+        from collections import deque
+        if target not in cls.BY_ID:
+            return []
+        groups = {cls.BY_ID[n].get('exclusive_group') for n in allocated if n in cls.BY_ID}
+        parents = {n: None for n in sorted(allocated) if n in cls.BY_ID}
+        queue = deque(parents)
+        while queue:
+            current = queue.popleft()
+            if current == target:
+                result = [current]
+                while parents[result[-1]] is not None:
+                    result.append(parents[result[-1]])
+                return list(reversed(result))
+            for other in sorted(cls.ADJ[current]):
+                if other in parents:
+                    continue
+                group = cls.BY_ID[other].get('exclusive_group')
+                if group and group in groups and other not in allocated:
+                    continue
+                parents[other] = current
+                queue.append(other)
+        return []
+
+    @classmethod
     def is_allocatable(cls, node_id, allocated):
         """node_id su an alinabilir mi?
 
