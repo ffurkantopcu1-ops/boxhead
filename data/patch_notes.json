@@ -1,11 +1,23 @@
 {
   "versions": [
     {
-      "version": "Yayınlanmamış",
+      "version": "1.26.6",
+      "date": "2026-10-05",
+      "categories": {
+        "🐞 Hata Düzeltmeleri": [
+          "Yayın paketindeki orb güncellemesi sürüm başlığı düzeltildi"
+        ]
+      }
+    },
+    {
+      "version": "1.26.5",
       "date": "2026-10-05",
       "categories": {
         "✨ Yeni Özellikler": [
           "Aile özleri, odaklanmış ekleme, dönüşüm ve tek taraflı Kaos ile orb işçiliği yenilendi"
+        ],
+        "📦 Diğer": [
+          "1.26.5 sürüm notlarını oluştur"
         ]
       }
     },
