@@ -1,11 +1,27 @@
 {
   "versions": [
     {
+      "version": "1.26.7",
+      "date": "2026-10-05",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "10 yeni kart ve puanın yettiği kadar yetenek yolu alma eklendi",
+          "Orblara özgün görseller ve yeni Türkçe isimler eklendi"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "Oyun metinleri net Türkçe fontlarla ve okunabilir boyutlarla yenilendi"
+        ]
+      }
+    },
+    {
       "version": "1.26.6",
       "date": "2026-10-05",
       "categories": {
         "🐞 Hata Düzeltmeleri": [
           "Yayın paketindeki orb güncellemesi sürüm başlığı düzeltildi"
+        ],
+        "📦 Diğer": [
+          "1.26.6 sürüm notlarını oluştur"
         ]
       }
     },
