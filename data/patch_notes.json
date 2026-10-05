@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "1.26.8",
+      "date": "2026-10-05",
+      "categories": {
+        "✨ Yeni Özellikler": [
+          "Ruh Birliği kartı saldırı bonuslarını, sekme ve delmeyi minyonlara aktarır"
+        ],
+        "🐞 Hata Düzeltmeleri": [
+          "Terbiyeci sopasının hasarı petlere aktarılır; minyon canı ve zırhı çalışan bonuslara dönüştürülür"
+        ]
+      }
+    },
+    {
       "version": "1.26.7",
       "date": "2026-10-05",
       "categories": {
@@ -10,6 +22,9 @@
         ],
         "🐞 Hata Düzeltmeleri": [
           "Oyun metinleri net Türkçe fontlarla ve okunabilir boyutlarla yenilendi"
+        ],
+        "📦 Diğer": [
+          "1.26.7 sürüm notlarını oluştur"
         ]
       }
     },
