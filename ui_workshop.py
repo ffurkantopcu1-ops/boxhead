@@ -10,7 +10,7 @@ def plate(scene, rect, label, key='gold', enabled=True):
     hover = enabled and rect.collidepoint(pygame.mouse.get_pos())
     ui_theme.draw_plate(scene.screen, rect, 'hover' if hover else ('normal' if enabled else 'disabled'),
                         ui_theme.COLORS[key] if enabled else None)
-    txt = render_fit(label, 17, ui_theme.TEXT_COL, rect.width - (10 if rect.width <= 70 else 28), bold=hover)
+    txt = render_fit(label, 17, ui_theme.TEXT_COL, rect.width - (10 if rect.width <= 70 else 28), bold=True)
     scene.screen.blit(txt, txt.get_rect(center=rect.center))
 
 
@@ -125,10 +125,11 @@ def craft_layout(scene):
 
 def _paragraph(scene, label, rect, size=16, key='steel'):
     from ui_elements import get_font
+    size = max(16, size)
     font = get_font(size)
     color = ui_theme.readable(ui_theme.COLORS[key])
-    for i,line in enumerate(wrap_text(font,label,rect.width)[:max(1,rect.height//(size+3))]):
-        scene.screen.blit(font.render(line,True,color),(rect.x,rect.y+i*(size+3)))
+    for i,line in enumerate(wrap_text(font,label,rect.width)[:max(1,rect.height//(font.get_linesize()+3))]):
+        scene.screen.blit(font.render(line,True,color),(rect.x,rect.y+i*(font.get_linesize()+3)))
 
 
 def _operation_icon(option):

@@ -3,18 +3,9 @@ import math
 import time
 import os
 
-# --- Ortak Metin Yardımcıları ---
-# Gotik temayla uyumlu serif (başlıklar zaten Georgia; gövde metni de aynı
-# aileye çekilerek modern sans-serif "Segoe UI" görünümü kaldırıldı).
-_FONT_CACHE = {}
-UI_FONT_NAME = "Georgia, Times New Roman, serif"
-
-def get_font(size, bold=False):
-    """Boyuta göre önbelleğe alınmış font döndürür."""
-    key = (size, bold)
-    if key not in _FONT_CACHE:
-        _FONT_CACHE[key] = pygame.font.SysFont(UI_FONT_NAME, size, bold=bold)
-    return _FONT_CACHE[key]
+# Readable body text; ornamental serif is reserved for screen titles.
+from ui_typography import get_font, BODY_FONT, fit_font
+UI_FONT_NAME = BODY_FONT
 
 _glyph_cache = {}
 
@@ -58,10 +49,11 @@ def _is_emoji(ch):
             or 0x1F000 <= o <= 0x1FAFF)  # emoji blokları
 
 
-def render_fit(text, size, color, max_width, bold=False, min_size=11):
+def render_fit(text, size, color, max_width, bold=False, min_size=14):
     """Metni max_width'e sığana kadar font boyutunu küçülterek keskin şekilde render eder.
     Yine sığmazsa sonuna '…' koyarak kırpar. Bulanık scale yerine bunu kullanın."""
     text = strip_unsupported(text)
+    min_size = min(size, min_size)
     s = size
     while s >= min_size:
         font = get_font(s, bold)
@@ -227,7 +219,7 @@ class ClassCard:
         self.data = class_data # {id, name, desc, color, stats: {}}
         self.font_main = font_main
         self.font_sub = font_sub
-        self.font_desc = pygame.font.SysFont(UI_FONT_NAME, 18)
+        self.font_desc = get_font(18)
         
         self.is_hovered = False
         self.glow_alpha = 0

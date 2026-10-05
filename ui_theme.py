@@ -8,6 +8,7 @@ fonksiyonlar boyuta göre üretir ve cache'ler.
 """
 import os
 import pygame
+from ui_typography import get_font, fit_font
 
 try:
     import ui_nineslice as _n9
@@ -168,20 +169,15 @@ def _banner_points(x0, y0, w, h, inset):
 def _draw_button_text(surf, width, box_y, box_h, text, color, state, scale=1):
     """Buton metnini gölgesiyle yüzeye çizer (banner ve 9-slice ortak)."""
     disabled = state == "disabled"
-    f_size = max(7 * scale, int(box_h * 0.62))
-    font = pygame.font.SysFont(_FONT_NAME, f_size, bold=True)
-    t_col = (150, 148, 142) if disabled else TEXT_COL
-    txt = font.render(text, True, t_col)
-
-    max_tw = width - 18 * scale
-    if max_tw > 0 and txt.get_width() > max_tw:
-        ratio = max_tw / txt.get_width()
-        txt = pygame.transform.smoothscale(
-            txt, (int(max_tw), max(1, int(txt.get_height() * ratio))))
+    f_size = max(14, min(28, int(box_h * 0.56)))
+    font, fitted = fit_font(text, f_size, max(1,width-18*scale), bold=True,
+                            max_height=box_h-2)
+    t_col = (174, 173, 168) if disabled else TEXT_COL
+    txt = font.render(fitted, True, t_col)
 
     tx = width // 2 - txt.get_width() // 2
     ty = box_y + box_h // 2 - txt.get_height() // 2
-    sh = font.render(text, True, (20, 10, 8))
+    sh = font.render(fitted, True, (20, 10, 8))
     if sh.get_size() != txt.get_size():
         sh = pygame.transform.smoothscale(sh, txt.get_size())
     surf.blit(sh, (tx + max(1, scale), ty + max(1, scale)))
@@ -326,21 +322,17 @@ def render_banner_button(width, height, text, color, state="normal", skull=False
     out = pygame.transform.scale(surf, (nw * s, (nh + over_n) * s))
 
     # Metni direkt olarak ölçeklenmiş yüzeye (out) kendi net font boyutuyla çiz
-    f_size_scaled = max(7 * s, int(bh * 0.62 * s))
-    font = pygame.font.SysFont(_FONT_NAME, f_size_scaled, bold=True)
-    t_col = (150, 148, 142) if disabled else TEXT_COL
-    txt = font.render(text, True, t_col)
-    
-    max_tw_scaled = (bw - 2 * inset - 6) * s
-    if txt.get_width() > max_tw_scaled and max_tw_scaled > 0:
-        ratio = max_tw_scaled / txt.get_width()
-        txt = pygame.transform.smoothscale(txt, (max_tw_scaled, max(1, int(txt.get_height() * ratio))))
-        
+    f_size_scaled = max(14, min(28, int(bh * 0.56 * s)))
+    font, fitted = fit_font(text, f_size_scaled, max(1,(bw-2*inset-6)*s),
+                            bold=True, max_height=bh*s-2)
+    t_col = (174, 173, 168) if disabled else TEXT_COL
+    txt = font.render(fitted, True, t_col)
+
     tx_scaled = (nw * s) // 2 - txt.get_width() // 2
     ty_scaled = (by * s) + (bh * s) // 2 - txt.get_height() // 2 + s
     
     # Gölge
-    sh = font.render(text, True, (20, 10, 8))
+    sh = font.render(fitted, True, (20, 10, 8))
     if sh.get_size() != txt.get_size():
         sh = pygame.transform.smoothscale(sh, txt.get_size())
     out.blit(sh, (tx_scaled + max(1, s // 2), ty_scaled + max(1, s // 2)))
@@ -390,7 +382,7 @@ def _draw_panel_nineslice(screen, rect, fill, alpha, skull):
     return False
 
 
-def readable(color, min_lum=150):
+def readable(color, min_lum=180):
     """Koyu sınıf/aksan renklerini koyu zeminde okunur seviyeye çıkarır.
 
     Gölge Ninja (44,62,80) gibi renkler panel zemininde neredeyse görünmez

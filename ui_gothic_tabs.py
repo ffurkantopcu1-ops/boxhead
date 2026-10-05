@@ -46,16 +46,21 @@ def equipped(scene,row,item):
     color=ui_theme.rarity_color(item.get('rarity','Normal')) if item else ui_theme.METAL_LO
     ui_theme.draw_inset_frame(scene.screen,r,'panel_frame_small.png',pad=16,
                               tint=tuple(int(c*.28) for c in color),alpha=220)
-    title=render_fit(labels[row.slot_type],13,ui_theme.TEXT_COL,r.width-34,bold=True)
+    title=render_fit(labels[row.slot_type],15,ui_theme.TEXT_COL,r.width-34,bold=True)
     scene.screen.blit(title,title.get_rect(midtop=(r.centerx,r.y+13)))
     size=max(26,min(58,r.height-58))
-    box=pygame.Rect(r.centerx-size//2,r.y+34,size,size)
+    compact=r.height<110
+    box=pygame.Rect(r.x+18 if compact else r.centerx-size//2,r.y+34,size,size)
     ui_theme.draw_item_slot(scene.screen,box,item.get('rarity') if item else None,row.is_hovered)
     if item:
         icon=ImageLoader.get_item_icon(item.get('icon_id',''),(size-8,size-8))
         if icon:scene.screen.blit(icon,(box.x+4,box.y+4))
-    name=render_fit(item['name'] if item else 'Boş yuva',13,color,r.width-24)
-    scene.screen.blit(name,name.get_rect(midbottom=(r.centerx,r.bottom-10)))
+    name_width=r.width-size-48 if compact else r.width-36
+    name=render_fit(item['name'] if item else 'Boş yuva',15,ui_theme.readable(color),name_width)
+    if compact:
+        scene.screen.blit(name,(box.right+8,box.centery-name.get_height()//2))
+    else:
+        scene.screen.blit(name,name.get_rect(midbottom=(r.centerx,r.bottom-22)))
 
 
 def backpack(scene,card,item):
@@ -73,7 +78,7 @@ def backpack(scene,card,item):
     tx=card.slot_rect.right+10
     name=render_fit(item['name'],17,color,max(40,r.right-tx-18),bold=True)
     scene.screen.blit(name,(tx,r.y+24))
-    rarity=render_fit(item.get('rarity','Normal').upper(),13,ui_theme.TEXT_COL,max(40,r.right-tx-18))
+    rarity=render_fit(item.get('rarity','Normal').upper(),14,ui_theme.TEXT_COL,max(40,r.right-tx-18))
     scene.screen.blit(rarity,(tx,r.y+48))
     values=list(item.get('itemBase',{}).items())
     if values and r.height>=120:
