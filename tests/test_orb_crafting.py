@@ -93,3 +93,22 @@ def test_visible_family_selection_and_apply_spends_once(scene):
     scene._handle_inventory_mouse(p,scene._craft_layout()['apply'].center)
     assert orb['stack']==1 and p.craft_essences['fire']==1
     assert item['prefixes'][0]['stat'] in oc.FAMILIES['fire'][1]
+
+def test_legacy_orb_names_and_icons_refresh_without_changing_stack(scene,tmp_path,monkeypatch):
+    p,item,orb=setup(scene,'p_scour')
+    orb.update(name='Prefix Silme Orbu',icon_id='orb_chaos',stack=19)
+    monkeypatch.setattr(SaveManager,'SAVE_DIR',str(tmp_path))
+    SaveManager.save_game(scene.logic,'old-orbs')
+    SaveManager.load_game(scene.logic,'old-orbs')
+    loaded=next(x for x in scene.logic.players['p1'].inventory if x.get('orb_id')=='p_scour')
+    assert loaded['name']=='Unutuş Küresi' and loaded['icon_id']=='orb_p_scour'
+    assert loaded['stack']==19
+
+def test_every_orb_has_a_distinct_loadable_icon(scene):
+    from ui_elements import ImageLoader
+    orbs=scene.logic.item_system.orbs
+    assert len({o['icon_id'] for o in orbs})==len(orbs)
+    for orb in orbs:
+        icon=ImageLoader.get_item_icon(orb['icon_id'],(40,40))
+        assert icon is not None,orb['orb_id']
+        assert icon.get_size()==(40,40)
