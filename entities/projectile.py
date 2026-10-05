@@ -273,7 +273,8 @@ class Projectile:
         if self.fire_dmg > 0:
             enemy.apply_dot('fire', self.fire_dmg * 0.5 * _dm, 4.0)
             # Mini Patlama (AoE Pulse) on hit
-            self.explode(game, small=True, impact_target=enemy)
+            if not getattr(self, "is_minion_proj", False):
+                self.explode(game, small=True, impact_target=enemy)
 
         if self.frost_dmg > 0:
             enemy.apply_dot('frost', self.frost_dmg * 0.5 * _dm, 4.0)
@@ -310,9 +311,36 @@ class Projectile:
         enemy.last_hit_by_minion = _by_minion
         try:
             enemy.take_damage(self.dmg, game, is_crit=self.is_crit, from_player=not self.is_hostile,
-                              is_secondary=getattr(self,"is_turret_proj",False))
+                              is_secondary=getattr(self,"is_turret_proj",False),
+                              damage_type=getattr(self,"damage_type","physical"))
         finally:
             enemy.last_hit_by_minion = False
+        if _by_minion:
+            for kind, amount in (("fire", self.fire_dmg), ("frost", self.frost_dmg)):
+                if amount > 0 and not enemy.dead:
+                    enemy.last_hit_by_minion = True
+                    try:
+                        enemy.take_damage(amount*getattr(self, 'hit_crit_mult', 1), game,
+                                          from_player=True, is_secondary=True, damage_type=kind)
+                    finally:
+                        enemy.last_hit_by_minion = False
+        if _by_minion and self.aoe > 0:
+            for nearby in list(game.iter_enemies_near(enemy.x, enemy.y, self.aoe)):
+                if nearby is enemy or nearby.dead or nearby.is_trap:
+                    continue
+                if (nearby.x-enemy.x)**2+(nearby.y-enemy.y)**2 > self.aoe**2:
+                    continue
+                nearby.last_hit_by_minion = True
+                try:
+                    nearby.take_damage(self.dmg*.5, game, from_player=True, is_secondary=True,
+                                       damage_type=getattr(self, 'damage_type', 'physical'))
+                    for kind, amount in (("fire", self.fire_dmg), ("frost", self.frost_dmg)):
+                        if amount > 0 and not nearby.dead:
+                            nearby.take_damage(amount*.5*getattr(self, 'hit_crit_mult', 1), game,
+                                               from_player=True, is_secondary=True, damage_type=kind)
+                finally:
+                    nearby.last_hit_by_minion = False
+            game.add_event("explosion", enemy.x, enemy.y, radius=self.aoe, color=self.color, timer=.2)
         self.hit_history.append(enemy.id)
 
         # Ayaz (frostbite) aurası: frost_slow statı tanımlıydı ama okunmuyordu.

@@ -88,6 +88,9 @@ class CardSystem:
                     return True
         return False
 
+    def _apply_pack_soul(self, player):
+        player.has_minion_inheritance = True
+
     def _apply_data_stats(self, player, card):
         for key, value in card.get("stats", {}).items():
             player.skills_permanent[key] = player.skills_permanent.get(key, 0) + value

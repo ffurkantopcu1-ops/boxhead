@@ -281,7 +281,7 @@ def generate():
         ('giant','Devlerin Alanı',{'aoe_bonus':1,'attack_speed_bonus':-.3},'Alan boyutu +%100; oyuncu saldırı hızı -%30. Yakın dövüş erişimini artırmaz.','fire'),
         ('horizon','Ufuk Kesen',{'meleeRangeMult':.8,'max_hp_pct':-30},'Yakın dövüş menzili +%80; maksimum can -%30. Mermi menzilini artırmaz.','reach'),
         ('army','Kalabalık Ordu',{'minionCount':2,'turretLimit':2,'minionDamage':-.3,'turretDmg':-.3},'İki ek minyon/taret limiti; her birinin hasarı -%30. Yardımcı varlık sağlayan ekipman gerekir.','minion'),
-        ('overdrive','Kırılgan Devir',{'minionRate':.6,'turretRate':.6,'minionMaxHp':-.4,'turretMaxHp':-80},'Yardımcıların saldırı hızı +%60; minyon canı -%40, taret canı -80.','turret'),
+        ('overdrive','Kırılgan Devir',{'minionRate':.6,'turretRate':.6,'minionRange':-.4,'turretMaxHp':-80},'Yardımcıların saldırı hızı +%60; minyon menzili -%40, taret canı -80.','turret'),
         ('vampire','Açlığın Yemini',{'lifesteal':.2,'treeNoRegen':1},'Can çalma +%20; doğal ve savaş can yenilenmesi kapanır. İksir ve seviye iyileşmesi korunur.','leech'),
         ('astral','Astral Kabuk',{'maxEnergyShield':180,'esRegen':12,'max_hp_pct':-50},'+180 enerji kalkanı, +12 kalkan yenilenmesi; maksimum can -%50.','shield'),
         ('wind','Rüzgârın Bedeli',{'speed':2,'dodgeChance':.15,'treeNoArmor':1},'+2 hareket hızı ve +%15 kaçınma; zırh sıfıra kilitlenir.','speed'),

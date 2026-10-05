@@ -8,10 +8,10 @@ FAMILIES = {
     'fire': ('Ateş', {'fireDamage','elementDmgMult'}),
     'frost': ('Buz', {'frostDamage','elementDmgMult'}),
     'poison': ('Zehir', {'poisonDps','dotDmgMult','statusDuration','toxicAura'}),
-    'defense': ('Savunma', {'armor','thorns','dodgeChance','minionArmor'}),
-    'life': ('Yaşam', {'maxHp','hpRegen','combatRegen','orbHealMult','lifesteal','minionMaxHp'}),
+    'defense': ('Savunma', {'armor','thorns','dodgeChance'}),
+    'life': ('Yaşam', {'maxHp','hpRegen','combatRegen','orbHealMult','lifesteal'}),
     'speed': ('Hız', {'speed','fireRate','cooldownReduction','killSpeedBoost','minionRate'}),
-    'helpers': ('Yardımcı', {'minionCount','minionDamage','minionRate','minionProjectileCount','minionPierce','minionMaxHp','minionArmor','minionRange','minionBounce','orbitDrones'}),
+    'helpers': ('Yardımcı', {'minionCount','minionDamage','minionRate','minionCrit','minionFrostDmgFlat','minionProjectileCount','minionPierce','minionRange','minionBounce','orbitDrones'}),
     'fortune': ('Servet', {'goldGain','magicFind','thiefChance','xpGain','magnetRadius'}),
 }
 FOCUS_ORBS = {'p_add','s_add','aug'}

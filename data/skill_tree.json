@@ -4802,13 +4802,13 @@
   },
   {
     "id": "beastmaster_pack_2",
-    "name": "Avcı Sürüsü — +%4 Minyon Canı",
+    "name": "Avcı Sürüsü — +%4 Minyon Menzili",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionMaxHp": 0.04
+      "minionRange": 0.04
     },
-    "desc": "+%4 Minyon Canı",
+    "desc": "+%4 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -4887,13 +4887,13 @@
   },
   {
     "id": "beastmaster_pack_6",
-    "name": "Avcı Sürüsü — +%4 Minyon Canı",
+    "name": "Avcı Sürüsü — +%4 Minyon Menzili",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionMaxHp": 0.04
+      "minionRange": 0.04
     },
-    "desc": "+%4 Minyon Canı",
+    "desc": "+%4 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -5099,15 +5099,15 @@
   },
   {
     "id": "beastmaster_guard_0",
-    "name": "Sürü Sığınağı — +4 Minyon Zırhı",
+    "name": "Sürü Sığınağı — +4 Zırh",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionArmor": 4
+      "armor": 4
     },
-    "desc": "+4 Minyon Zırhı",
-    "cat": "minion",
-    "icon": "minion",
+    "desc": "+4 Zırh",
+    "cat": "defense",
+    "icon": "shield",
     "pos": [
       5905,
       5174
@@ -5120,13 +5120,13 @@
   },
   {
     "id": "beastmaster_guard_1",
-    "name": "Sürü Sığınağı — +%6 Minyon Canı",
+    "name": "Sürü Sığınağı — +%6 Minyon Menzili",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionMaxHp": 0.06
+      "minionRange": 0.06
     },
-    "desc": "+%6 Minyon Canı",
+    "desc": "+%6 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -5183,15 +5183,15 @@
   },
   {
     "id": "beastmaster_guard_4",
-    "name": "Sürü Sığınağı — +4 Minyon Zırhı",
+    "name": "Sürü Sığınağı — +4 Zırh",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionArmor": 4
+      "armor": 4
     },
-    "desc": "+4 Minyon Zırhı",
-    "cat": "minion",
-    "icon": "minion",
+    "desc": "+4 Zırh",
+    "cat": "defense",
+    "icon": "shield",
     "pos": [
       5621,
       5114
@@ -5205,13 +5205,13 @@
   },
   {
     "id": "beastmaster_guard_5",
-    "name": "Sürü Sığınağı — +%6 Minyon Canı",
+    "name": "Sürü Sığınağı — +%6 Minyon Menzili",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionMaxHp": 0.06
+      "minionRange": 0.06
     },
-    "desc": "+%6 Minyon Canı",
+    "desc": "+%6 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -5251,12 +5251,12 @@
     "arm": "beastmaster",
     "type": "notable",
     "stats": {
-      "minionArmor": 12,
-      "minionMaxHp": 0.2
+      "armor": 12,
+      "minionRange": 0.2
     },
-    "desc": "+12 Minyon Zırhı, +%20 Minyon Canı",
+    "desc": "+12 Zırh, +%20 Minyon Menzili",
     "cat": "minion",
-    "icon": "minion",
+    "icon": "shield",
     "pos": [
       5773.73,
       5123.0
@@ -5503,13 +5503,13 @@
   },
   {
     "id": "beastmaster_bond_3",
-    "name": "Yaban Bağı — +%6 Minyon Canı",
+    "name": "Yaban Bağı — +%6 Minyon Menzili",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionMaxHp": 0.06
+      "minionRange": 0.06
     },
-    "desc": "+%6 Minyon Canı",
+    "desc": "+%6 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -6137,13 +6137,13 @@
   },
   {
     "id": "beastmaster_cross_1",
-    "name": "Geçiş — +%6 Minyon Canı",
+    "name": "Geçiş — +%6 Minyon Menzili",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionMaxHp": 0.06
+      "minionRange": 0.06
     },
-    "desc": "+%6 Minyon Canı",
+    "desc": "+%6 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -6177,13 +6177,13 @@
   },
   {
     "id": "beastmaster_cross_3",
-    "name": "Geçiş — +%6 Minyon Canı",
+    "name": "Geçiş — +%6 Minyon Menzili",
     "arm": "beastmaster",
     "type": "minor",
     "stats": {
-      "minionMaxHp": 0.06
+      "minionRange": 0.06
     },
-    "desc": "+%6 Minyon Canı",
+    "desc": "+%6 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -6303,9 +6303,9 @@
     "type": "keystone",
     "stats": {
       "minionDamage": 0.4,
-      "minionMaxHp": -0.3
+      "minionRange": -0.3
     },
-    "desc": "+%40 Minyon Hasarı, -%30 Minyon Canı",
+    "desc": "+%40 Minyon Hasarı, -%30 Minyon Menzili",
     "cat": "minion",
     "icon": "minion",
     "pos": [
@@ -17215,10 +17215,10 @@
     "stats": {
       "minionRate": 0.6,
       "turretRate": 0.6,
-      "minionMaxHp": -0.4,
+      "minionRange": -0.4,
       "turretMaxHp": -80
     },
-    "desc": "Yardımcıların saldırı hızı +%60; minyon canı -%40, taret canı -80.",
+    "desc": "Yardımcıların saldırı hızı +%60; minyon menzili -%40, taret canı -80.",
     "cat": "turret",
     "icon": "turret",
     "pos": [

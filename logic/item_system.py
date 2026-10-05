@@ -121,12 +121,12 @@ class ItemSystem:
         { 'type': 'pet', 'name': '🐾 Yavru Kurt (T4)', 'tier': 4, 'icon_id': 'pet_wolf_small', 'itemBase': { 'minionDamage': 0.08, 'minionAttackSpeed': 0.10, 'minionRange': 0.10 } },
         { 'type': 'pet', 'name': '🐾 Savaş Kurdu (T3)', 'tier': 3, 'icon_id': 'pet_wolf_war', 'itemBase': { 'minionDamage': 0.25, 'minionAttackSpeed': 0.20, 'minionRange': 0.25 } },
         { 'type': 'pet', 'name': '🐾 Alfa Kurt (T2)', 'tier': 2, 'icon_id': 'pet_wolf_alpha', 'itemBase': { 'minionDamage': 0.60, 'minionAttackSpeed': 0.40, 'minionRange': 0.45, 'minionCrit': 0.1 } },
-        { 'type': 'pet', 'name': '🐾 Efsanevi Kurt (T1)', 'tier': 1, 'icon_id': 'pet_wolf_legendary', 'itemBase': { 'minionDamage': 1.20, 'minionMaxHp': 7.00, 'minionRange': 0.60, 'minionCrit': 0.2 } },
+        { 'type': 'pet', 'name': '🐾 Efsanevi Kurt (T1)', 'tier': 1, 'icon_id': 'pet_wolf_legendary', 'itemBase': { 'minionDamage': 1.20, 'minionRange': 0.90, 'minionCrit': 0.2 } },
 
-        { 'type': 'pet', 'name': '🐲 Ejder Yavrusu (T4)', 'tier': 4, 'icon_id': 'pet_dragon_baby', 'itemBase': { 'minionDamage': 0.12, 'fireDamage': 10, 'minionMaxHp': 0.60 } },
-        { 'type': 'pet', 'name': '🐲 Kanatlı Ejder (T3)', 'tier': 3, 'icon_id': 'pet_dragon_winged', 'itemBase': { 'minionDamage': 0.35, 'fireDamage': 30, 'minionMaxHp': 1.50, 'aoe': 0.25 } },
-        { 'type': 'pet', 'name': '🐲 Kadim Ejder (T2)', 'tier': 2, 'icon_id': 'pet_dragon_ancient', 'itemBase': { 'minionDamage': 0.80, 'fireDamage': 70, 'minionMaxHp': 4.50, 'aoe': 0.50, 'pierce': 2 } },
-        { 'type': 'pet', 'name': '🐲 Ejderhalar Kralı (T1)', 'tier': 1, 'icon_id': 'pet_dragon_king', 'itemBase': { 'minionDamage': 1.80, 'fireDamage': 150, 'minionMaxHp': 12.0, 'aoe': 0.80, 'pierce': 4 } },
+        { 'type': 'pet', 'name': '🐲 Ejder Yavrusu (T4)', 'tier': 4, 'icon_id': 'pet_dragon_baby', 'itemBase': { 'minionDamage': 0.12, 'fireDamage': 10, 'minionRange': 0.3 } },
+        { 'type': 'pet', 'name': '🐲 Kanatlı Ejder (T3)', 'tier': 3, 'icon_id': 'pet_dragon_winged', 'itemBase': { 'minionDamage': 0.35, 'fireDamage': 30, 'minionRange': 0.3, 'aoe': 0.25 } },
+        { 'type': 'pet', 'name': '🐲 Kadim Ejder (T2)', 'tier': 2, 'icon_id': 'pet_dragon_ancient', 'itemBase': { 'minionDamage': 0.80, 'fireDamage': 70, 'minionRange': 0.3, 'aoe': 0.50, 'pierce': 2 } },
+        { 'type': 'pet', 'name': '🐲 Ejderhalar Kralı (T1)', 'tier': 1, 'icon_id': 'pet_dragon_king', 'itemBase': { 'minionDamage': 1.80, 'fireDamage': 150, 'minionRange': 0.3, 'aoe': 0.80, 'pierce': 4 } },
 
         # --- COMMANDER WEAPONS (Minyon Odaklı, Hasarsız) ---
         { 'type': 'weapon', 'name': 'Eski Terbiye Sopası (T4)', 'tier': 4, 'icon_id': 'weapon_stick', 'isCommander': True, 'price': 800, 'itemBase': { 'minionDamage': 0.1, 'minionRange': 0.1 } },
@@ -220,8 +220,8 @@ class ItemSystem:
             {'stat': 'minionPierce', 'name': 'Minyon Delme', 'tiers': {1: [2, 2], 2: [1, 1], 3: [1, 1]}},
         ],
         'pet_suffixes': [
-            {'stat': 'minionMaxHp', 'name': 'Minyon Canı', 'tiers': {1: [0.4, 0.5], 2: [0.2, 0.39], 3: [0.1, 0.19]}},
-            {'stat': 'minionArmor', 'name': 'Minyon Zırhı', 'tiers': {1: [20, 30], 2: [10, 19], 3: [5, 9]}},
+            {'stat': 'minionFrostDmgFlat', 'name': 'Minyon Buz Hasarı', 'tiers': {1: [20, 30], 2: [10, 19], 3: [5, 9]}},
+            {'stat': 'minionCrit', 'name': 'Minyon Kritik Şansı', 'tiers': {1: [0.04, 0.06], 2: [0.02, 0.038], 3: [0.01, 0.018]}},
             {'stat': 'toxicAura', 'name': 'Zehir Aurası', 'tiers': {1: [40, 50], 2: [20, 39], 3: [10, 19]}},
             {'stat': 'minionRange', 'name': 'Minyon Menzili', 'tiers': {1: [0.4, 0.5], 2: [0.2, 0.39], 3: [0.1, 0.19]}},
             {'stat': 'minionBounce', 'name': 'Minyon Sekme', 'tiers': {1: [2, 2], 2: [1, 1], 3: [1, 1]}},

@@ -179,8 +179,7 @@ class Player:
             { 'name': '💂 Ordulu (+1 Minyon Sayı)', 'stat': 'minionCount', 'val': 1, 'lvl': 0, 'max': 2, 'group': 'MİNYON' },
             { 'name': '🎖️ Komutan (+25% Minyon Hasar)', 'stat': 'minionDamage', 'val': 0.25, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '⚡ Çevik Pençeler (+20% Minyon Hızı)', 'stat': 'minionRate', 'val': 0.2, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
-            # Düz can veriyor; çarpan statını beslerse minyon canı 85.000'e çıkıyordu (F3)
-            { 'name': '💖 Fedai (+80 Minyon Canı)', 'stat': 'minionMaxHpFlat', 'val': 80, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
+            { 'name': 'Keskin Duyular (+%8 Minyon Menzili)', 'stat': 'minionRange', 'val': 0.08, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '📏 Keskin Gözler (+15% Minyon Menzil)', 'stat': 'minionRange', 'val': 0.15, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '👊 Pençe Eğitimi (+5 Minyon Fiz. Hasar)', 'stat': 'minionPhysDmgFlat', 'val': 5, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
             { 'name': '⚔️ Keskin Pençe (+10% Minyon Fiz. Hasar)', 'stat': 'minionPhysDmgMult', 'val': 0.1, 'lvl': 0, 'max': 10, 'group': 'MİNYON' },
@@ -261,12 +260,10 @@ class Player:
 
     # Ruh Terbiyecisi tek sınıf olarak silahla değil PET ile başlar ve bu pet
     # T4 pet tabanından (Yavru Kurt) kasıtlı olarak zayıftır: minionDamage 0.
-    # minionMaxHp ÇARPAN'dır (pet itemleri 0.60-12.0 aralığında); 50 değeri
-    # başlangıç kurduna 5100 can veriyordu (F3). Türetilmez, elle tanımlıdır.
     STARTING_PET = {
         "name": "Küçük Kurt", "type": "pet", "rarity": "Normal",
         "icon_id": "pet_wolf_small",
-        "itemBase": {"minionDamage": 0, "minionMaxHp": 0.5},
+        "itemBase": {"minionDamage": 0, "minionRange": 0.3},
         "prefixes": [], "suffixes": [],
     }
 
@@ -1427,17 +1424,17 @@ class Player:
         # BEASTMASTER
         "beastmaster_emperor": {
             "name": "👑 Pet İmparatoru", "class_base": "beastmaster",
-            "stats": {"minionCount": 2, "minionDamage": 0.3, "minionMaxHp": 0.4, "minionRange": 0.2},
+            "stats": {"minionCount": 2, "minionDamage": 0.3, "minionRange": 0.5},
             "max_hp_delta": -20,
             "passive": "wind_minions",
-            "desc": "+2 minyon sayısı ve sürü genelinde hasar/can bonusu. Can -20."
+            "desc": "+2 minyon sayısı ve sürü genelinde hasar/menzil bonusu. Can -20."
         },
         "beastmaster_hunter": {
             "name": "🦅 Avcı", "class_base": "beastmaster",
-            "stats": {"minionDamage": 2.0, "minionMaxHp": 1.0, "minionRange": 0.6},
+            "stats": {"minionDamage": 2.0, "minionRange": 0.9},
             "max_hp_delta": 0,
             "passive": "alpha_pet",
-            "desc": "Az sayıda ama devasa güçte pet: minyon hasarı 3x, canı 2x."
+            "desc": "Az sayıda ama devasa güçte pet: minyon hasar bonusu +%200, menzil bonusu +%90."
         },
         # SNIPER
         "sniper_marksman": {

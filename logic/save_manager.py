@@ -48,6 +48,7 @@ class SaveManager:
         "has_chaos_field": False,
         "has_doppelganger": False,
         "has_furnace": False,
+        "has_minion_inheritance": False,
         "no_passive_regen": False,
         "_pact_expired": False,
         "turret_hp_penalty": 1.0,

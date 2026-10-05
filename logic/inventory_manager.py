@@ -5,11 +5,8 @@ class InventoryManager:
     # (veri dosyaları değişmez -> save uyumluluğu korunur)
     STAT_ALIASES = {"maxHp": "max_hp", "attack_speed_mult": "attack_speed_bonus"}
 
-    # Yetenek ağacı (skills) girdilerinde kullanılan eski stat adlarının yeni
-    # karşılıkları. Eşya/aura tarafını bozmamak için SADECE skill döngüsünde
-    # uygulanır: eski kayıtlardaki "Fedai" skili düz değer verdiği halde
-    # çarpan statını besliyordu (F3).
-    SKILL_STAT_MIGRATION = {"minionMaxHp": "minionMaxHpFlat"}
+    # Eski minyon savunma bonusları minion_stats tarafından dönüştürülür.
+    SKILL_STAT_MIGRATION = {}
 
     # Oynanabilir sınıflar. Bir silahın weaponClass'ı yalnızca bu kümedeyse
     # sınıfı değiştirir; "general"/"none" gibi değerler sınıfsızdır.
@@ -49,8 +46,6 @@ class InventoryManager:
         "fireDmgMult":    (1.0,  0.5, 2.0),
         "frostDmgMult":   (1.0,  0.5, 2.0),
         # Pet çarpanları toplanabiliyor; eski kayıtlardaki hatalı "Küçük Kurt"
-        # (minionMaxHp: 50) gibi değerleri de sınırlar (F3)
-        "minionMaxHp":    (13.0, 0.5, 20.0),
     }
 
     def __init__(self, player):
@@ -210,6 +205,8 @@ class InventoryManager:
         return out
 
     def recalculate_stats(self):
+        from logic.minion_stats import migrate_player
+        migrate_player(self.player, self.equipped)
         # 🟢 STEP 1: CLASS-SPECIFIC BASE STATS (tek kaynak: CLASS_BASES)
         class_bases = self.CLASS_BASES
 
@@ -242,11 +239,8 @@ class InventoryManager:
             "elementDmgMult": 0,
             # minionCount/minionDamage tabanı 0: tüketim noktaları (player.py 1+,
             # minion.py 1.0+) tabanı zaten ekliyor; 1/1.0 çift sayım yaratıyordu (F5)
-            # minionMaxHp ÇARPAN (taban 1.0), minionMaxHpFlat DÜZ can (taban 0);
-            # ikisi tek anahtarda toplanınca 85.000 canlı minyon çıkıyordu (F3)
             "minionCount": 0, "minionDamage": 0.0, "minionRate": 1.0,
-            "minionMaxHp": 1.0, "minionMaxHpFlat": 0, "minionArmor": 0,
-            "minionRange": 1.0, 
+            "minionRange": 1.0,
             "minionPhysDmgFlat": 0, "minionPhysDmgMult": 0,
             "minionFireDmgFlat": 0, "minionFireDmgMult": 0,
             "minionFrostDmgFlat": 0, "minionFrostDmgMult": 0,
@@ -268,6 +262,7 @@ class InventoryManager:
         # 🧪 ESSENCE BONUSES (Kalıcı Base Stat Artışları) - tavanlı (S9)
         essence_caps = getattr(self.player, 'ESSENCE_CAPS', {})
         for stat, val in self.player.essence_stats.items():
+            stat = self.STAT_ALIASES.get(stat, stat)
             cap = essence_caps.get(stat)
             if cap is not None:
                 val = min(val, cap)
@@ -294,21 +289,15 @@ class InventoryManager:
             if item:
                 # Base Stats (Kahverengi)
                 i_base = item.get("itemBase", {})
-                is_commander = item.get("isCommander", False) and slot == "weapon"
+                from logic.minion_inheritance import is_tamer_weapon, WEAPON_STATS
+                is_commander = (is_tamer_weapon(item) and slot == "weapon") or slot == "pet"
                 
                 def add_stat(s_name, s_val):
                     s_name = self.STAT_ALIASES.get(s_name, s_name)
                     # Commander Weapon ise mermi/hasar statlarını minyona aktar
                     target_stat = s_name
                     if is_commander:
-                        mapping = {
-                            "physDmg": "minionPhysDmgFlat", "physDmgMult": "minionPhysDmgMult",
-                            "fireDmgFlat": "minionFireDmgFlat", "fireDmgMult": "minionFireDmgMult",
-                            "frostDmgFlat": "minionFrostDmgFlat", "frostDmgMult": "minionFrostDmgMult",
-                            "poisonDps": "minionPoisonDpsFlat", "attack_speed_bonus": "minionRate",
-                            "projectileCount": "minionProjectileCount", "bounce": "minionBounce",
-                            "pierce": "minionPierce"
-                        }
+                        mapping = WEAPON_STATS
                         target_stat = mapping.get(s_name, s_name)
                     
                     if target_stat in totals: totals[target_stat] += s_val
@@ -333,6 +322,7 @@ class InventoryManager:
                     
         # 🟣 KARTLARDAN GELEN KALICI STATLAR (skills_permanent)
         for stat, val in getattr(self.player, 'skills_permanent', {}).items():
+            stat = self.STAT_ALIASES.get(stat, stat)
             if stat in totals:
                 totals[stat] += val
             else:
@@ -343,6 +333,7 @@ class InventoryManager:
         # matematikte kart bedelleriyle birlikte işlenir.
         from logic.skill_tree import SkillTree
         for stat, val in SkillTree.resolve_stats(getattr(self.player, 'allocated_nodes', ())).items():
+            stat = self.STAT_ALIASES.get(stat, stat)
             if stat in totals:
                 totals[stat] += val
             else:
@@ -351,6 +342,7 @@ class InventoryManager:
         # 🔺 ASCENDANCY (alt-sınıf) düğümleri — aynı şekilde toplanır
         from logic.ascendancy import Ascendancy
         for stat, val in Ascendancy.resolve_stats(getattr(self.player, 'ascendancy_nodes', ())).items():
+            stat = self.STAT_ALIASES.get(stat, stat)
             if stat in totals:
                 totals[stat] += val
             else:
@@ -572,6 +564,8 @@ class InventoryManager:
             return {}
             
         item = self.equipped[slot]
+        from logic.minion_stats import migrate_item
+        migrate_item(item)
         # Base Stats Kopyala
         stats = item.get("itemBase", {}).copy()
         

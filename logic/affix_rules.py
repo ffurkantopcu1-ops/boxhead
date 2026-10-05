@@ -4,7 +4,7 @@ import random
 COUNT_STATS = {'projectileCount', 'bounce', 'pierce', 'minionCount',
                'minionProjectileCount', 'minionPierce', 'minionBounce'}
 FLAT_STATS = {'maxHp', 'armor', 'thorns', 'fireDamage', 'frostDamage',
-              'poisonDps', 'minionArmor', 'toxicAura', 'shockwave', 'magnetRadius'}
+              'poisonDps', 'toxicAura', 'shockwave', 'magnetRadius'}
 
 def item_level(item):
     # Old items infer their level from the base, without changing their rolls.

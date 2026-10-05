@@ -814,5 +814,13 @@
             "critDmg": 0.4,
             "max_hp_pct": -25
         }
+    },
+    {
+        "id": "pack_soul",
+        "name": "Ruh Birliği",
+        "desc": "Savunma ve iyileşme hariç tüm bonusların minyonlara da geçer. Hasar, hız, kritik, delme, sekme, çoklu atış, alan ve durum etkileri; zehre dönüşüm/yalnız ateş gibi kurallar dâhil.",
+        "category": "minion",
+        "affinity": ["beastmaster"],
+        "apply": "_apply_pack_soul"
     }
 ]

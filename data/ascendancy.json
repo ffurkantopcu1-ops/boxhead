@@ -285,12 +285,12 @@
   },
   {
     "id": "beastmaster_hunter_a2",
-    "name": "Kalın Post",
-    "desc": "+100 Minyon Canı",
+    "name": "Keskin Duyular",
+    "desc": "+%10 Minyon Menzili",
     "subclass": "beastmaster_hunter",
     "type": "minor",
     "stats": {
-      "minionMaxHpFlat": 100
+      "minionRange": 0.1
     },
     "connects": [],
     "pos": [
@@ -301,12 +301,12 @@
   {
     "id": "beastmaster_hunter_a3",
     "name": "🐾 Dev Yoldaş",
-    "desc": "+%40 Minyon Hasarı, +100 Minyon Canı",
+    "desc": "+%40 Minyon Hasarı, +%10 Minyon Menzili",
     "subclass": "beastmaster_hunter",
     "type": "notable",
     "stats": {
       "minionDamage": 0.4,
-      "minionMaxHpFlat": 100
+      "minionRange": 0.1
     },
     "connects": [
       "beastmaster_hunter_a1",

@@ -1,6 +1,5 @@
 import pygame
 import math
-from logic.progression import base_life
 import random
 import vfx
 
@@ -64,14 +63,9 @@ class Minion:
         self.dead = False
         self.is_recharging = False
         self.recharge_timer = 0
-        # minionMaxHp ÇARPAN, minionMaxHpFlat DÜZ can (F3): eskiden ikisi de tek
-        # anahtarda toplanıp 100 ile çarpılıyordu (851 -> 85.100 can).
-        hp_mult = owner.stats.get("minionMaxHp", 1.0) if owner else 1.0
-        hp_flat = owner.stats.get("minionMaxHpFlat", 0) if owner else 0
-        self.max_hp = max(1.0, (100 + .5*(base_life(getattr(owner,'level',1))-100)) * hp_mult + hp_flat)
-        self.hp = self.max_hp
-        self.armor = owner.stats.get("minionArmor", 0) if owner else 0
-        
+        # Compatibility fields for helper targeting; pets do not take damage.
+        self.hp = self.max_hp = 1.0
+
         # minionRate __init__'te bir kez okunuyordu; sonradan alınan
         # aura/sinerji/skill mevcut minyonlara işlemiyordu (bayat stat).
         # Taban süre saklanır, çarpan KULLANIM ANINDA (update) uygulanır -
@@ -93,13 +87,9 @@ class Minion:
 
     def update(self, dt, game):
         if not self.owner: return
-        stats = self.owner.stats
-        maximum = max(1.0, (100 + .5*(base_life(getattr(self.owner,'level',1))-100)) * stats.get('minionMaxHp', 1.0) + stats.get('minionMaxHpFlat', 0))
-        if maximum != self.max_hp:
-            self.hp = min(maximum, self.hp * maximum / self.max_hp)
-            self.max_hp = maximum
-        self.range = self.base_range * max(.1, stats.get('minionRange', 1.0))
-        self.armor = stats.get('minionArmor', 0)
+        from logic.minion_inheritance import combat_stats
+        stats = combat_stats(self.owner)
+        self.range = self.base_range * max(.1, stats.get('minionRange', 1.0)) + stats.get("minionExtraRange", 0)
 
         # Pet İmparatoru evrimi (wind_minions): minyonlar %40 daha hızlı hareket
         # eder ve %30 daha sık saldırır.
@@ -109,24 +99,16 @@ class Minion:
         # minyonlarda ya da stat yeniden hesaplamasında tutarsız kalır.
         # Bunun yerine çarpan KULLANIM ANINDA uygulanır (idempotent).
         wind = getattr(self.owner, 'evolution_passive', '') == 'wind_minions'
-        move_speed = self.speed * (1.4 if wind else 1.0)
+        move_speed = self.speed * (1.4 if wind else 1.0) * stats.get("minionMoveMult", 1)
 
 
+        if self.dead:
+            return
         if self.lifetime is not None:
             self.lifetime -= dt
             if self.lifetime <= 0:
-                self.hp = 0
-                
-        # 0. RECHARGE KONTROLÜ: Minyon canı biterse 5 sn devre dışı kalır,
-        # sonra yarı canla döner (kalıcı ölümsüzlük EHP'yi tanımsız yapıyordu, F5)
-        if self.is_recharging:
-            self.recharge_timer -= dt
-            if self.recharge_timer <= 0:
-                self.is_recharging = False
-                self.hp = self.max_hp * 0.5
-        elif self.hp <= 0:
-            self.is_recharging = True
-            self.recharge_timer = 5.0
+                self.dead = True
+                return
 
         # 1. HAREKET SENKRONİZASYONU (Sync)
         # Oyuncunun anlık yer değiştirmesini minyona aktar (Yetişme sorunu çözümü)
@@ -151,32 +133,30 @@ class Minion:
             self.x += math.cos(angle) * catchup_speed * dt * 60
             self.y += math.sin(angle) * catchup_speed * dt * 60
             
-        # CAN YERİLEME (Oyuncu regenine bağlı)
-        # regen -999 (Berserker Öfkesi / Lanetli Kan) minyonları sürekli
-        # is_recharging'e kilitliyordu; negatif regen minyona yansımaz (H13)
-        p_regen = max(0, self.owner.stats.get("regen", 0))
-        self.hp = min(self.max_hp, self.hp + dt * (2 + p_regen * 0.5))
-            
         # 2. TOXIC AURA (Alan Hasarı)
         self.aura_timer += dt
         if self.aura_timer >= 1.0: # Her saniye
             self.aura_timer = 0
-            aura_dmg = self.owner.stats.get("toxicAura", 0)
-            if aura_dmg > 0:
-                for e in game.iter_enemies_near(self.x, self.y, 150):
-                    dx = e.x - self.x
-                    dy = e.y - self.y
-                    if not e.dead and dx * dx + dy * dy < 150 * 150:
-                        # minion_kills görevi: bayrak yalnızca bu çağrı boyunca
-                        # açık (bkz. entities/projectile.py -> on_hit)
-                        e.last_hit_by_minion = True
-                        try:
-                            e.take_damage(aura_dmg, game, from_player=True)
-                            vfx.hit(game, e.x, e.y, 'poison')
-                        finally:
-                            e.last_hit_by_minion = False
-                        game.add_event("damage_text", e.x, e.y - 10, value=aura_dmg, color=(46, 204, 113), scale=0.6)
-            
+            inherited = getattr(self.owner, "has_minion_inheritance", False)
+            packets = [("poison", stats.get("toxicAura", 0))]
+            if inherited:
+                packets.extend((("physical", self.owner.max_hp*.05*stats.get("decayAura", 0)),
+                                ("lightning", stats.get("static_field", 0)),
+                                ("fire", 75*stats.get("starfallAura", 0))))
+            for enemy in list(game.iter_enemies_near(self.x, self.y, 150)):
+                if enemy.dead or enemy.is_trap or (enemy.x-self.x)**2+(enemy.y-self.y)**2 >= 150**2:
+                    continue
+                if inherited and getattr(self.owner, "has_chaos_field", False):
+                    from logic.status_effects import StatusEffect
+                    enemy.effect_manager.add_effect(StatusEffect("ChaosArmor", 1.5))
+                enemy.last_hit_by_minion = True
+                try:
+                    for kind, amount in packets:
+                        if amount > 0 and not enemy.dead:
+                            enemy.take_damage(amount, game, from_player=True, damage_type=kind)
+                finally:
+                    enemy.last_hit_by_minion = False
+
         # 3. HEDEF BUL (En yakın düşman)
         self.find_target(game)
         
@@ -186,9 +166,10 @@ class Minion:
         # Attack Speed hesaplaması
         # minionRate her karede taze okunur (bkz. __init__ notu); böylece
         # dalga ortasında alınan aura/skill mevcut sürüye de işler.
-        rate_mult = max(0.1, self.owner.stats.get("minionRate", 1.0))
+        rate_mult = max(0.1, stats.get("minionRate", 1.0))
         self.attack_cooldown = self.base_cd / rate_mult
-        eff_cooldown = self.attack_cooldown / (1.0 + self.owner.stats.get("minionAttackSpeed", 0))
+        eff_cooldown = self.attack_cooldown / max(.1, 1.0 + stats.get("minionAttackSpeed", 0))
+        eff_cooldown *= stats.get("minionCooldownMult", 1)
         if wind:
             eff_cooldown *= 0.7
 
@@ -215,7 +196,8 @@ class Minion:
                 return
 
         # 2. YENİ HEDEFLEME MANTIĞI
-        m_range_mult = self.owner.stats.get("minionRange", 1.0)
+        from logic.minion_inheritance import combat_stats
+        m_range_mult = combat_stats(self.owner).get("minionRange", 1.0)
         leash_dist = 800 * m_range_mult
         
         if dist_to_owner > leash_dist:
@@ -257,14 +239,15 @@ class Minion:
     def attack(self, game):
         if not self.target or self.is_recharging: return
         
-        # --- STAT MİRASI (Minyon Statları) ---
-        minion_dmg_mult = self.owner.stats.get("minionDamage", 0.0)
-        minion_phys_mult = self.owner.stats.get("minionPhysDmgMult", 0)
-        minion_fire_mult = self.owner.stats.get("minionFireDmgMult", 0)
-        minion_frost_mult = self.owner.stats.get("minionFrostDmgMult", 0)
-        
-        total_mult = 1.0 + minion_dmg_mult + minion_phys_mult + minion_fire_mult + minion_frost_mult
-        
+        from logic.minion_inheritance import combat_stats
+        stats = combat_stats(self.owner)
+        damage = stats.get("minionDamage", 0)
+        total_mult = max(0, 1+damage+stats.get("minionPhysDmgMult", 0))
+        conditional = stats.get("minionConditionalMult", 1)
+        element = stats.get("minionElementDmgMult", 0)
+        fire_mult = max(0, 1+damage+element+stats.get("minionFireDmgMult", 0))
+        frost_mult = max(0, 1+damage+element+stats.get("minionFrostDmgMult", 0))
+
         # BEASTMASTER BONUS (SPIRIT TAMER)
         # Eğer Ruh Terbiyecisi değilse, minyonlar çok daha güçsüz olur (Nerf Artırıldı)
         eff_mult = 1.0
@@ -273,39 +256,37 @@ class Minion:
         if self.type != "drone" and self.owner and getattr(self.owner, 'class_id', '') != 'beastmaster':
             eff_mult = 0.15
             
-        # IMPOSSIBLE ZORLUK CEZASI (%50 Hasar Kaybı)
-        if game.wave.get("current_diff") == "Impossible":
-            eff_mult *= 0.5
+        # Difficulty mitigation is applied once by Enemy.take_damage.
             
-        flat_dmg = self.owner.stats.get("minionPhysDmgFlat", 0)
-        final_dmg_base = ((self.base_dmg * total_mult) + flat_dmg) * eff_mult
+        flat_dmg = stats.get("minionPhysDmgFlat", 0)
+        final_dmg_base = ((self.base_dmg + flat_dmg) * total_mult) * eff_mult * conditional
         
         # Yeni Mermi Statları (Mermi sayısı, sekiş, deliş)
         # Terbiyeci Sopası silahı da hesaba katılır
-        local_stats = self.owner.inv_manager.get_item_local_stats("weapon") if getattr(self.owner, "inv_manager", None) else {}
-        proj_count = int(self.owner.stats.get("minionProjectileCount", 1)) + int(local_stats.get("projectileCount", 0))
-        
+        proj_count = max(1, int(stats.get("minionProjectileCount", 1)))
+
         if self.owner.stats.get('treeSingleShot', 0): proj_count = 1
         # Çoklu atış hasar cezası (%15 hasar kaybı per ekstra mermi, min %30)
         penalty = max(0.3, 1.0 - (proj_count - 1) * 0.15)
         final_dmg_base *= penalty
         
-        bounce = int(self.owner.stats.get("minionBounce", 0)) + int(local_stats.get("bounce", 0))
-        pierce = int(self.owner.stats.get("minionPierce", 0)) + int(local_stats.get("pierce", 0))
+        bounce = int(stats.get("minionBounce", 0))
+        pierce = int(stats.get("minionPierce", 0))
         
         if self.owner.stats.get('treeSingleShot', 0): bounce = pierce = 0
         # Kritik Şans
         # minionCrit (Vahşi Bağı kartı + pet itemleri) hiçbir yerde okunmuyordu (P3)
-        crit_chance = self.owner.stats.get("critChance", 0.05) + self.owner.stats.get("minionCrit", 0)
+        crit_chance = min(1, max(0, .05 + stats.get("minionCrit", 0)))
         is_crit = not self.owner.stats.get('treeNoCrit', 0) and random.random() < crit_chance
         # Krit tabanı oyuncuyla aynı (2.0) olacak şekilde hizalandı
-        final_dmg = final_dmg_base * (self.owner.get_critical_multiplier()) if is_crit else final_dmg_base
+        crit_mult = 2+min(1.5, max(-1, stats.get("minionCritDmg", 0)))
+        final_dmg = final_dmg_base * crit_mult if is_crit else final_dmg_base
 
         from entities.projectile import Projectile
         angle_to_target = math.atan2(self.target.y - self.y, self.target.x - self.x)
         
         # Çoklu Atış Yayılımı
-        spread = 0.25
+        spread = math.radians(max(1, 14+stats.get("spreadAngle", 0)))
         start_angle = angle_to_target - (spread * (proj_count - 1) / 2)
         
         for i in range(proj_count):
@@ -316,37 +297,52 @@ class Minion:
             
             # Wolf için kısa ömürlü (Katana), Dragon için uzun ömürlü (Mermi)
             # Menzil statı hem Wolf (Slash mesafesi) hem Dragon (Mermi mesafesi) için çalışır
-            m_range_mult = self.owner.stats.get("minionRange", 1.0)
+            m_range_mult = stats.get("minionRange", 1.0)
             if self.type == "wolf":
-                lifetime = int(45 * m_range_mult) # Base 45 frame (~540 birim)
+                lifetime = int(45 * m_range_mult + stats.get("minionExtraRange", 0)/12) # Base 45 frame (~540 birim)
             else:
-                lifetime = int(180 * m_range_mult) # Base 180 frame
+                lifetime = int(180 * m_range_mult + stats.get("minionExtraRange", 0)/12) # Base 180 frame
             
             # AOE Hesabı (Dragon mermileri varsayılan olarak biraz alan hasarı verir)
             aoe_stat = self.owner.stats.get("aoe", 1.0)
             final_aoe = 0
-            if self.type == "dragon":
-                # Dragon mermileri 40 base AOE + item bonusları alır
-                final_aoe = (40 + self.owner.stats.get("minionFireDmgFlat", 0)) * aoe_stat
+            if self.type == "dragon" or (getattr(self.owner, "has_minion_inheritance", False) and aoe_stat > 1):
+                final_aoe = 40 * aoe_stat
             
             proj = Projectile(game.entity_id_counter, self.x, self.y, vx, vy, 
                               final_dmg, bounce=bounce, pierce=pierce, 
                               p_type=p_type, aoe=final_aoe, lifetime=lifetime)
             proj.is_crit = is_crit
             proj.is_minion_proj = True
+            proj.hit_crit_mult = crit_mult if is_crit else 1
+            proj.dot_mult = max(0, 1+stats.get("minionDotDmgMult", 0))
+            proj.bounce_dmg_mult = 1.3 if getattr(self.owner, "has_minion_inheritance", False) and getattr(self.owner, "has_ricochet_master", False) else 1.0
             
             # Elemental Statlar (Poison vb.)
-            proj.poison_dps = self.owner.stats.get("minionPoisonDpsFlat", 0) * total_mult
-            proj.fire_dmg = self.owner.stats.get("minionFireDmgFlat", 0) * total_mult
-            proj.frost_dmg = self.owner.stats.get("minionFrostDmgFlat", 0) * total_mult
-            if self.owner.stats.get('treeFireOnly', 0):
-                proj.dmg = 0
+            proj.poison_dps = stats.get("minionPoisonDpsFlat", 0) * max(0, 1+damage+element) * conditional * eff_mult
+            proj.fire_dmg = stats.get("minionFireDmgFlat", 0) * fire_mult * conditional * eff_mult
+            proj.frost_dmg = stats.get("minionFrostDmgFlat", 0) * frost_mult * conditional * eff_mult
+            if self.owner.stats.get('treeFireOnly', 0) or getattr(self.owner, 'has_furnace', False):
+                proj.damage_type = 'fire'
                 proj.poison_dps = proj.frost_dmg = 0
-                proj.fire_dmg *= 1 + self.owner.stats.get('fireDmgMult', 0)
-            
+                converted_mult = fire_mult
+                if self.owner.stats.get('treeFireOnly', 0) and not getattr(self.owner, 'has_minion_inheritance', False):
+                    converted_mult += self.owner.stats.get('fireDmgMult', 0)
+                proj.dmg = (self.base_dmg+flat_dmg)*max(0, converted_mult)*eff_mult*conditional*penalty*(crit_mult if is_crit else 1)
+            elif self.type == 'dragon':
+                proj.damage_type = 'fire'
+                proj.dmg = (self.base_dmg+flat_dmg)*fire_mult*eff_mult*conditional*penalty*(crit_mult if is_crit else 1)
+
             game.projectiles.append(proj)
             game.entity_id_counter += 1
             
+        if getattr(self.owner, "has_minion_inheritance", False) and stats.get('shockwave', 0) > 0:
+            for nearby in list(game.iter_enemies_near(self.x, self.y, 90)):
+                if not nearby.dead and not nearby.is_trap and (nearby.x-self.x)**2+(nearby.y-self.y)**2 <= 90**2:
+                    nearby.take_damage(stats['shockwave'], game, from_player=True, is_secondary=True,
+                                       damage_type='fire' if self.owner.stats.get('treeFireOnly', 0) else 'physical')
+            game.add_event('shockwave', self.x, self.y, radius=90, color=self.color, timer=.25)
+
         # Görsel Efekt
         if self.type == "wolf":
             game.add_event("slash", self.target.x, self.target.y, timer=0.2)

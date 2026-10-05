@@ -22,7 +22,7 @@ def test_early_clear_and_defense_notables_arrive_at_four_points(cls):
     near=[n for n in SkillTree.NODES if n['arm']==cls and n['type']=='notable' and costs[n['id']]<=4]
     assert len(near)>=3
     assert any(set(n['stats']) & {'armor','max_hp','max_hp_pct','maxEnergyShield',
-                                 'minionArmor','minionMaxHp','turretMaxHp','dodgeChance'} for n in near)
+                                 'turretMaxHp','dodgeChance'} for n in near)
     assert min(costs[n['id']] for n in near)==4
     assert all(costs[n['id']]>=3 for n in SkillTree.NODES if n['type']=='notable')
 
