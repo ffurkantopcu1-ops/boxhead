@@ -265,7 +265,7 @@ class Cloud:
                 p.y += math.sin(angle_to_center) * pull_strength
                 # Hasar ver
                 dmg = getattr(self, 'dmg', 10)
-                p.take_damage(dmg * dt, force=True, is_dot=True)
+                p.take_damage(dmg * dt, force=True, is_dot=True, source="black_hole")
 
         # Ağ Etkisi (Oyuncuyu yavaşlatır ve susturur)
         if getattr(self, 'is_web', False):

@@ -6,6 +6,7 @@ from ui_elements import (TabButton, EquippedRow, BackpackItemCard,
                          strip_unsupported, get_skull_crest, ImageLoader)
 from logic.skill_tree import SkillTree
 import pygame
+from ui_typography import get_font
 import math
 import time
 import random
@@ -175,10 +176,9 @@ class GameScene(BaseScene):
         # verisi oradan gelir. Yeni oyunda seed değiştiği için önbellek geçersiz.
         tile_renderer.clear_cache()
         # Gotik temayla uyumlu serif (bkz. ui_elements.UI_FONT_NAME)
-        _THEME_FONT = "Georgia, Times New Roman, serif"
-        self.font_main = pygame.font.SysFont(_THEME_FONT, 48, bold=True)
-        self.font_sub = pygame.font.SysFont(_THEME_FONT, 24)
-        self.font_desc = pygame.font.SysFont(_THEME_FONT, 18)
+        self.font_main = get_font(48, bold=True, title=True)
+        self.font_sub = get_font(24)
+        self.font_desc = get_font(18)
         self.active_tab = "inventory" # inventory, hero, skills, market, aura
         
         # Aura & Essence UI State
@@ -2535,12 +2535,13 @@ class GameScene(BaseScene):
             row = i - col * half
             rx = cx0 + col * (col_w + col_gap)
             ry = gy0 + row * row_h
-            l_surf = render_fit(label_t, 22, (176, 170, 158), col_w - 120)
-            v_surf = render_fit(str(val), 22, ui_theme.TEXT_COL, 120, bold=True)
+            point = min(22, max(16, row_h - 10))
+            l_surf = render_fit(label_t, point, (198, 192, 180), col_w - 120)
+            v_surf = render_fit(str(val), point, ui_theme.TEXT_COL, 120, bold=True)
             self.screen.blit(l_surf, (rx, ry))
             self.screen.blit(v_surf, (rx + col_w - v_surf.get_width(), ry))
             pygame.draw.line(self.screen, (52, 46, 42),
-                             (rx, ry + row_h - 8), (rx + col_w, ry + row_h - 8), 1)
+                             (rx, ry + row_h - 2), (rx + col_w, ry + row_h - 2), 1)
         # Sütun ayıracı
         midx = cx0 + col_w + col_gap // 2
         pygame.draw.line(self.screen, (62, 55, 50),
@@ -2873,7 +2874,7 @@ class GameScene(BaseScene):
         if self._tree_area and not self._tree_area.collidepoint(pos): return
         for nid, rect in reversed(getattr(self, 'tree_node_hit', [])):
             if rect.collidepoint(pos):
-                ok, msg = SkillTree.allocate(p, nid)
+                ok, msg = SkillTree.allocate_path(p, nid)
                 color = (241, 196, 15) if ok else (231, 76, 60)
                 self.logic.add_event("damage_text", p.x, p.y - 60, value=msg, color=color)
                 return
@@ -2902,13 +2903,14 @@ class GameScene(BaseScene):
 
         from ui_elements import wrap_text
         width=min(410,self.width-32)
-        font=pygame.font.SysFont('Segoe UI',16)
+        font=get_font(16)
         lines=wrap_text(font,node.get('desc',''),width-80)
         if nid.startswith('central_'):
             lines+=wrap_text(font,'Merkez yemini: diğer yeminlere ayrı yol yatırımı gerekir.',width-80)
         route = SkillTree.path_from_allocated(nid, allocated)
         if route and nid not in allocated:
-            lines+=wrap_text(font,f'Gerçek bağlantı yolu: {len(route)-1} ek SP. Mavi çizgiyi takip et.',width-80)
+            cost=sum(SkillTree.get_cost(step) for step in route if step not in allocated)
+            lines+=wrap_text(font,f'Yol: {cost} SP. Tıkla: puanın yettiği kadar yolu al.',width-80)
         name_s=render_fit(node['name'],20,ui_theme.readable(ui_theme.COLORS['gold']),width-80,bold=True)
         height=98+len(lines)*22
         tx=max(8,min(mouse_pos[0]+18,self.width-width-8))

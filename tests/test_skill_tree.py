@@ -254,3 +254,31 @@ class TestTreeShape(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBudgetPathAllocation(unittest.TestCase):
+    def test_distant_click_spends_six_points_on_preview_route(self):
+        p = _StubPlayer('sniper', 6)
+        candidates = [(n, SkillTree.path_from_allocated(n, p.allocated_nodes)) for n in SkillTree.BY_ID]
+        target, path = next((n, route) for n, route in candidates if len([x for x in route if SkillTree.get_cost(x)]) == 10)
+        expected = [x for x in path if x not in p.allocated_nodes][:6]
+        ok, message = SkillTree.allocate_path(p, target)
+        self.assertTrue(ok, message)
+        self.assertEqual(p.skill_points, 0)
+        self.assertTrue(set(expected).issubset(p.allocated_nodes))
+        self.assertNotIn(target, p.allocated_nodes)
+
+    def test_no_points_does_not_allocate(self):
+        p = _StubPlayer('warrior', 0)
+        before = set(p.allocated_nodes)
+        ok, _ = SkillTree.allocate_path(p, _first_step())
+        self.assertFalse(ok)
+        self.assertEqual(before, p.allocated_nodes)
+
+    def test_nearby_click_reaches_target_and_keeps_remaining_points(self):
+        p = _StubPlayer('warrior', 6)
+        target = _first_step()
+        ok, _ = SkillTree.allocate_path(p, target)
+        self.assertTrue(ok)
+        self.assertIn(target, p.allocated_nodes)
+        self.assertEqual(p.skill_points, 5)

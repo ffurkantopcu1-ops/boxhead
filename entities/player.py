@@ -461,7 +461,7 @@ class Player:
         # Slot anahtarı var ama değeri None olabildiği için .get default'u devreye
         # girmiyor; "or {}" gerekli (C7)
         if self.artifact_timer > 0 and (self.inv_manager.equipped.get("artifact") or {}).get("artifactId") == "blood_ritual":
-            self.hp -= self.max_hp * 0.02 * dt
+            self.take_damage(self.max_hp * 0.02 * dt, force=True, is_self_damage=True, is_dot=True, source="blood_ritual")
             
         keys = pygame.key.get_pressed()
         dx, dy = 0, 0
@@ -595,15 +595,9 @@ class Player:
                         e.take_damage(static_dmg, game, from_player=True)
                         game.add_event("explosion", e.x, e.y, radius=20, color=(100, 200, 255), timer=0.1)
                     if chaos:
-                        if random.random() < 0.30:
-                            effect_type = random.choice(['slow', 'poison', 'fire'])
-                            if effect_type == 'slow':
-                                apply_slow(e.effect_manager, duration=2.0, mult=0.5)
-                            elif effect_type == 'poison':
-                                e.apply_dot('poison', 25.0, 3.0)
-                            elif effect_type == 'fire':
-                                e.apply_dot('fire', 35.0, 2.0)
-                                
+                        from logic.status_effects import StatusEffect
+                        e.effect_manager.add_effect(StatusEffect("ChaosArmor", 1.5))
+
             # Starfall Aura
             if starfall > 0:
                 targets = list(game.iter_enemies_near(self.x, self.y, 600))
@@ -616,6 +610,7 @@ class Player:
                             e.take_damage(75 * starfall, game, from_player=True)
 
         # Iron Will Kalkan CD
+        self._iron_shield_remaining = max(0.0, getattr(self, "_iron_shield_remaining", 0.0) - dt)
         if self.passive_shield_cd > 0 and self._shield_timer > 0:
             self._shield_timer -= dt
 
@@ -624,7 +619,7 @@ class Player:
             current_wave = game.wave.get("level", 1)
             if current_wave <= self.pact_devil_waves:
                 self.is_invulnerable = True
-            elif self.is_invulnerable and not getattr(self, '_pact_expired', False):
+            elif not getattr(self, '_pact_expired', False):
                 self.is_invulnerable = False
                 self._pact_expired = True
                 sp = getattr(self, 'skills_permanent', {})
@@ -951,10 +946,6 @@ class Player:
         phys_flat = self.stats.get("physDmgFlat", 0) * self.get_added_damage_effectiveness()
         
         # Poison Convert: Fiziksel -> Zehir
-        if getattr(self, "poison_convert", False):
-            base_poison += (base_phys + phys_flat)
-            base_phys = 0
-            phys_flat = 0
 
         # Eğer bomba/şişe fırlatılıyorsa PoisonDps baz alınır
         if is_bomb:
@@ -982,6 +973,8 @@ class Player:
             is_crit = not self.stats.get('treeNoCrit', 0) and (force_crit or (random.random() < self.stats.get("critChance", 0.05)))
             crit_mult = self.get_critical_multiplier()
             final_dmg = final_dmg_base * crit_mult if is_crit else final_dmg_base
+            if self.has_furnace and p_type_final != "bomb":
+                p_type_final = "fire"
             dot_mult = 1.0 + self.stats.get("dotDmgMult", 0.0)
             
             # Hedefleri bul (en yakın N hedef)
@@ -1183,10 +1176,6 @@ class Player:
         # üzerinden hesaplandığı için ayrı tutulur.
         phys_mult = mult * (1.0 + self.stats.get("physDmgMult", 0))
 
-        if getattr(self, "poison_convert", False):
-            base_poison += (base_phys + phys_flat)
-            base_phys = 0
-            phys_flat = 0
 
         is_crit = random.random() < self.stats.get('critChance', 0.05)
         final_dmg = (base_phys + phys_flat) * phys_mult * (self.get_critical_multiplier() if is_crit else 1.0)
@@ -1729,7 +1718,17 @@ class Player:
 
         # Kan Bankası (Blood Bank) overheal birikimi
         if getattr(self, "has_blood_bank", False):
-            self.blood_bank_amount = getattr(self, "blood_bank_amount", 0) + overheal
+            self.blood_bank_amount = min(self.max_hp*.5, getattr(self, "blood_bank_amount", 0) + overheal)
+            if self.blood_bank_amount >= self.max_hp*.25 and getattr(self, 'game', None):
+                stored = self.blood_bank_amount
+                self.blood_bank_amount = 0
+                for enemy in list(self.game.iter_enemies_near(self.x, self.y, 180)):
+                    if not enemy.dead and math.hypot(enemy.x-self.x, enemy.y-self.y) <= 180:
+                        enemy.take_damage(stored, self.game, from_player=True, is_secondary=True)
+                for ally in self.game.players.values():
+                    if math.hypot(ally.x-self.x, ally.y-self.y) <= 180:
+                        ally.hp = min(ally.max_hp, ally.hp+stored)
+                self.game.add_event("explosion", self.x, self.y, radius=180, color=(220, 45, 80), timer=.4)
             
         return actual_heal, overheal
 
@@ -1746,7 +1745,9 @@ class Player:
             regen = max(0.0, self.stats.get("esRegen", 0) + 10.0) * difficulty_mult
             self.energy_shield = min(self.max_energy_shield, self.energy_shield + regen * shield_dt)
         regen = max(0.0, self.stats.get("regen", 0) + self.stats.get("hpRegen", 0) + self.stats.get("combatRegen", 0))
-        if self.hp < self.max_hp:
+        if getattr(self, "no_passive_regen", False):
+            regen = 0.0
+        if self.hp < self.max_hp or getattr(self, "has_blood_bank", False):
             self.heal(regen * difficulty_mult * dt)
         self.update_lifesteal(dt)
 
@@ -1801,10 +1802,14 @@ class Player:
             speed *= 3.5
         return speed
 
-    def take_damage(self, amount, force=False, is_self_damage=False, is_reflected=False, is_dot=False):
+    def take_damage(self, amount, force=False, is_self_damage=False, is_reflected=False, is_dot=False, source=None, attacker_type=None):
         """Vuruş veya sürekli hasar; gerçek HP+ES kaybını döndürür."""
         if amount <= 0 or self.hp <= 0: return 0.0
+        if not is_self_damage and self.pact_devil_waves > 0 and getattr(self, 'game', None) and self.game.wave.get('level', 1) <= self.pact_devil_waves:
+            return 0.0
         if self.is_invulnerable: return 0.0
+        if not is_self_damage and getattr(self, '_iron_shield_remaining', 0.0) > 0:
+            return 0.0
         if not is_dot and self.dash_active_timer > 0: return 0.0
         if not is_dot and not force and self.i_frame_timer > 0: return 0.0
         hp_before = self.hp
@@ -1866,18 +1871,16 @@ class Player:
                     self.energy_shield = 0
                     shield_broke = True
                     
-                # Statik Zırh
+                # Statik Zırh: gerçek yıldırım vuruşu, sıfır fiziksel ek hasarda da çalışır.
                 if getattr(self, "has_static_armor", False) and not is_self_damage:
-                    self.energy_shield = 0 # Tamamen sıfırlanır
-                    if hasattr(self, 'game') and self.game:
-                        from entities.cloud import Cloud
-                        self.game.entity_id_counter += 1
-                        elec_cloud = Cloud(self.game.entity_id_counter, self.x, self.y,
-                                           radius=150, duration=0.5,
-                                           fire_dmg=self.stats.get("physDmgFlat", 50) * 2)
-                        self.game.clouds.append(elec_cloud)
-                        self.game.add_event("damage_text", self.x, self.y - 40, value="STATİK PATLAMA!", color=(255, 255, 0), timer=1.5)
-                        
+                    self.energy_shield = 0
+                    if getattr(self, 'game', None):
+                        pulse = max(25.0, self.stats.get("physDmg", 0) + self.stats.get("physDmgFlat", 0)) * 2
+                        for enemy in list(self.game.iter_enemies_near(self.x, self.y, 150)):
+                            if not enemy.dead and math.hypot(enemy.x-self.x, enemy.y-self.y) <= 150:
+                                enemy.take_damage(pulse, self.game, from_player=True, is_secondary=True, damage_type='lightning')
+                        self.game.add_event("explosion", self.x, self.y, radius=150, color=(170, 210, 255), timer=.3)
+
                 # Kan Bankası (Kalkan kırılınca)
                 if shield_broke and getattr(self, "has_blood_bank", False) and not is_self_damage:
                     stored_blood = getattr(self, "blood_bank_amount", 0)
@@ -1904,11 +1907,6 @@ class Player:
                         self.game.clouds.append(shield_cloud)
                         self.game.add_event("damage_text", self.x, self.y - 40, value="CAM KALE PATLAMASI!", color=(200, 200, 255), timer=1.5)
 
-                # Iron Will CD Tetikleme
-                if shield_broke and self.passive_shield_cd > 0:
-                    cd_red = self.stats.get("shieldCdRed", 0)
-                    self._shield_timer = max(1, self.passive_shield_cd * (1 - cd_red))
-            
             # Ayna Kalkan (Reflection Aura)
             refl = self.stats.get("reflectionAura", 0)
             if refl > 0 and final_dmg > 0 and not is_self_damage and not is_reflected and not is_dot:
@@ -1937,6 +1935,13 @@ class Player:
             self.gain_xp(xp_on_hit)
 
         actual_damage = min(hp_before, final_dmg) + shield_damage
+        if actual_damage > 0 and not is_self_damage and not is_dot and self.hp > 0 and self.passive_shield_cd > 0 and self._shield_timer <= 0:
+            self._iron_shield_remaining = 3.0
+            self._shield_timer = max(1.0, self.passive_shield_cd * (1-self.stats.get('shieldCdRed', 0)))
+        if actual_damage > 0:
+            self.last_damage_source = source or ('self_damage' if is_self_damage else
+                'reflection' if is_reflected else 'damage_over_time' if is_dot else 'enemy_attack')
+            self.last_attacker_type = attacker_type or ''
         if hasattr(self, 'game') and hasattr(self.game, 'stats'):
             self.game.stats['total_damage_taken'] += actual_damage
         

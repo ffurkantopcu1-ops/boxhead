@@ -48,6 +48,10 @@ class SaveManager:
         "has_chaos_field": False,
         "has_doppelganger": False,
         "has_furnace": False,
+        "no_passive_regen": False,
+        "_pact_expired": False,
+        "turret_hp_penalty": 1.0,
+        "_iron_shield_remaining": 0.0,
     }
 
     # Başlangıç silahlarında (Player.init_class_specialization) eskiden
@@ -248,6 +252,7 @@ class SaveManager:
             },
             "card_system": {
                 "active_cards": getattr(logic.card_system, 'active_cards', []),
+                "pact_expired": getattr(p, "_pact_expired", False),
                 "passive_stats": getattr(logic.card_system, 'passive_stats', {}),
                 "active_synergies": getattr(logic.card_system.synergy_system, 'active_synergies', [])
             }
@@ -360,6 +365,14 @@ class SaveManager:
         p.inv_manager.equipped = inv.get("equipped", {})
         p.inventory = inv.get("bag", [])
         SaveManager.backfill_weapon_classes(p.inv_manager.equipped, p.inventory)
+        # Cosmetic orb identities follow current definitions; stacks stay intact.
+        from logic.item_system import ItemSystem
+        orb_definitions={orb['orb_id']:orb for orb in ItemSystem.orbs}
+        for saved_item in p.inventory:
+            definition=orb_definitions.get(saved_item.get('orb_id')) if saved_item.get('type')=='orb' else None
+            if definition:
+                for field in ('name','icon_id','desc'):
+                    saved_item[field]=definition[field]
         
         # Wave (To prevent empty spawn queue triggering next wave immediately)
         wave_data = save_data.get("wave", {})
@@ -397,6 +410,7 @@ class SaveManager:
             ]
         # Kart bayrakları (bedeller dâhil) yeniden kurulur; statlar çift sayılmaz
         SaveManager.restore_card_effects(logic, p, saved_cards, saved_synergies)
+        p._pact_expired = card_data.get("pact_expired", "pact_devil" in saved_cards and logic.wave["level"] > 5)
 
         logic.next_wave()
 

@@ -226,7 +226,7 @@ class Projectile:
                 absorb_active = (getattr(p, 'class_id', '') == "bloodwalker" and
                                  getattr(getattr(p, 'specialization', None), 'blood_absorb_active', False))
                 if not absorb_active:
-                    p.last_damage_source = "projectile"; p.last_attacker_type = getattr(self, "owner_type", "bilinmeyen"); p.take_damage(self.dmg)
+                    p.take_damage(self.dmg, source="projectile", attacker_type=getattr(self, "owner_type", None))
                 # absorb_active ise bloodwalker_logic.update() zaten emer
                 self.dead = True
 

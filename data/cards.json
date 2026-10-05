@@ -2,7 +2,7 @@
     {
         "id": "iron_will",
         "name": "🛡️ Demir İrade",
-        "desc": "Etki: Hasar alınca 3 sn kalkan kazanır (60 sn bekleme) ve +50 maksimum can verir. Bedel: Hareket hızı %10 azalır.",
+        "desc": "Etki: Hasar alınca sonraki vuruşları 3 sn engeller (60 sn bekleme), maksimum can +50. Bedel: hareket hızı -0,3.",
         "category": "survival",
         "apply": "_apply_iron_will",
         "stats": {
@@ -51,7 +51,7 @@
     {
         "id": "phoenix_blood",
         "name": "🔆 Anka Kanı",
-        "desc": "Etki: Öldüğünde savaş alanındaki tüm düşmanlara 200 hasar verir. Bedel: Maksimum can %10 azalır.",
+        "desc": "Etki: Öldüğünde yakındaki düşmanlara 200 hasar verir (bir kez). Bedel: maksimum can -%10.",
         "category": "survival",
         "apply": "_apply_phoenix_blood",
         "stats": {
@@ -195,7 +195,7 @@
     {
         "id": "accelerator",
         "name": "🚀 İvmeleyici",
-        "desc": "Etki: Hareket hızın %50 artar. Bedel: Zırhın %30 azalır.",
+        "desc": "Etki: Hareket hızı +1,5. Bedel: zırh -30.",
         "category": "support",
         "apply": "_apply_accelerator",
         "stats": {
@@ -275,7 +275,7 @@
     {
         "id": "fire_soul",
         "name": "🔥 Ateş Ruhu",
-        "desc": "Etki: Tüm saldırılarına verdiğin hasarın %40'ı kadar ateş hasarı eklenir. Bedel: Hızın %15 azalır.",
+        "desc": "Etki: +20 ateş hasarı ve +10 düz ateş hasarı. Bedel: hareket hızı -0,45.",
         "category": "elemental",
         "apply": "_apply_fire_soul",
         "stats": {
@@ -287,7 +287,7 @@
     {
         "id": "frozen_time",
         "name": "❄️ Donmuş Zaman",
-        "desc": "Etki: Her 15 saniyede yakındaki düşmanları dondurur. Bedel: Verdiğin hasar %15 azalır.",
+        "desc": "Etki: Her 15 saniyede tüm düşmanları 3 saniye dondurur. Bedel: hasar bonusu -%15.",
         "category": "elemental",
         "apply": "_apply_frozen_time",
         "stats": {
@@ -418,7 +418,7 @@
     {
         "id": "static_armor",
         "name": "⚡ Statik Zırh",
-        "desc": "Etki: Hasar alındığında kalkanı tamamen sıfırlar ve çevrede elektrik dalgası yaratır.",
+        "desc": "Etki: Enerji kalkanına hasar alınca 150 mesafede yıldırım dalgası yaratır. Bedel: kalan enerji kalkanı tamamen tüketilir.",
         "category": "survival",
         "apply": "_apply_static_armor"
     },
@@ -432,14 +432,14 @@
     {
         "id": "blood_bank",
         "name": "🩸 Kan Bankası",
-        "desc": "Etki: Fazla iyileşme (overheal) birikir. Belli şartlarda patlayarak AoE şifa ve hasar sağlar.",
+        "desc": "Etki: Fazla iyileşme depolanır. Maksimum canın %25’i birikince 180 mesafede şifa ve hasar patlaması; kalkan kırılması da biriken kanı açığa çıkarır.",
         "category": "survival",
         "apply": "_apply_blood_bank"
     },
     {
         "id": "chaos_field",
         "name": "🌀 Kaos Alanı",
-        "desc": "Etki: Etraftaki düşmanların zırhını düşüren bir aura yaratır. Bedel: Senin zırhın %20 düşer.",
+        "desc": "Etki: 400 mesafedeki düşmanların zırhını %30 azaltır. Bedel: kendi zırhın -20.",
         "category": "elemental",
         "apply": "_apply_chaos_field",
         "stats": {
@@ -688,5 +688,131 @@
         "affinity": ["sorcerer"],
         "apply": "_apply_arcane_surge",
         "stats": { "elementDmgMult": 0.40, "max_hp_pct": -20 }
+    },
+    {
+        "id": "ash_echo",
+        "name": "Kül Yankısı",
+        "desc": "Öldürülen düşmanlar yakındaki düşmanlara ateş patlaması vurur. Bedel: saldırı hızı -%15.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "cardDeathBlast": 1,
+            "fireRate": -0.15
+        }
+    },
+    {
+        "id": "opening_strike",
+        "name": "İlk Darbe",
+        "desc": "Tam canlı düşmanlara +%50 hasar. Bedel: saldırı hızı -%20.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "fullHealthDmg": 0.5,
+            "fireRate": -0.2
+        }
+    },
+    {
+        "id": "last_judgment",
+        "name": "Son Hüküm",
+        "desc": "Canı %35 veya altında olan düşmanlara +%60 hasar. Bedel: zırh -30.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "lowHealthDmg": 0.6,
+            "armor": -30
+        }
+    },
+    {
+        "id": "winter_grip",
+        "name": "Kış Pençesi",
+        "desc": "Soğuk hasarı +%40 ve +12 düz soğuk hasarı. Bedel: saldırı hızı -%20.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "frostDmgMult": 0.4,
+            "frostDmgFlat": 12,
+            "fireRate": -0.2
+        }
+    },
+    {
+        "id": "venom_reservoir",
+        "name": "Zehir Haznesi",
+        "desc": "Zehir DPS +15, durum süresi +%35. Bedel: maksimum can -%15.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "poisonDps": 15,
+            "statusDuration": 0.35,
+            "max_hp_pct": -15
+        }
+    },
+    {
+        "id": "fortress_oath",
+        "name": "Ağır Nöbet",
+        "desc": "Zırh +60, diken hasarı +15. Bedel: hareket hızı -0,5.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "armor": 60,
+            "thorns": 15,
+            "speed": -0.5
+        }
+    },
+    {
+        "id": "crossfire",
+        "name": "Çapraz Ateş",
+        "desc": "İki ek mermi. Bedel: saldırı hızı -%25 ve saçılma +4 derece.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "projectileCount": 2,
+            "fireRate": -0.25,
+            "spreadAngle": 4
+        },
+        "affinity": [
+            "sniper"
+        ]
+    },
+    {
+        "id": "flock_pact",
+        "name": "Sürü Paktı",
+        "desc": "Bir ek minyon, minyon saldırı hızı +%25. Bedel: kendi hasar bonusun -%25.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "minionCount": 1,
+            "minionRate": 0.25,
+            "dmgMult": -0.25
+        },
+        "affinity": [
+            "beastmaster"
+        ]
+    },
+    {
+        "id": "field_network",
+        "name": "Saha Ağı",
+        "desc": "Bir ek taret, taret menzili +150. Bedel: taret saldırı hızı -%15.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "turretRange": 150,
+            "turretLimit": 1,
+            "turretRate": -0.15
+        },
+        "affinity": [
+            "engineer"
+        ]
+    },
+    {
+        "id": "brittle_precision",
+        "name": "Kırılgan Hassasiyet",
+        "desc": "Kritik şansı +%15, kritik hasarı +%40. Bedel: maksimum can -%25.",
+        "category": "curse",
+        "apply": "_apply_data_stats",
+        "stats": {
+            "critChance": 0.15,
+            "critDmg": 0.4,
+            "max_hp_pct": -25
+        }
     }
 ]

@@ -804,8 +804,8 @@ def test_boss_pool_swept_collision_does_not_skip_player(combat):
     shot=BossProjectile()
     shot.reset(0,0,100,0,5,lifetime=120)
     shot.update(1/30,g)
-    p.take_damage.assert_called_once_with(5)
-    assert not shot.active and p.last_attacker_type=="boss"
+    p.take_damage.assert_called_once_with(5, source="projectile", attacker_type="boss")
+    assert not shot.active
 
 def test_avoided_boss_projectile_does_not_apply_burn(combat):
     from entities.projectile_pool import BossProjectile
@@ -1146,3 +1146,200 @@ def test_minimap_player_position_moves_on_fixed_map():
     assert world_point(rect,0,0,5000)==(100,100)
     assert world_point(rect,2500,2500,5000)==(192,192)
     assert world_point(rect,5000,5000,5000)==(284,284)
+
+
+def test_parasite_cannot_damage_player(combat):
+    p, e, g = combat()
+    e.type = 'parasite'
+    before = p.hp
+    e.hit_player(p, 100000, force=True)
+    e.update_contact(5, p)
+    assert p.hp == before
+
+
+def test_parasite_enters_host_and_buffs_only_once(combat):
+    p, host, g = combat()
+    parasite = Enemy(2, host.x, host.y, g, type='parasite')
+    g.enemies.append(parasite)
+    before = (host.hp, host.max_hp, host.dmg, host.speed)
+    parasite.update(.1, g)
+    assert parasite.dead and parasite.looted
+    assert host.has_parasite
+    assert host.hp == pytest.approx(before[0]*1.25)
+    assert host.max_hp == pytest.approx(before[1]*1.25)
+    assert host.dmg == pytest.approx(before[2]*1.2)
+    assert host.speed == pytest.approx(before[3]*1.1)
+    parasite.update(.1, g)
+    assert host.dmg == pytest.approx(before[2]*1.2)
+
+
+def test_last_parasite_does_not_block_wave(combat):
+    p, e, g = combat()
+    e.type = 'parasite'
+    e.update(3.1, g)
+    assert e.dead
+
+
+@pytest.mark.parametrize('source', ['poison','burn','black_hole','projectile','self_damage'])
+def test_death_source_recorded_on_real_lethal_damage(combat, source):
+    p, e, g = combat()
+    p.last_attacker_type = 'zombie'
+    p.take_damage(10000, force=True, source=source, is_dot=True)
+    assert p.hp == 0
+    assert p.last_damage_source == source
+    assert p.last_attacker_type == ''
+
+
+def test_avoided_hit_does_not_overwrite_last_attacker(combat):
+    p, e, g = combat()
+    p.take_damage(1, force=True, source='projectile', attacker_type='boss')
+    p.dash_active_timer = 1
+    e.hit_player(p, 10)
+    assert p.last_attacker_type == 'boss'
+    assert p.last_damage_source == 'projectile'
+
+
+def test_iron_will_protects_without_energy_shield(combat):
+    p, e, g = combat()
+    p.passive_shield_cd = 60
+    p.take_damage(10, force=True)
+    assert p.hp == 990
+    assert p._iron_shield_remaining == 3
+    assert p.take_damage(100, force=True) == 0
+    p._iron_shield_remaining = 0
+    assert p.take_damage(10, force=True) == 10
+
+
+def test_furnace_blocks_other_elements_and_converts_physical(combat):
+    p, e, g = combat()
+    p.has_furnace = True
+    before = e.hp
+    for kind in ['frost', 'poison', 'lightning']:
+        e.take_damage(10, g, from_player=True, damage_type=kind)
+    assert e.hp == before
+    e.take_damage(10, g, from_player=True)
+    assert e.hp < before
+    e.apply_dot('poison', 50, 4)
+    assert not any(x.name == 'Poison' for x in e.effect_manager.effects)
+
+
+def test_poison_heart_converts_class_attack_to_timed_poison(combat):
+    p, e, g = combat('warrior')
+    p.poison_convert = True
+    before = e.hp
+    p.specialization.execute_attack(p, g)
+    assert e.hp == before
+    assert any(x.name == 'CardConversionPoison' for x in e.effect_manager.effects)
+    e.effect_manager.update(1, e, g)
+    assert e.hp < before
+
+
+def test_furnace_death_blast_hits_nearby_enemy(combat):
+    from logic.card_effects import death_blast
+    p, e, g = combat()
+    p.has_furnace = True
+    source = Enemy(3, 70, 0, g)
+    source.max_hp = 1000
+    before = e.hp
+    death_blast(g, source, p)
+    assert e.hp < before
+
+
+def test_blood_bank_works_without_energy_shield(combat):
+    p, e, g = combat()
+    p.has_blood_bank = True
+    before = e.hp
+    p.heal(p.max_hp*.25)
+    assert p.blood_bank_amount == 0
+    assert e.hp < before
+
+
+def test_static_armor_has_damage_without_flat_physical_bonus(combat):
+    p, e, g = combat()
+    p.has_static_armor = True
+    p.energy_shield = 20
+    before = e.hp
+    p.take_damage(10, force=True)
+    assert e.hp < before
+    assert p.energy_shield == 0
+
+
+def test_chaos_armor_effect_reduces_physical_mitigation(combat):
+    from logic.status_effects import StatusEffect
+    p, e, g = combat()
+    e.armor = 100
+    e.take_damage(100, g, from_player=True)
+    before = e.hp
+    e.effect_manager.add_effect(StatusEffect('ChaosArmor', 1.5))
+    e.take_damage(100, g, from_player=True)
+    assert before-e.hp == pytest.approx(100/1.7)
+
+
+@pytest.mark.parametrize('stat,health', [('fullHealthDmg', 1.0), ('lowHealthDmg', .3)])
+def test_conditional_new_cards_apply_only_in_their_health_band(combat, stat, health):
+    p, e, g = combat()
+    p.stats[stat] = .5
+    e.hp = e.max_hp*health
+    before = e.hp
+    e.take_damage(10, g, from_player=True)
+    assert before-e.hp == pytest.approx(15)
+    e.hp = e.max_hp*.5
+    before = e.hp
+    e.take_damage(10, g, from_player=True)
+    assert before-e.hp == pytest.approx(10)
+
+
+def test_furnace_chain_uses_real_kill_rewards_once(combat, tmp_path, monkeypatch):
+    from logic.game_logic import GameLogic
+    from logic.save_manager import SaveManager
+    monkeypatch.setattr(SaveManager, 'SAVE_DIR', str(tmp_path))
+    g = GameLogic(None, 1024, 768, 'warrior')
+    p = g.players[g.local_player_id]
+    g.card_system.apply_card('furnace', p)
+    first = Enemy(101, p.x+70, p.y, g)
+    second = Enemy(102, p.x+75, p.y, g)
+    first.max_hp = 1000
+    second.hp = 1
+    g.enemies = [first, second]
+    g.update_grid()
+    kills = g.stats['enemies_killed']
+    g.kill_enemy(first)
+    assert second.dead and second.looted
+    assert g.stats['enemies_killed'] == kills+2
+    g.kill_enemy(first)
+    g.kill_enemy(second)
+    assert g.stats['enemies_killed'] == kills+2
+
+
+def test_death_report_has_sources_for_unowned_damage(combat, tmp_path, monkeypatch):
+    from logic.game_logic import GameLogic
+    from logic.save_manager import SaveManager
+    monkeypatch.setattr(SaveManager, 'SAVE_DIR', str(tmp_path))
+    g = GameLogic(None, 1024, 768, 'warrior')
+    p = g.players[g.local_player_id]
+    p.last_attacker_type = 'bilinmeyen'
+    p.last_damage_source = 'projectile'
+    report = dict((label, value) for label, value, _ in g.get_run_summary())
+    assert report['Ölüm nedeni'] == 'Düşman mermisi'
+
+
+def test_expired_pact_survives_save_without_double_penalty(combat, tmp_path, monkeypatch):
+    from logic.game_logic import GameLogic
+    from logic.save_manager import SaveManager
+    monkeypatch.setattr(SaveManager, 'SAVE_DIR', str(tmp_path))
+    g = GameLogic(None, 1024, 768, 'warrior')
+    p = g.players[g.local_player_id]
+    g.card_system.apply_card('pact_devil', p)
+    g.wave['level'] = 6
+    g.manager = SimpleNamespace(current_scene=SimpleNamespace(zoom_level=1, camera_x=0, camera_y=0))
+    p.update(.01, g)
+    assert p._pact_expired
+    before = p.skills_permanent['dmgMult']
+    SaveManager.save_game(g, 'pact')
+    dst = GameLogic(None, 1024, 768, 'warrior')
+    SaveManager.load_game(dst, 'pact')
+    q = dst.players[dst.local_player_id]
+    assert q._pact_expired
+    dst.manager = g.manager
+    q.update(.01, dst)
+    assert q.skills_permanent['dmgMult'] == before

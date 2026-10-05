@@ -70,8 +70,7 @@ class AbyssalLord(Enemy):
         self.timer=self.MOVES[self.move][0]
 
     def strike_player(self,p,game,base):
-        p.last_attacker_type="boss"
-        p.take_damage(self.attack_damage(base))
+        p.take_damage(self.attack_damage(base), source="enemy_attack", attacker_type="boss")
 
     def resolve_attack(self,game):
         p=game.players[game.local_player_id]

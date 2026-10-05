@@ -72,8 +72,7 @@ class BossProjectile:
             self.on_hit_player(p, game)
 
     def on_hit_player(self, player, game):
-        player.last_attacker_type = "boss"
-        dealt = player.take_damage(self.damage)
+        dealt = player.take_damage(self.damage, source="projectile", attacker_type="boss")
         if self.status_effect and (dealt is None or dealt > 0):
             from logic.status_effects import apply_burn, apply_slow, apply_silence, apply_stun
             if self.status_effect == "burn": apply_burn(player.effect_manager)

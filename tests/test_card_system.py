@@ -92,3 +92,29 @@ class TestCardDataIntegrity(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAllCardActivation(unittest.TestCase):
+    def test_all_cards_activate_and_reload_without_double_stats(self):
+        import tempfile
+        import math
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        from entities.player import Player
+        from logic.save_manager import SaveManager
+        with tempfile.TemporaryDirectory() as directory, patch.object(SaveManager, 'SAVE_DIR', directory):
+            for card in CardSystem.CARDS:
+                with self.subTest(card=card['id']):
+                    player = Player('p1', 0, 0, (card.get('affinity') or ['warrior'])[0])
+                    cards = CardSystem()
+                    self.assertTrue(cards.apply_card(card['id'], player))
+                    before = dict(player.skills_permanent)
+                    self.assertFalse(cards.apply_card(card['id'], player))
+                    self.assertEqual(before, player.skills_permanent)
+                    logic = SimpleNamespace(card_system=cards)
+                    SaveManager.restore_card_effects(logic, player, [card['id']], [])
+                    self.assertEqual(before, player.skills_permanent)
+                    player.inv_manager.recalculate_stats()
+                    self.assertTrue(all(math.isfinite(v) for v in player.stats.values() if isinstance(v, (float,int))))
+                    for key, value in card.get('stats', {}).items():
+                        self.assertAlmostEqual(player.skills_permanent.get(key, 0), value)

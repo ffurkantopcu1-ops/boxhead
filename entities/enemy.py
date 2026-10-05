@@ -497,6 +497,34 @@ class Enemy:
                     self.dmg = self._war_tower_base_dmg
                     del self._war_tower_base_dmg
         
+        if self.type == "parasite":
+            hosts = [e for e in game.enemies if e is not self and not e.dead
+                     and not getattr(e, "has_parasite", False)
+                     and not getattr(e, "is_trap", False)
+                     and e.type not in ("parasite", "war_tower")]
+            if hosts:
+                self._hostless_timer = 0.0
+                host = min(hosts, key=lambda e: (e.x-self.x)**2 + (e.y-self.y)**2)
+                distance = math.hypot(host.x-self.x, host.y-self.y)
+                if distance <= self.radius + host.radius:
+                    host.has_parasite = True
+                    host.max_hp *= 1.25
+                    host.hp *= 1.25
+                    host.dmg *= 1.2
+                    host.speed *= 1.1
+                    self.dead = self.looted = True
+                    game.add_event("damage_text", host.x, host.y-25,
+                                   value="ENFEKTE", color=(220, 110, 210), timer=1.5)
+                elif distance > 0:
+                    step = min(distance, self.speed*self.speed_mod*dt*60)
+                    self.x += (host.x-self.x)/distance*step
+                    self.y += (host.y-self.y)/distance*step
+            else:
+                self._hostless_timer = getattr(self, "_hostless_timer", 0.0) + dt
+                if self._hostless_timer >= 3 and game.wave.get("enemies_to_spawn", 0) <= 0:
+                    self.dead = self.looted = True
+            return
+
         # Target player
         p = game.players[game.local_player_id]
         dist = math.hypot(p.x - self.x, p.y - self.y)
@@ -1024,7 +1052,7 @@ class Enemy:
 
     def update_contact(self, dt, player, in_contact=True):
         """Düşman başına 0.5s vuruş: eski 2*dmg DPS, tek kaçınma/tetikleme."""
-        if self.type == 'kamikaze':
+        if self.type in ('kamikaze', 'parasite'):
             return  # Warning is an escape window; explosion is its only hit.
         self.contact_cooldown = getattr(self, "contact_cooldown", 0.5) - max(0.0, dt)
         if not in_contact:
@@ -1042,14 +1070,15 @@ class Enemy:
         Can çalma İSTENEN hasara değil GERÇEKLEŞEN hasara bağlıdır; böylece
         dodge/i-frame ile boşa giden vuruş düşmanı iyileştirmez.
         """
-        p.last_damage_source = 'explosion' if self.type=='kamikaze' else 'enemy_contact' if force else 'enemy_attack'
-        p.last_attacker_type = self.type
+        if self.type == 'parasite':
+            return 0.0
+        source = 'explosion' if self.type == 'kamikaze' else 'enemy_contact' if force else 'enemy_attack'
         ls = getattr(self, 'elite_lifesteal', 0)
         if ls <= 0:
-            p.take_damage(dmg, force=force)
+            p.take_damage(dmg, force=force, source=source, attacker_type=self.type)
             return
         before = p.hp + getattr(p, 'energy_shield', 0)
-        dealt = p.take_damage(dmg, force=force)
+        dealt = p.take_damage(dmg, force=force, source=source, attacker_type=self.type)
         if dealt is None:  # Eski hedef/test sözleşmesi
             dealt = max(0.0, before - (p.hp + getattr(p, 'energy_shield', 0)))
         if dealt > 0:
@@ -1066,8 +1095,13 @@ class Enemy:
 
     def apply_dot(self, eff_type, dps, duration, slow=0.0):
         from logic.status_effects import apply_burn, apply_slow
-        if self._player_stats().get('treeFireOnly', 0) and eff_type not in ('fire', 'burn'):
+        game=getattr(self,'game',None)
+        player=game.players[game.local_player_id] if game is not None else None
+        from logic.card_effects import fire_only
+        if player is not None and fire_only(player) and eff_type not in ('fire', 'burn'):
             return
+        if player is not None and getattr(player,'poison_convert',False) and not fire_only(player) and eff_type in ('fire','burn'):
+            eff_type='poison'
         # statusDuration (affix + SET_VENOM 3pc + SET_ALCHEMIST 4pc) ve
         # juggernaut aurasının -0.5 cezası tanımlıydı ama hiç okunmuyordu.
         # Süre negatife düşmesin diye taban 0.1x ile kırpılır.
@@ -1102,12 +1136,26 @@ class Enemy:
         # --- ZIRH HESABI ---
         player = game.players[game.local_player_id]
         p_stats = player.stats if from_player else {}
+        if from_player and getattr(player,'has_furnace',False):
+            if damage_type=='physical' and not is_dot:
+                damage_type='fire'
+            elif damage_type!='fire':
+                return
         if p_stats.get('treeFireOnly', 0) and damage_type != 'fire':
             return
+        if from_player and not is_dot:
+            if self.hp>=self.max_hp:
+                amount*=1.0+p_stats.get('fullHealthDmg',0)
+            elif self.hp<=self.max_hp*.35:
+                amount*=1.0+p_stats.get('lowHealthDmg',0)
+            if getattr(player,'poison_convert',False) and not getattr(player,'has_furnace',False):
+                from logic.card_effects import add_conversion_poison
+                add_conversion_poison(self,amount*max(0,1+p_stats.get('dotDmgMult',0)))
+                return
         if p_stats.get('treeNoCrit', 0): is_crit = False
         if from_player and not is_dot and not is_reflected:
             if p_stats.get('treeSingleShot', 0): amount *= 2
-            converted = amount * min(.5, max(0, p_stats.get('treePoisonConversion', 0)))
+            converted = 0 if getattr(player,'has_furnace',False) or p_stats.get('treeFireOnly',0) else amount * min(.5, max(0, p_stats.get('treePoisonConversion', 0)))
             if converted:
                 from logic.status_effects import StatusEffect
                 # Separate timed packets conserve damage without refreshing
@@ -1126,6 +1174,8 @@ class Enemy:
         # Zırh Delme (Armor Pen) - Broken Stat
         armor_pen = p_stats.get("armorPen", 0)
         effective_armor = max(0, self.armor - max(0, p_stats.get("armorPenFlat", 0))) * (1.0 - min(1.0, armor_pen))
+        if any(e.name == 'ChaosArmor' and e.active for e in self.effect_manager.effects):
+            effective_armor*=.7
         
         # Hasar Azaltma Formülü: dmg * (100 / (100 + armor))
         if damage_type == 'physical':
@@ -1178,7 +1228,7 @@ class Enemy:
         triggers_on_hit = triggers_on_hit and final_dmg > 0
         if triggers_on_hit and getattr(player, "self_dmg_on_hit", 0.0) > 0:
             sd = player.max_hp * player.self_dmg_on_hit
-            player.take_damage(sd, force=True, is_self_damage=True)
+            player.take_damage(sd, force=True, is_self_damage=True, source="double_edge")
 
         # --- ELİT 🌵 DİKENLİ (thorny) ---
         # elite_system enemy.thorns bayrağını kuruyordu ama okunmuyordu.
@@ -1189,7 +1239,7 @@ class Enemy:
         if th > 0 and triggers_on_hit:
             reflect = min(actual_damage * th, player.max_hp * 0.15)
             if reflect > 0:
-                player.take_damage(reflect, force=True, is_reflected=True)
+                player.take_damage(reflect, force=True, is_reflected=True, source="reflection", attacker_type=self.type)
 
         # --- ÇALMA ŞANSI (thiefChance affix'i) ---
         if triggers_on_hit and p_stats.get("thiefChance", 0) > 0:

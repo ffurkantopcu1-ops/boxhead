@@ -134,7 +134,7 @@ class SkillTree:
     # Tahsis / iade
     # ------------------------------------------------------------------
     @classmethod
-    def allocate(cls, player, node_id):
+    def allocate(cls, player, node_id, sync=True):
         """Bir dugum alir. Donen: (basari, mesaj). player'i gunceller."""
         if node_id not in cls.BY_ID:
             return False, "Dugum bulunamadi."
@@ -157,8 +157,32 @@ class SkillTree:
         allocated.add(node_id)
         if cost:
             player.skill_points -= cost
-        cls._sync_player(player)
+        if sync:
+            cls._sync_player(player)
         return True, cls.BY_ID[node_id]["name"]
+
+    @classmethod
+    def allocate_path(cls, player, target):
+        """Spend the available budget on the same route used by the preview."""
+        allocated=cls._ensure_set(player)
+        if target in allocated:
+            return False, 'Bu düğüm zaten alındı.'
+        route=cls.path_from_allocated(target,allocated)
+        if not route:
+            return False, 'Bu düğüme uygun bir bağlantı yolu yok.'
+        gained=[];spent=0;reason=''
+        for node_id in route:
+            if node_id in allocated:
+                continue
+            ok,reason=cls.allocate(player,node_id,sync=False)
+            if not ok:
+                break
+            gained.append(node_id);spent+=cls.get_cost(node_id)
+        if not gained:
+            return False,reason or 'Yetersiz yetenek puanı.'
+        cls._sync_player(player)
+        suffix='Hedefe ulaşıldı.' if target in allocated else 'Yol boyunca puanın yettiği kadar ilerledin.'
+        return True,f'{len(gained)} düğüm alındı • {spent} SP. {suffix}'
 
     @classmethod
     def refund_all(cls, player):

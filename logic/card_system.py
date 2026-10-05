@@ -66,11 +66,13 @@ class CardSystem:
 
     def apply_card(self, card_id: str, player) -> bool:
         """Verilen kart id'sine göre ilgili _apply_ metodunu çağrır."""
+        if card_id in self.active_cards:
+            return False
         for card in self.CARDS:
             if card["id"] == card_id:
                 method = getattr(self, card["apply"], None)
                 if method:
-                    method(player)
+                    method(player, card) if card["apply"] == "_apply_data_stats" else method(player)
                     if card_id not in self.active_cards:
                         self.active_cards.append(card_id)
                     # _apply_* metodlari yalnizca skills_permanent'a yaziyor;
@@ -85,6 +87,10 @@ class CardSystem:
                             player.game.add_event("damage_text", player.x, player.y - 50, value=f"Sinerji Aktif: {new_synergy['name']}", color=(255, 215, 0), timer=3.0)
                     return True
         return False
+
+    def _apply_data_stats(self, player, card):
+        for key, value in card.get("stats", {}).items():
+            player.skills_permanent[key] = player.skills_permanent.get(key, 0) + value
 
     @staticmethod
     def _card_allowed(card, player_class):
@@ -199,6 +205,7 @@ class CardSystem:
     def _apply_berserker_rage(self, player):
         """😡 Berserker Öfkesi — %40 HP altındayken hasar +%80 (pasif)."""
         player.berserker_rage = True
+        player.no_passive_regen = True
         sp = getattr(player, "skills_permanent", {}); sp["regen"] = -999; player.skills_permanent = sp
 
     def _apply_phoenix_blood(self, player):
@@ -446,6 +453,7 @@ class CardSystem:
     def _apply_cursed_blood(self, player):
         """🩸 Lanetli Kan — Her öldürmede +2 HP, rejen durur."""
         player.kill_hp_bonus = getattr(player, "kill_hp_bonus", 0) + 2
+        player.no_passive_regen = True
         sp = getattr(player, "skills_permanent", {})
         sp["regen"] = -999  # Oyun mantığında 0'a sıkıştırılır
         player.skills_permanent = sp

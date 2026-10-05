@@ -35,7 +35,7 @@ class StatusEffect:
                 target.take_damage(damage, game, is_dot=True, from_player=True,
                                    damage_type='fire' if self.name == 'Burn' else 'poison')
             elif hasattr(target, 'take_damage'):
-                target.take_damage(damage, force=True, is_dot=True)
+                target.take_damage(damage, force=True, is_dot=True, source="burn" if self.name == "Burn" else "poison")
             elif hasattr(target, 'hp'):
                 target.hp = max(0.0, target.hp - damage)
 

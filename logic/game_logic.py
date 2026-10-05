@@ -606,7 +606,12 @@ class GameLogic:
         taken = int(st.get('total_damage_taken', 0))
 
         cause_key = getattr(p, 'last_attacker_type', '') or ''
-        cause = self.DEATH_CAUSE_NAMES.get(cause_key, cause_key or "bilinmiyor")
+        source_names = {"projectile": "Düşman mermisi", "enemy_attack": "Düşman saldırısı",
+            "enemy_contact": "Düşman teması", "explosion": "Patlama", "burn": "Yanma",
+            "poison": "Zehir", "damage_over_time": "Sürekli hasar", "black_hole": "Kara delik",
+            "double_edge": "Çift Ağız kartının bedeli", "blood_ritual": "Kan Ritüeli bedeli", "self_damage": "Kendi etkisinin bedeli", "reflection": "Yansıtılan hasar"}
+        source = source_names.get(getattr(p, 'last_damage_source', ''), "Alınan hasar")
+        cause = self.DEATH_CAUSE_NAMES.get(cause_key, cause_key) if cause_key and cause_key != 'bilinmeyen' else source
 
         cards = len(getattr(p, 'active_cards', []) or [])
         crystals = self.wave["level"] * 5 + self.kill_streak * 2
@@ -709,11 +714,14 @@ class GameLogic:
         enemy.dead = True
         
         p = self.players[self.local_player_id]
-        
+
+        from logic.card_effects import death_blast
+        death_blast(self,enemy,p)
+
         # Lanetli Kan: her öldürmede sabit can (kart bayrağı okunmuyordu, P3)
         kill_hp = getattr(p, "kill_hp_bonus", 0)
         if kill_hp > 0 and p.hp > 0:
-            p.hp = min(p.max_hp, p.hp + kill_hp)
+            p.heal(kill_hp)
 
         # Kill Speed Boost (On Kill temporary speed buff) - tavan +%75 (S8)
         speed_boost = min(0.75, p.stats.get("killSpeedBoost", 0))
@@ -795,7 +803,7 @@ class GameLogic:
         # BARREL PATLAMASI (Menzil ve Hasar Nerflendi: 200->120, 50->20)
         if enemy.type == "barrel":
             if math.hypot(p.x - enemy.x, p.y - enemy.y) < 120:
-                p.take_damage(20)
+                p.take_damage(20, source="explosion", attacker_type="barrel")
             self.add_event("shockwave", enemy.x, enemy.y, radius=80, timer=0.5, color=(255, 100, 0))
 
         # --- ÖDÜL SKALASI (Zorluk ve Wave Basamağına Göre) ---
@@ -893,18 +901,6 @@ class GameLogic:
                 self.items_on_ground.append(GroundItem(self.entity_id_counter, enemy.x + 10, enemy.y + 10, 
                                                     {'type': 'gold', 'value': gold_value, 'rarity': 'Normal'}))
                                                     
-        elif enemy.type == "parasite":
-            # Parazit ölünce etraftaki bir düşmana yapışır (Infest)
-            targets = []
-            for e in self.iter_enemies_near(enemy.x, enemy.y, 300):
-                if not e.dead and not getattr(e, "has_parasite", False) and not getattr(e, "is_trap", False) and e.type != "parasite" and e.type != "war_tower":
-                    targets.append(e)
-            if targets:
-                target = random.choice(targets)
-                target.has_parasite = True
-                target.dmg *= 1.2 # Infested düşman biraz güçlenir
-                self.add_event("damage_text", target.x, target.y - 20, value="INFESTED!", color=(255, 100, 200), timer=1.5)
-
         # Infested (Parazitli) düşman öldüğünde içinden tekrar parazit çıkar
         if getattr(enemy, "has_parasite", False):
             if not hasattr(self, '_pending_spawns'):
